@@ -1,0 +1,27 @@
+### Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# One-time setup:
+#   1. Push this file to main.
+#   2. In the Render dashboard: New > Blueprint > connect this repo.
+#   3. When prompted, paste RAILS_MASTER_KEY (contents of config/master.key).
+#
+# After that, every push to main builds the Dockerfile and deploys
+# automatically. Migrations run on boot via bin/docker-entrypoint.
+services:
+  - type: web
+    name: assistant
+    runtime: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /up
+    envVars:
+      - key: RAILS_MASTER_KEY
+        sync: false
+    # All SQLite databases (primary, cache, queue, cable) live in
+    # /rails/storage — this disk keeps them across deploys and restarts.
+    # Note: a service with a disk runs a single instance, which is also
+    # what SQLite requires.
+    disk:
+      name: assistant-storage
+      mountPath: /rails/storage
+      sizeGB: 1
