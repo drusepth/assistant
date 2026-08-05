@@ -51,17 +51,56 @@
   <%= render Ui::CardComponent.new(title: "Household", subtitle: Current.user.household.name) do %>
     <ul class="space-y-2">
       <% Current.user.household.users.order(:name).each do |member| %>
-        <li class="flex items-center gap-3 text-sm">
-          <span class="flex size-8 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-800">
+        <li class="flex items-center gap-3 rounded-lg border border-edge px-4 py-2.5 text-sm">
+          <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-800">
             <%= member.name.split.map(&:first).join[0, 2].upcase %>
           </span>
-          <span class="font-medium text-ink"><%= member.name %></span>
-          <span class="text-soft"><%= member.email_address %></span>
+          <span class="min-w-0 flex-1 truncate">
+            <span class="font-medium text-ink"><%= member.name %></span>
+            <span class="text-soft"><%= member.email_address %></span>
+          </span>
           <% if member.admin? %><span class="chip bg-stone-100 text-stone-700">admin</span><% end %>
-          <% if member == Current.user %><span class="chip bg-primary-50 text-primary-800">you</span><% end %>
+          <% if member == Current.user %>
+            <span class="chip bg-primary-50 text-primary-800">you</span>
+          <% elsif Current.user.admin? %>
+            <%= button_to member.admin? ? "Remove admin" : "Make admin",
+                  household_member_path(member, admin: !member.admin?), method: :patch,
+                  class: "btn btn-ghost btn-sm" %>
+            <%= button_to "Remove", household_member_path(member), method: :delete, class: "btn btn-danger btn-sm",
+                  data: { turbo_confirm: "Remove #{member.name} from the household? Their account and ALL of their data will be permanently deleted." } %>
+          <% end %>
         </li>
       <% end %>
     </ul>
-    <p class="mt-4 text-xs text-soft">Member management (inviting your household) arrives with the next milestone step.</p>
+
+    <% if Current.user.admin? %>
+      <div class="mt-5 border-t border-edge pt-4">
+        <h3 class="text-sm font-semibold text-ink">Invite someone</h3>
+        <p class="mb-3 mt-0.5 text-xs text-soft">
+          Creates a join link to copy and send however you like — no email setup needed. Links expire after 7 days.
+        </p>
+
+        <% @pending_invitations.each do |invitation| %>
+          <div class="mb-2 rounded-lg border border-edge px-4 py-3" data-controller="clipboard">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-sm font-medium text-ink">For <%= invitation.name %></span>
+              <span class="flex items-center gap-1.5">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        data-clipboard-target="button" data-action="clipboard#copy">Copy link</button>
+                <%= button_to "Revoke", invitation_path(invitation), method: :delete, class: "btn btn-danger btn-sm" %>
+              </span>
+            </div>
+            <input type="text" readonly value="<%= join_url(invitation.join_token) %>"
+                   data-clipboard-target="source" onclick="this.select()"
+                   class="input mt-2 text-xs text-soft">
+          </div>
+        <% end %>
+
+        <%= form_with url: invitations_path, class: "flex items-center gap-2" do |form| %>
+          <%= text_field_tag "invitation[name]", nil, class: "input flex-1", placeholder: "Their name", required: true %>
+          <%= form.submit "Create invite link" %>
+        <% end %>
+      </div>
+    <% end %>
   <% end %>
 </div>

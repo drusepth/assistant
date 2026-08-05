@@ -4,6 +4,7 @@ class SettingsController < ApplicationController
     @household_members = household_members
     @section_grants = Current.user.granted_access_grants.where(subject_type: "Section")
       .includes(:grantee, :subject)
+    @pending_invitations = Current.user.household.invitations.pending.order(:created_at) if Current.user.admin?
   end
 
   def update

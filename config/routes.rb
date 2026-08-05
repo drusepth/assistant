@@ -2,6 +2,15 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
+  get "setup" => "first_run#new", as: :setup
+  post "setup" => "first_run#create"
+
+  resources :invitations, only: %i[ create destroy ]
+  get "join/:token" => "invitations#show", as: :join
+  post "join/:token" => "invitations#accept"
+
+  resources :household_members, only: %i[ update destroy ]
+
   root "dashboard#show"
   get "today" => "today#show", as: :today
   get "calendar(/:year/:month)" => "calendar#show", as: :calendar,

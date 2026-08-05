@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_220154) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_230000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -95,6 +95,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_220154) do
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "invitations", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.integer "inviter_id", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id"], name: "index_invitations_on_household_id"
+    t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
   end
 
   create_table "notes", force: :cascade do |t|
@@ -197,6 +208,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_220154) do
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
   add_foreign_key "goals", "users"
+  add_foreign_key "invitations", "households"
+  add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "notes", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"

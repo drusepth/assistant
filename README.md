@@ -21,3 +21,5 @@ bin/rails db:prepare db:seed
 bin/rails test
 bin/rails server
 ```
+
+On first run, visiting the app walks you through creating your household and admin account. Invite the rest of your household from Settings — invitations are copyable join links, so no email server is needed.

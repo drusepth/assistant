@@ -48,6 +48,9 @@ Full schema (households/users, sections taxonomy, six primitives, tagging, shari
 **D14. Technical stack.**
 Rails 8.1, Ruby 3.3+, SQLite (the user's life is literally one file they own), Solid Queue/Cache/Cable (zero external services), Hotwire, Propshaft, Kamal + Dockerfile for the one-command-install path. Rails 8 built-in authentication. — *Locked.*
 
+**D15. Onboarding: first-run setup + link-based invitations.**
+A fresh instance redirects every visit to `/setup`, which creates the household and its first (admin) user in one form — solo users are fully onboarded there and never see invite concepts. Admins invite others by generating **signed join links** from Settings (name only; copied and sent over whatever channel the household already uses). No email delivery dependency — self-hosted instances rarely have SMTP. Tokens are single-use, expire in 7 days, die on revoke. No public signup, no account merging. Admins can promote/demote others and remove members; acting on yourself is forbidden, which structurally guarantees ≥1 admin. — *Locked.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**

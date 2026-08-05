@@ -88,7 +88,6 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 
 ## Where we left off
 
-Milestone 1 is **Organize core, AI-lite** (see D13). Built and under test: the database layer (households/users/sessions, seeded sections taxonomy, six primitives, tagging, access grants with `visible_to`), the design system, and the full Organize UI — CRUD for all six primitives, Dashboard, Today, Calendar, Documents vault (section filters), Goals boards (kanban), section pages, Settings (section toggles + section-level sharing), and item-level sharing on every show page. Next steps, in order:
-1. Household member management (invite/create members from Settings; currently console-only)
-2. The one AI feature: document upload → extraction → summary + suggested tags (Solid Queue job through the OpenAI-compatible adapter; `model_profiles` table arrives with this)
-3. Then: pressure-test Situations with "eviction notice" (Q7)
+Milestone 1 is **Organize core, AI-lite** (see D13). Built and under test: the database layer (households/users/sessions, seeded sections taxonomy, six primitives, tagging, access grants with `visible_to`), the design system, the full Organize UI — CRUD for all six primitives, Dashboard, Today, Calendar, Documents vault (section filters), Goals boards (kanban), section pages, Settings (section toggles + section-level sharing), item-level sharing on every show page — and onboarding/member management (D15: first-run `/setup`, link-based invitations, admin roles). Next steps, in order:
+1. The one AI feature: document upload → extraction → summary + suggested tags (Solid Queue job through the OpenAI-compatible adapter; `model_profiles` table arrives with this)
+2. Then: pressure-test Situations with "eviction notice" (Q7)

@@ -94,7 +94,10 @@ patterns — everything reusable lives in one redesignable place.
 3. ✅ Primitive CRUD, cross-cutting views (Dashboard, Today, Calendar, Vault,
    Boards, section pages), Settings (section toggles), sharing UI (item +
    section grants)
-4. Household member management (invite/create members from Settings)
+4. ✅ Household member management (D15): first-run `/setup` creates
+   household + admin; link-based invitations (`Invitation` +
+   `generates_token_for`, single-use, 7-day expiry, revocable); admin
+   role management and member removal from Settings
 5. Document AI pipeline + `ModelProfile` + adapter
 6. Situation pressure-test: "eviction notice" (Q7)
 

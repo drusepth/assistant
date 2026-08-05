@@ -3,6 +3,8 @@ class SessionsController < ApplicationController
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }
 
   def new
+    # A fresh instance has no one to sign in — onboard the first user instead.
+    redirect_to setup_path if User.none?
   end
 
   def create

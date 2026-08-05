@@ -7,4 +7,9 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   default_form_builder ApplicationFormBuilder
+
+  private
+    def require_admin
+      redirect_to settings_path, alert: "Only household admins can do that." unless Current.user.admin?
+    end
 end
