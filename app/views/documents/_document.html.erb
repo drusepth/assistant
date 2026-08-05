@@ -1,0 +1,13 @@
+<div class="flex items-center gap-3 px-4 py-3">
+  <span class="shrink-0 rounded-lg bg-stone-100 p-2 text-soft"><%= icon(:document, css_class: "size-5") %></span>
+
+  <div class="min-w-0 flex-1">
+    <%= link_to document.title, document, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+    <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
+      <span class="text-xs text-soft">
+        Added <%= document.created_at.strftime("%b %-d, %Y") %><% if document.file.attached? %> · <%= document.file.filename %><% end %>
+      </span>
+      <%= render "shared/item_chips", item: document %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+<div class="card">
+  <% if header? %>
+    <div class="flex items-center justify-between gap-3 border-b border-edge px-5 py-3.5">
+      <div>
+        <h2 class="text-sm font-semibold text-ink"><%= title %></h2>
+        <% if subtitle %>
+          <p class="text-xs text-soft"><%= subtitle %></p>
+        <% end %>
+      </div>
+      <% if actions? %>
+        <div class="flex items-center gap-2"><%= actions %></div>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="<%= body_classes %>">
+    <%= content %>
+  </div>
+</div>

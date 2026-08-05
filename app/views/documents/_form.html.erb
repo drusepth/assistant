@@ -1,0 +1,15 @@
+<%= form_with model: document, class: "space-y-4" do |form| %>
+  <%= form.field :title %>
+  <%= form.field :description, as: :text_area, hint: "What is this and why does it matter?" %>
+  <%= form.field :file, label_text: "File" do %>
+    <%= form.file_field :file %>
+    <% if document.file.attached? %>
+      <p class="hint">Currently: <%= document.file.filename %> — choosing a new file replaces it.</p>
+    <% end %>
+  <% end %>
+  <%= render "shared/section_picker", form: form %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", documents_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

@@ -1,0 +1,15 @@
+<div class="card flex items-start gap-3 p-4">
+  <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-800">
+    <%= person.name.split.map(&:first).join[0, 2].upcase %>
+  </span>
+
+  <div class="min-w-0 flex-1">
+    <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+    <% if person.relationship.present? %>
+      <p class="text-xs text-soft"><%= person.relationship %></p>
+    <% end %>
+    <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+      <%= render "shared/item_chips", item: person %>
+    </div>
+  </div>
+</div>

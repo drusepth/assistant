@@ -74,17 +74,21 @@ Single **OpenAI-compatible chat-completions adapter** (configurable base URL + k
 
 Rails 8.1 · Ruby 3.3 · SQLite · Solid Queue/Cache/Cable · Hotwire (Turbo + Stimulus) · Propshaft + importmaps · Minitest + fixtures · Kamal + Dockerfile. Run tests with `bin/rails test`; lint with `bin/rubocop`.
 
+## Design system
+
+Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `ApplicationFormBuilder`. Four redesign-in-one-place layers: tokens (`app/assets/tailwind/application.css` `@theme`), atoms (`.btn`, `.input`, `.card`, `.chip` in the same file), `Ui::` components (`app/components/ui/`), and per-primitive row partials (`tasks/_task`, …). Views never hand-roll buttons/inputs/cards. See `docs/DESIGN.md`.
+
 ## Docs
 
 - `docs/VISION.md` — full mission background and strategic reasoning
 - `docs/PRODUCT.md` — detailed section-by-section feature brainstorm
 - `docs/DECISIONS.md` — decision log + open questions (D1–D14)
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
+- `docs/DESIGN.md` — design language: tokens, atoms, components, conventions
 
 ## Where we left off
 
-Milestone 1 is **Organize core, AI-lite** (see D13). The database layer is built: households/users/sessions, sections taxonomy (seeded), six primitives, section tagging, access grants with the `visible_to` scope, all under test. Next steps, in order:
-1. Controllers/views for the primitives + the cross-cutting views (Calendar, Today, Vault, Boards, Dashboard shell)
-2. Settings (section toggles)
-3. The one AI feature: document upload → extraction → summary + suggested tags (Solid Queue job through the OpenAI-compatible adapter; `model_profiles` table arrives with this)
-4. Then: pressure-test Situations with "eviction notice" (Q7)
+Milestone 1 is **Organize core, AI-lite** (see D13). Built and under test: the database layer (households/users/sessions, seeded sections taxonomy, six primitives, tagging, access grants with `visible_to`), the design system, and the full Organize UI — CRUD for all six primitives, Dashboard, Today, Calendar, Documents vault (section filters), Goals boards (kanban), section pages, Settings (section toggles + section-level sharing), and item-level sharing on every show page. Next steps, in order:
+1. Household member management (invite/create members from Settings; currently console-only)
+2. The one AI feature: document upload → extraction → summary + suggested tags (Solid Queue job through the OpenAI-compatible adapter; `model_profiles` table arrives with this)
+3. Then: pressure-test Situations with "eviction notice" (Q7)

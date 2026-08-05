@@ -80,12 +80,21 @@ No moral/ethical stances are encoded (D9): defaults are private, every grant is 
 - One adapter class speaking OpenAI-compatible chat completions. No vendor gems; ~200 lines we own and audit. Remote first; Ollama/llama.cpp later by changing base_url.
 - First and only Milestone-1 AI feature: document upload → Solid Queue job → text extraction → summary + suggested section tags written back to the Document, surfaced as *suggestions* (trust ladder, D6).
 
+## Design system
+
+Tailwind CSS v4 (standalone binary — no Node) + ViewComponent + a default
+`ApplicationFormBuilder`. Tokens, atoms, components, and conventions are
+documented in `DESIGN.md`; the rule is that views never hand-roll visual
+patterns — everything reusable lives in one redesignable place.
+
 ## Build sequence
 
-1. ✅ Schema + models + tests (this change)
-2. Auth flows wired to households (invite/create household members), `Current.user` conventions
-3. Primitive CRUD (Hotwire), cross-cutting views: Calendar, Today, Vault, Boards, Dashboard shell
-4. Settings: section toggles, sharing grants UI
+1. ✅ Schema + models + tests
+2. ✅ Design system (Tailwind v4 tokens + atoms, ViewComponents, form builder)
+3. ✅ Primitive CRUD, cross-cutting views (Dashboard, Today, Calendar, Vault,
+   Boards, section pages), Settings (section toggles), sharing UI (item +
+   section grants)
+4. Household member management (invite/create members from Settings)
 5. Document AI pipeline + `ModelProfile` + adapter
 6. Situation pressure-test: "eviction notice" (Q7)
 

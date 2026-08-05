@@ -1,0 +1,19 @@
+<%= render Ui::PageHeaderComponent.new(title: "Upcoming events") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Calendar view", calendar_path, class: "btn btn-secondary" %>
+    <%= link_to new_event_path, class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Event
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if @events.any? %>
+  <div class="card divide-y divide-edge"><%= render @events %></div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "No upcoming events",
+        description: "Appointments, deadlines, renewals — everything dated lands on one calendar."
+      ) do |empty| %>
+    <% empty.with_action { link_to "New event", new_event_path, class: "btn btn-primary" } %>
+  <% end %>
+<% end %>

@@ -1,0 +1,13 @@
+<%= form_with model: task, class: "space-y-4" do |form| %>
+  <%= form.field :title, placeholder: "What needs doing?" %>
+  <%= form.field :notes, as: :text_area %>
+  <%= form.field :due_on, as: :date_field, label_text: "Due date" %>
+  <%= form.field :goal_id, label_text: "Goal" do %>
+    <%= form.collection_select :goal_id, Current.user.goals.order(:title), :id, :title, include_blank: "None" %>
+  <% end %>
+  <%= render "shared/section_picker", form: form %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", tasks_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

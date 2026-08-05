@@ -1,0 +1,67 @@
+<%= render Ui::PageHeaderComponent.new(title: "Settings") %>
+
+<div class="max-w-2xl space-y-6">
+  <%= render Ui::CardComponent.new(title: "Sections", subtitle: "Choose which sections appear in your sidebar") do %>
+    <%= form_with url: settings_path, method: :patch, class: "space-y-3" do |form| %>
+      <% @sections.each do |section| %>
+        <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+          <%= check_box_tag "enabled_section_ids[]", section.id, Current.user.section_enabled?(section),
+                id: "section_#{section.slug}", class: "size-4 rounded accent-primary-600" %>
+          <span class="size-2.5 rounded-full <%= section_dot_classes(section) %>"></span>
+          <span class="text-sm font-medium text-ink"><%= section.name %></span>
+          <% if section.children.any? %>
+            <span class="text-xs text-soft"><%= section.children.map(&:name).join(" · ") %></span>
+          <% end %>
+        </label>
+      <% end %>
+      <%= form.submit "Save sections" %>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Section sharing", subtitle: "Share everything you tag with a section — including future items") do %>
+    <% if @section_grants.any? %>
+      <ul class="mb-4 space-y-2">
+        <% @section_grants.each do |grant| %>
+          <li class="flex items-center justify-between gap-2 rounded-lg border border-edge px-4 py-2.5 text-sm">
+            <span>
+              <span class="font-medium text-ink"><%= grant.subject.qualified_name %></span>
+              <span class="text-soft">→ <%= grant.grantee.name %></span>
+            </span>
+            <%= button_to "Revoke", access_grant_path(grant), method: :delete, class: "btn btn-danger btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <% if @household_members.any? %>
+      <%= form_with url: access_grants_path, class: "flex flex-wrap items-center gap-2" do |form| %>
+        <%= hidden_field_tag :subject_type, "Section" %>
+        <%= select_tag :subject_id,
+              options_from_collection_for_select(Section.order(:parent_id, :position), :id, :qualified_name),
+              class: "input flex-1" %>
+        <span class="text-sm text-soft">with</span>
+        <%= select_tag :grantee_id, options_from_collection_for_select(@household_members, :id, :name), class: "input flex-1" %>
+        <%= form.submit "Share" %>
+      <% end %>
+    <% else %>
+      <p class="text-sm text-soft">No other household members yet — sharing kicks in once your household has more than one user.</p>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Household", subtitle: Current.user.household.name) do %>
+    <ul class="space-y-2">
+      <% Current.user.household.users.order(:name).each do |member| %>
+        <li class="flex items-center gap-3 text-sm">
+          <span class="flex size-8 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-800">
+            <%= member.name.split.map(&:first).join[0, 2].upcase %>
+          </span>
+          <span class="font-medium text-ink"><%= member.name %></span>
+          <span class="text-soft"><%= member.email_address %></span>
+          <% if member.admin? %><span class="chip bg-stone-100 text-stone-700">admin</span><% end %>
+          <% if member == Current.user %><span class="chip bg-primary-50 text-primary-800">you</span><% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="mt-4 text-xs text-soft">Member management (inviting your household) arrives with the next milestone step.</p>
+  <% end %>
+</div>

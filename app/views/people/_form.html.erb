@@ -1,0 +1,18 @@
+<%= form_with model: person, class: "space-y-4" do |form| %>
+  <%= form.field :name %>
+  <%= form.field :relationship, placeholder: "Mom, landlord, cardiologist…" %>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <%= form.field :email, as: :email_field %>
+    <%= form.field :phone, as: :telephone_field %>
+  </div>
+  <%= form.field :birthday, as: :date_field %>
+  <%= form.field :notes, as: :text_area, hint: "What matters about this person." %>
+  <%= form.field :linked_user_id, label_text: "Household account", hint: "Link this contact to a household member's account." do %>
+    <%= form.collection_select :linked_user_id, Current.user.household.users.order(:name), :id, :name, include_blank: "Not a household account" %>
+  <% end %>
+  <%= render "shared/section_picker", form: form %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", people_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

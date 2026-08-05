@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Design tokens — the single place to retheme the app (see docs/DESIGN.md).
+   Views consume components and atoms; components and atoms consume tokens.
+   ========================================================================== */
+@theme {
+  /* Brand ramp */
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+
+  /* Semantic neutrals */
+  --color-canvas: #fafaf9;  /* page background */
+  --color-surface: #ffffff; /* cards, sidebar */
+  --color-edge: #e7e5e4;    /* borders, dividers */
+  --color-ink: #1c1917;     /* primary text */
+  --color-soft: #78716c;    /* secondary text */
+}
+
+/* ============================================================================
+   Atoms — reusable class-level pieces (buttons, inputs, chips, cards).
+   Structural composites (page headers, cards with slots, empty states)
+   live in app/components as ViewComponents.
+   ========================================================================== */
+@layer components {
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700;
+  }
+  .btn-secondary {
+    @apply border border-edge bg-surface text-ink hover:bg-stone-50;
+  }
+  .btn-danger {
+    @apply border border-red-200 bg-surface text-red-600 hover:bg-red-50;
+  }
+  .btn-ghost {
+    @apply text-soft hover:bg-stone-100 hover:text-ink;
+  }
+  .btn-sm {
+    @apply rounded-md px-2.5 py-1.5 text-xs;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-ink;
+  }
+  .input {
+    @apply block w-full rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-ink placeholder:text-stone-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
+  }
+  .hint {
+    @apply text-xs text-soft;
+  }
+  .field-error {
+    @apply text-xs text-red-600;
+  }
+
+  .card {
+    @apply rounded-xl border border-edge bg-surface shadow-xs;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}

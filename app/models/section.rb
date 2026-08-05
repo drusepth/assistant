@@ -10,4 +10,9 @@ class Section < ApplicationRecord
   scope :top_level, -> { where(parent_id: nil).order(:position) }
 
   def top_level? = parent_id.nil?
+
+  # "Budget" reads ambiguously outside its section; "Money · Budget" doesn't.
+  def qualified_name
+    parent ? "#{parent.name} · #{name}" : name
+  end
 end

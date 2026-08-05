@@ -1,0 +1,9 @@
+<div class="card flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
+  <p class="text-sm font-medium text-ink"><%= title %></p>
+  <% if description %>
+    <p class="max-w-sm text-sm text-soft"><%= description %></p>
+  <% end %>
+  <% if action? %>
+    <div class="mt-2"><%= action %></div>
+  <% end %>
+</div>

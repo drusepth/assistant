@@ -1,0 +1,58 @@
+<%= render Ui::PageHeaderComponent.new(title: @section.qualified_name) do |header| %>
+  <% if @section.children.any? %>
+    <% header.with_actions do %>
+      <% @section.children.each do |child| %>
+        <%= render Ui::SectionChipComponent.new(section: child) %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if [ @events, @tasks, @documents, @people, @goals, @notes ].all?(&:empty?) %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "Nothing in #{@section.name} yet",
+        description: "Items tagged with this section will show up here — one item can live in several sections at once."
+      ) do |empty| %>
+    <% empty.with_action do %>
+      <%= link_to "Add a task", new_task_path, class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+<% else %>
+  <div class="space-y-6">
+    <% if @tasks.any? %>
+      <%= render Ui::CardComponent.new(title: "Open tasks", padded: false) do %>
+        <div class="divide-y divide-edge"><%= render @tasks %></div>
+      <% end %>
+    <% end %>
+
+    <% if @events.any? %>
+      <%= render Ui::CardComponent.new(title: "Upcoming events", padded: false) do %>
+        <div class="divide-y divide-edge"><%= render @events %></div>
+      <% end %>
+    <% end %>
+
+    <% if @goals.any? %>
+      <%= render Ui::CardComponent.new(title: "Goals", padded: false) do %>
+        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @goals %></div>
+      <% end %>
+    <% end %>
+
+    <% if @documents.any? %>
+      <%= render Ui::CardComponent.new(title: "Documents", padded: false) do %>
+        <div class="divide-y divide-edge"><%= render @documents %></div>
+      <% end %>
+    <% end %>
+
+    <% if @people.any? %>
+      <%= render Ui::CardComponent.new(title: "People", padded: false) do %>
+        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @people %></div>
+      <% end %>
+    <% end %>
+
+    <% if @notes.any? %>
+      <%= render Ui::CardComponent.new(title: "Notes", padded: false) do %>
+        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @notes %></div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

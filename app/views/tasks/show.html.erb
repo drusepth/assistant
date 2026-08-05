@@ -1,0 +1,54 @@
+<% own = @task.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @task.title) do |header| %>
+  <% if own %>
+    <% header.with_actions do %>
+      <%= button_to @task.completed? ? "Reopen" : "Complete",
+            @task.completed? ? reopen_task_path(@task) : complete_task_path(@task),
+            method: :patch, class: "btn btn-secondary" %>
+      <%= link_to "Edit", edit_task_path(@task), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @task, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this task?" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Status</dt>
+          <dd class="<%= @task.completed? ? "text-primary-700" : "text-ink" %>">
+            <%= @task.completed? ? "Completed #{@task.completed_at.strftime("%b %-d, %Y")}" : "Open" %>
+          </dd>
+        </div>
+        <% if @task.due_on %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Due</dt>
+            <dd><%= @task.due_on.strftime("%B %-d, %Y") %></dd>
+          </div>
+        <% end %>
+        <% if @task.goal %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Goal</dt>
+            <dd><%= link_to @task.goal.title, @task.goal, class: "text-primary-700 hover:underline" %></dd>
+          </div>
+        <% end %>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Sections</dt>
+          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @task %></dd>
+        </div>
+        <% if @task.notes.present? %>
+          <div>
+            <dt class="mb-1 text-soft">Notes</dt>
+            <dd class="whitespace-pre-wrap text-ink"><%= @task.notes %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+  </div>
+  <% if own %>
+    <div><%= render "shared/share_controls", subject: @task %></div>
+  <% end %>
+</div>

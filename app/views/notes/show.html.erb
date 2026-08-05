@@ -1,0 +1,23 @@
+<% own = @note.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @note.title.presence || "Note", subtitle: "Updated #{@note.updated_at.strftime("%B %-d, %Y")}") do |header| %>
+  <% if own %>
+    <% header.with_actions do %>
+      <%= link_to "Edit", edit_note_path(@note), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @note, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this note?" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <div class="card p-6">
+      <div class="mb-4 flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @note %></div>
+      <p class="whitespace-pre-wrap text-sm leading-relaxed text-ink"><%= @note.body %></p>
+    </div>
+  </div>
+  <% if own %>
+    <div><%= render "shared/share_controls", subject: @note %></div>
+  <% end %>
+</div>
