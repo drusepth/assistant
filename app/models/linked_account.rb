@@ -34,7 +34,8 @@ class LinkedAccount < ApplicationRecord
     },
     "contacts" => {
       label: "Address book",
-      description: "Your contacts over CardDAV — Google, iCloud, Nextcloud, or any address-book server.",
+      description: "Your contacts over CardDAV — iCloud, Fastmail, Nextcloud, or any address-book server. Syncs into People.",
+      syncable: true,
       fields: [
         { key: "server_url", label: "CardDAV server", placeholder: "https://contacts.example.com/…" },
         { key: "username", label: "Username", placeholder: "you@example.com" },
@@ -109,6 +110,10 @@ class LinkedAccount < ApplicationRecord
 
   def enabled_scopes = scopes.keys - disabled_scopes
   def full_access? = (scopes.keys & disabled_scopes).empty?
+
+  # Whether a live sync consumer exists for this provider yet. There's one
+  # job today (SyncContactsJob); dispatch by provider once a second lands.
+  def syncable? = provider_settings[:syncable].present?
 
   private
     def required_credentials_present

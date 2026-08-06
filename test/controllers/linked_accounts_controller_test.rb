@@ -1,6 +1,7 @@
 require "test_helper"
 
 class LinkedAccountsControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
   test "linking a service starts with full access" do
     sign_in_as users(:one)
 
@@ -98,6 +99,45 @@ class LinkedAccountsControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("LinkedAccount.count") do
       delete linked_account_path(account)
     end
+  end
+
+  test "linking a syncable service starts a sync right away" do
+    sign_in_as users(:two)
+
+    assert_enqueued_with(job: SyncContactsJob) do
+      post linked_accounts_path, params: {
+        provider: "contacts",
+        credentials: { server_url: "https://dav.example.com/", username: "bob@example.com", password: "pw" }
+      }
+    end
+  end
+
+  test "sync now enqueues a sync for a syncable link" do
+    sign_in_as users(:one)
+    account = linked_accounts(:alice_contacts)
+
+    assert_enqueued_with(job: SyncContactsJob, args: [ account ]) do
+      post sync_linked_account_path(account)
+    end
+    assert_redirected_to settings_path
+  end
+
+  test "providers without a sync consumer cannot be synced" do
+    sign_in_as users(:one)
+
+    assert_no_enqueued_jobs do
+      post sync_linked_account_path(linked_accounts(:alice_email))
+    end
+    assert_equal "Email doesn't sync yet.", flash[:alert]
+  end
+
+  test "users cannot sync another user's link" do
+    sign_in_as users(:two)
+
+    assert_no_enqueued_jobs do
+      post sync_linked_account_path(linked_accounts(:alice_contacts))
+    end
+    assert_response :not_found
   end
 
   test "settings shows connected accounts with their scope dials" do

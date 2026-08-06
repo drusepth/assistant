@@ -20,7 +20,11 @@ Rails.application.routes.draw do
   resource :settings, only: %i[ show update ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
-  resources :linked_accounts, only: %i[ create update destroy ]
+  resources :linked_accounts, only: %i[ create update destroy ] do
+    member do
+      post :sync
+    end
+  end
 
   namespace :events do
     resource :import, only: %i[ new create ]

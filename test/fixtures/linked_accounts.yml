@@ -6,3 +6,12 @@ alice_email:
     username: one@example.com
     password: app-password
   disabled_scopes: []
+
+alice_contacts:
+  user: one
+  provider: contacts
+  credentials:
+    server_url: https://dav.example.com/
+    username: one@example.com
+    password: app-password
+  disabled_scopes: []

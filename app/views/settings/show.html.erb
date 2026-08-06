@@ -88,6 +88,21 @@
               <% end %>
               <%= form.submit "Save access", class: "btn-sm" %>
             <% end %>
+
+            <% if account.syncable? %>
+              <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-edge pt-3">
+                <span class="text-xs <%= account.sync_error ? "text-red-600" : "text-soft" %>">
+                  <% if account.sync_error %>
+                    Last sync failed: <%= account.sync_error %>
+                  <% elsif account.synced_at %>
+                    Synced <%= time_ago_in_words(account.synced_at) %> ago
+                  <% else %>
+                    Not synced yet
+                  <% end %>
+                </span>
+                <%= button_to "Sync now", sync_linked_account_path(account), method: :post, class: "btn btn-secondary btn-sm ml-auto" %>
+              </div>
+            <% end %>
           <% else %>
             <details class="mt-2">
               <summary class="cursor-pointer text-sm font-medium text-primary-700">Connect</summary>

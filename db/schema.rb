@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_190000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -117,6 +117,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_180000) do
     t.json "credentials", default: {}, null: false
     t.json "disabled_scopes", default: [], null: false
     t.string "provider", null: false
+    t.string "sync_error"
+    t.datetime "synced_at"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "provider"], name: "index_linked_accounts_on_user_id_and_provider", unique: true

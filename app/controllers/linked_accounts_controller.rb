@@ -9,11 +9,23 @@ class LinkedAccountsController < ApplicationController
 
     account = Current.user.linked_accounts.build(provider: provider, credentials: credential_params(settings))
     if account.save
-      redirect_to settings_path,
-        notice: "#{account.label} linked. The assistant has full access — adjust what it can use below."
+      notice = "#{account.label} linked. The assistant has full access — adjust what it can use below."
+      if account.syncable?
+        SyncContactsJob.perform_later(account)
+        notice = "#{account.label} linked — syncing your contacts into People now."
+      end
+      redirect_to settings_path, notice: notice
     else
       redirect_to settings_path, alert: account.errors.full_messages.to_sentence
     end
+  end
+
+  def sync
+    account = Current.user.linked_accounts.find(params[:id])
+    return redirect_to settings_path, alert: "#{account.label} doesn't sync yet." unless account.syncable?
+
+    SyncContactsJob.perform_later(account)
+    redirect_to settings_path, notice: "Syncing your #{account.label.downcase} — new contacts will appear in People."
   end
 
   # Scope checkboxes post the ENABLED set; we store the complement so new
