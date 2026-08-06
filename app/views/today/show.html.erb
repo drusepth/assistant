@@ -29,6 +29,17 @@
     <% end %>
   <% end %>
 
+  <%= render Ui::CardComponent.new(title: "Get ready for tomorrow", subtitle: "Tasks due and events happening tomorrow", padded: false) do %>
+    <% if @tomorrow_tasks.any? || @tomorrow_events.any? %>
+      <div class="divide-y divide-edge">
+        <%= render @tomorrow_tasks %>
+        <%= render @tomorrow_events %>
+      </div>
+    <% else %>
+      <p class="px-5 py-8 text-center text-sm text-soft">Nothing on the books for tomorrow yet.</p>
+    <% end %>
+  <% end %>
+
   <% if @week_events.any? %>
     <%= render Ui::CardComponent.new(title: "Coming up this week", padded: false) do %>
       <div class="divide-y divide-edge"><%= render @week_events %></div>

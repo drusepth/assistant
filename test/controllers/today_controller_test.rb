@@ -15,6 +15,17 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "Tonight", response.body
   end
 
+  test "shows tomorrow's tasks and events in the get-ready section" do
+    users(:one).tasks.create!(title: "Pack gym bag", due_on: Date.tomorrow)
+    users(:one).events.create!(title: "Dentist checkup", starts_at: Date.tomorrow.noon)
+
+    get today_path
+    assert_response :success
+    assert_match "Get ready for tomorrow", response.body
+    assert_match "Pack gym bag", response.body
+    assert_match "Dentist checkup", response.body
+  end
+
   test "does not show other users' private items" do
     users(:two).tasks.create!(title: "Bob's secret errand", due_on: Date.current)
 
