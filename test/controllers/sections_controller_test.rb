@@ -19,4 +19,26 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     get section_path("nonsense")
     assert_response :not_found
   end
+
+  test "shows the section's tools, including subsection tools on the parent page" do
+    get section_path("rights")
+    assert_response :success
+    assert_match "Draft a dispute letter", response.body
+
+    get section_path("disputes")
+    assert_match "Draft a dispute letter", response.body
+  end
+
+  test "a section with no tools shows none" do
+    get section_path("health")
+    assert_response :success
+    assert_no_match "Draft a dispute letter", response.body
+  end
+
+  test "the empty state offers capture pre-tagged with the section" do
+    get section_path("health")
+    assert_response :success
+    assert_match "Nothing in Health yet", response.body
+    assert_match new_task_path(section_ids: [ sections(:health).id ]), response.body
+  end
 end

@@ -1,0 +1,9 @@
+<%# Carries section pre-tags (e.g. from a section page's quick capture)
+    through the minimal new forms. Hand-tagging here means auto-sort leaves
+    the item's sections alone (D16). %>
+<% if item.sections.any? %>
+  <% item.sections.each do |section| %>
+    <%= form.hidden_field :section_ids, multiple: true, value: section.id %>
+  <% end %>
+  <p class="hint">Will be filed under <%= item.sections.map(&:qualified_name).to_sentence %>.</p>
+<% end %>

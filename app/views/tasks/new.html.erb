@@ -9,6 +9,7 @@
       </div>
       <%= form.hidden_field :goal_id %>
       <%= form.hidden_field :due_on %>
+      <%= render "shared/pretagged_sections", form: form, item: @task %>
       <% if @task.goal %>
         <p class="hint">Will be added to the goal “<%= @task.goal.title %>”.</p>
       <% end %>

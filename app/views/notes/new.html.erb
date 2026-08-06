@@ -7,6 +7,7 @@
         <%= form.errors_for :body %>
         <p class="hint"><%= note_auto_sort_hint %></p>
       </div>
+      <%= render "shared/pretagged_sections", form: form, item: @note %>
       <div class="flex items-center gap-2">
         <%= form.submit "Save note" %>
         <%= link_to "Cancel", notes_path, class: "btn btn-ghost" %>

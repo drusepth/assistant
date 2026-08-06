@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_130000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -194,6 +194,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_120001) do
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
+  create_table "tool_run_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "item_id", null: false
+    t.string "item_type", null: false
+    t.integer "tool_run_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["item_type", "item_id"], name: "index_tool_run_items_on_item"
+    t.index ["tool_run_id", "item_type", "item_id"], name: "index_tool_run_items_on_tool_run_id_and_item_type_and_item_id", unique: true
+    t.index ["tool_run_id"], name: "index_tool_run_items_on_tool_run_id"
+  end
+
+  create_table "tool_runs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "error"
+    t.json "inputs", default: {}, null: false
+    t.json "output", default: {}, null: false
+    t.string "status", default: "queued", null: false
+    t.string "tool_slug", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "created_at"], name: "index_tool_runs_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_tool_runs_on_user_id"
+  end
+
   create_table "user_sections", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
@@ -236,6 +260,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_120001) do
   add_foreign_key "sessions", "users"
   add_foreign_key "tasks", "goals"
   add_foreign_key "tasks", "users"
+  add_foreign_key "tool_run_items", "tool_runs"
+  add_foreign_key "tool_runs", "users"
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"
   add_foreign_key "users", "households"
