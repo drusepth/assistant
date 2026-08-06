@@ -106,7 +106,16 @@ patterns — everything reusable lives in one redesignable place.
    pre-tagged with the section; `Tool::Base` + explicit registry
    (`app/tools/`), `tool_runs`/`tool_run_items` + `ToolRunJob` + live run
    page; first tool: Draft a dispute letter (Rights → Disputes)
-7. Situation pressure-test: "eviction notice" as the first *plan* tool
-   (Q7, build step M2.2)
+7. ✅ First plan tool (M2.2 — "Learn something"): `Goals::BreakDown#plan!`
+   + optional `brief` shared by `BreakDownGoalJob` and plan tools; zero
+   new schema (a plan tool is goal capture with framing). Q7's
+   cross-section test now rides the first Situation ("moving", M2.4)
+8. ✅ Suggestions core (M3.1 — D20, see `ROADMAP.md`): `suggestions`
+   table (fingerprint-deduped, action payloads materialized on accept),
+   deterministic watchers (`app/watchers/` + `Watcher::SLUGS` registry),
+   `AgentScanJob` weekly fan-out (hardwired Quiet), Dashboard feed +
+   section Attend zones; first watcher: checkup cadence
+9. Coverage tools (M2.3), Situations (M2.4), agent dials + more
+   watchers (M3.2)
 
 Deferred deliberately: encryption at rest & deployment hardening (post-foundation, per D10), community packs (D11), voice, FTUE, agent mode.

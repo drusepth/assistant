@@ -138,7 +138,7 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 2. ✅ **M2.2 — First plan tool: Learn something.** Proved the plan seam with zero new schema: `Goals::BreakDown#plan!` (call + apply extracted from the breakdown job, shared by both) and the optional `brief` param. (Replaced the eviction Situation here — see the slate note.)
 3. **M2.3 — Coverage slate**: doctor-visit prep, cancel-subscription, reconnect — each is one declarative class now.
 4. **M2.4 — Situations** as plan tools with richer briefs: "moving" first (the Q7 pressure test), others per demand.
-5. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
+5. ✅ **M3.1 — Suggestions core**: `suggestions` table (fingerprint-deduped, snooze/dismiss/accept with action payloads), Attend zone + Dashboard "From your assistant" feed, checkup-cadence watcher, weekly scan via Solid Queue recurring — everything hardwired to Quiet.
 6. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
 7. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
 

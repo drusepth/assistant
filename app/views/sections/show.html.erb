@@ -22,6 +22,14 @@
     </div>
   <% end %>
 
+  <%# Attend zone (D18): the pull-side slice of the agent's suggestions —
+      the Dashboard is the push surface for the same rows. %>
+  <% if @suggestions.any? %>
+    <%= render Ui::CardComponent.new(title: "Needs your attention", padded: false) do %>
+      <div class="divide-y divide-edge"><%= render @suggestions %></div>
+    <% end %>
+  <% end %>
+
   <%# Browse zone: the lens itself. The empty state is quick capture
       pre-tagged with this section — never a dead end. %>
   <% if [ @events, @tasks, @documents, @people, @goals, @notes ].all?(&:empty?) %>
