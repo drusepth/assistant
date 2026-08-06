@@ -1,6 +1,9 @@
 class Event < ApplicationRecord
   include Visible
   include Sectionable
+  include AutoSortable
+
+  AUTO_SORT_JOB = CategorizeEventJob
 
   belongs_to :goal, optional: true
 

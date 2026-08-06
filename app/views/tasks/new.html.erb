@@ -5,7 +5,7 @@
       <div class="space-y-1">
         <%= form.text_field :title, placeholder: "What needs doing?", autofocus: true, required: true %>
         <%= form.errors_for :title %>
-        <p class="hint"><%= auto_sort_hint(@task) %></p>
+        <p class="hint"><%= task_auto_sort_hint %></p>
       </div>
       <%= form.hidden_field :goal_id %>
       <%= form.hidden_field :due_on %>

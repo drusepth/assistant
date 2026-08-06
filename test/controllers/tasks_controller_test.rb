@@ -27,6 +27,15 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ sections(:money) ], Task.last.sections.to_a
   end
 
+  test "new and edit forms render, with shortcut chips on the edit date field" do
+    get new_task_path
+    assert_response :success
+
+    get edit_task_path(@task)
+    assert_response :success
+    assert_match "Tomorrow", response.body
+  end
+
   test "quick-adding a bare title queues auto-sorting" do
     assert_enqueued_with(job: CategorizeTaskJob) do
       post tasks_path, params: { task: { title: "Renew passport by Friday" } }

@@ -10,12 +10,15 @@ class EventsController < ApplicationController
   end
 
   def new
-    @event = Current.user.events.new(starts_at: params[:date]&.to_date&.noon)
+    # Quick capture is a title and a day: the event starts as all-day, and
+    # auto-sorting fills in a time if the title implies one.
+    @event = Current.user.events.new(starts_at: params[:date]&.to_date, all_day: true)
   end
 
   def create
     @event = Current.user.events.new(event_params)
     if @event.save
+      @event.enqueue_auto_sort!
       redirect_to calendar_path, notice: "Event added."
     else
       render :new, status: :unprocessable_entity

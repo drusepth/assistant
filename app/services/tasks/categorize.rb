@@ -18,7 +18,7 @@ module Tasks
       response = @profile.client.chat(messages, json: true)
 
       Result.new(
-        sections: matched_sections(response["sections"]),
+        sections: Llm::Taxonomy.match(response["sections"], limit: MAX_SECTIONS),
         due_on: parsed_date(response["due_on"])
       )
     end
@@ -48,18 +48,8 @@ module Tasks
         parts = [ "Today's date: #{Date.current.iso8601} (#{Date.current.strftime("%A")})" ]
         parts << "Task: #{@task.title}"
         parts << "Notes: #{@task.notes}" if @task.notes.present?
-        parts << "Available sections (slug — meaning):\n#{taxonomy}"
+        parts << "Available sections (slug — meaning):\n#{Llm::Taxonomy.listing}"
         parts.join("\n\n")
-      end
-
-      def taxonomy
-        Section.order(:parent_id, :position).map { |section| "#{section.slug} — #{section.qualified_name}" }.join("\n")
-      end
-
-      def matched_sections(slugs)
-        wanted = Array(slugs).map(&:to_s).first(MAX_SECTIONS)
-        by_slug = Section.where(slug: wanted).index_by(&:slug)
-        wanted.filter_map { |slug| by_slug[slug] }
       end
 
       def parsed_date(value)
