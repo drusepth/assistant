@@ -33,6 +33,20 @@ class ToolRunTest < ActiveSupport::TestCase
     assert_empty Tool.for_section(sections(:hobbies))
   end
 
+  test "next_steps re-resolves stored slugs and skips retired ones" do
+    run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", inputs: { "document_id" => "1" })
+    run.update!(output: { "next_tools" => [
+      { "slug" => "insurance_appeal", "inputs" => { "document_id" => "7" }, "reason" => "why" },
+      { "slug" => "tool_we_deleted_in_v2", "inputs" => {} },
+      "not even a hash"
+    ] })
+
+    steps = run.next_steps
+    assert_equal [ Tool::InsuranceAppeal ], steps.map(&:tool)
+    assert_equal({ "document_id" => "7" }, steps.first.inputs)
+    assert_equal "why", steps.first.reason
+  end
+
   test "items returns the primitives a run created" do
     run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", inputs: { "document_id" => "1" })
     note = users(:one).notes.create!(body: "Draft")

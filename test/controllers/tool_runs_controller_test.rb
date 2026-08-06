@@ -50,6 +50,29 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "new prefills inputs from the query string — the D21 routing entry point" do
+    get new_tool_run_path("insurance_appeal", inputs: { document_id: @document.id, intent: "it was an emergency" })
+
+    assert_response :success
+    assert_select "select#inputs_document_id option[selected][value='#{@document.id}']"
+    assert_select "input#inputs_intent[value='it was an emergency']"
+  end
+
+  test "show renders a finished run's suggested next steps as prefilled links" do
+    run = users(:one).tool_runs.create!(tool_slug: "decode_letter", inputs: { "document_id" => @document.id.to_s })
+    run.update!(status: :done, output: { "next_tools" => [
+      { "slug" => "insurance_appeal", "inputs" => { "document_id" => @document.id.to_s }, "reason" => "This denial can be appealed." }
+    ] })
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_match "This denial can be appealed.", response.body
+    assert_select "a[href=?]",
+      new_tool_run_path("insurance_appeal", inputs: { document_id: @document.id.to_s }),
+      text: /Start/
+  end
+
   test "show renders a finished run's drafts and follow-ups" do
     run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", inputs: { "document_id" => @document.id.to_s })
     note = users(:one).notes.create!(title: "Dispute of account 12345", body: "To whom it may concern")

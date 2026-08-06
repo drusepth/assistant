@@ -18,6 +18,20 @@ class ToolRun < ApplicationRecord
     tool_run_items.includes(:item).map(&:item).compact
   end
 
+  NextStep = Data.define(:tool, :inputs, :reason)
+
+  # Follow-on tools this run proposed (D21) — sanitized at write time by
+  # Tool::Base#store_next_tools, re-resolved against the registry at read
+  # time so a retired slug can never break the page.
+  def next_steps
+    Array(output["next_tools"]).filter_map do |entry|
+      next unless entry.is_a?(Hash)
+
+      tool = Tool.find(entry["slug"])
+      NextStep.new(tool: tool, inputs: entry["inputs"] || {}, reason: entry["reason"]) if tool
+    end
+  end
+
   def finished? = done? || failed?
 
   private

@@ -2,6 +2,8 @@
 
 <%= render Ui::PageHeaderComponent.new(title: @document.title, subtitle: "Added #{@document.created_at.strftime("%B %-d, %Y")}") do |header| %>
   <% header.with_actions do %>
+    <%= link_to "Decode this", new_tool_run_path("decode_letter", inputs: { document_id: @document.id }),
+          class: "btn btn-secondary" %>
     <% if @document.file.attached? %>
       <%= link_to "Download", rails_blob_path(@document.file, disposition: "attachment"), class: "btn btn-secondary" %>
     <% end %>

@@ -18,6 +18,7 @@ module Tool
     MAX_DOCUMENT_CHARS = 15_000
     MAX_FOLLOW_UPS = 3
     MAX_DEADLINES = 3
+    MAX_NEXT_TOOLS = 2
 
     class << self
       def slug = name.demodulize.underscore
@@ -144,6 +145,37 @@ module Tool
           date = parsed_date(deadline["date"])
           create_event(title: deadline["title"].to_s, on: date) if date
         end
+      end
+
+      # ── Routing (D21) ──────────────────────────────────────────────────
+
+      # Tools compose by routing, never by calling each other: the model
+      # proposes follow-on tools, code sanitizes — only slugs the caller
+      # allows, only inputs the target declares — and the run page renders
+      # what survives as prefilled next-step cards the user clicks through.
+      def store_next_tools(proposals, allowed:)
+        sanitized = Array(proposals).filter_map do |proposal|
+          next unless proposal.is_a?(Hash)
+
+          tool = Tool.find(proposal["slug"].to_s)
+          next unless tool && tool != self.class && allowed.include?(tool.slug)
+
+          {
+            "slug" => tool.slug,
+            "inputs" => sanitized_inputs(tool, proposal["inputs"]),
+            "reason" => proposal["reason"].to_s.strip.presence
+          }.compact
+        end.uniq { |entry| entry["slug"] }.first(MAX_NEXT_TOOLS)
+
+        run.update!(output: run.output.merge("next_tools" => sanitized)) if sanitized.any?
+      end
+
+      def sanitized_inputs(tool, inputs)
+        return {} unless inputs.is_a?(Hash)
+
+        inputs.slice(*tool.inputs.map(&:name))
+          .transform_values(&:to_s)
+          .reject { |_name, value| value.blank? }
       end
 
       # "Heading:\n- item" blocks are assembled by code so list formatting
