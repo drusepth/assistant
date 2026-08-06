@@ -103,6 +103,7 @@ New table **`suggestions`**: user, title, body (the rationale — *why* the app 
 
 Each watcher is a class in `app/watchers/` with a `slug`, `sections`, and `scan(user)` that emits candidate suggestions. **The signal comes from SQL, not model calls** — cheap, private, and it works identically with every model (including none). The LLM is optional garnish: phrasing, ranking, and the Dashboard's synthesized digest. Launch watchers:
 
+- ✅ **Neglected hobby** (Hobbies — `docs/HOBBIES.md` §4) — a hobby lens (D25) with no activity in 6 weeks and nothing upcoming → one nudge, accept = put a session on the calendar on a free day. Pure SQL over existing taggings — no new signal needed.
 - **Checkup cadence** (Health) — no Health-tagged event in the past N months and none upcoming → "you're due for a checkup," accept = create the Event, with free-day candidates read from the calendar.
 - **Stay in touch** (People) — a person's contact recency exceeds their usual rhythm → "it's been a while since you talked to Mom," accept = run the Reconnect tool prefilled.
 - **Renewal radar** (Money/Rights) — a renewal/lease-end/expiry Event approaching with no follow-up work attached → "your lease ends in 60 days."
@@ -139,7 +140,7 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 3. ✅ **M2.3 — Coverage slate**: doctor-visit prep, cancel-subscription, reconnect — each one declarative class on the shared Base contracts (DRAFT_FORMAT + `plan_goal!`), plus a `person` input kind.
 4. ✅ **M2.4 — Situations**: "Plan a move" — the Q7 cross-section test, shipped as a plan tool with a rich brief and nothing else. Further Situations (lost-my-job, new-baby, eviction) are one class each, per demand.
 5. ✅ **M3.1 — Suggestions core**: `suggestions` table (fingerprint-deduped, snooze/dismiss/accept with action payloads), Attend zone + Dashboard "From your assistant" feed, checkup-cadence watcher, weekly scan via Solid Queue recurring — everything hardwired to Quiet.
-6. ✅ **M3.2 — Dials + watchers**: Off/Quiet/Active per section in Settings (`user_sections.agent_level`), honored by weekly/daily cadences (loudest dial among a watcher's sections wins); stay-in-touch (Q8 resolved: manual "Log contact" signal), renewal radar, goal stall.
+6. ✅ **M3.2 — Dials + watchers**: Off/Quiet/Active per section in Settings (`user_sections.agent_level`), honored by weekly/daily cadences (loudest dial among a watcher's sections wins); stay-in-touch (Q8 resolved: manual "Log contact" signal), renewal radar, goal stall — joined by **neglected-hobby** from the Hobbies build (`docs/HOBBIES.md` §4).
 7. **M3.3 — Garnish + reach**: ✅ the LLM-phrased Dashboard digest (phrasing only — deterministic facts in, two warm sentences out, silent failure). Remaining: cross-user coordination suggestions (needs its own design pass — shared-data semantics across household members), notification channels (Q10), Tier-B capabilities (Q9).
 
 Still parked from before, unchanged: D14 leftovers (export, `model_profiles.api_key` encryption) slot in whenever — they don't block this sequence.

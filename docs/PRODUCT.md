@@ -27,6 +27,7 @@ Build order and trust ladder: Organize → Tools → Agent. Agent aggressiveness
 - Project tracking for creative work, side builds, collections
 - Skill progression and practice scheduling
 - Purpose & creation focus: in a post-labor transition, meaning-making grows in importance. Goal decomposition into trackable steps (PASS-style).
+- Full section deep-dive in `docs/HOBBIES.md`: hobbies as user-created sub-lenses (Q11), a tool slate (start-a-hobby, project ideas, find-your-people), and the neglected-hobby watcher.
 
 ### 3. Education
 - Infinite patient 1:1 tutoring for user and kids, adapted to level and language

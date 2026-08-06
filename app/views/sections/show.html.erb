@@ -1,14 +1,24 @@
 <%= render Ui::PageHeaderComponent.new(title: @section.qualified_name) do |header| %>
-  <% if @section.children.any? %>
+  <% if @section.children.any? || @section.custom? %>
     <% header.with_actions do %>
       <% @section.children.each do |child| %>
         <%= render Ui::SectionChipComponent.new(section: child) %>
+      <% end %>
+      <% if @section.custom? %>
+        <%= button_to "Remove this hobby", hobby_path(@section), method: :delete, class: "btn btn-ghost",
+              data: { turbo_confirm: "Remove #{@section.name}? Your items stay — they just lose this tag." } %>
       <% end %>
     <% end %>
   <% end %>
 <% end %>
 
 <div class="space-y-8">
+  <%# Hobby identity capture (D25) — the section needs to know what the
+      hobbies are before its tools and lenses can do anything. %>
+  <% if @section.slug == "hobbies" %>
+    <%= render "sections/hobby_capture", hobbies: @section %>
+  <% end %>
+
   <%# Act zone (D18): what the app can do here — present even, especially,
       when the section is empty. %>
   <% if @tools.any? %>
