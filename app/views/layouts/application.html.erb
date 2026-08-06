@@ -55,18 +55,23 @@
               <%= nav_link_to "Today", today_path, :inbox %>
               <%= nav_link_to "Calendar", calendar_path, :calendar %>
               <%= nav_link_to "Tasks", tasks_path, :check_circle %>
-              <%= nav_link_to "Documents", documents_path, :document %>
-              <%= nav_link_to "Goals", goals_path, :flag %>
-              <%= nav_link_to "People", people_path, :users %>
-              <%= nav_link_to "Notes", notes_path, :note %>
             </div>
 
             <div>
-              <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Sections</p>
+              <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Facets</p>
               <div class="space-y-0.5">
                 <% Current.user.enabled_sections.each do |section| %>
                   <%= section_nav_link(section) %>
                 <% end %>
+              </div>
+            </div>
+
+            <div>
+              <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Vault</p>
+              <div class="space-y-0.5">
+                <%= nav_link_to "Address Book", people_path, :users %>
+                <%= nav_link_to "Documents", documents_path, :document %>
+                <%= nav_link_to "Notes", notes_path, :note %>
               </div>
             </div>
           </nav>
