@@ -1,0 +1,28 @@
+[
+  {
+    "name": ["Nadia Osman"],
+    "tel": ["+1 555 030 1000", "+1 555 030 1001"],
+    "email": ["nadia@example.com"],
+    "address": [
+      {
+        "addressLine": ["12 Elm Court", "Apt 4"],
+        "city": "Austin",
+        "region": "TX",
+        "postalCode": "78701",
+        "country": "USA"
+      }
+    ]
+  },
+  {
+    "name": ["Omar Haddad"],
+    "tel": [],
+    "email": ["omar@example.com"],
+    "address": []
+  },
+  {
+    "name": [],
+    "tel": ["+1 555 030 2000"],
+    "email": [],
+    "address": []
+  }
+]
