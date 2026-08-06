@@ -34,9 +34,10 @@
         <%= render partial: "tool_runs/message", collection: @tool_run.tool_run_messages.ordered.reverse %>
       </div>
       <div class="border-t border-edge p-3">
-        <%= form_with url: tool_run_messages_path(@tool_run), class: "flex gap-2" do %>
-          <%= text_field_tag :content, nil, class: "input flex-1", autocomplete: "off",
-                placeholder: "Ask, answer, or say where to go next…" %>
+        <%= form_with url: tool_run_messages_path(@tool_run), class: "flex items-end gap-2" do %>
+          <%= text_area_tag :content, nil, rows: 3, class: "input flex-1 resize-none",
+                autocomplete: "off", placeholder: "Ask, answer, or say where to go next… (Shift+Enter for a new line)",
+                data: { controller: "chat-input", action: "keydown->chat-input#keydown input->chat-input#grow" } %>
           <%= submit_tag "Send", class: "btn btn-primary" %>
         <% end %>
       </div>
