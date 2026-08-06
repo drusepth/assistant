@@ -98,3 +98,6 @@ Tools that need the live web (real provider directories, current benefit rules) 
 
 **Q10. Agent notification channels.**
 Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. Email/push/webhook channels need their own design. — *Not started.*
+
+**Q11. Hobby representation: user-created sub-lenses?**
+The Hobbies section needs to know *what the user's hobbies are* — an ongoing interest is not a Goal, Event, or Note; it is a lens. Proposal (`docs/HOBBIES.md` §1): hobbies become **user-created child sections of Hobbies** — the first user-generated rows in the `sections` taxonomy (D12's `parent_id` mechanism, already built) — each paired with an ordinary profile Note (skill level, gear, aspirations) that Hobbies tools read as their brief. Sub-lenses buy per-hobby pages/filters/sharing/dials for free, but break the "sections are first-party seeded" assumption (colors, slugs, toggles UI) and need parent-registered tools to surface on child pages. Fallback: free-form hobby tags, forfeiting most of the free wins. Decide before building any Hobbies tools. — *Not started.*
