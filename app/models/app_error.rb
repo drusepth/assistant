@@ -43,4 +43,20 @@ class AppError < ApplicationRecord
   end
 
   def backtrace_lines = backtrace.to_s.lines.map(&:chomp)
+
+  # A plain-text account of the failure, built to be pasted whole into a bug
+  # report or an AI chat: everything /admin knows about it, nothing that
+  # needs the app open to make sense.
+  def report
+    details = [ created_at.utc.iso8601 ]
+    details << "user: #{user.name}" if user
+    context.each { |key, value| details << "#{key}: #{value}" }
+
+    [ "#{source} — #{error_class}", details.join(" · "), message, backtrace.presence ]
+      .compact.join("\n")
+  end
+
+  def self.report_for(errors)
+    errors.map(&:report).join("\n\n#{"-" * 40}\n\n")
+  end
 end

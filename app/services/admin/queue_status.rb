@@ -32,14 +32,31 @@ module Admin
       return [] unless available?
 
       SolidQueue::FailedExecution.includes(:job).order(created_at: :desc).limit(limit).map do |execution|
+        error = (execution.error || {}).with_indifferent_access
         {
           job_class: execution.job&.class_name || "unknown",
-          error: execution.error.to_s.truncate(300),
+          error_class: error[:exception_class].to_s.presence || "unknown",
+          message: error[:message].to_s,
+          backtrace: Array(error[:backtrace]).first(AppError::BACKTRACE_LINES).join("\n"),
           failed_at: execution.created_at
         }
       end
     rescue StandardError
       []
+    end
+
+    # Same paste-ready shape as AppError#report, for failures that never made
+    # it into the error log because they died before or outside a job's own
+    # error handling.
+    def failure_report(failure)
+      [ "#{failure[:job_class]} — #{failure[:error_class]}",
+        failure[:failed_at]&.utc&.iso8601,
+        failure[:message].presence,
+        failure[:backtrace].presence ].compact.join("\n")
+    end
+
+    def report_for(failures)
+      failures.map { |failure| failure_report(failure) }.join("\n\n#{"-" * 40}\n\n")
     end
 
     private

@@ -27,12 +27,9 @@ module RetriesModelCalls
   private
     # True while another attempt is still coming. `executions` counts the run
     # in progress, so on the final attempt this is false and the caller is free
-    # to write the failure down — and to show it to the user.
+    # to write the failure down — and to show it to the user. Also keeps
+    # ApplicationJob's safety net from logging one AppError per attempt.
     def will_retry?(error)
       error.is_a?(Llm::TransientError) && executions < ATTEMPTS
-    end
-
-    def record_failure(error, user:, context: {})
-      AppError.record(error, source: self.class.name, user: user, context: context)
     end
 end
