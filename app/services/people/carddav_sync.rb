@@ -1,4 +1,4 @@
-# Live contacts pull for the "contacts" linked account (D21's first
+# Live contacts pull for the "contacts" linked account (D26's first
 # consumer): fetches every vCard from the link's CardDAV server and
 # funnels them through People::Import — the same normalize/dedupe/
 # overflow-to-notes path as a file upload, so a sync and an upload can

@@ -27,18 +27,20 @@ class People::Import
   # Ordered: specific formats first, the header-sniffing generic CSV last.
   FORMATS = [
     People::Import::Vcard,
+    People::Import::DeviceJson,
     People::Import::GoogleCsv,
     People::Import::OutlookCsv,
     People::Import::GenericCsv
   ].freeze
 
-  # Takes either an uploaded file or raw content + filename — the latter is
-  # how live syncs (People::CarddavSync) reuse this exact pipeline, so a
-  # sync and an upload can never normalize or dedupe differently.
+  # Takes an uploaded file (filename: overrides its name, e.g. the device
+  # contact picker's JSON) or raw content + filename — the latter is how
+  # live syncs (People::CarddavSync) reuse this exact pipeline, so a sync
+  # and an upload can never normalize or dedupe differently.
   def initialize(user:, file: nil, content: nil, filename: nil)
     @user = user
     if file
-      @filename = file.respond_to?(:original_filename) ? file.original_filename : File.basename(file.to_path)
+      @filename = filename || (file.respond_to?(:original_filename) ? file.original_filename : File.basename(file.to_path))
       @content = normalize_encoding(file.read)
     else
       @filename = filename.to_s

@@ -18,6 +18,7 @@ module Tool
       def required? = required
       def document? = kind == :document
       def person? = kind == :person
+      def hobby? = kind == :hobby
     end
 
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil

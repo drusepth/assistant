@@ -45,6 +45,44 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "Hi!", client.chat([ { role: "user", content: "Hi" } ])
   end
 
+  test "classifies failures the retry policy can act on" do
+    # Permanent: the request itself is wrong and will be wrong next time too.
+    { 400 => "Bad request", 401 => "Incorrect API key", 403 => "Forbidden", 404 => "No such model" }.each do |status, message|
+      stub_request(:post, @endpoint).to_return(status: status, body: { error: { message: message } }.to_json)
+
+      error = assert_raises(Llm::Error) { @client.chat([ { role: "user", content: "Hi" } ]) }
+      assert_not_kind_of Llm::TransientError, error, "#{status} should not be retried"
+    end
+
+    # Transient: the request was fine, the provider just couldn't answer now.
+    [ 408, 409, 425, 429, 500, 502, 503, 504 ].each do |status|
+      stub_request(:post, @endpoint).to_return(status: status, body: "busy")
+
+      assert_raises(Llm::TransientError, "#{status} should be retried") do
+        @client.chat([ { role: "user", content: "Hi" } ])
+      end
+    end
+  end
+
+  test "transport failures are transient, an incompatible endpoint is not" do
+    stub_request(:post, @endpoint).to_raise(Errno::ECONNREFUSED)
+    assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ]) }
+
+    # A response with no choices array means this isn't an OpenAI-compatible
+    # endpoint at all — retrying can't fix that.
+    stub_request(:post, @endpoint).to_return(status: 200, body: { unexpected: true }.to_json)
+    error = assert_raises(Llm::Error) { @client.chat([ { role: "user", content: "Hi" } ]) }
+    assert_not_kind_of Llm::TransientError, error
+    assert_match "unexpected response shape", error.message
+  end
+
+  test "invalid JSON is transient, because another sample often parses" do
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: "not json" } } ] }.to_json)
+
+    assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+  end
+
   test "raises on invalid JSON content and unreachable hosts" do
     stub_request(:post, @endpoint)
       .to_return(status: 200, body: { choices: [ { message: { content: "not json" } } ] }.to_json)

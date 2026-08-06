@@ -3,6 +3,7 @@
 # the only way in is a session or an invitation link.
 class FirstRunController < ApplicationController
   allow_unauthenticated_access
+  skip_before_action :require_onboarding
   before_action :require_fresh_instance
 
   def new

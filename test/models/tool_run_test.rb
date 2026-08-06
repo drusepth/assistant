@@ -23,13 +23,18 @@ class ToolRunTest < ActiveSupport::TestCase
     assert_equal Tool::DisputeLetter, run.tool
   end
 
-  test "registry finds tools by section, including from the parent section" do
+  test "registry finds tools by section, in both directions along the taxonomy" do
     assert_includes Tool.for_section(sections(:disputes)), Tool::DisputeLetter
     assert_includes Tool.for_section(sections(:rights)), Tool::DisputeLetter,
       "a tool on a subsection shows on its parent's page too"
     assert_includes Tool.for_section(sections(:money)), Tool::CancelSubscription,
       "subscriptions tools surface on Money"
-    assert_empty Tool.for_section(sections(:hobbies))
+    assert_includes Tool.for_section(sections(:hobbies)), Tool::StartAHobby
+
+    lens = Hobbies::Lens.find_or_create!("Guitar")
+    assert_includes Tool.for_section(lens), Tool::FindYourPeople,
+      "a tool on a parent shows on each subsection's page — hobby lenses (D25) can't be registered on ahead of time"
+    assert_empty Tool.for_section(sections(:career))
   end
 
   test "items returns the primitives a run created" do

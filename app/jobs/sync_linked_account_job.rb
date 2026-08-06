@@ -1,4 +1,4 @@
-# Pulls data in from a syncable linked account (D21): the provider's
+# Pulls data in from a syncable linked account (D26): the provider's
 # registry entry names the sync service (contacts → People::CarddavSync,
 # calendar → Events::CaldavSync). Enqueued when the link is created and
 # from its "Sync now" button; sync state lands on the link so Settings

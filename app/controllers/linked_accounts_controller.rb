@@ -1,4 +1,4 @@
-# Connect/disconnect outside services and tune what each one shares (D21).
+# Connect/disconnect outside services and tune what each one shares (D26).
 # Strictly per-user: links belong to whoever created them, and scope edits
 # only ever touch Current.user's own rows.
 class LinkedAccountsController < ApplicationController

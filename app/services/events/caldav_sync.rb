@@ -1,4 +1,4 @@
-# Live calendar pull for the "calendar" linked account (D21): fetches
+# Live calendar pull for the "calendar" linked account (D26): fetches
 # iCalendar payloads from the link's CalDAV server and funnels them
 # through Events::Import — the same parse/window/dedupe path as an .ics
 # upload, so a sync and an upload can never disagree. Mirrors

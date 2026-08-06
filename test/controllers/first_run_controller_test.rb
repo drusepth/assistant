@@ -31,8 +31,9 @@ class FirstRunControllerTest < ActionDispatch::IntegrationTest
     assert_equal "The Riveras", user.household.name
 
     follow_redirect!
-    assert_response :success
-    assert_match "Dashboard", response.body
+    assert_redirected_to onboarding_path(step: 1), "a fresh admin starts in the welcome flow (Q5)"
+    follow_redirect!
+    assert_match "What parts of life", response.body
   end
 
   test "household name defaults from the first name" do

@@ -1,6 +1,20 @@
 <%= render Ui::PageHeaderComponent.new(title: "Import contacts", subtitle: "Bring in the address book you already have") %>
 
-<div class="max-w-xl">
+<div class="max-w-xl space-y-4">
+  <div class="card hidden p-6" data-controller="contact-picker">
+    <div class="space-y-3">
+      <div class="space-y-1">
+        <h2 class="font-medium">On this phone?</h2>
+        <p class="text-sm text-soft">Pick people straight from your phone's contacts — no export file needed. Only the contacts you choose are shared, and only with your own assistant.</p>
+      </div>
+      <%= form_with url: people_import_path, data: { contact_picker_target: "form" } do |form| %>
+        <%= form.hidden_field :contacts, data: { contact_picker_target: "field" } %>
+        <button type="button" class="btn btn-primary" data-action="contact-picker#pick">Choose contacts&hellip;</button>
+      <% end %>
+      <p class="text-sm text-soft">Or upload an exported file below.</p>
+    </div>
+  </div>
+
   <div class="card p-6">
     <%= form_with url: people_import_path, class: "space-y-4" do |form| %>
       <%= form.field :file, label_text: "Address book file" do %>

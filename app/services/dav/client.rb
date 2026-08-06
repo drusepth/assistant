@@ -1,6 +1,6 @@
 require "net/http"
 
-# Minimal WebDAV client shared by the linked-account syncs (D21):
+# Minimal WebDAV client shared by the linked-account syncs (D26):
 # CardDAV (People::CarddavSync) and CalDAV (Events::CaldavSync) are the
 # same protocol with different namespaces, so the HTTP mechanics and the
 # RFC 6352/4791 discovery walk live here once. Plain Net::HTTP like

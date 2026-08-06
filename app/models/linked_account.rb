@@ -1,4 +1,4 @@
-# Connected outside services (D21): the linking layer that lets the
+# Connected outside services (D26): the linking layer that lets the
 # assistant reach the accounts a user already lives in — mail, address
 # book, calendar, social networks. One row per user per provider,
 # connected from Settings.
@@ -11,10 +11,10 @@
 # go through `allows?`.
 #
 # Providers are first-party registry entries, not user data (D11): adding
-# a service = one entry here. Credentials are a plaintext JSON blob for
-# now — the same deliberate encryption deferral as model_profiles.api_key
-# (D10/D14). Nothing syncs yet; this is the configuration surface future
-# importers, tools, and watchers consume.
+# a service = one entry here; ones with a live consumer name their
+# sync_service. Credentials are a plaintext JSON blob for now — encrypting
+# them with the AR-encryption setup that already covers
+# model_profiles.api_key is a pending follow-up (D26).
 class LinkedAccount < ApplicationRecord
   PROVIDERS = {
     "email" => {
