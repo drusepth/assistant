@@ -16,6 +16,13 @@
           <% if section.children.any? %>
             <span class="min-w-0 text-xs text-soft"><%= section.children.map(&:name).join(" · ") %></span>
           <% end %>
+          <%# The D20 agent dial: how proactively the assistant may nudge here.
+              Quiet = weekly suggestions in-app; Active = daily; Off = never. %>
+          <%= select_tag "agent_levels[#{section.id}]",
+                options_for_select(UserSection::AGENT_LEVELS.map { |level| [ "Assistant: #{level.capitalize}", level ] },
+                  @agent_levels[section.id] || UserSection::DEFAULT_AGENT_LEVEL),
+                class: "input ml-auto w-auto py-1 text-xs", id: "agent_level_#{section.slug}",
+                title: "How proactively the assistant may make suggestions for #{section.name}" %>
         </label>
       <% end %>
       <%= form.submit "Save sections" %>
