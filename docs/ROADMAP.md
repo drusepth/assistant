@@ -103,6 +103,7 @@ New table **`suggestions`**: user, title, body (the rationale — *why* the app 
 
 Each watcher is a class in `app/watchers/` with a `slug`, `sections`, and `scan(user)` that emits candidate suggestions. **The signal comes from SQL, not model calls** — cheap, private, and it works identically with every model (including none). The LLM is optional garnish: phrasing, ranking, and the Dashboard's synthesized digest. Launch watchers:
 
+- ✅ **Neglected hobby** (Hobbies — shipped as M3.1's proving watcher; `docs/HOBBIES.md` §4) — a hobby lens with no activity in 6 weeks and nothing upcoming → one nudge, accept = put a session on the calendar on a free day. Chosen to prove the core because it needs no new signal, unlike stay-in-touch (Q8).
 - **Checkup cadence** (Health) — no Health-tagged event in the past N months and none upcoming → "you're due for a checkup," accept = create the Event, with free-day candidates read from the calendar.
 - **Stay in touch** (People) — a person's contact recency exceeds their usual rhythm → "it's been a while since you talked to Mom," accept = run the Reconnect tool prefilled.
 - **Renewal radar** (Money/Rights) — a renewal/lease-end/expiry Event approaching with no follow-up work attached → "your lease ends in 60 days."
@@ -138,8 +139,8 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 2. ✅ **M2.2 — First plan tool: Learn something.** Proved the plan seam with zero new schema: `Goals::BreakDown#plan!` (call + apply extracted from the breakdown job, shared by both) and the optional `brief` param. (Replaced the eviction Situation here — see the slate note.)
 3. **M2.3 — Coverage slate**: doctor-visit prep, cancel-subscription, reconnect — each is one declarative class now.
 4. **M2.4 — Situations** as plan tools with richer briefs: "moving" first (the Q7 pressure test), others per demand.
-5. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
-6. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
+5. ✅ **M3.1 — Suggestions core.** `suggestions` table (Sectionable; fingerprint dedupe, accept performs the action payload, snoozes wake on expiry), Attend zone on section pages + Dashboard feed, accept/dismiss/snooze controller, weekly `AgentScanFanOutJob` → per-user `AgentScanJob` hardwired to Quiet. Proving watcher: **neglected-hobby** (no new signal needed); checkup-cadence joins M3.2's slate.
+6. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (checkup cadence, renewal radar, goal stall, and Q8's contact-recency design for stay-in-touch), weekly/daily scheduling honoring the dials.
 7. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
 
 Still parked from before, unchanged: D14 leftovers (export, `model_profiles.api_key` encryption) slot in whenever — they don't block this sequence.

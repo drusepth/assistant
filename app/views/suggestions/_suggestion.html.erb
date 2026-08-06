@@ -1,0 +1,20 @@
+<div class="flex flex-wrap items-start justify-between gap-3 p-4">
+  <div class="min-w-0 flex-1 space-y-1">
+    <p class="text-sm font-medium text-ink"><%= suggestion.title %></p>
+    <% if suggestion.body.present? %>
+      <p class="text-sm text-soft"><%= suggestion.body %></p>
+    <% end %>
+    <% if suggestion.sections.any? %>
+      <div class="flex flex-wrap gap-1 pt-1">
+        <% suggestion.sections.each do |section| %>
+          <%= render Ui::SectionChipComponent.new(section: section) %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+  <div class="flex items-center gap-2">
+    <%= button_to suggestion_accept_label(suggestion), accept_suggestion_path(suggestion), class: "btn btn-primary btn-sm" %>
+    <%= button_to "Later", snooze_suggestion_path(suggestion), class: "btn btn-ghost btn-sm" %>
+    <%= button_to "No thanks", dismiss_suggestion_path(suggestion), class: "btn btn-ghost btn-sm" %>
+  </div>
+</div>

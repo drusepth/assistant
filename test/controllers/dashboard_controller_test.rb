@@ -66,4 +66,24 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_match "Conference week", response.body
   end
+
+  test "pending suggestions surface on the dashboard; other members' don't" do
+    sign_in_as users(:one)
+    users(:two).suggestions.create!(
+      watcher_slug: "neglected_hobby", fingerprint: "f2", title: "Bob's nudge", action: { "type" => "create_event" }
+    )
+
+    get root_path
+    assert_no_match "Suggestions", response.body
+    assert_no_match "Bob's nudge", response.body
+
+    users(:one).suggestions.create!(
+      watcher_slug: "neglected_hobby", fingerprint: "f1",
+      title: "It's been a while since anything Guitar", action: { "type" => "create_event" }
+    )
+
+    get root_path
+    assert_match "been a while since anything Guitar", response.body
+    assert_match "Put it on the calendar", response.body
+  end
 end

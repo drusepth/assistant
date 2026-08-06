@@ -81,4 +81,26 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_no_match "Remove this hobby", response.body
   end
+
+  test "the Attend zone shows pending suggestions tagged with the section, on parent and lens pages" do
+    lens = Hobbies::Lens.find_or_create!("Guitar")
+    suggestion = users(:one).suggestions.create!(
+      watcher_slug: "neglected_hobby", fingerprint: "neglected_hobby:#{lens.id}",
+      title: "It's been a while since anything Guitar", action: { "type" => "create_event" }
+    )
+    suggestion.sections = [ sections(:hobbies), lens ]
+
+    get section_path("hobbies")
+    assert_match "been a while since anything Guitar", response.body
+
+    get section_path(lens.slug)
+    assert_match "been a while since anything Guitar", response.body
+
+    get section_path("health")
+    assert_no_match "been a while", response.body
+
+    suggestion.dismiss!
+    get section_path("hobbies")
+    assert_no_match "been a while", response.body
+  end
 end

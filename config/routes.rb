@@ -18,6 +18,14 @@ Rails.application.routes.draw do
   get "sections/:slug" => "sections#show", as: :section
   resources :hobbies, only: %i[ create destroy ]
 
+  resources :suggestions, only: [] do
+    member do
+      post :accept
+      post :dismiss
+      post :snooze
+    end
+  end
+
   resource :settings, only: %i[ show update ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]

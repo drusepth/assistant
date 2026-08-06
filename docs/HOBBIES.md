@@ -169,13 +169,13 @@ All Tier A unless marked. Ordered roughly by funnel width.
 
 ## 4. Agent (D20 watchers — SQL-first, all of these are cheap)
 
-- **Neglected hobby** — the flagship. No items tagged with a hobby sub-lens
-  created/completed/scheduled in N weeks → "It's been six weeks since anything
-  guitar. Want a session on the calendar?" Accept = create the Event (free-day
-  candidates from the calendar, same as checkup-cadence) or run Coach
-  prefilled. Pure SQL over `section_taggings` — needs *no new signal*, unlike
-  stay-in-touch (Q8), so it's arguably an easier second watcher than the
-  People one.
+- ✅ **Neglected hobby** — the flagship, shipped as M3.1's proving watcher
+  (`Watcher::NeglectedHobby`). No items tagged with a hobby lens added,
+  scheduled, or checked off in 6 weeks, nothing upcoming, and the lens older
+  than the window → one nudge; accept = an all-day session Event on the
+  first free day in the next week. Pure SQL over `section_taggings` — it
+  needed *no new signal*, which is why it beat checkup-cadence and
+  stay-in-touch (Q8) to the front of the slate.
 - **Rhythm keeper** — refinement of the above: learn each hobby's natural
   cadence (median gap between hobby-tagged events) and nudge on *broken
   rhythm* rather than a fixed N. Shares its math with Q8's recency design —
@@ -222,6 +222,7 @@ All Tier A unless marked. Ordered roughly by funnel width.
    Tier A, one class each.
 3. ✅ **"Find your people" (Tier A)** — the meetup ask, honestly scoped:
    guide note + check-this-week tasks; upgrades in place when Q9 resolves.
-4. **Neglected-hobby watcher** in the M3 watcher slate — strong candidate to
-   ship *before* stay-in-touch, since it needs no Q8-style new signal.
+4. ✅ **Neglected-hobby watcher** — shipped as the proving watcher of the
+   M3.1 suggestions core (which it pulled forward with it: `suggestions`
+   table, Attend zone, Dashboard feed, accept/dismiss/snooze, weekly scan).
 5. **Tier B upgrades** (real meetups/classes/event radar) when Q9 resolves.

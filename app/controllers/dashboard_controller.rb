@@ -5,6 +5,10 @@ class DashboardController < ApplicationController
     @upcoming_events = Event.visible_to(Current.user)
       .overlapping(Time.current..7.days.from_now.end_of_day).includes(:sections).limit(8)
 
+    # The push side of the agent (D20): the Dashboard is the primary surface
+    # for pending suggestions; section Attend zones are the pull-side slice.
+    @suggestions = Current.user.suggestions.attend.includes(:sections).limit(5)
+
     # Blank records for the header's inline quick-add forms.
     @quick_task = Current.user.tasks.new
     @quick_note = Current.user.notes.new
