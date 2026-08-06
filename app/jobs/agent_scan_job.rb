@@ -18,11 +18,17 @@ class AgentScanJob < ApplicationJob
       next if level == "off"
       next if cadence == "daily" && level != "active"
 
-      scan = watcher.new(user)
-      scan.scan
-      # Only Active sections may reach beyond the app (D22) — Quiet means
-      # in-app, that's the dial's meaning.
-      noteworthy.concat(scan.proposals) if level == "active"
+      begin
+        scan = watcher.new(user)
+        scan.scan
+        # Only Active sections may reach beyond the app (D22) — Quiet means
+        # in-app, that's the dial's meaning.
+        noteworthy.concat(scan.proposals) if level == "active"
+      rescue StandardError => e
+        # One broken watcher must not silence the rest of the scan — record
+        # it for /admin (D23) and keep going.
+        record_failure(e, user: user, context: { watcher: watcher.name })
+      end
     end
 
     NotifyJob.perform_later(user, noteworthy.map(&:title)) if noteworthy.any?

@@ -15,6 +15,19 @@ class Admin::ErrorsControllerTest < ActionDispatch::IntegrationTest
     assert_operator response.body.index("newer failure"), :<, response.body.index("older failure")
   end
 
+  test "every error is copyable, together and one at a time" do
+    error = StandardError.new("copy me")
+    error.set_backtrace([ "app/jobs/somewhere.rb:1" ])
+    AppError.record(error, source: "ToolRunJob")
+
+    get admin_errors_path
+
+    assert_response :success
+    assert_select "[data-controller=clipboard] [data-action='clipboard#copy']", minimum: 2
+    assert_match "Copy all", response.body
+    assert_match "app/jobs/somewhere.rb:1", response.body, "the backtrace is on the page"
+  end
+
   test "shows an empty state with no errors" do
     get admin_errors_path
 

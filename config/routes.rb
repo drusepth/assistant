@@ -89,6 +89,13 @@ Rails.application.routes.draw do
     resources :errors, only: :index do
       collection { delete :destroy_all }
     end
+    resources :failed_jobs, only: [] do
+      member do
+        post :retry
+        delete :discard
+      end
+      collection { delete :discard_all }
+    end
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

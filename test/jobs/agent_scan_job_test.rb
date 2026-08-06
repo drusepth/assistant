@@ -33,9 +33,40 @@ class AgentScanJobTest < ActiveJob::TestCase
     assert_empty users(:one).suggestions
   end
 
+  # A watcher with a bug, standing in for any of them: no sections, so it
+  # runs at the Quiet default on the weekly scan.
+  class BrokenWatcher
+    def self.section_slugs = []
+    def initialize(user); end
+    def scan = raise "watcher bug"
+    def proposals = []
+  end
+
+  test "one broken watcher doesn't stop the rest of the scan" do
+    with_watchers(BrokenWatcher, Watcher.find!("checkup_cadence")) do
+      assert_nothing_raised { AgentScanJob.perform_now(users(:one)) }
+    end
+
+    assert_equal 1, users(:one).suggestions.count, "the healthy watcher still ran"
+
+    recorded = AppError.where(error_class: "RuntimeError").sole
+    assert_equal "AgentScanJob", recorded.source
+    assert_equal users(:one), recorded.user
+    assert_equal({ "watcher" => BrokenWatcher.name }, recorded.context)
+  end
+
   test "scan_all fans out one job per user" do
     assert_enqueued_jobs User.count, only: AgentScanJob do
       AgentScanJob.scan_all
     end
   end
+
+  private
+    def with_watchers(*watchers)
+      original = Watcher.method(:all)
+      Watcher.define_singleton_method(:all) { watchers }
+      yield
+    ensure
+      Watcher.define_singleton_method(:all, original)
+    end
 end

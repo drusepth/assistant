@@ -1,8 +1,12 @@
-<li class="px-5 py-3.5">
+<li class="px-5 py-3.5" data-controller="clipboard" data-clipboard-text-value="<%= error.report %>">
   <div class="flex flex-wrap items-baseline justify-between gap-2">
     <span class="font-mono text-xs font-semibold text-ink"><%= error.source %></span>
-    <span class="text-xs text-soft" title="<%= error.created_at %>">
-      <%= time_ago_in_words(error.created_at) %> ago
+    <span class="flex items-baseline gap-2">
+      <span class="text-xs text-soft" title="<%= error.created_at %>">
+        <%= time_ago_in_words(error.created_at) %> ago
+      </span>
+      <button type="button" class="btn btn-secondary btn-sm"
+              data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
     </span>
   </div>
   <p class="mt-1 text-sm text-ink"><%= error.message %></p>
@@ -15,4 +19,10 @@
       <span class="font-mono"><%= key %>: <%= value %></span>
     <% end %>
   </div>
+  <% if error.backtrace.present? %>
+    <details class="mt-2">
+      <summary class="cursor-pointer text-xs text-soft">Backtrace</summary>
+      <pre class="mt-1.5 overflow-x-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-soft"><%= error.backtrace %></pre>
+    </details>
+  <% end %>
 </li>

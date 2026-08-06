@@ -6,6 +6,7 @@ module Admin
       @errors = AppError.recent.includes(:user).limit(RECENT_ERRORS)
       @error_count = AppError.count
       @queue = QueueStatus.new
+      @queue_failures = @queue.recent_failures
       @model_profile = Current.user.household.model_profile
 
       # Counts, not contents: a household admin may see *that* another member's

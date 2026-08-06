@@ -40,7 +40,19 @@
 
   <%= render Ui::CardComponent.new(
         title: "Background jobs",
-        subtitle: "Adapter: #{@queue.adapter_name}") do %>
+        subtitle: "Adapter: #{@queue.adapter_name}") do |card| %>
+    <% if @queue_failures.any? %>
+      <% card.with_actions do %>
+        <span data-controller="clipboard" data-clipboard-text-value="<%= @queue.report_for(@queue_failures) %>">
+          <button type="button" class="btn btn-secondary btn-sm"
+                  data-clipboard-target="button" data-action="clipboard#copy">Copy all</button>
+        </span>
+        <%= button_to "Discard all", discard_all_admin_failed_jobs_path, method: :delete,
+              class: "btn btn-danger btn-sm",
+              form: { data: { turbo_confirm: "Discard every failed job? They will never run." } } %>
+      <% end %>
+    <% end %>
+
     <% if @queue.available? %>
       <div class="flex flex-wrap gap-6 text-sm">
         <span><span class="font-semibold text-ink"><%= @queue.pending_count %></span> <span class="text-soft">pending</span></span>
@@ -48,16 +60,36 @@
         <span><span class="font-semibold text-ink"><%= @queue.failed_count %></span> <span class="text-soft">failed</span></span>
       </div>
 
-      <% failures = @queue.recent_failures %>
-      <% if failures.any? %>
+      <% if @queue_failures.any? %>
         <ul class="mt-4 space-y-2">
-          <% failures.each do |failure| %>
-            <li class="rounded-lg border border-edge px-4 py-2.5">
+          <% @queue_failures.each do |failure| %>
+            <li class="rounded-lg border border-edge px-4 py-2.5"
+                data-controller="clipboard" data-clipboard-text-value="<%= @queue.failure_report(failure) %>">
               <div class="flex flex-wrap items-baseline justify-between gap-2">
                 <span class="font-mono text-xs font-semibold text-ink"><%= failure[:job_class] %></span>
-                <span class="text-xs text-soft"><%= time_ago_in_words(failure[:failed_at]) %> ago</span>
+                <span class="flex items-baseline gap-2">
+                  <span class="text-xs text-soft"><%= time_ago_in_words(failure[:failed_at]) %> ago</span>
+                  <button type="button" class="btn btn-secondary btn-sm"
+                          data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+                </span>
               </div>
-              <p class="mt-1 text-sm text-ink"><%= failure[:error] %></p>
+              <p class="mt-1 text-sm text-ink"><%= failure[:message].presence || failure[:error_class] %></p>
+              <div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                <span class="chip bg-red-50 text-red-700"><%= failure[:error_class] %></span>
+              </div>
+              <% if failure[:backtrace].present? %>
+                <details class="mt-2">
+                  <summary class="cursor-pointer text-xs text-soft">Backtrace</summary>
+                  <pre class="mt-1.5 overflow-x-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-soft"><%= failure[:backtrace] %></pre>
+                </details>
+              <% end %>
+              <div class="mt-2 flex gap-2">
+                <%= button_to "Retry", retry_admin_failed_job_path(failure[:id]), method: :post,
+                      class: "btn btn-secondary btn-sm" %>
+                <%= button_to "Discard", discard_admin_failed_job_path(failure[:id]), method: :delete,
+                      class: "btn btn-danger btn-sm",
+                      form: { data: { turbo_confirm: "Discard this failed job? It will never run." } } %>
+              </div>
             </li>
           <% end %>
         </ul>

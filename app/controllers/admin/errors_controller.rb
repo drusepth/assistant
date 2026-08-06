@@ -5,6 +5,7 @@ module Admin
     def index
       @errors = AppError.recent.includes(:user).limit(PER_PAGE)
       @error_count = AppError.count
+      @report = AppError.report_for(@errors)
     end
 
     def destroy_all

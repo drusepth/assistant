@@ -4,6 +4,10 @@
   <% header.with_actions do %>
     <%= link_to "Back to admin", admin_root_path, class: "btn btn-secondary btn-sm" %>
     <% if @errors.any? %>
+      <span data-controller="clipboard" data-clipboard-text-value="<%= @report %>">
+        <button type="button" class="btn btn-secondary btn-sm"
+                data-clipboard-target="button" data-action="clipboard#copy">Copy all</button>
+      </span>
       <%= button_to "Clear log", destroy_all_admin_errors_path, method: :delete,
             class: "btn btn-danger btn-sm",
             form: { data: { turbo_confirm: "Delete every recorded error?" } } %>
