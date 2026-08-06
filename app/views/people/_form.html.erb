@@ -5,6 +5,7 @@
     <%= form.field :email, as: :email_field %>
     <%= form.field :phone, as: :telephone_field %>
   </div>
+  <%= form.field :address, placeholder: "Street, city, state…" %>
   <%= form.field :birthday, as: :date_field %>
   <%= form.field :notes, as: :text_area, hint: "What matters about this person." %>
   <%= form.field :linked_user_id, label_text: "Household account", hint: "Link this contact to a household member's account." do %>
