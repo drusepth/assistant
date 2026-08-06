@@ -66,6 +66,17 @@
     <% end %>
   <% end %>
 
+  <%= render Ui::CardComponent.new(title: "Your data", subtitle: "Everything you own — items as JSON, documents as files — in one zip") do %>
+    <div class="flex flex-wrap items-center gap-3">
+      <%= button_to "Build export", export_path, method: :post, class: "btn btn-secondary" %>
+      <% if Current.user.export_archive.attached? %>
+        <%= link_to "Download (#{Current.user.export_archive.blob.created_at.strftime("%b %-d, %-l:%M %p")})",
+              rails_blob_path(Current.user.export_archive, disposition: "attachment"), class: "btn btn-primary" %>
+      <% end %>
+    </div>
+    <p class="mt-2 text-xs text-soft">Only what you own is included — items shared with you belong to their owners. Whole-instance backup = copy the storage/ volume.</p>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Household", subtitle: Current.user.household.name) do %>
     <ul class="space-y-2">
       <% Current.user.household.users.order(:name).each do |member| %>

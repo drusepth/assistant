@@ -47,6 +47,9 @@ gem "image_processing", "~> 1.2"
 # Pure-Ruby PDF text extraction for document understanding
 gem "pdf-reader"
 
+# Zip assembly for the per-user data export (M4.2)
+gem "rubyzip", "~> 3.0", require: "zip"
+
 # Parse CSV address-book exports (stdlib csv leaves the default gems in Ruby 3.4)
 gem "csv"
 
