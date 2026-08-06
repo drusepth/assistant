@@ -6,7 +6,7 @@ module Tool
   SLUGS = %w[
     decode_letter dispute_letter insurance_appeal debt_collector_response
     deposit_demand results_explainer doctor_visit_prep negotiation_prep
-    learn_something
+    benefits_screener learn_something
   ].freeze
 
   module_function

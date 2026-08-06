@@ -73,6 +73,26 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
       text: /Start/
   end
 
+  test "new renders select and checkbox input kinds" do
+    get new_tool_run_path("benefits_screener")
+
+    assert_response :success
+    assert_select "select#inputs_state option[value='Ohio']"
+    assert_select "input[type=checkbox][name='inputs[circumstances][]'][value='Children under 18']"
+  end
+
+  test "create keeps checkbox answers as an array" do
+    assert_enqueued_with job: ToolRunJob do
+      post run_tool_path("benefits_screener"), params: { inputs: {
+        state: "Ohio", household_size: "3", monthly_income: "$2,400",
+        circumstances: [ "Children under 18", "Renting my home" ]
+      } }
+    end
+
+    run = users(:one).tool_runs.last
+    assert_equal [ "Children under 18", "Renting my home" ], run.inputs["circumstances"]
+  end
+
   test "show renders a finished run's drafts and follow-ups" do
     run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", inputs: { "document_id" => @document.id.to_s })
     note = users(:one).notes.create!(title: "Dispute of account 12345", body: "To whom it may concern")

@@ -31,9 +31,10 @@ class ToolRunsController < ApplicationController
       @document_choices = Document.visible_to(Current.user).order(created_at: :desc)
     end
 
-    # `new` accepts the same params so "Run again" can prefill from a
-    # previous run's inputs.
+    # `new` accepts the same params so "Run again" and next-step links can
+    # prefill from earlier inputs. Checkbox inputs arrive as arrays.
     def input_params
-      params.fetch(:inputs, {}).permit(*@tool.inputs.map(&:name)).to_h
+      permitted = @tool.inputs.map { |input| input.checkboxes? ? { input.name => [] } : input.name }
+      params.fetch(:inputs, {}).permit(*permitted).to_h
     end
 end

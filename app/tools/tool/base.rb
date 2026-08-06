@@ -6,9 +6,11 @@ module Tool
   # call from inputs + owned context, `handle` lands the response as draft
   # primitives recorded on the run.
   class Base
-    Input = Data.define(:name, :label, :kind, :required, :hint) do
+    Input = Data.define(:name, :label, :kind, :required, :hint, :options) do
       def required? = required
       def document? = kind == :document
+      def select? = kind == :select
+      def checkboxes? = kind == :checkboxes
     end
 
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil
@@ -23,8 +25,8 @@ module Tool
     class << self
       def slug = name.demodulize.underscore
 
-      def input(name, label:, kind: :text, required: false, hint: nil)
-        self.input_definitions += [ Input.new(name: name.to_s, label:, kind:, required:, hint:) ]
+      def input(name, label:, kind: :text, required: false, hint: nil, options: nil)
+        self.input_definitions += [ Input.new(name: name.to_s, label:, kind:, required:, hint:, options:) ]
       end
 
       def inputs = input_definitions
