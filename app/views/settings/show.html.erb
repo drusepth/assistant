@@ -1,10 +1,14 @@
 <%= render Ui::PageHeaderComponent.new(title: "Settings") %>
 
 <div class="max-w-2xl space-y-6">
-  <%= render Ui::CardComponent.new(title: "Sections", subtitle: "Choose which sections appear in your sidebar") do %>
-    <%= form_with url: settings_path, method: :patch, class: "space-y-3" do |form| %>
+  <%= render Ui::CardComponent.new(title: "Sections", subtitle: "Choose which sections appear in your sidebar — drag to reorder them") do %>
+    <%= form_with url: settings_path, method: :patch, class: "space-y-3", data: { controller: "sortable" } do |form| %>
       <% @sections.each do |section| %>
-        <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+        <label draggable="true"
+               data-action="dragstart->sortable#dragStart dragover->sortable#dragOver drop->sortable#drop dragend->sortable#dragEnd"
+               class="flex cursor-pointer items-center gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+          <span class="cursor-grab text-stone-300 active:cursor-grabbing" title="Drag to reorder"><%= icon(:bars_3, css_class: "size-4") %></span>
+          <%= hidden_field_tag "section_order[]", section.id, id: "section_order_#{section.slug}" %>
           <%= check_box_tag "enabled_section_ids[]", section.id, Current.user.section_enabled?(section),
                 id: "section_#{section.slug}", class: "size-4 rounded accent-primary-600" %>
           <span class="size-2.5 rounded-full <%= section_dot_classes(section) %>"></span>

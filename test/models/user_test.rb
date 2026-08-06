@@ -19,6 +19,15 @@ class UserTest < ActiveSupport::TestCase
     assert users(:two).section_enabled?(sections(:health))
   end
 
+  test "enabled_sections follows the user's saved order, then taxonomy order" do
+    users(:one).user_sections.create!(section: sections(:money), position: 1)
+    users(:one).user_sections.create!(section: sections(:rights), position: 2)
+
+    assert_equal [ sections(:money), sections(:rights), sections(:health) ],
+      users(:one).enabled_sections.first(3)
+    assert_equal sections(:health), users(:two).enabled_sections.first
+  end
+
   test "destroying a user removes their data but not the household" do
     user = users(:one)
     user.tasks.create!(title: "Task")

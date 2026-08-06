@@ -1,0 +1,26 @@
+<%= render Ui::PageHeaderComponent.new(title: "Import contacts", subtitle: "Bring in the address book you already have") %>
+
+<div class="max-w-xl">
+  <div class="card p-6">
+    <%= form_with url: people_import_path, class: "space-y-4" do |form| %>
+      <%= form.field :file, label_text: "Address book file" do %>
+        <%= form.file_field :file, accept: ".vcf,.vcard,.csv,text/vcard,text/csv", required: true %>
+      <% end %>
+      <div class="space-y-1 text-sm text-soft">
+        <p>Export your contacts from wherever they live, then upload the file here:</p>
+        <ul class="list-disc space-y-0.5 pl-5">
+          <li><strong>iPhone / iCloud</strong> — icloud.com &rarr; Contacts &rarr; select all &rarr; Export vCard (.vcf)</li>
+          <li><strong>Google Contacts</strong> — contacts.google.com &rarr; Export &rarr; vCard or Google CSV</li>
+          <li><strong>Android</strong> — Contacts app &rarr; Fix &amp; manage &rarr; Export to file (.vcf)</li>
+          <li><strong>Outlook</strong> — People &rarr; Manage &rarr; Export contacts (CSV)</li>
+          <li><strong>Anything else</strong> — any CSV with a name column works</li>
+        </ul>
+        <p>Names, relationships, phone numbers, emails, addresses, and birthdays come across; anything that doesn't fit is kept in the person's notes. Contacts you already have (by name) are skipped, never overwritten.</p>
+      </div>
+      <div class="flex items-center gap-2 pt-2">
+        <%= form.submit "Import" %>
+        <%= link_to "Cancel", people_path, class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  </div>
+</div>
