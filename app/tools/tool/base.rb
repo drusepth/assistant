@@ -9,6 +9,7 @@ module Tool
     Input = Data.define(:name, :label, :kind, :required, :hint) do
       def required? = required
       def document? = kind == :document
+      def hobby? = kind == :hobby
     end
 
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil

@@ -1,0 +1,21 @@
+<%# The Hobbies identity capture (docs/HOBBIES.md §1): each answer becomes a
+    hobby lens (D21) — a child section whose page, filters, and sharing come
+    from the existing lens machinery. %>
+<%= render Ui::CardComponent.new(
+      title: hobbies.children.any? ? "Add another hobby" : "What do you do for fun?",
+      subtitle: "Each hobby becomes its own lens — projects, sessions, gear, and people in one place."
+    ) do %>
+  <div class="space-y-3">
+    <%= form_with url: hobbies_path, class: "flex gap-2" do %>
+      <%= text_field_tag :name, nil, class: "input", placeholder: "Name a hobby…" %>
+      <%= submit_tag "Add", class: "btn btn-primary" %>
+    <% end %>
+    <% if (suggestions = hobby_suggestions(hobbies)).any? %>
+      <div class="flex flex-wrap gap-2">
+        <% suggestions.each do |name| %>
+          <%= button_to name, hobbies_path(name: name), class: "chip bg-amber-100 text-amber-800 hover:bg-amber-200" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

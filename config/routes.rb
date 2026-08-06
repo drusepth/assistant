@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   get "calendar(/:year/:month)" => "calendar#show", as: :calendar,
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
   get "sections/:slug" => "sections#show", as: :section
+  resources :hobbies, only: %i[ create destroy ]
 
   resource :settings, only: %i[ show update ]
   resource :model_profile, only: %i[ update ]

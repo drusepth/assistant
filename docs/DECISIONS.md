@@ -67,6 +67,9 @@ Two kinds: **plan tools** (Goal + multi-tagged Tasks/Events via the D17 breakdow
 **D20. The agent proposes; the user disposes.**
 The agent's only write surface is a new `suggestions` table (Sectionable; rationale, action payload, fingerprint deduping, pending/accepted/dismissed/snoozed). Signals come from deterministic **watchers** (`app/watchers/`, SQL-first, LLM only for phrasing/ranking/digest). Per-section dials on `user_sections`: **Off / Quiet (default: weekly, in-app only) / Active (daily, + Today)**. Cross-user suggestions read strictly through `visible_to` (D9). Notification channels deferred (Q10). Full design in `ROADMAP.md` §3. — *Provisional until the M3.1 build pass.*
 
+**D21. Hobbies are user-created sub-lenses of the Hobbies section.**
+A hobby is a lens, not a Goal/Event/Note: a user-created child section of Hobbies — the first user-written rows in the D12 taxonomy (`sections.custom`, the only sections that can be removed; removing one keeps its items, which just lose the tag). Slugs share the taxonomy's global namespace (numbered on collision) and feed the LLM taxonomy listing, so categorizers and breakdowns can file straight into a hobby. Lenses are household-shared like the rest of the taxonomy; tagged items stay private per D9. Capture: the Hobbies page leads with "What do you do for fun?" (suggestion chips + free text, `Hobbies::Lens`), and the Start-a-hobby tool creates the lens too; no other tool creates lenses as a side effect. The tool registry surfaces parent-registered tools on every subsection page (and subsection tools on the parent, as before), since lenses can't be registered on ahead of time. Full design in `docs/HOBBIES.md`. — *Provisional until real-household use proves it.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -76,6 +79,8 @@ Discovery argument wins: people looking for money help should find unclaimed ben
 The lens model answers its own question — if an item fits two sections, tag it with both (D5 working as designed). — *Resolved.*
 
 **Q6. Technical stack.** — *Resolved; see D14.*
+
+**Q11. Hobby representation.** — *Resolved; see D21.*
 
 ## Open questions
 
@@ -99,5 +104,3 @@ Tools that need the live web (real provider directories, current benefit rules) 
 **Q10. Agent notification channels.**
 Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. Email/push/webhook channels need their own design. — *Not started.*
 
-**Q11. Hobby representation: user-created sub-lenses?**
-The Hobbies section needs to know *what the user's hobbies are* — an ongoing interest is not a Goal, Event, or Note; it is a lens. Proposal (`docs/HOBBIES.md` §1): hobbies become **user-created child sections of Hobbies** — the first user-generated rows in the `sections` taxonomy (D12's `parent_id` mechanism, already built) — each paired with an ordinary profile Note (skill level, gear, aspirations) that Hobbies tools read as their brief. Sub-lenses buy per-hobby pages/filters/sharing/dials for free, but break the "sections are first-party seeded" assumption (colors, slugs, toggles UI) and need parent-registered tools to surface on child pages. Fallback: free-form hobby tags, forfeiting most of the free wins. Decide before building any Hobbies tools. — *Not started.*

@@ -1,10 +1,11 @@
 # HOBBIES.md
 
-Section deep-dive for **Hobbies** — brainstorm-level design for how the section
-earns its place across all three modes (D6). Written before any Hobbies-specific
-build work; everything here rides existing infrastructure (D17 breakdown, D19
-tools, D20 watchers) except where explicitly flagged. The one new decision it
-needs is logged as **Q11** in `DECISIONS.md`.
+Section deep-dive for **Hobbies** — design for how the section earns its place
+across all three modes (D6). Everything here rides existing infrastructure
+(D17 breakdown, D19 tools, D20 watchers) except where explicitly flagged. The
+one new decision it needed — hobby representation — is **D21** in
+`DECISIONS.md`; the first slice (sub-lenses, capture, and three tools) is
+built, marked ✅ in §6.
 
 ## Why this section matters (mission tie)
 
@@ -27,7 +28,7 @@ a started project, or a human connection, not a better-groomed log.
 Everything else in this doc needs to know *what the hobbies are* and *where the
 user is with each one*. Two-part answer, both riding existing structures:
 
-### Hobby = user-created sub-lens (proposed; Q11)
+### Hobby = user-created sub-lens (D21 — built)
 
 A hobby is not a Goal (it doesn't complete), not an Event (not dated), not a
 Note (it's a lens, not a fact). It is exactly what a **section** is: a filter
@@ -52,29 +53,27 @@ pitch:
 - Later, per-hobby agent dials — the D20 dial machinery already lives on
   `user_sections`.
 
-This is the first place users write to the taxonomy table, which is why it's
-an open question (Q11) and not a decision: it touches section colors, slugs,
-toggles UI, and the "sections are first-party" assumption. The fallback if
-Q11 resolves against sub-lenses: hobbies as plain free-form tags via
-`section_taggings` metadata — workable but forfeits most of the free wins
-above.
+This was the first place users write to the taxonomy table; D21 resolved it:
+lenses carry `sections.custom` (the only removable sections — removal keeps
+the items, which just lose the tag), slugs share the global namespace with
+numbered collision handling, colors inherit from the parent as the helper
+always did, and the tool registry now surfaces parent-registered tools on
+every subsection page.
 
-### Hobby profile = a pinned Note per hobby
+### Hobby profile = the lens's own Notes
 
-Alongside the lens, each hobby gets an ordinary **Note** holding what tools
-need as context: skill level, years in, gear owned, aspirations, taste,
-constraints (budget, space, time), season (for the seasonal watcher below).
-No schema — it's a Note tagged with the hobby, maintained conversationally
-(tools append to it; the user can edit it like any note). This is the **brief**
-every Hobbies tool reads.
+Alongside the lens, ordinary **Notes** tagged with it hold what tools need as
+context: skill level, years in, gear owned, aspirations, taste, constraints
+(budget, space, time), season (for the seasonal watcher below). No schema and
+no special "profile" object — tools read the lens's notes (and goals and
+documents) as their context, so the profile accrues from normal use.
 
 ### How hobbies get known
 
-1. **Section empty state asks.** The Hobbies empty state (already the tools
-   front door per D18) leads with one question — "What do you do for fun?" —
-   chips for common hobbies + free text. Each answer creates a sub-lens + a
-   seeded profile note. This is the section's mini-FTUE and feeds Q5's design
-   later.
+1. **The section page asks.** The Hobbies page leads with one question —
+   "What do you do for fun?" — chips for common hobbies + free text
+   (shrinking to "Add another hobby" once lenses exist). Each answer creates
+   a sub-lens. This is the section's mini-FTUE and feeds Q5's design later.
 2. **The data confesses.** `Categorize*Jobs` already tag `hobbies`. When
    hobby-tagged items keep mentioning the same activity ("climbing" in four
    events and two notes), a watcher suggests: "Looks like climbing is a thing
@@ -213,16 +212,16 @@ All Tier A unless marked. Ordered roughly by funnel width.
   active hobby in the new city; "retiring," "empty nest," and "recovering from
   burnout" are hobby-heavy Situations for the later slate.
 
-## 6. Suggested build order
+## 6. Build order
 
-1. **Q11 first** — decide hobby representation (sub-lenses + profile notes
-   recommended above). Ship: sub-lens creation, the empty-state "what do you
-   do for fun?" capture, profile notes. Small, but everything below stands on
-   it.
-2. **Two tools to make the section alive** — "Start a hobby" (plan) +
-   "What should I make next?" (draft). Both Tier A, both one class each on
-   existing infra; slots naturally alongside M2.3's coverage slate.
-3. **"Find your people" (Tier A)** — the meetup ask, honestly scoped.
+1. ✅ **Representation (D21)** — sub-lens creation (`Hobbies::Lens`), the
+   "What do you do for fun?" capture on the Hobbies page, lens removal,
+   parent-tool surfacing on subsection pages.
+2. ✅ **Two tools to make the section alive** — "Start a hobby" (plan; also
+   creates the lens) + "What should I make next?" (draft idea menu). Both
+   Tier A, one class each.
+3. ✅ **"Find your people" (Tier A)** — the meetup ask, honestly scoped:
+   guide note + check-this-week tasks; upgrades in place when Q9 resolves.
 4. **Neglected-hobby watcher** in the M3 watcher slate — strong candidate to
    ship *before* stay-in-touch, since it needs no Q8-style new signal.
 5. **Tier B upgrades** (real meetups/classes/event radar) when Q9 resolves.
