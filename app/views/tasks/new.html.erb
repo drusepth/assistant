@@ -1,22 +1,6 @@
 <%= render Ui::PageHeaderComponent.new(title: "New task") %>
 <div class="max-w-xl">
   <div class="card p-6">
-    <%= form_with model: @task, class: "space-y-4" do |form| %>
-      <div class="space-y-1">
-        <%= form.text_field :title, placeholder: "What needs doing?", autofocus: true, required: true %>
-        <%= form.errors_for :title %>
-        <p class="hint"><%= task_auto_sort_hint %></p>
-      </div>
-      <%= form.hidden_field :goal_id %>
-      <%= form.hidden_field :due_on %>
-      <%= render "shared/pretagged_sections", form: form, item: @task %>
-      <% if @task.goal %>
-        <p class="hint">Will be added to the goal “<%= @task.goal.title %>”.</p>
-      <% end %>
-      <div class="flex items-center gap-2">
-        <%= form.submit "Add task" %>
-        <%= link_to "Cancel", tasks_path, class: "btn btn-ghost" %>
-      </div>
-    <% end %>
+    <%= render "quick_form", task: @task, cancel_url: tasks_path, return_to: params[:return_to] %>
   </div>
 </div>

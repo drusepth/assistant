@@ -19,7 +19,7 @@ class EventsController < ApplicationController
     @event = Current.user.events.new(event_params)
     if @event.save
       @event.enqueue_auto_sort!
-      redirect_to calendar_path, notice: "Event added."
+      redirect_to return_to_path(calendar_path), notice: "Event added."
     else
       render :new, status: :unprocessable_entity
     end

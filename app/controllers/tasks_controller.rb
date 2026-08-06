@@ -25,7 +25,7 @@ class TasksController < ApplicationController
     @task = Current.user.tasks.new(task_params)
     if @task.save
       @task.enqueue_auto_sort!
-      redirect_to tasks_path, notice: "Task added."
+      redirect_to return_to_path(tasks_path), notice: "Task added."
     else
       render :new, status: :unprocessable_entity
     end

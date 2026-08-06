@@ -1,0 +1,26 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Rivera;Maria;;;
+FN:Maria Rivera
+ORG:St. Mary's Hospital;Cardiology
+TEL;TYPE=CELL:+1 (555) 010-2000
+TEL;TYPE=WORK,VOICE:+1 (555) 010-2001
+EMAIL;TYPE=INTERNET,HOME:maria@example.com
+EMAIL;TYPE=WORK:m.rivera@stmarys.example.com
+ADR;TYPE=WORK:;;123 Main St;Springfield;IL;62704;USA
+BDAY:1975-04-05
+NOTE:Mom's cardiologist. Prefers mornings\, weekdays only.
+END:VCARD
+BEGIN:VCARD
+VERSION:2.1
+N:Nguyen;Linh
+TEL;CELL:+1 555 010 3000
+NOTE;ENCODING=QUOTED-PRINTABLE;CHARSET=UTF-8:Met at the caf=C3=A9
+BDAY:19881120
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Folded Note Person
+NOTE:This note is folded acr
+ oss two lines per RFC.
+END:VCARD

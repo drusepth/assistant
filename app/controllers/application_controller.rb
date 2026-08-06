@@ -12,4 +12,12 @@ class ApplicationController < ActionController::Base
     def require_admin
       redirect_to settings_path, alert: "Only household admins can do that." unless Current.user.admin?
     end
+
+    # Capture forms can send the browser back where capture happened (e.g.
+    # the dashboard's inline quick-add panels) via a hidden return_to field.
+    # Only local paths are honored.
+    def return_to_path(fallback)
+      path = params[:return_to].to_s
+      path.start_with?("/") && !path.start_with?("//") ? path : fallback
+    end
 end

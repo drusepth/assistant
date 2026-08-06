@@ -1,16 +1,26 @@
-<%= render Ui::PageHeaderComponent.new(title: "Dashboard", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
-  <% header.with_actions do %>
-    <%= link_to new_task_path, class: "btn btn-secondary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Task
-    <% end %>
-    <%= link_to new_event_path, class: "btn btn-secondary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Event
-    <% end %>
-    <%= link_to new_goal_path, class: "btn btn-primary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Goal
+<div data-controller="quick-add" data-action="keydown.esc->quick-add#closeAll">
+  <%= render Ui::PageHeaderComponent.new(title: "Dashboard", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
+    <% header.with_actions do %>
+      <% [ [ "task", "Task", "btn-secondary" ], [ "note", "Note", "btn-secondary" ],
+           [ "event", "Event", "btn-secondary" ], [ "goal", "Goal", "btn-primary" ] ].each do |name, label, style| %>
+        <%= tag.button type: "button", class: "btn #{style}", aria: { expanded: false },
+              data: { quick_add_target: "button", action: "quick-add#toggle", quick_add_name_param: name } do %>
+          <%= icon(:plus, css_class: "size-4") %> <%= label %>
+        <% end %>
+      <% end %>
     <% end %>
   <% end %>
-<% end %>
+
+  <% [ [ "task", "New task", render("tasks/quick_form", task: @quick_task, return_to: root_path, autofocus: false) ],
+       [ "note", "New note", render("notes/quick_form", note: @quick_note, return_to: root_path, autofocus: false) ],
+       [ "event", "New event", render("events/quick_form", event: @quick_event, return_to: root_path, autofocus: false) ],
+       [ "goal", "New goal", render("goals/quick_form", goal: @quick_goal, return_to: root_path, autofocus: false) ] ].each do |name, title, form| %>
+    <div class="mb-6 hidden max-w-xl card p-5" data-quick-add-target="panel" data-name="<%= name %>">
+      <h2 class="mb-3 text-sm font-semibold text-ink"><%= title %></h2>
+      <%= form %>
+    </div>
+  <% end %>
+</div>
 
 <% attention_count = @overdue_tasks.size + @due_today_tasks.size %>
 <div class="mb-6 rounded-xl border border-primary-200 bg-primary-50 px-5 py-4">
@@ -45,34 +55,6 @@
       <div class="divide-y divide-edge"><%= render @upcoming_events %></div>
     <% else %>
       <p class="px-5 py-8 text-center text-sm text-soft">No upcoming events this week.</p>
-    <% end %>
-  <% end %>
-
-  <%= render Ui::CardComponent.new(title: "Active goals", padded: false) do |card| %>
-    <% card.with_actions { link_to "Tasks", tasks_path, class: "btn btn-ghost btn-sm" } %>
-    <% if @active_goals.any? %>
-      <div class="divide-y divide-edge">
-        <% @active_goals.each do |goal| %>
-          <div class="flex items-center justify-between gap-3 px-4 py-3">
-            <%= link_to goal.title, goal, class: "text-sm font-medium text-ink hover:text-primary-700" %>
-            <% total = goal.tasks.size %>
-            <% if total.positive? %>
-              <span class="text-xs text-soft"><%= goal.tasks.count(&:completed?) %>/<%= total %> steps</span>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <p class="px-5 py-8 text-center text-sm text-soft">No active goals.</p>
-    <% end %>
-  <% end %>
-
-  <%= render Ui::CardComponent.new(title: "Recent documents", padded: false) do |card| %>
-    <% card.with_actions { link_to "Vault", documents_path, class: "btn btn-ghost btn-sm" } %>
-    <% if @recent_documents.any? %>
-      <div class="divide-y divide-edge"><%= render @recent_documents %></div>
-    <% else %>
-      <p class="px-5 py-8 text-center text-sm text-soft">No documents yet.</p>
     <% end %>
   <% end %>
 </div>

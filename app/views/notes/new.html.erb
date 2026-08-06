@@ -1,17 +1,6 @@
 <%= render Ui::PageHeaderComponent.new(title: "New note") %>
 <div class="max-w-xl">
   <div class="card p-6">
-    <%= form_with model: @note, class: "space-y-4" do |form| %>
-      <div class="space-y-1">
-        <%= form.text_area :body, rows: 6, placeholder: "What should your assistant remember?", autofocus: true, required: true %>
-        <%= form.errors_for :body %>
-        <p class="hint"><%= note_auto_sort_hint %></p>
-      </div>
-      <%= render "shared/pretagged_sections", form: form, item: @note %>
-      <div class="flex items-center gap-2">
-        <%= form.submit "Save note" %>
-        <%= link_to "Cancel", notes_path, class: "btn btn-ghost" %>
-      </div>
-    <% end %>
+    <%= render "quick_form", note: @note, cancel_url: notes_path, return_to: params[:return_to] %>
   </div>
 </div>

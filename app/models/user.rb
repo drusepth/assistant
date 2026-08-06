@@ -37,7 +37,18 @@ class User < ApplicationRecord
     !user_sections.exists?(section: section, enabled: false)
   end
 
+  # Top-level sections in this user's sidebar order: a dragged position on
+  # user_sections wins; sections the user never reordered sort after those,
+  # keeping the taxonomy default among themselves.
+  def ordered_sections
+    preferences = user_sections.index_by(&:section_id)
+    Section.top_level.sort_by do |section|
+      [ preferences[section.id]&.position || Float::INFINITY, section.position ]
+    end
+  end
+
   def enabled_sections
-    Section.top_level.where.not(id: user_sections.where(enabled: false).select(:section_id))
+    disabled_ids = user_sections.where(enabled: false).pluck(:section_id)
+    ordered_sections.reject { |section| disabled_ids.include?(section.id) }
   end
 end

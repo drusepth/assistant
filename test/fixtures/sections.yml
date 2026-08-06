@@ -18,6 +18,11 @@ career:
   name: Career
   position: 4
 
+people:
+  slug: people
+  name: People
+  position: 5
+
 money:
   slug: money
   name: Money
