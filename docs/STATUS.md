@@ -50,3 +50,4 @@ Ready to build without one:
 
 5. More linked-account consumers (D26): email next (IMAP, richest surface); recurring background sync; `linked_accounts.credentials` encryption riding the M4 setup
 6. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)
+7. Household photos (`docs/PHOTOS_PLAN.md`, D30–D31): Photo as the seventh primitive, albums + access-grant sharing, S3-compatible storage seam with direct uploads — five waves, W1 (storage seam) and W2 (primitive + timeline) first

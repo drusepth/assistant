@@ -99,6 +99,12 @@ A tool's run `output` may carry a sanitized `next_tools` payload — `{slug, inp
 **D29. Chat is a tool kind, not a separate feature.**
 Third tool kind `:chat` (after draft/plan): one new table, `tool_run_messages` (role user/assistant/notice — a notice is the app speaking after a failed turn, shown in the transcript but never sent to the model), under the existing `tool_runs`. The run page doubles as the chat surface; `ToolRunJob` generates the opening assistant message from owned context and `done` means *live* (composer stays open; turns run through `ChatTurnJob`, deliberately un-retried — mid-conversation, a visible notice the user retries by typing beats silent background retries). Context stays lean (system prompt + last 30 conversational turns) for the model-agnostic constraint. Primitives land only via an explicit "Save a recap" (`ChatRecapJob` → one filed Note recorded on the run) — no auto-writes, per D20. The tutor (Education) is the proving tool, and recap Notes are what give future sessions continuity — the owned-memory moat working as designed. Full design in `TOOLS_PLAN.md` §2/S3. — *Built (TOOLS_PLAN wave 5).*
 
+**D30. Photo is the seventh primitive; albums are containers; sharing rides access grants.**
+A photo is not a Document (no text pipeline, high volume, grid-and-lightbox browsing idiom, its own joins for albums and people), so `Photo` joins the primitive pool — `Visible` + `Sectionable`, multi-taggable, surfaced through a new cross-section **Photos view** (timeline grid), not a new section. **Albums are user-owned containers** (`albums` + `album_photos`), not sections — deliberate curation, not filters — and are themselves `Visible`. Sharing adds no new mechanism: the photo read path gains one clause mirroring the section-grant clause — a photo is visible to a holder of a grant on a containing album when the grant's grantor is the photo's owner — so `AccessGrant` stays the single sharing mechanism and `visible_to` the single read path (D9). "Share with the whole household" is a convenience button that bulk-creates ordinary per-member grants. Ingestion is deterministic and LLM-free (EXIF date/GPS, checksum dedupe, preprocessed variants); people-tagging is manual (the Q8 lesson). Full design in `PHOTOS_PLAN.md`. — *Proposed; build not started.*
+
+**D31. Blob storage is a config seam: pick a service the way you pick a model.**
+Model-agnosticism gets a storage twin: `config/storage.yml` grows an **`s3` service defined entirely from ENV** (`STORAGE_ENDPOINT`/`REGION`/`BUCKET`/keys/`FORCE_PATH_STYLE`) — one shape covering AWS S3, Cloudflare R2, Backblaze B2, and self-hosted MinIO, since S3-compatible is the protocol and Amazon just one vendor — selected by `ACTIVE_STORAGE_SERVICE` with **local disk remaining the zero-config default**. Uploads are Active Storage **direct uploads** (browser → bucket, documented CORS policy) so photo batches never funnel through the Rails process; delivery stays redirect-mode short-lived signed URLs behind `visible_to`-scoped pages; migration local→S3 is the documented mirror-then-flip path. Full design in `PHOTOS_PLAN.md` §2. — *Proposed; build not started.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -138,3 +144,12 @@ Deposit demand and the benefits screener are state-sensitive (return deadlines, 
 
 **Q13. Chat transcript retention.**
 Tutor transcripts accumulate under `tool_run_messages`; recap Notes are the durable owned artifact. Whether old transcripts should be pruned, and whether they join the M4 export, needs deciding. — *Not started.*
+
+**Q14. Photo location privacy dial.**
+v1 (PHOTOS_PLAN): shared viewers get EXIF-stripped variants and coordinates render owner-only. Is a per-album "share locations" toggle warranted, or is owner-only forever the right D9 answer? — *Not started.*
+
+**Q15. Collaborative albums.**
+Household members adding *their own* photos to someone else's shared album (the `grantor = photo owner` guard in the D30 visibility clause already anticipates it). Real family demand, real complexity; decide after photos wave 3 sees usage. — *Not started.*
+
+**Q16. Video in the photo library.**
+Needs ffmpeg in the image, preview generation, size limits, possibly range streaming. Separate plan once photos prove out; the D30 schema shouldn't need to change. — *Not started.*
