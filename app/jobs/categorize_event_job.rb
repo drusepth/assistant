@@ -13,8 +13,9 @@ class CategorizeEventJob < ApplicationJob
     if event.all_day? && result.starts_at
       event.update!(starts_at: result.starts_at, ends_at: result.ends_at, all_day: false)
     end
-  rescue Llm::Error
+  rescue Llm::Error => e
     # Best-effort: an unreachable or misbehaving model just leaves the event
     # unsorted, and the user can tag it from the edit form.
+    AppError.record(e, source: self.class.name, user: event.user, context: { event_id: event.id })
   end
 end

@@ -19,10 +19,12 @@ class AnalyzeDocumentJob < ApplicationJob
     document.sections = document.suggested_section_records if document.sections.none?
   rescue Llm::Error, Documents::Analyze::UnsupportedFileType => e
     document.update!(analysis_status: :failed, analysis_error: e.message)
-  rescue StandardError
+    AppError.record(e, source: self.class.name, user: document.user, context: { document_id: document.id })
+  rescue StandardError => e
     # A bug, not a user-facing condition: don't leave the document stuck in
     # "processing", but let the error propagate to the job backend's log.
     document.update!(analysis_status: :failed, analysis_error: "Something went wrong during analysis — try again.")
+    AppError.record(e, source: self.class.name, user: document.user, context: { document_id: document.id })
     raise
   end
 end

@@ -7,10 +7,12 @@ class ToolRunJob < ApplicationJob
     run.update!(status: :done)
   rescue Llm::Error => e
     run.update!(status: :failed, error: e.message)
-  rescue StandardError
+    AppError.record(e, source: self.class.name, user: run.user, context: { tool_run_id: run.id, tool_slug: run.tool_slug })
+  rescue StandardError => e
     # Never leave a run spinning: mark it failed with a generic message,
     # then let the real error surface in the job backend.
     run.update!(status: :failed, error: "Something unexpected went wrong — try again.")
+    AppError.record(e, source: self.class.name, user: run.user, context: { tool_run_id: run.id, tool_slug: run.tool_slug })
     raise
   ensure
     # The run page subscribes to the run and refreshes itself.

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_140000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -51,6 +51,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "app_errors", force: :cascade do |t|
+    t.text "backtrace"
+    t.json "context", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.string "error_class", null: false
+    t.text "message", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["created_at"], name: "index_app_errors_on_created_at"
+    t.index ["source", "created_at"], name: "index_app_errors_on_source_and_created_at"
+    t.index ["user_id"], name: "index_app_errors_on_user_id"
   end
 
   create_table "documents", force: :cascade do |t|
@@ -247,6 +261,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130000) do
   add_foreign_key "access_grants", "users", column: "grantor_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "app_errors", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"

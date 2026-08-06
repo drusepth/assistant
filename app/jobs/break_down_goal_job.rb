@@ -11,10 +11,11 @@ class BreakDownGoalJob < ApplicationJob
     return if goal.tasks.any? && !append
 
     Goals::BreakDown.new(goal: goal, profile: profile).plan!
-  rescue Llm::Error
+  rescue Llm::Error => e
     # Best-effort (D16): an unreachable or misbehaving model leaves the goal
     # as a single unplanned item — the user can add steps by hand or retry
     # from the goal page.
+    AppError.record(e, source: self.class.name, user: goal.user, context: { goal_id: goal.id, append: append })
   ensure
     # Stamp even on failure so the "breaking into steps…" state can't stick,
     # and refresh the owner's board either way.

@@ -9,8 +9,9 @@ class CategorizePersonJob < ApplicationJob
     result = People::Categorize.new(person: person, profile: profile).call
     person.sections = result.sections
     person.update!(relationship: result.relationship) if person.relationship.blank? && result.relationship.present?
-  rescue Llm::Error
+  rescue Llm::Error => e
     # Best-effort: an unreachable or misbehaving model just leaves the person
     # unfiled, and the user can tag them from the edit form.
+    AppError.record(e, source: self.class.name, user: person.user, context: { person_id: person.id })
   end
 end

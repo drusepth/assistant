@@ -65,6 +65,20 @@ class CategorizeTaskJobTest < ActiveJob::TestCase
     assert_empty @task.reload.sections
   end
 
+  test "a swallowed provider error is still recorded for /admin" do
+    stub_request(:post, ENDPOINT).to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json)
+
+    assert_difference -> { AppError.count }, 1 do
+      CategorizeTaskJob.perform_now(@task)
+    end
+
+    recorded = AppError.recent.first
+    assert_equal "CategorizeTaskJob", recorded.source
+    assert_equal "Llm::Error", recorded.error_class
+    assert_equal users(:one), recorded.user
+    assert_equal @task.id, recorded.context["task_id"]
+  end
+
   test "an invalid due date from the model is ignored" do
     stub_llm(sections: [], due_on: "next Friday-ish")
 

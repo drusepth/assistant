@@ -77,6 +77,9 @@
           </nav>
 
           <div class="space-y-1 border-t border-edge p-3">
+            <% if Current.user.admin? %>
+              <%= nav_link_to "Admin", admin_root_path, :warning %>
+            <% end %>
             <%= nav_link_to "Settings", settings_path, :cog %>
             <div class="flex items-center justify-between gap-2 px-3 py-1">
               <span class="min-w-0 truncate text-xs text-soft"><%= Current.user.name %></span>

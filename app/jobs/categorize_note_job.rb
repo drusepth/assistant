@@ -9,8 +9,9 @@ class CategorizeNoteJob < ApplicationJob
     result = Notes::Categorize.new(note: note, profile: profile).call
     note.sections = result.sections
     note.update!(title: result.title) if note.title.blank? && result.title.present?
-  rescue Llm::Error
+  rescue Llm::Error => e
     # Best-effort: an unreachable or misbehaving model just leaves the note
     # unfiled, and the user can title and tag it from the edit form.
+    AppError.record(e, source: self.class.name, user: note.user, context: { note_id: note.id })
   end
 end

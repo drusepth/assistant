@@ -67,6 +67,10 @@ Two kinds: **plan tools** (Goal + multi-tagged Tasks/Events via the D17 breakdow
 **D20. The agent proposes; the user disposes.**
 The agent's only write surface is a new `suggestions` table (Sectionable; rationale, action payload, fingerprint deduping, pending/accepted/dismissed/snoozed). Signals come from deterministic **watchers** (`app/watchers/`, SQL-first, LLM only for phrasing/ranking/digest). Per-section dials on `user_sections`: **Off / Quiet (default: weekly, in-app only) / Active (daily, + Today)**. Cross-user suggestions read strictly through `visible_to` (D9). Notification channels deferred (Q10). Full design in `ROADMAP.md` §3. — *Provisional until the M3.1 build pass.*
 
+**D21. Silence is a product feature and an operations bug: swallowed failures get logged to `app_errors` and surfaced at `/admin`.**
+Best-effort AI work deliberately hides its failures from the person who triggered it (D16) — a model that times out leaves a task unsorted rather than showing a stack trace. That is right for the user and wrong for whoever runs the box, who otherwise never learns the model has been down for a week. Every `rescue` that swallows now also calls `AppError.record` (source, error class, message, backtrace, actor, context ids); `record` rescues itself, because logging a failure must never cause one. The table is a 500-row ring buffer — an unattended self-hosted instance shouldn't grow it forever.
+`/admin` (household admins per D15, not a hardcoded user id) shows model-profile status, job-backend status, and the log. It reports **counts, never contents**, for other members' failed runs and documents: the admin flag is a household role, not a master key, and items stay private until shared (D9). Solid Queue is production-only here, so its panel degrades to an explanatory note rather than crashing in development. — *Provisional until the M3 watcher pass, which may want to read this table.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
