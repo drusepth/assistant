@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_234001) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -54,9 +54,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_230000) do
   end
 
   create_table "documents", force: :cascade do |t|
+    t.string "analysis_error"
+    t.string "analysis_status"
     t.datetime "created_at", null: false
     t.text "description"
     t.text "extracted_text"
+    t.json "suggested_sections", default: []
     t.text "summary"
     t.string "title", null: false
     t.datetime "updated_at", null: false
@@ -106,6 +109,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_230000) do
     t.datetime "updated_at", null: false
     t.index ["household_id"], name: "index_invitations_on_household_id"
     t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
+  end
+
+  create_table "model_profiles", force: :cascade do |t|
+    t.string "api_key"
+    t.string "base_url", default: "https://api.openai.com/v1", null: false
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.string "model", default: "gpt-4o-mini", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id"], name: "index_model_profiles_on_household_id", unique: true
   end
 
   create_table "notes", force: :cascade do |t|
@@ -210,6 +223,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_230000) do
   add_foreign_key "goals", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"
+  add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"

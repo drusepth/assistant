@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   get "sections/:slug" => "sections#show", as: :section
 
   resource :settings, only: %i[ show update ]
+  resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
 
   resources :events
@@ -27,7 +28,12 @@ Rails.application.routes.draw do
       patch :reopen
     end
   end
-  resources :documents
+  resources :documents do
+    member do
+      post :analyze
+      patch :apply_suggestion
+    end
+  end
   resources :people
   resources :goals do
     member do

@@ -51,7 +51,7 @@ class FirstRunControllerTest < ActionDispatch::IntegrationTest
 
   private
     def empty_the_instance
-      [ Invitation, AccessGrant, Session, UserSection, SectionTagging,
+      [ Invitation, ModelProfile, AccessGrant, Session, UserSection, SectionTagging,
         Task, Event, Document, Person, Note, Goal, User, Household ].each(&:delete_all)
     end
 end

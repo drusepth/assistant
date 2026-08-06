@@ -24,6 +24,12 @@ rights:
   name: Rights
   position: 7
 
+renting:
+  slug: renting
+  name: Renting
+  parent: rights
+  position: 2
+
 disputes:
   slug: disputes
   name: Disputes

@@ -36,13 +36,45 @@
       </dl>
     <% end %>
 
-    <%= render Ui::CardComponent.new(title: "Understanding", subtitle: "AI summary and extracted text") do %>
-      <% if @document.summary.present? %>
+    <%= render Ui::CardComponent.new(title: "Understanding", subtitle: "AI summary and suggested sections") do |card| %>
+      <% if own && @document.analyzable_profile && !@document.analysis_queued? && !@document.analysis_processing? %>
+        <% card.with_actions do %>
+          <%= button_to @document.analysis_analyzed? || @document.analysis_failed? ? "Re-analyze" : "Analyze",
+                analyze_document_path(@document), method: :post, class: "btn btn-secondary btn-sm" %>
+        <% end %>
+      <% end %>
+
+      <% if @document.analysis_queued? || @document.analysis_processing? %>
+        <p class="text-sm text-soft">Analyzing — refresh in a moment.</p>
+      <% elsif @document.analysis_failed? %>
+        <p class="text-sm text-red-600"><%= @document.analysis_error %></p>
+      <% elsif @document.analysis_analyzed? %>
         <p class="whitespace-pre-wrap text-sm text-ink"><%= @document.summary %></p>
+        <% suggestions = @document.suggested_section_records %>
+        <% if own && suggestions.any? %>
+          <div class="mt-4 border-t border-edge pt-3">
+            <p class="mb-2 text-xs font-medium text-soft">Suggested sections — apply the ones that fit:</p>
+            <div class="flex flex-wrap gap-1.5">
+              <% suggestions.each do |section| %>
+                <%= button_to apply_suggestion_document_path(@document, slug: section.slug), method: :patch,
+                      class: "chip cursor-pointer #{section_chip_classes(section)} hover:opacity-80" do %>
+                  + <%= section.qualified_name %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% elsif @document.analyzable_profile %>
+        <p class="text-sm text-soft">Not analyzed yet.</p>
       <% else %>
         <p class="text-sm text-soft">
-          Not analyzed yet — document understanding (extraction, summary, suggested tags) is the
-          AI feature arriving later in this milestone.
+          Document understanding needs an AI model.
+          <% if Current.user.admin? %>
+            <%= link_to "Configure one in Settings", settings_path, class: "text-primary-700 hover:underline" %> —
+            it takes a base URL, a model name, and a key.
+          <% else %>
+            Ask your household admin to configure one in Settings.
+          <% end %>
         </p>
       <% end %>
     <% end %>

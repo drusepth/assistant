@@ -74,11 +74,12 @@ implemented as correlated `EXISTS` subqueries so it stays one SQL query and comp
 
 No moral/ethical stances are encoded (D9): defaults are private, every grant is a visible row a user created, and the settings UI will render grants explicitly. Parent/child access is whatever grants the household configures.
 
-## Model integration (D10 — built in a later step of Milestone 1)
+## Model integration (D10 — built)
 
-- `ModelProfile` (table arrives with the feature): name, base_url, api_key, model. Multiple profiles allowed; tasks route to a profile (cheap model for tagging, big model for drafting).
-- One adapter class speaking OpenAI-compatible chat completions. No vendor gems; ~200 lines we own and audit. Remote first; Ollama/llama.cpp later by changing base_url.
-- First and only Milestone-1 AI feature: document upload → Solid Queue job → text extraction → summary + suggested section tags written back to the Document, surfaced as *suggestions* (trust ladder, D6).
+- `ModelProfile`: one per household for now (base_url, model, api_key), managed by admins from Settings. Defaults point at OpenAI (`https://api.openai.com/v1`, `gpt-4o-mini`); any OpenAI-compatible endpoint works by changing base_url (Ollama, OpenRouter, Groq). api_key plaintext for now — encryption deferred per D10. Multiple profiles / per-task routing later.
+- `Llm::Client` (`app/services/llm/`): the one adapter — OpenAI-compatible chat completions over Net::HTTP, JSON response mode, friendly `Llm::Error`s. No vendor gem.
+- Document understanding: upload (or Analyze button) → `AnalyzeDocumentJob` → `Documents::Analyze` extracts text (PDF via pdf-reader; text/markdown/CSV; other types fail with a friendly message) → one chat call returns `{summary, sections}` against the seeded taxonomy → stored on the Document with status queued/processing/analyzed/failed.
+- Trust ladder (D6): section suggestions are chips with per-chip Apply buttons on the document page — the AI never tags anything itself.
 
 ## Design system
 
@@ -98,7 +99,8 @@ patterns — everything reusable lives in one redesignable place.
    household + admin; link-based invitations (`Invitation` +
    `generates_token_for`, single-use, 7-day expiry, revocable); admin
    role management and member removal from Settings
-5. Document AI pipeline + `ModelProfile` + adapter
+5. ✅ Document AI pipeline: `ModelProfile` + `Llm::Client` adapter +
+   `AnalyzeDocumentJob` (summary + suggested tags, human-applied)
 6. Situation pressure-test: "eviction notice" (Q7)
 
 Deferred deliberately: encryption at rest & deployment hardening (post-foundation, per D10), community packs (D11), voice, FTUE, agent mode.

@@ -48,6 +48,31 @@
     <% end %>
   <% end %>
 
+  <% if Current.user.admin? %>
+    <% profile = Current.user.household.model_profile %>
+    <%= render Ui::CardComponent.new(title: "AI model", subtitle: profile&.configured? ? "Configured — #{profile.model} at #{URI(profile.base_url).host}" : "Not configured — document understanding is off") do %>
+      <%= form_with url: model_profile_path, method: :patch, scope: :model_profile, class: "space-y-4" do |form| %>
+        <div class="space-y-1">
+          <%= form.label :base_url, "API base URL" %>
+          <%= form.text_field :base_url, value: profile&.base_url || "https://api.openai.com/v1" %>
+          <p class="hint">Any OpenAI-compatible endpoint works: OpenAI, OpenRouter, Groq — or a local Ollama at http://localhost:11434/v1.</p>
+        </div>
+        <div class="space-y-1">
+          <%= form.label :model, "Model" %>
+          <%= form.text_field :model, value: profile&.model || "gpt-4o-mini" %>
+        </div>
+        <div class="space-y-1">
+          <%= form.label :api_key, "API key" %>
+          <%= form.password_field :api_key, placeholder: profile&.configured? ? "•••••••• (leave blank to keep)" : "sk-…" %>
+        </div>
+        <p class="text-xs text-soft">
+          Text from analyzed documents is sent to this provider. Point it at a local model and nothing ever leaves your machine.
+        </p>
+        <%= form.submit "Save AI settings" %>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Household", subtitle: Current.user.household.name) do %>
     <ul class="space-y-2">
       <% Current.user.household.users.order(:name).each do |member| %>

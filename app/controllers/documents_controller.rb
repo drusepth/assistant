@@ -21,6 +21,7 @@ class DocumentsController < ApplicationController
   def create
     @document = Current.user.documents.new(document_params)
     if @document.save
+      @document.enqueue_analysis! if @document.analyzable_profile
       redirect_to @document, notice: "Document added to the vault."
     else
       render :new, status: :unprocessable_entity
@@ -41,6 +42,25 @@ class DocumentsController < ApplicationController
   def destroy
     @document.destroy!
     redirect_to documents_path, notice: "Document deleted."
+  end
+
+  def analyze
+    @document = Current.user.documents.find(params[:id])
+    if @document.analyzable_profile
+      @document.enqueue_analysis!
+      redirect_to @document, notice: "Analyzing — check back in a moment."
+    else
+      redirect_to @document, alert: "Configure an AI model in Settings first."
+    end
+  end
+
+  def apply_suggestion
+    @document = Current.user.documents.find(params[:id])
+    section = Section.find_by!(slug: params.expect(:slug))
+
+    @document.sections << section unless @document.sections.include?(section)
+    @document.update!(suggested_sections: @document.suggested_sections - [ section.slug ])
+    redirect_to @document, notice: "Tagged with #{section.qualified_name}."
   end
 
   private
