@@ -16,10 +16,10 @@
 
   <% available = members.where.not(id: grants.map(&:grantee_id)) %>
   <% if available.any? %>
-    <%= form_with url: access_grants_path, class: "flex items-center gap-2" do |form| %>
+    <%= form_with url: access_grants_path, class: "flex flex-wrap items-center gap-2" do |form| %>
       <%= hidden_field_tag :subject_type, subject.class.name %>
       <%= hidden_field_tag :subject_id, subject.id %>
-      <%= select_tag :grantee_id, options_from_collection_for_select(available, :id, :name), class: "input flex-1" %>
+      <%= select_tag :grantee_id, options_from_collection_for_select(available, :id, :name), class: "input min-w-40 flex-1" %>
       <%= form.submit "Share" %>
     <% end %>
   <% elsif members.empty? %>
