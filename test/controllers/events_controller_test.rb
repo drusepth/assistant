@@ -5,11 +5,16 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   setup { sign_in_as users(:one) }
 
-  test "creates an event" do
+  test "creates a timed event from date and time parts" do
     assert_difference("Event.count") do
-      post events_path, params: { event: { title: "Cardiology", starts_at: 3.days.from_now, section_ids: [ sections(:health).id ] } }
+      post events_path, params: { event: {
+        title: "Cardiology", starts_date: "2026-08-20", starts_time: "14:00", section_ids: [ sections(:health).id ]
+      } }
     end
     assert_redirected_to calendar_path
+    event = Event.last
+    assert_not event.all_day?
+    assert_equal Time.zone.local(2026, 8, 20, 14, 0), event.starts_at
   end
 
   test "new form is quick capture: title, date picker, shortcut chips" do
@@ -22,7 +27,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "quick-adding a title and day queues auto-sorting" do
     assert_enqueued_with(job: CategorizeEventJob) do
-      post events_path, params: { event: { title: "Dentist at 3pm", starts_at: "2026-08-10", all_day: true } }
+      post events_path, params: { event: { title: "Dentist at 3pm", starts_date: "2026-08-10" } }
     end
     event = Event.last
     assert event.all_day?
@@ -31,7 +36,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "hand-tagged events are not auto-sorted" do
     assert_no_enqueued_jobs(only: CategorizeEventJob) do
-      post events_path, params: { event: { title: "Cardiology", starts_at: 3.days.from_now, section_ids: [ sections(:health).id ] } }
+      post events_path, params: { event: { title: "Cardiology", starts_date: "2026-08-20", section_ids: [ sections(:health).id ] } }
     end
   end
 

@@ -1,4 +1,16 @@
 <%= render Ui::PageHeaderComponent.new(title: "New goal") %>
 <div class="max-w-xl">
-  <div class="card p-6"><%= render "form", goal: @goal %></div>
+  <div class="card p-6">
+    <%= form_with model: @goal, class: "space-y-4" do |form| %>
+      <div class="space-y-1">
+        <%= form.text_field :title, placeholder: "What are you working toward?", autofocus: true, required: true %>
+        <%= form.errors_for :title %>
+        <p class="hint"><%= goal_auto_sort_hint %></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= form.submit "Add goal" %>
+        <%= link_to "Cancel", goals_path, class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  </div>
 </div>

@@ -3,6 +3,9 @@
 class Person < ApplicationRecord
   include Visible
   include Sectionable
+  include AutoSortable
+
+  AUTO_SORT_JOB = CategorizePersonJob
 
   belongs_to :linked_user, class_name: "User", optional: true
 

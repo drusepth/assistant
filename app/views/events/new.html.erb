@@ -7,10 +7,9 @@
         <%= form.errors_for :title %>
         <p class="hint"><%= event_auto_sort_hint %></p>
       </div>
-      <%= form.field :starts_at, label_text: "When" do %>
-        <%= render "shared/date_shortcuts_field", form: form, method: :starts_at, required: true %>
+      <%= form.field :starts_date, label_text: "When" do %>
+        <%= render "shared/date_shortcuts_field", form: form, method: :starts_date, required: true %>
       <% end %>
-      <%= form.hidden_field :all_day %>
       <div class="flex items-center gap-2">
         <%= form.submit "Add event" %>
         <%= link_to "Cancel", calendar_path, class: "btn btn-ghost" %>

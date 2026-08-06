@@ -12,6 +12,24 @@ class PeopleControllerTest < ActionDispatch::IntegrationTest
     assert_equal users(:two), Person.last.linked_user
   end
 
+  test "quick-adding a name and note queues auto-sorting" do
+    assert_enqueued_with(job: CategorizePersonJob) do
+      post people_path, params: { person: { name: "Dr. Alvarez", notes: "My cardiologist." } }
+    end
+  end
+
+  test "hand-tagged people are not auto-sorted" do
+    assert_no_enqueued_jobs(only: CategorizePersonJob) do
+      post people_path, params: { person: { name: "Bob", section_ids: [ sections(:health).id ] } }
+    end
+  end
+
+  test "new form is quick capture" do
+    get new_person_path
+    assert_response :success
+    assert_match "Who are they?", response.body
+  end
+
   test "index shows only visible people" do
     users(:one).people.create!(name: "My Doctor")
     users(:two).people.create!(name: "Bob's Dentist")

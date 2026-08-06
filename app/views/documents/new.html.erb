@@ -1,4 +1,18 @@
 <%= render Ui::PageHeaderComponent.new(title: "Add document") %>
 <div class="max-w-xl">
-  <div class="card p-6"><%= render "form", document: @document %></div>
+  <div class="card p-6">
+    <%= form_with model: @document, class: "space-y-4" do |form| %>
+      <%= form.field :file, label_text: "File" do %>
+        <%= form.file_field :file, required: true %>
+      <% end %>
+      <div class="space-y-1">
+        <%= form.field :title, hint: "Optional — uses the file name if left blank." %>
+        <p class="hint"><%= document_auto_sort_hint %></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= form.submit "Add document" %>
+        <%= link_to "Cancel", documents_path, class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  </div>
 </div>

@@ -21,6 +21,19 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     assert_equal [ "renting", "money" ], @document.suggested_sections
     assert_match "Monthly rent", @document.extracted_text
     assert_nil @document.analysis_error
+    # Untagged documents get filed automatically (D16).
+    assert_equal [ sections(:money), sections(:renting) ].to_set, @document.sections.to_set
+  end
+
+  test "hand-tagged documents keep their tags; suggestions stay suggestions" do
+    @document.sections << sections(:health)
+    stub_llm(summary: "A lease.", sections: [ "renting" ])
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    @document.reload
+    assert_equal [ sections(:health) ], @document.sections.to_a
+    assert_equal [ sections(:renting) ], @document.suggested_section_records
   end
 
   test "sends the document text and taxonomy to the model" do

@@ -16,6 +16,7 @@ class PeopleController < ApplicationController
   def create
     @person = Current.user.people.new(person_params)
     if @person.save
+      @person.enqueue_auto_sort!
       redirect_to @person, notice: "#{@person.name} added."
     else
       render :new, status: :unprocessable_entity
