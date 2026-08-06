@@ -67,6 +67,12 @@ Two kinds: **plan tools** (Goal + multi-tagged Tasks/Events via the D17 breakdow
 **D20. The agent proposes; the user disposes.**
 The agent's only write surface is a new `suggestions` table (Sectionable; rationale, action payload, fingerprint deduping, pending/accepted/dismissed/snoozed). Signals come from deterministic **watchers** (`app/watchers/`, SQL-first, LLM only for phrasing/ranking/digest). Per-section dials on `user_sections`: **Off / Quiet (default: weekly, in-app only) / Active (daily, + Today)**. Cross-user suggestions read strictly through `visible_to` (D9). Notification channels deferred (Q10). Full design in `ROADMAP.md` §3. — *Built through M3.2 (suggestions table, four watchers, Off/Quiet/Active dials in Settings honored by weekly/daily scans) plus M3.3's phrased weekly digest (LLM phrases, never decides; silent failure). Remaining: cross-user coordination suggestions (needs its own design) and notification channels (Q10).*
 
+**D21. Cross-user coordination is ordinary watchers over `visible_to` scopes.**
+No household-level agent, no new data model, no new privacy machinery: a cross-user watcher queries `visible_to(user)` instead of user-owned scopes, so it structurally cannot see or reference an unshared item. Each member's agent speaks only to its own user; symmetric suggestions on both sides of a share are correct behavior; staleness resolves by dismissal (fingerprints never re-propose). Deterministic-first still applies — v1 is same-day sync, not location inference; LLM upgrades phrase the same signal, never replace it. Design in `ROADMAP.md` §5.1. — *Drafted; provisional until the M4.4 build pass.*
+
+**D22. Notification channels: webhook → Web Push → email-if-configured, Active sections only.**
+No SMTP assumption (D15) and no third-party push dependency: a user-pasted webhook URL first (covers ntfy/Home Assistant/Matrix — the self-hoster ecosystem), per-instance VAPID Web Push second, optional instance SMTP last. Quiet means in-app only — **only Active sections may notify**; batched per scan; payloads carry counts and titles, never bodies (a lock screen is not private by default). Design in `ROADMAP.md` §5.2. — *Drafted; provisional until the M4.3 build pass; resolves Q10's direction.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -84,7 +90,7 @@ Decided in principle: care and coverage navigation in Health; medical billing di
 
 **Q4. Project name.** — *Not started; repo is "assistant" as a working title.*
 
-**Q5. FTUE flow design.** — *Not started.*
+**Q5. FTUE flow design.** — *Designed (`ROADMAP.md` §5.4): four skippable steps (sections → agent voice → model → import), `users.onboarded_at` gate, invited members skip the admin step. Build at M4.1.*
 
 **Q7. First deep-dive to pressure-test the model.**
 Current plan: after Milestone 1, pressure-test with the **"eviction notice" Situation** rather than a section alone — it exercises Rights *and* the cross-section spawning mechanics (D7) in one pass. Now scheduled as build step **M2.2**: the eviction Situation is the first *plan tool* (D19), so the pressure test rides the tools infrastructure instead of preceding it.
@@ -97,4 +103,4 @@ Resolved (M3.2): `people.last_contacted_on`, set by a one-tap **"Log contact tod
 Tools that need the live web (real provider directories, current benefit rules) are deferred; M2 tools are Tier A only (owned data). Revisit whether a `capabilities` flag on `ModelProfile` is worth building once provider browsing support stabilizes, or keep leaning on user-supplied documents. — *Not started.*
 
 **Q10. Agent notification channels.**
-Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. Email/push/webhook channels need their own design. — *Not started.*
+Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. — *Direction decided: see D22 (webhook → Web Push → email-if-configured; Active sections only). Build at M4.3.*
