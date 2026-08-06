@@ -24,7 +24,8 @@
     <% items = @tool_run.items %>
     <% drafts = items.grep(Note) %>
     <% goals = items.grep(Goal) %>
-    <% rest = items - drafts - goals %>
+    <% deadlines = items.grep(Event) %>
+    <% rest = items - drafts - goals - deadlines %>
 
     <% drafts.each do |note| %>
       <%= render Ui::CardComponent.new(title: note.title, subtitle: "Draft — saved to your notes") do |card| %>
@@ -47,6 +48,12 @@
             subtitle: "Added to your tasks", padded: false
           ) do %>
         <div class="divide-y divide-edge"><%= render rest %></div>
+      <% end %>
+    <% end %>
+
+    <% if deadlines.any? %>
+      <%= render Ui::CardComponent.new(title: "Deadlines", subtitle: "Added to your calendar", padded: false) do %>
+        <div class="divide-y divide-edge"><%= render deadlines %></div>
       <% end %>
     <% end %>
 

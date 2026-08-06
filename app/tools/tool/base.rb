@@ -15,6 +15,10 @@ module Tool
     class_attribute :section_slugs, instance_accessor: false, default: []
     class_attribute :input_definitions, instance_accessor: false, default: []
 
+    MAX_DOCUMENT_CHARS = 15_000
+    MAX_FOLLOW_UPS = 3
+    MAX_DEADLINES = 3
+
     class << self
       def slug = name.demodulize.underscore
 
@@ -56,6 +60,84 @@ module Tool
       def record(item)
         run.tool_run_items.create!(item: item)
         item
+      end
+
+      # ── Owned context ──────────────────────────────────────────────────
+
+      # The document an input points at, read through the visibility wall.
+      # A blank input returns nil (for tools where the document is optional);
+      # a chosen document that vanished or was unshared raises, because the
+      # user picked it and silence would draft a letter about nothing.
+      def chosen_document(input_name = :document_id)
+        return nil if inputs[input_name].blank?
+
+        (@chosen_documents ||= {})[input_name.to_s] ||=
+          Document.visible_to(user).find_by(id: inputs[input_name]) ||
+            raise(Llm::Error, "That document is gone or no longer shared with you.")
+      end
+
+      def document_text(document)
+        text = document.extracted_text.presence || document.summary.presence
+        raise Llm::Error, "That document has no readable text yet — open it and run Analyze first." unless text
+
+        text.truncate(MAX_DOCUMENT_CHARS)
+      end
+
+      # ── Landing primitives ─────────────────────────────────────────────
+
+      # Everything a tool creates is filed where the tool lives, plus the
+      # filing of whatever owned items the run read (the DisputeLetter rule:
+      # a letter about a Health-tagged bill lands in Disputes and Health).
+      def filing
+        @filing ||= (self.class.section_records + filing_sources.compact.flat_map(&:sections)).uniq
+      end
+
+      # Owned items whose sections the output inherits; subclasses override.
+      def filing_sources = []
+
+      def create_note(title:, body:)
+        note = record(user.notes.create!(title:, body:))
+        note.sections = filing
+        note
+      end
+
+      def create_task(title:, due_on: nil, notes: nil)
+        task = record(user.tasks.create!(
+          title:, notes:, due_on:,
+          bucket: due_on && due_on <= Date.current ? :today : :later
+        ))
+        task.sections = filing
+        task
+      end
+
+      # Deadlines land as all-day Events: a Task can be snoozed, a date on
+      # the calendar is harder to lose — and it surfaces in Calendar/Today
+      # like everything else.
+      def create_event(title:, on:, description: nil)
+        event = record(user.events.create!(
+          title:, description:, starts_at: on.in_time_zone, all_day: true
+        ))
+        event.sections = filing
+        event
+      end
+
+      # The response-shape parsers shared by the draft-tool family: arrays
+      # of {"title", "due_on"/"date"} hashes, malformed entries dropped.
+      def create_follow_ups(steps, limit: MAX_FOLLOW_UPS)
+        Array(steps).first(limit).each do |step|
+          next unless step.is_a?(Hash) && step["title"].present?
+
+          create_task(title: step["title"].to_s, due_on: parsed_date(step["due_on"]))
+        end
+      end
+
+      def create_deadline_events(deadlines, limit: MAX_DEADLINES)
+        Array(deadlines).first(limit).each do |deadline|
+          next unless deadline.is_a?(Hash) && deadline["title"].present?
+
+          date = parsed_date(deadline["date"])
+          create_event(title: deadline["title"].to_s, on: date) if date
+        end
       end
 
       def parsed_date(value)
