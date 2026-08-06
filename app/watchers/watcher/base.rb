@@ -11,7 +11,12 @@ module Watcher
 
     def initialize(user)
       @user = user
+      @proposals = []
     end
+
+    # Suggestions actually created by this scan (deduped ones excluded) —
+    # what the notification fan-out speaks about.
+    attr_reader :proposals
 
     def scan
       raise NotImplementedError
@@ -29,6 +34,7 @@ module Watcher
           title: title, body: body, kind: kind, action: action
         )
         suggestion.sections = Section.where(slug: sections)
+        @proposals << suggestion
         suggestion
       end
   end

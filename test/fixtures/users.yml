@@ -6,15 +6,18 @@ one:
   email_address: one@example.com
   password_digest: <%= password_digest %>
   admin: true
+  onboarded_at: <%= Time.current %>
 
 two:
   household: smith
   name: Bob Smith
   email_address: two@example.com
   password_digest: <%= password_digest %>
+  onboarded_at: <%= Time.current %>
 
 outsider:
   household: jones
   name: Carol Jones
   email_address: carol@example.com
   password_digest: <%= password_digest %>
+  onboarded_at: <%= Time.current %>

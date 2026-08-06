@@ -143,3 +143,63 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 7. **M3.3 — Garnish + reach**: ✅ the LLM-phrased Dashboard digest (phrasing only — deterministic facts in, two warm sentences out, silent failure). Remaining: cross-user coordination suggestions (needs its own design pass — shared-data semantics across household members), notification channels (Q10), Tier-B capabilities (Q9).
 
 Still parked from before, unchanged: D14 leftovers (export, `model_profiles.api_key` encryption) slot in whenever — they don't block this sequence.
+
+---
+
+## 5. Milestone 4 — what remains (designed 2026-08)
+
+Four items survived the first three milestones. Designs below; proposed decisions logged as **D21–D22** in `DECISIONS.md`.
+
+### 5.1 Cross-user coordination (D21)
+
+The D8 ambition ("book us back-to-back so we can carpool") turns out to need **no new machinery** — the visibility model was built for exactly this:
+
+> **A cross-user watcher is an ordinary watcher whose queries use `visible_to(user)` scopes instead of user-owned scopes.**
+
+Everything else follows from rules we already have:
+
+- **Each member's agent speaks only to its own user.** There is no household-level agent; a coordination suggestion is one user's suggestion, produced by their own scan, over data they can already see. If both spouses share calendars, both may get the suggestion independently — that's correct, not a bug (each sees their own angle; fingerprints are per-user).
+- **The suggestion body may reference only visible items.** This is enforced structurally: the watcher literally cannot query anything else. The agent can never leak, or even hint at, an unshared item (D9's guarantee, restated for prose output).
+- **Staleness is handled the boring way.** If Alice accepts and the situation resolves, Bob's copy is dismissable; watchers never re-propose a fingerprint. No cross-user suggestion locking.
+
+**First watcher: same-day sync.** The deterministic-first rule (D20) makes the fancy versions (location matching, "carpool-able") fuzzy, so v1 is the honest core: two household members with timed events on the same day within a few hours of each other, where at least one event is shared → heads-up to each sharing participant — "You and Bob are both out Thursday morning" — accept creates a "Coordinate Thursday with Bob" task. Location-aware upgrades come later, likely as LLM-phrased *garnish over the same deterministic signal*, never as the signal itself.
+
+### 5.2 Notification channels (D22, resolves Q10)
+
+The constraint: self-hosted instances rarely have SMTP (D15), and local-first means no push service account we own. Three channels, built in this order:
+
+1. **Webhook** *(build first — trivial, most in-spirit)*: user pastes a URL in Settings; the agent POSTs a minimal JSON payload. This immediately covers ntfy (self-hostable push), Home Assistant, Matrix bridges — the ecosystem our users already run. One column, one job, huge reach.
+2. **Web Push** *(the mainstream answer)*: browser push via VAPID keys generated per-instance at boot — no third party, works wherever the app is served over HTTPS. This is the channel for "normal" household members.
+3. **Email, if configured** *(last)*: optional SMTP settings in instance Settings; when present, the weekly digest can go to inboxes. Never assumed, never required.
+
+Delivery policy rides the dials: **only Active sections may notify** (Quiet stays in-app — that's what Quiet means), notifications are batched per scan (one message: "3 suggestions from your assistant", not three pings), and payloads carry **counts and titles only** — bodies stay in the app, since a lock-screen is not private by default.
+
+Schema: `notification_channels` (user, kind, config JSON, enabled) + a `Notify` fan-out job called at the end of `AgentScanJob` for newly created Active-section suggestions.
+
+### 5.3 D14 leftovers: export and key encryption
+
+**Export** — the mission item: the user's life must be *portable*, not just stored.
+- **Per-user, own-data-only** (D9: what's shared *with* you isn't yours to take): every primitive serialized as JSON-lines per model, plus the raw files of your documents, zipped.
+- One button in Settings → background `ExportJob` → downloadable archive; the archive format is documented so anything can import it. (The full-instance backup story stays what it always was: copy the `storage/` volume.)
+
+**`model_profiles.api_key` encryption** — Active Record Encryption (`encrypts :api_key`), with the self-hosting wrinkle solved at the entrypoint: the container's boot script generates AR encryption keys on first run if absent and persists them in the storage volume, so one-command install stays one command and existing plaintext rows are backfilled by a migration that re-saves them. No user action, no new secrets to manage manually.
+
+### 5.4 FTUE (resolves Q5)
+
+The gap: `/setup` creates the household, then drops you on an empty Dashboard. The vision line — a 22-year-old renter and a 60-year-old caregiver should see different apps — is one short, skippable flow (`users.onboarded_at`, redirect after first sign-in while nil):
+
+1. **Pick your sections** — the seven top-level sections as cards, all pre-checked; unchecking writes explicit `user_sections` rows. No personas, no quiz — the sections *are* the personas.
+2. **Set the assistant's voice** — one screen explaining the trust ladder in two sentences, with a single choice: suggestions **Quiet** (default, weekly, in-app) or **Off** for now; per-section dials are pointed at, not configured here.
+3. **Connect a model** *(admin only, skippable)* — the existing provider picker, with the honest line that Organize works fine with no model at all.
+4. **Bring your life in** — three buttons that already exist: import contacts, import calendar, upload a document. Ends on the Dashboard.
+
+Every step skippable; the whole flow revisitable from Settings. Invited members get steps 1, 2, and 4 only.
+
+### Build order
+
+1. ✅ **M4.1** — FTUE (four skippable steps at /welcome, `users.onboarded_at` gate) + api_key encryption (per-instance keys generated on first boot into storage/)
+2. ✅ **M4.2** — Export (`Users::Export`: own-data-only JSON-lines + document files, one Settings button, documented manifest)
+3. ✅ **M4.3** — All three channels in one pass (per the 2026-08 product call): webhook + Web Push (per-instance VAPID, service worker) + email-if-configured, fan-out via `NotifyJob`, Active-dial-only, titles-never-bodies
+4. ✅ **M4.4** — Same-day sync watcher: D21 proven — one ordinary watcher class whose only difference is `visible_to` scopes; location/LLM garnish per demand
+
+Q9 (Tier-B tool capabilities — live web data) stays deliberately parked until model-side browsing stabilizes or a first-party data pack makes sense; nothing above depends on it.

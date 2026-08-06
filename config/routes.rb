@@ -11,6 +11,9 @@ Rails.application.routes.draw do
 
   resources :household_members, only: %i[ update destroy ]
 
+  get "welcome(/:step)" => "onboarding#show", as: :onboarding, constraints: { step: /[1-4]/ }
+  patch "welcome/:step" => "onboarding#update", constraints: { step: /[1-4]/ }
+
   root "dashboard#show"
   get "today" => "today#show", as: :today
   get "calendar(/:year/:month)" => "calendar#show", as: :calendar,
@@ -18,6 +21,8 @@ Rails.application.routes.draw do
   get "sections/:slug" => "sections#show", as: :section
 
   resource :settings, only: %i[ show update ]
+  resource :export, only: %i[ create ]
+  resources :notification_channels, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
 

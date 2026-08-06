@@ -1,0 +1,85 @@
+<div class="mx-auto max-w-2xl">
+  <div class="mb-6 text-center">
+    <p class="text-xs font-medium tracking-wide text-soft uppercase">Welcome<%= " to #{Current.user.household.name}" if @step == 1 %> · step <%= @step %> of 4</p>
+  </div>
+
+  <% case @step %>
+  <% when 1 %>
+    <%= render Ui::CardComponent.new(title: "What parts of life should this cover?",
+          subtitle: "A renter fighting a deposit and a parent coordinating care need different apps. Toggle sections anytime in Settings.") do %>
+      <%= form_with url: onboarding_path(step: 1), method: :patch, class: "space-y-3" do |form| %>
+        <% Section.top_level.order(:position).each do |section| %>
+          <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+            <%= check_box_tag "enabled_section_ids[]", section.id, Current.user.section_enabled?(section),
+                  id: "onboarding_section_#{section.slug}", class: "size-4 rounded accent-primary-600" %>
+            <span class="size-2.5 rounded-full <%= section_dot_classes(section) %>"></span>
+            <span class="text-sm font-medium text-ink"><%= section.name %></span>
+            <% if section.children.any? %>
+              <span class="min-w-0 text-xs text-soft"><%= section.children.map(&:name).join(" · ") %></span>
+            <% end %>
+          </label>
+        <% end %>
+        <div class="flex items-center gap-2 pt-2">
+          <%= form.submit "Continue" %>
+          <%= link_to "Skip", onboarding_path(step: 2), class: "btn btn-ghost" %>
+        </div>
+      <% end %>
+    <% end %>
+
+  <% when 2 %>
+    <%= render Ui::CardComponent.new(title: "How proactive should your assistant be?",
+          subtitle: "It only ever suggests — nothing happens without your click. Fine-tune per section in Settings later.") do %>
+      <%= form_with url: onboarding_path(step: 2), method: :patch, class: "space-y-3" do |form| %>
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+          <%= radio_button_tag :agent_voice, "quiet", true, class: "mt-0.5 size-4 accent-primary-600" %>
+          <span>
+            <span class="block text-sm font-medium text-ink">Quiet (recommended)</span>
+            <span class="block text-sm text-soft">A weekly look at your own data, surfaced in-app only — "you're due for a checkup", "your lease ends soon".</span>
+          </span>
+        </label>
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+          <%= radio_button_tag :agent_voice, "off", false, class: "mt-0.5 size-4 accent-primary-600" %>
+          <span>
+            <span class="block text-sm font-medium text-ink">Off for now</span>
+            <span class="block text-sm text-soft">No suggestions anywhere. Flip it on whenever the app has earned it.</span>
+          </span>
+        </label>
+        <div class="flex items-center gap-2 pt-2">
+          <%= form.submit "Continue" %>
+          <%= link_to "Skip", onboarding_path(step: 3), class: "btn btn-ghost" %>
+        </div>
+      <% end %>
+    <% end %>
+
+  <% when 3 %>
+    <%= render Ui::CardComponent.new(title: "Connect an AI model",
+          subtitle: "Optional — organizing works with no AI at all. A model adds document understanding, goal planning, and tools.") do %>
+      <%= render "shared/model_profile_form", profile: Current.user.household.model_profile, return_to: onboarding_path(step: 4) %>
+      <div class="mt-3">
+        <%= link_to "Skip for now", onboarding_path(step: 4), class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+
+  <% when 4 %>
+    <%= render Ui::CardComponent.new(title: "Bring your life in",
+          subtitle: "Three shortcuts that pay off immediately — or head straight to your dashboard.") do %>
+      <div class="grid gap-3 sm:grid-cols-3">
+        <%= link_to new_people_import_path, class: "card block p-4 text-center hover:border-primary-300" do %>
+          <p class="text-sm font-semibold text-ink">Import contacts</p>
+          <p class="mt-1 text-xs text-soft">vCard or CSV from your phone or Google</p>
+        <% end %>
+        <%= link_to new_events_import_path, class: "card block p-4 text-center hover:border-primary-300" do %>
+          <p class="text-sm font-semibold text-ink">Import a calendar</p>
+          <p class="mt-1 text-xs text-soft">.ics from Google, Apple, or Outlook</p>
+        <% end %>
+        <%= link_to new_document_path, class: "card block p-4 text-center hover:border-primary-300" do %>
+          <p class="text-sm font-semibold text-ink">Upload a document</p>
+          <p class="mt-1 text-xs text-soft">A lease, a bill, a test result</p>
+        <% end %>
+      </div>
+      <div class="mt-5 text-center">
+        <%= link_to "Take me to my dashboard", root_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
