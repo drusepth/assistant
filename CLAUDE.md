@@ -80,6 +80,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 
 ## Docs
 
+- `docs/STATUS.md` — build log: what is built so far, and what is next (start here)
 - `docs/VISION.md` — full mission background and strategic reasoning
 - `docs/PRODUCT.md` — detailed section-by-section feature brainstorm
 - `docs/DECISIONS.md` — decision log + open questions

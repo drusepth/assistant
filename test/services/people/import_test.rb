@@ -98,6 +98,23 @@ class People::ImportTest < ActiveSupport::TestCase
     assert_includes joe.notes, "Work phone: +1 555 040 1001"
   end
 
+  test "imports Contact Picker JSON from the on-device mobile path" do
+    result = assert_difference("@user.people.count", 2) { import("device_contacts.json") }
+
+    assert_equal 2, result.imported
+    assert_nil result.error
+
+    nadia = @user.people.find_by!(name: "Nadia Osman")
+    assert_equal "+1 555 030 1000", nadia.phone
+    assert_equal "nadia@example.com", nadia.email
+    assert_equal "12 Elm Court, Apt 4, Austin, TX, 78701, USA", nadia.address
+    assert_includes nadia.notes, "Other phone: +1 555 030 1001"
+    assert_equal [ sections(:people) ], nadia.sections
+
+    assert @user.people.exists?(name: "Omar Haddad")
+    assert_not @user.people.exists?(phone: "+1 555 030 2000"), "nameless picker entries are skipped"
+  end
+
   test "skips contacts already in the address book by name" do
     @user.people.create!(name: "Maria Rivera", phone: "keep me")
 

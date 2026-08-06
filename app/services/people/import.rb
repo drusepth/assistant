@@ -27,14 +27,15 @@ class People::Import
   # Ordered: specific formats first, the header-sniffing generic CSV last.
   FORMATS = [
     People::Import::Vcard,
+    People::Import::DeviceJson,
     People::Import::GoogleCsv,
     People::Import::OutlookCsv,
     People::Import::GenericCsv
   ].freeze
 
-  def initialize(user:, file:)
+  def initialize(user:, file:, filename: nil)
     @user = user
-    @filename = file.respond_to?(:original_filename) ? file.original_filename : File.basename(file.to_path)
+    @filename = filename || (file.respond_to?(:original_filename) ? file.original_filename : File.basename(file.to_path))
     @content = normalize_encoding(file.read)
   end
 
