@@ -1,7 +1,8 @@
-<%# Section chips + shared-by attribution, used inside every item row. %>
+<%# Section chips + shared-by attribution, used inside every item row.
+    Pass on_dark: true when the row sits on a dark surface (goal cards). %>
 <% item.sections.each do |section| %>
   <%= render Ui::SectionChipComponent.new(section: section) %>
 <% end %>
 <% if item.user_id != Current.user.id %>
-  <span class="text-xs text-soft">from <%= item.user.name %></span>
+  <span class="text-xs <%= local_assigns[:on_dark] ? "text-white/70" : "text-soft" %>">from <%= item.user.name %></span>
 <% end %>
