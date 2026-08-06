@@ -197,9 +197,9 @@ Every step skippable; the whole flow revisitable from Settings. Invited members 
 
 ### Build order
 
-1. **M4.1** — FTUE (highest leverage per hour: every new instance sees it) + api_key encryption (small, overdue)
-2. **M4.2** — Export (mission-critical trust feature; unblocks recommending the app to strangers)
-3. **M4.3** — Webhook channel + Notify fan-out, then Web Push; email-if-configured last
-4. **M4.4** — Same-day sync watcher (first cross-user coordination), then location/LLM garnish per demand
+1. ✅ **M4.1** — FTUE (four skippable steps at /welcome, `users.onboarded_at` gate) + api_key encryption (per-instance keys generated on first boot into storage/)
+2. ✅ **M4.2** — Export (`Users::Export`: own-data-only JSON-lines + document files, one Settings button, documented manifest)
+3. ✅ **M4.3** — All three channels in one pass (per the 2026-08 product call): webhook + Web Push (per-instance VAPID, service worker) + email-if-configured, fan-out via `NotifyJob`, Active-dial-only, titles-never-bodies
+4. ✅ **M4.4** — Same-day sync watcher: D21 proven — one ordinary watcher class whose only difference is `visible_to` scopes; location/LLM garnish per demand
 
 Q9 (Tier-B tool capabilities — live web data) stays deliberately parked until model-side browsing stabilizes or a first-party data pack makes sense; nothing above depends on it.
