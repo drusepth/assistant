@@ -39,7 +39,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
 
     get tasks_path
     assert_match "Find a new job", response.body
-    assert_match "0/1 steps", response.body
+    assert_match "0 of 1 steps done", response.body
   end
 
   test "moves a task across the board" do
