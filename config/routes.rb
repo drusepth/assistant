@@ -36,6 +36,9 @@ Rails.application.routes.draw do
       patch :apply_suggestion
     end
   end
+  namespace :people do
+    resource :import, only: %i[ new create ]
+  end
   resources :people
   resources :goals do
     member do
