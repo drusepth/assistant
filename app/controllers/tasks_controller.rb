@@ -18,14 +18,14 @@ class TasksController < ApplicationController
   end
 
   def new
-    @task = Current.user.tasks.new(params.permit(:due_on, :goal_id))
+    @task = Current.user.tasks.new(params.permit(:due_on, :goal_id, section_ids: []))
   end
 
   def create
     @task = Current.user.tasks.new(task_params)
     if @task.save
       @task.enqueue_auto_sort!
-      redirect_to tasks_path, notice: "Task added."
+      redirect_to return_to_path(tasks_path), notice: "Task added."
     else
       render :new, status: :unprocessable_entity
     end

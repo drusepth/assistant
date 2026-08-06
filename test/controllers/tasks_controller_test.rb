@@ -90,6 +90,14 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_match "Tomorrow", response.body
   end
 
+  test "new pre-tags sections passed from a section page's quick capture" do
+    get new_task_path(section_ids: [ sections(:health).id ])
+
+    assert_response :success
+    assert_match %(name="task[section_ids][]"), response.body
+    assert_match "Will be filed under Health", response.body
+  end
+
   test "quick-adding a bare title queues auto-sorting" do
     assert_enqueued_with(job: CategorizeTaskJob) do
       post tasks_path, params: { task: { title: "Renew passport by Friday" } }

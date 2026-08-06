@@ -21,7 +21,7 @@ class GoalsController < ApplicationController
     if @goal.save
       @goal.enqueue_break_down!
       notice = @goal.breaking_down? ? "Goal added — your assistant is breaking it into steps." : "Goal added."
-      redirect_to tasks_path, notice: notice
+      redirect_to return_to_path(tasks_path), notice: notice
     else
       render :new, status: :unprocessable_entity
     end

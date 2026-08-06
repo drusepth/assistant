@@ -8,51 +8,72 @@
   <% end %>
 <% end %>
 
-<% if [ @events, @tasks, @documents, @people, @goals, @notes ].all?(&:empty?) %>
-  <%= render Ui::EmptyStateComponent.new(
-        title: "Nothing in #{@section.name} yet",
-        description: "Items tagged with this section will show up here — one item can live in several sections at once."
-      ) do |empty| %>
-    <% empty.with_action do %>
-      <%= link_to "Add a task", new_task_path, class: "btn btn-primary" %>
-    <% end %>
+<div class="space-y-8">
+  <%# Act zone (D18): what the app can do here — present even, especially,
+      when the section is empty. %>
+  <% if @tools.any? %>
+    <div>
+      <h2 class="mb-3 text-sm font-medium text-soft">Tools</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <% @tools.each do |tool| %>
+          <%= render Ui::ToolCardComponent.new(tool: tool) %>
+        <% end %>
+      </div>
+    </div>
   <% end %>
-<% else %>
-  <div class="space-y-6">
-    <% if @tasks.any? %>
-      <%= render Ui::CardComponent.new(title: "Open tasks", padded: false) do %>
-        <div class="divide-y divide-edge"><%= render @tasks %></div>
-      <% end %>
-    <% end %>
 
-    <% if @events.any? %>
-      <%= render Ui::CardComponent.new(title: "Upcoming events", padded: false) do %>
-        <div class="divide-y divide-edge"><%= render @events %></div>
+  <%# Browse zone: the lens itself. The empty state is quick capture
+      pre-tagged with this section — never a dead end. %>
+  <% if [ @events, @tasks, @documents, @people, @goals, @notes ].all?(&:empty?) %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "Nothing in #{@section.name} yet",
+          description: "Anything you add here starts tagged #{@section.name} — and one item can live in several sections at once."
+        ) do |empty| %>
+      <% empty.with_action do %>
+        <div class="flex flex-wrap justify-center gap-2">
+          <%= link_to "Add a task", new_task_path(section_ids: [ @section.id ]), class: "btn btn-primary" %>
+          <%= link_to "Add an event", new_event_path(section_ids: [ @section.id ]), class: "btn btn-secondary" %>
+          <%= link_to "Add a note", new_note_path(section_ids: [ @section.id ]), class: "btn btn-secondary" %>
+        </div>
       <% end %>
     <% end %>
+  <% else %>
+    <div class="space-y-6">
+      <% if @tasks.any? %>
+        <%= render Ui::CardComponent.new(title: "Open tasks", padded: false) do %>
+          <div class="divide-y divide-edge"><%= render @tasks %></div>
+        <% end %>
+      <% end %>
 
-    <% if @goals.any? %>
-      <%= render Ui::CardComponent.new(title: "Goals", padded: false) do %>
-        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @goals %></div>
+      <% if @events.any? %>
+        <%= render Ui::CardComponent.new(title: "Upcoming events", padded: false) do %>
+          <div class="divide-y divide-edge"><%= render @events %></div>
+        <% end %>
       <% end %>
-    <% end %>
 
-    <% if @documents.any? %>
-      <%= render Ui::CardComponent.new(title: "Documents", padded: false) do %>
-        <div class="divide-y divide-edge"><%= render @documents %></div>
+      <% if @goals.any? %>
+        <%= render Ui::CardComponent.new(title: "Goals", padded: false) do %>
+          <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @goals %></div>
+        <% end %>
       <% end %>
-    <% end %>
 
-    <% if @people.any? %>
-      <%= render Ui::CardComponent.new(title: "People", padded: false) do %>
-        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @people %></div>
+      <% if @documents.any? %>
+        <%= render Ui::CardComponent.new(title: "Documents", padded: false) do %>
+          <div class="divide-y divide-edge"><%= render @documents %></div>
+        <% end %>
       <% end %>
-    <% end %>
 
-    <% if @notes.any? %>
-      <%= render Ui::CardComponent.new(title: "Notes", padded: false) do %>
-        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @notes %></div>
+      <% if @people.any? %>
+        <%= render Ui::CardComponent.new(title: "People", padded: false) do %>
+          <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @people %></div>
+        <% end %>
       <% end %>
-    <% end %>
-  </div>
-<% end %>
+
+      <% if @notes.any? %>
+        <%= render Ui::CardComponent.new(title: "Notes", padded: false) do %>
+          <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @notes %></div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

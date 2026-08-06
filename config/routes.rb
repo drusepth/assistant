@@ -21,6 +21,9 @@ Rails.application.routes.draw do
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
 
+  namespace :events do
+    resource :import, only: %i[ new create ]
+  end
   resources :events
   resources :tasks do
     member do
@@ -48,6 +51,10 @@ Rails.application.routes.draw do
     end
   end
   resources :notes
+
+  get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
+  post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
+  resources :tool_runs, only: :show
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

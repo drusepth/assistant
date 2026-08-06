@@ -1,0 +1,25 @@
+<%# Minimal capture form (D16). Locals: task; optional return_to (local path
+    to land on after create), autofocus, and cancel_url — omit cancel_url to
+    get a button that closes the enclosing quick-add panel instead. %>
+<%= form_with model: task, class: "space-y-4" do |form| %>
+  <div class="space-y-1">
+    <%= form.text_field :title, placeholder: "What needs doing?", autofocus: local_assigns.fetch(:autofocus, true), required: true %>
+    <%= form.errors_for :title %>
+    <p class="hint"><%= task_auto_sort_hint %></p>
+  </div>
+  <%= form.hidden_field :goal_id %>
+  <%= form.hidden_field :due_on %>
+  <% if task.goal %>
+    <p class="hint">Will be added to the goal “<%= task.goal.title %>”.</p>
+  <% end %>
+  <%= render "shared/pretagged_sections", form: form, item: task %>
+  <%= hidden_field_tag :return_to, local_assigns[:return_to] if local_assigns[:return_to].present? %>
+  <div class="flex items-center gap-2">
+    <%= form.submit "Add task" %>
+    <% if local_assigns[:cancel_url] %>
+      <%= link_to "Cancel", local_assigns[:cancel_url], class: "btn btn-ghost" %>
+    <% else %>
+      <button type="button" class="btn btn-ghost" data-action="quick-add#closeAll">Cancel</button>
+    <% end %>
+  </div>
+<% end %>
