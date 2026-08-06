@@ -16,7 +16,7 @@
       <dl class="space-y-3 text-sm">
         <div class="flex gap-2">
           <dt class="w-24 shrink-0 text-soft">When</dt>
-          <dd>
+          <dd class="min-w-0 wrap-anywhere">
             <% if @event.all_day? %>
               All day
             <% else %>
@@ -27,18 +27,18 @@
         <% if @event.location.present? %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Where</dt>
-            <dd><%= @event.location %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= @event.location %></dd>
           </div>
         <% end %>
         <% if @event.goal %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Goal</dt>
-            <dd><%= link_to @event.goal.title, @event.goal, class: "text-primary-700 hover:underline" %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= link_to @event.goal.title, @event.goal, class: "text-primary-700 hover:underline" %></dd>
           </div>
         <% end %>
         <div class="flex gap-2">
           <dt class="w-24 shrink-0 text-soft">Sections</dt>
-          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @event %></dd>
+          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @event %></dd>
         </div>
         <% if @event.description.present? %>
           <div>
