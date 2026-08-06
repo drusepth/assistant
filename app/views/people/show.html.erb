@@ -3,6 +3,8 @@
 <%= render Ui::PageHeaderComponent.new(title: @person.name, subtitle: @person.relationship) do |header| %>
   <% if own %>
     <% header.with_actions do %>
+      <%= button_to "Log contact today", log_contact_person_path(@person), method: :patch, class: "btn btn-secondary",
+            title: @person.last_contacted_on ? "Last logged: #{@person.last_contacted_on.strftime("%B %-d, %Y")}" : "No contact logged yet" %>
       <%= link_to "Edit", edit_person_path(@person), class: "btn btn-secondary" %>
       <%= button_to "Delete", @person, method: :delete, class: "btn btn-danger",
             data: { turbo_confirm: "Remove #{@person.name}?" } %>

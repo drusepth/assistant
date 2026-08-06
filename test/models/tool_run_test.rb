@@ -27,7 +27,9 @@ class ToolRunTest < ActiveSupport::TestCase
     assert_includes Tool.for_section(sections(:disputes)), Tool::DisputeLetter
     assert_includes Tool.for_section(sections(:rights)), Tool::DisputeLetter,
       "a tool on a subsection shows on its parent's page too"
-    assert_empty Tool.for_section(sections(:health))
+    assert_includes Tool.for_section(sections(:money)), Tool::CancelSubscription,
+      "subscriptions tools surface on Money"
+    assert_empty Tool.for_section(sections(:hobbies))
   end
 
   test "items returns the primitives a run created" do

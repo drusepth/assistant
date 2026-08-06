@@ -42,7 +42,11 @@ Rails.application.routes.draw do
   namespace :people do
     resource :import, only: %i[ new create ]
   end
-  resources :people
+  resources :people do
+    member do
+      patch :log_contact
+    end
+  end
   resources :goals do
     member do
       patch :complete
@@ -51,6 +55,14 @@ Rails.application.routes.draw do
     end
   end
   resources :notes
+
+  resources :suggestions, only: [] do
+    member do
+      patch :accept
+      patch :dismiss
+      patch :snooze
+    end
+  end
 
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool

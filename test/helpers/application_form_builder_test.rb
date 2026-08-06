@@ -8,7 +8,7 @@ class ApplicationFormBuilderTest < ActionView::TestCase
     assert_match 'class="file-input-dropzone group"', html
     assert_match 'data-controller="file-input"', html
     assert_match 'data-file-input-target="input"', html
-    assert_match 'Click to choose a file', html
-    assert_match 'Accepted formats: .pdf,.csv', html
+    assert_match "Click to choose a file", html
+    assert_match "Accepted formats: .pdf,.csv", html
   end
 end
