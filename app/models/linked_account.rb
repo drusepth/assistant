@@ -35,7 +35,7 @@ class LinkedAccount < ApplicationRecord
     "contacts" => {
       label: "Address book",
       description: "Your contacts over CardDAV — iCloud, Fastmail, Nextcloud, or any address-book server. Syncs into People.",
-      syncable: true,
+      sync_service: "People::CarddavSync",
       fields: [
         { key: "server_url", label: "CardDAV server", placeholder: "https://contacts.example.com/…" },
         { key: "username", label: "Username", placeholder: "you@example.com" },
@@ -49,7 +49,8 @@ class LinkedAccount < ApplicationRecord
     },
     "calendar" => {
       label: "Calendar",
-      description: "Your calendars over CalDAV — Google, iCloud, Nextcloud, or any calendar server.",
+      description: "Your calendars over CalDAV — iCloud, Fastmail, Nextcloud, or any calendar server. Syncs into Calendar.",
+      sync_service: "Events::CaldavSync",
       fields: [
         { key: "server_url", label: "CalDAV server", placeholder: "https://caldav.example.com/…" },
         { key: "username", label: "Username", placeholder: "you@example.com" },
@@ -111,9 +112,10 @@ class LinkedAccount < ApplicationRecord
   def enabled_scopes = scopes.keys - disabled_scopes
   def full_access? = (scopes.keys & disabled_scopes).empty?
 
-  # Whether a live sync consumer exists for this provider yet. There's one
-  # job today (SyncContactsJob); dispatch by provider once a second lands.
-  def syncable? = provider_settings[:syncable].present?
+  # A provider with a live sync consumer names it in the registry;
+  # SyncLinkedAccountJob dispatches through this.
+  def sync_service = provider_settings[:sync_service]&.constantize
+  def syncable? = provider_settings[:sync_service].present?
 
   private
     def required_credentials_present

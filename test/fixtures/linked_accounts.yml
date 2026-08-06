@@ -15,3 +15,12 @@ alice_contacts:
     username: one@example.com
     password: app-password
   disabled_scopes: []
+
+alice_calendar:
+  user: one
+  provider: calendar
+  credentials:
+    server_url: https://cal.example.com/
+    username: one@example.com
+    password: app-password
+  disabled_scopes: []

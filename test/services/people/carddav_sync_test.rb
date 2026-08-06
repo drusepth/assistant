@@ -103,7 +103,7 @@ class People::CarddavSyncTest < ActiveSupport::TestCase
     stub_report("https://dav.example.com/books/personal/", [ VCARD_MARIA ])
     stub_report("https://dav.example.com/books/work/", [])
 
-    SyncContactsJob.perform_now(@account)
+    SyncLinkedAccountJob.perform_now(@account)
 
     @account.reload
     assert_not_nil @account.synced_at
@@ -114,7 +114,7 @@ class People::CarddavSyncTest < ActiveSupport::TestCase
     stub_request(:propfind, "https://dav.example.com/").to_return(status: 401)
     stub_request(:propfind, "https://dav.example.com/.well-known/carddav").to_return(status: 401)
 
-    SyncContactsJob.perform_now(@account)
+    SyncLinkedAccountJob.perform_now(@account)
 
     @account.reload
     assert_nil @account.synced_at

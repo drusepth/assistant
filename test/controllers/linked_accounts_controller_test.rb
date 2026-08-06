@@ -104,7 +104,7 @@ class LinkedAccountsControllerTest < ActionDispatch::IntegrationTest
   test "linking a syncable service starts a sync right away" do
     sign_in_as users(:two)
 
-    assert_enqueued_with(job: SyncContactsJob) do
+    assert_enqueued_with(job: SyncLinkedAccountJob) do
       post linked_accounts_path, params: {
         provider: "contacts",
         credentials: { server_url: "https://dav.example.com/", username: "bob@example.com", password: "pw" }
@@ -116,7 +116,7 @@ class LinkedAccountsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as users(:one)
     account = linked_accounts(:alice_contacts)
 
-    assert_enqueued_with(job: SyncContactsJob, args: [ account ]) do
+    assert_enqueued_with(job: SyncLinkedAccountJob, args: [ account ]) do
       post sync_linked_account_path(account)
     end
     assert_redirected_to settings_path
