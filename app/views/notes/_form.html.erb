@@ -1,0 +1,9 @@
+<%= form_with model: note, class: "space-y-4" do |form| %>
+  <%= form.field :title, hint: "Optional." %>
+  <%= form.field :body, as: :text_area, rows: 8 %>
+  <%= render "shared/section_picker", form: form %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", notes_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

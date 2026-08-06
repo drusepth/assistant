@@ -1,0 +1,27 @@
+<%= render Ui::PageHeaderComponent.new(title: "Documents", subtitle: "Your household's vault") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to new_document_path, class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Document
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="mb-4 flex flex-wrap gap-1.5">
+  <%= link_to "All", documents_path,
+        class: "chip #{@section.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+  <% Section.top_level.each do |section| %>
+    <%= link_to section.name, documents_path(section: section.slug),
+          class: "chip #{@section == section ? "bg-ink text-white" : "#{section_chip_classes(section)} hover:opacity-80"}" %>
+  <% end %>
+</div>
+
+<% if @documents.any? %>
+  <div class="card divide-y divide-edge"><%= render @documents %></div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: @section ? "No documents in #{@section.name}" : "The vault is empty",
+        description: "Leases, test results, tax forms — store them here, tagged by section. AI summaries arrive in a later step of this milestone."
+      ) do |empty| %>
+    <% empty.with_action { link_to "Add a document", new_document_path, class: "btn btn-primary" } %>
+  <% end %>
+<% end %>

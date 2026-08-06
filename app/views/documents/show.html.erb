@@ -1,0 +1,85 @@
+<% own = @document.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @document.title, subtitle: "Added #{@document.created_at.strftime("%B %-d, %Y")}") do |header| %>
+  <% header.with_actions do %>
+    <% if @document.file.attached? %>
+      <%= link_to "Download", rails_blob_path(@document.file, disposition: "attachment"), class: "btn btn-secondary" %>
+    <% end %>
+    <% if own %>
+      <%= link_to "Edit", edit_document_path(@document), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @document, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this document?" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <% if @document.file.attached? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">File</dt>
+            <dd><%= @document.file.filename %> (<%= number_to_human_size(@document.file.byte_size) %>)</dd>
+          </div>
+        <% end %>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Sections</dt>
+          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @document %></dd>
+        </div>
+        <% if @document.description.present? %>
+          <div>
+            <dt class="mb-1 text-soft">Description</dt>
+            <dd class="whitespace-pre-wrap text-ink"><%= @document.description %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Understanding", subtitle: "AI summary and suggested sections") do |card| %>
+      <% if own && @document.analyzable_profile && !@document.analysis_queued? && !@document.analysis_processing? %>
+        <% card.with_actions do %>
+          <%= button_to @document.analysis_analyzed? || @document.analysis_failed? ? "Re-analyze" : "Analyze",
+                analyze_document_path(@document), method: :post, class: "btn btn-secondary btn-sm" %>
+        <% end %>
+      <% end %>
+
+      <% if @document.analysis_queued? || @document.analysis_processing? %>
+        <p class="text-sm text-soft">Analyzing — refresh in a moment.</p>
+      <% elsif @document.analysis_failed? %>
+        <p class="text-sm text-red-600"><%= @document.analysis_error %></p>
+      <% elsif @document.analysis_analyzed? %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= @document.summary %></p>
+        <% suggestions = @document.suggested_section_records %>
+        <% if own && suggestions.any? %>
+          <div class="mt-4 border-t border-edge pt-3">
+            <p class="mb-2 text-xs font-medium text-soft">Suggested sections — apply the ones that fit:</p>
+            <div class="flex flex-wrap gap-1.5">
+              <% suggestions.each do |section| %>
+                <%= button_to apply_suggestion_document_path(@document, slug: section.slug), method: :patch,
+                      class: "chip cursor-pointer #{section_chip_classes(section)} hover:opacity-80" do %>
+                  + <%= section.qualified_name %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% elsif @document.analyzable_profile %>
+        <p class="text-sm text-soft">Not analyzed yet.</p>
+      <% else %>
+        <p class="text-sm text-soft">
+          Document understanding needs an AI model.
+          <% if Current.user.admin? %>
+            <%= link_to "Configure one in Settings", settings_path, class: "text-primary-700 hover:underline" %> —
+            it takes a base URL, a model name, and a key.
+          <% else %>
+            Ask your household admin to configure one in Settings.
+          <% end %>
+        </p>
+      <% end %>
+    <% end %>
+  </div>
+  <% if own %>
+    <div><%= render "shared/share_controls", subject: @document %></div>
+  <% end %>
+</div>

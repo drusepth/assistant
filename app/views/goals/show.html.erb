@@ -1,0 +1,48 @@
+<% own = @goal.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @goal.title, subtitle: @goal.target_on && "Target: #{@goal.target_on.strftime("%B %-d, %Y")}") do |header| %>
+  <% header.with_actions do %>
+    <span class="chip <%= @goal.done? ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-700" %>"><%= @goal.status.humanize %></span>
+    <% if own %>
+      <%= link_to "Edit", edit_goal_path(@goal), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @goal, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this goal? Its tasks and events stay, unlinked." } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <% if @goal.description.present? %>
+      <%= render Ui::CardComponent.new(title: "About") do %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= @goal.description %></p>
+      <% end %>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Tasks", padded: false) do |card| %>
+      <% if own %>
+        <% card.with_actions { link_to "Add task", new_task_path(goal_id: @goal.id), class: "btn btn-ghost btn-sm" } %>
+      <% end %>
+      <% if @tasks.any? %>
+        <div class="divide-y divide-edge"><%= render @tasks %></div>
+      <% else %>
+        <p class="px-5 py-8 text-center text-sm text-soft">No tasks yet — break this goal into steps.</p>
+      <% end %>
+    <% end %>
+
+    <% if @events.any? %>
+      <%= render Ui::CardComponent.new(title: "Events", padded: false) do %>
+        <div class="divide-y divide-edge"><%= render @events %></div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <%= render Ui::CardComponent.new(title: "Sections") do %>
+      <div class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @goal %></div>
+    <% end %>
+    <% if own %>
+      <%= render "shared/share_controls", subject: @goal %>
+    <% end %>
+  </div>
+</div>

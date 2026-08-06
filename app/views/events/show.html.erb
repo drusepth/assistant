@@ -1,0 +1,55 @@
+<% own = @event.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @event.title, subtitle: @event.starts_at.strftime("%A, %B %-d, %Y")) do |header| %>
+  <% if own %>
+    <% header.with_actions do %>
+      <%= link_to "Edit", edit_event_path(@event), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @event, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this event?" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">When</dt>
+          <dd>
+            <% if @event.all_day? %>
+              All day
+            <% else %>
+              <%= @event.starts_at.strftime("%-l:%M %p") %><% if @event.ends_at %> – <%= @event.ends_at.strftime("%-l:%M %p") %><% end %>
+            <% end %>
+          </dd>
+        </div>
+        <% if @event.location.present? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Where</dt>
+            <dd><%= @event.location %></dd>
+          </div>
+        <% end %>
+        <% if @event.goal %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Goal</dt>
+            <dd><%= link_to @event.goal.title, @event.goal, class: "text-primary-700 hover:underline" %></dd>
+          </div>
+        <% end %>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Sections</dt>
+          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @event %></dd>
+        </div>
+        <% if @event.description.present? %>
+          <div>
+            <dt class="mb-1 text-soft">Description</dt>
+            <dd class="whitespace-pre-wrap text-ink"><%= @event.description %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+  </div>
+  <% if own %>
+    <div><%= render "shared/share_controls", subject: @event %></div>
+  <% end %>
+</div>

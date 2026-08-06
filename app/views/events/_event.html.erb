@@ -1,0 +1,16 @@
+<div class="flex items-center gap-4 px-4 py-3">
+  <div class="w-12 shrink-0 rounded-lg bg-stone-100 py-1.5 text-center">
+    <p class="text-[10px] font-semibold uppercase text-soft"><%= event.starts_at.strftime("%b") %></p>
+    <p class="text-lg font-bold leading-5 text-ink"><%= event.starts_at.day %></p>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <%= link_to event.title, event, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+    <p class="mt-0.5 text-xs text-soft">
+      <%= event.all_day? ? "All day" : event.starts_at.strftime("%-l:%M %p") %><% if event.location.present? %> · <%= event.location %><% end %>
+    </p>
+    <div class="mt-1 flex flex-wrap items-center gap-1.5">
+      <%= render "shared/item_chips", item: event %>
+    </div>
+  </div>
+</div>

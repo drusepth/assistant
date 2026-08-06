@@ -1,0 +1,43 @@
+<%= render Ui::PageHeaderComponent.new(title: "Today", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
+  <% header.with_actions do %>
+    <%= link_to new_task_path(due_on: Date.current), class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Task for today
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <% if @overdue_tasks.any? %>
+    <%= render Ui::CardComponent.new(title: "Overdue", padded: false) do %>
+      <div class="divide-y divide-edge"><%= render @overdue_tasks %></div>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Due today", padded: false) do %>
+    <% if @today_tasks.any? %>
+      <div class="divide-y divide-edge"><%= render @today_tasks %></div>
+    <% else %>
+      <p class="px-5 py-8 text-center text-sm text-soft">Nothing due today.</p>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Today's events", padded: false) do %>
+    <% if @today_events.any? %>
+      <div class="divide-y divide-edge"><%= render @today_events %></div>
+    <% else %>
+      <p class="px-5 py-8 text-center text-sm text-soft">No events today.</p>
+    <% end %>
+  <% end %>
+
+  <% if @week_events.any? %>
+    <%= render Ui::CardComponent.new(title: "Coming up this week", padded: false) do %>
+      <div class="divide-y divide-edge"><%= render @week_events %></div>
+    <% end %>
+  <% end %>
+
+  <% if @unscheduled_tasks.any? %>
+    <%= render Ui::CardComponent.new(title: "Unscheduled", subtitle: "Open tasks with no date", padded: false) do %>
+      <div class="divide-y divide-edge"><%= render @unscheduled_tasks %></div>
+    <% end %>
+  <% end %>
+</div>

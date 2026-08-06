@@ -1,0 +1,37 @@
+health:
+  slug: health
+  name: Health
+  position: 1
+
+career:
+  slug: career
+  name: Career
+  position: 4
+
+money:
+  slug: money
+  name: Money
+  position: 6
+
+budget:
+  slug: budget
+  name: Budget
+  parent: money
+  position: 1
+
+rights:
+  slug: rights
+  name: Rights
+  position: 7
+
+renting:
+  slug: renting
+  name: Renting
+  parent: rights
+  position: 2
+
+disputes:
+  slug: disputes
+  name: Disputes
+  parent: rights
+  position: 4

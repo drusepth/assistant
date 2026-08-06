@@ -1,0 +1,57 @@
+<% own = @person.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @person.name, subtitle: @person.relationship) do |header| %>
+  <% if own %>
+    <% header.with_actions do %>
+      <%= link_to "Edit", edit_person_path(@person), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @person, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Remove #{@person.name}?" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <% if @person.email.present? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Email</dt>
+            <dd><%= mail_to @person.email, nil, class: "text-primary-700 hover:underline" %></dd>
+          </div>
+        <% end %>
+        <% if @person.phone.present? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Phone</dt>
+            <dd><%= phone_to @person.phone, nil, class: "text-primary-700 hover:underline" %></dd>
+          </div>
+        <% end %>
+        <% if @person.birthday %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Birthday</dt>
+            <dd><%= @person.birthday.strftime("%B %-d") %></dd>
+          </div>
+        <% end %>
+        <% if @person.linked_user %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Account</dt>
+            <dd><span class="chip bg-primary-50 text-primary-800"><%= @person.linked_user.name %> (household member)</span></dd>
+          </div>
+        <% end %>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Sections</dt>
+          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @person %></dd>
+        </div>
+        <% if @person.notes.present? %>
+          <div>
+            <dt class="mb-1 text-soft">Notes</dt>
+            <dd class="whitespace-pre-wrap text-ink"><%= @person.notes %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+  </div>
+  <% if own %>
+    <div><%= render "shared/share_controls", subject: @person %></div>
+  <% end %>
+</div>

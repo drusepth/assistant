@@ -1,0 +1,16 @@
+<div class="card p-6">
+  <h1 class="mb-5 text-lg font-semibold text-ink">Forgot your password?</h1>
+
+  <%= form_with url: passwords_path, class: "space-y-4" do |form| %>
+    <div class="space-y-1">
+      <%= form.label :email_address, "Email" %>
+      <%= form.email_field :email_address, required: true, autofocus: true,
+            autocomplete: "username", placeholder: "you@example.com", value: params[:email_address] %>
+    </div>
+    <%= form.submit "Email reset instructions", class: "w-full" %>
+  <% end %>
+
+  <p class="mt-4 text-center text-sm">
+    <%= link_to "Back to sign in", new_session_path, class: "text-primary-700 hover:underline" %>
+  </p>
+</div>

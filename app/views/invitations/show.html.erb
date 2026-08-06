@@ -1,0 +1,14 @@
+<div class="card p-6">
+  <h1 class="text-lg font-semibold text-ink">Join <%= @invitation.household.name %></h1>
+  <p class="mb-5 mt-1 text-sm text-soft">
+    <%= @invitation.inviter.name %> invited you. Your items will be private to you
+    unless you choose to share them.
+  </p>
+
+  <%= form_with model: @user, url: join_path(params[:token]), class: "space-y-4" do |form| %>
+    <%= form.field :name, label_text: "Your name" %>
+    <%= form.field :email_address, as: :email_field, label_text: "Email", placeholder: "you@example.com" %>
+    <%= form.field :password, as: :password_field %>
+    <%= form.submit "Join household", class: "w-full" %>
+  <% end %>
+</div>

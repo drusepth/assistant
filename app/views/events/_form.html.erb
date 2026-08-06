@@ -1,0 +1,20 @@
+<%= form_with model: event, class: "space-y-4" do |form| %>
+  <%= form.field :title, placeholder: "What's happening?" %>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <%= form.field :starts_at, as: :datetime_local_field, label_text: "Starts" %>
+    <%= form.field :ends_at, as: :datetime_local_field, label_text: "Ends" %>
+  </div>
+  <label class="flex items-center gap-2 text-sm text-ink">
+    <%= form.check_box :all_day %> All day
+  </label>
+  <%= form.field :location %>
+  <%= form.field :description, as: :text_area %>
+  <%= form.field :goal_id, label_text: "Goal" do %>
+    <%= form.collection_select :goal_id, Current.user.goals.order(:title), :id, :title, include_blank: "None" %>
+  <% end %>
+  <%= render "shared/section_picker", form: form %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", calendar_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

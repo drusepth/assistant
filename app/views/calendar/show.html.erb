@@ -1,0 +1,50 @@
+<% prev_month = @month.prev_month %>
+<% next_month = @month.next_month %>
+
+<%= render Ui::PageHeaderComponent.new(title: @month.strftime("%B %Y")) do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "←", calendar_path(year: prev_month.year, month: prev_month.month), class: "btn btn-secondary", "aria-label": "Previous month" %>
+    <%= link_to "Today", calendar_path, class: "btn btn-secondary" %>
+    <%= link_to "→", calendar_path(year: next_month.year, month: next_month.month), class: "btn btn-secondary", "aria-label": "Next month" %>
+    <%= link_to new_event_path, class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Event
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="card overflow-hidden">
+  <div class="grid grid-cols-7 border-b border-edge bg-stone-50">
+    <% @weeks.first.each do |day| %>
+      <div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-soft">
+        <%= day.strftime("%a") %>
+      </div>
+    <% end %>
+  </div>
+
+  <% @weeks.each do |week| %>
+    <div class="grid grid-cols-7 divide-x divide-edge border-b border-edge last:border-b-0">
+      <% week.each do |day| %>
+        <div class="min-h-24 p-1.5 <%= "bg-stone-50/60" unless day.month == @month.month %>">
+          <%= link_to new_event_path(date: day), title: "New event on #{day.strftime("%B %-d")}",
+                class: "mb-1 flex size-6 items-center justify-center rounded-full text-xs font-medium
+                        #{day == Date.current ? "bg-primary-600 text-white" : day.month == @month.month ? "text-ink hover:bg-stone-100" : "text-stone-400 hover:bg-stone-100"}" do %>
+            <%= day.day %>
+          <% end %>
+          <div class="space-y-0.5">
+            <% events = @events_by_day.fetch(day, []) %>
+            <% events.first(3).each do |event| %>
+              <%= link_to event, class: "block truncate rounded px-1.5 py-0.5 text-xs font-medium
+                    #{event.sections.first ? section_chip_classes(event.sections.first) : "bg-stone-100 text-stone-700"} hover:opacity-80",
+                    title: event.title do %>
+                <%= event.title %>
+              <% end %>
+            <% end %>
+            <% if events.size > 3 %>
+              <p class="px-1.5 text-xs text-soft">+<%= events.size - 3 %> more</p>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

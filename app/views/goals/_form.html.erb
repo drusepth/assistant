@@ -1,0 +1,15 @@
+<%= form_with model: goal, class: "space-y-4" do |form| %>
+  <%= form.field :title, placeholder: "What are you working toward?" %>
+  <%= form.field :description, as: :text_area %>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <%= form.field :status do %>
+      <%= form.select :status, Goal.statuses.keys.map { |status| [ status.humanize, status ] } %>
+    <% end %>
+    <%= form.field :target_on, as: :date_field, label_text: "Target date" %>
+  </div>
+  <%= render "shared/section_picker", form: form %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", goals_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

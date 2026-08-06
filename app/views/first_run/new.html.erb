@@ -1,0 +1,19 @@
+<div class="card p-6">
+  <h1 class="text-lg font-semibold text-ink">Welcome to Assistant</h1>
+  <p class="mb-5 mt-1 text-sm text-soft">
+    This is your household's own instance — your data lives here and nowhere else.
+    Set yourself up as the first member.
+  </p>
+
+  <%= form_with model: @user, url: setup_path, class: "space-y-4" do |form| %>
+    <%= form.field :name, label_text: "Your name", placeholder: "Alice Rivera", autofocus: true %>
+    <%= form.field :email_address, as: :email_field, label_text: "Email", placeholder: "you@example.com" %>
+    <%= form.field :password, as: :password_field, hint: "At least use something you don't use elsewhere." %>
+    <div class="space-y-1">
+      <%= label_tag :household_name, "Household name", class: "label" %>
+      <%= text_field_tag :household_name, params[:household_name], class: "input", placeholder: "e.g. The Rivera Household" %>
+      <p class="hint">Optional — you can invite family later from Settings.</p>
+    </div>
+    <%= form.submit "Create my household", class: "w-full" %>
+  <% end %>
+</div>
