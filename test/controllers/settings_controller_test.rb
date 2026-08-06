@@ -19,4 +19,25 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_not users(:one).reload.section_enabled?(health)
     assert users(:one).section_enabled?(sections(:money))
   end
+
+  test "dragged section order persists and reorders the sidebar" do
+    all_ids = Section.top_level.ids
+    new_order = all_ids.rotate
+
+    patch settings_path, params: { enabled_section_ids: all_ids, section_order: new_order }
+
+    assert_redirected_to settings_path
+    assert_equal new_order, users(:one).reload.ordered_sections.map(&:id)
+    assert_equal new_order, users(:one).enabled_sections.map(&:id)
+    assert_equal Section.top_level.ids, users(:two).ordered_sections.map(&:id)
+  end
+
+  test "saving without a section order keeps the existing order" do
+    users(:one).user_sections.create!(section: sections(:money), enabled: true, position: 1)
+
+    patch settings_path, params: { enabled_section_ids: Section.top_level.ids }
+
+    assert_redirected_to settings_path
+    assert_equal sections(:money), users(:one).reload.ordered_sections.first
+  end
 end

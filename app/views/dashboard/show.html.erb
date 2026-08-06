@@ -57,32 +57,4 @@
       <p class="px-5 py-8 text-center text-sm text-soft">No upcoming events this week.</p>
     <% end %>
   <% end %>
-
-  <%= render Ui::CardComponent.new(title: "Active goals", padded: false) do |card| %>
-    <% card.with_actions { link_to "Tasks", tasks_path, class: "btn btn-ghost btn-sm" } %>
-    <% if @active_goals.any? %>
-      <div class="divide-y divide-edge">
-        <% @active_goals.each do |goal| %>
-          <div class="flex items-center justify-between gap-3 px-4 py-3">
-            <%= link_to goal.title, goal, class: "text-sm font-medium text-ink hover:text-primary-700" %>
-            <% total = goal.tasks.size %>
-            <% if total.positive? %>
-              <span class="text-xs text-soft"><%= goal.tasks.count(&:completed?) %>/<%= total %> steps</span>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <p class="px-5 py-8 text-center text-sm text-soft">No active goals.</p>
-    <% end %>
-  <% end %>
-
-  <%= render Ui::CardComponent.new(title: "Recent documents", padded: false) do |card| %>
-    <% card.with_actions { link_to "Vault", documents_path, class: "btn btn-ghost btn-sm" } %>
-    <% if @recent_documents.any? %>
-      <div class="divide-y divide-edge"><%= render @recent_documents %></div>
-    <% else %>
-      <p class="px-5 py-8 text-center text-sm text-soft">No documents yet.</p>
-    <% end %>
-  <% end %>
 </div>

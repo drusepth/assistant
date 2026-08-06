@@ -14,6 +14,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_response :success
     assert_select "h1", text: "Dashboard"
+    assert_select "button[data-quick-add-name-param=note]", text: /Note/
     assert_match "Overdue thing", response.body
     assert_match "Checkup", response.body
   end
