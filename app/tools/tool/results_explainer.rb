@@ -72,16 +72,13 @@ module Tool
 
         create_note(
           title: response.dig("explanation", "title").presence || "Explained — #{document.title}",
-          body: [ body, questions_block(response["questions_for_doctor"]), DISCLAIMER ].compact.join("\n\n")
+          body: [
+            body,
+            bulleted_block("Questions for your doctor", response["questions_for_doctor"], limit: MAX_QUESTIONS),
+            DISCLAIMER
+          ].compact.join("\n\n")
         )
         create_follow_ups(response["follow_ups"], limit: MAX_FOLLOW_UPS)
-      end
-
-      def questions_block(questions)
-        questions = Array(questions).grep(String).map(&:strip).reject(&:empty?).first(MAX_QUESTIONS)
-        return nil if questions.none?
-
-        "Questions for your doctor:\n#{questions.map { |question| "- #{question}" }.join("\n")}"
       end
   end
 end

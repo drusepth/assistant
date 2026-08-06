@@ -83,6 +83,12 @@ module Tool
         text.truncate(MAX_DOCUMENT_CHARS)
       end
 
+      # Owned items in the given sections (default: where the tool lives),
+      # through the visibility wall, as a budgeted prompt block.
+      def section_context(slugs = self.class.section_slugs, budget: Context::DEFAULT_BUDGET)
+        Context.new(user: user, section_slugs: slugs, budget: budget)
+      end
+
       # ── Landing primitives ─────────────────────────────────────────────
 
       # Everything a tool creates is filed where the tool lives, plus the
@@ -138,6 +144,15 @@ module Tool
           date = parsed_date(deadline["date"])
           create_event(title: deadline["title"].to_s, on: date) if date
         end
+      end
+
+      # "Heading:\n- item" blocks are assembled by code so list formatting
+      # never depends on model behavior.
+      def bulleted_block(heading, items, limit:)
+        items = Array(items).grep(String).map(&:strip).reject(&:empty?).first(limit)
+        return nil if items.none?
+
+        "#{heading}:\n#{items.map { |item| "- #{item}" }.join("\n")}"
       end
 
       def parsed_date(value)
