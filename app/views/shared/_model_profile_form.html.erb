@@ -1,0 +1,31 @@
+<%# The provider picker (D10), shared by Settings and the first-run flow.
+    Locals: profile; optional return_to (local path to land on after save). %>
+<%= form_with url: model_profile_path, method: :patch, scope: :model_profile,
+      class: "space-y-4", data: { controller: "provider-fields" } do |form| %>
+  <div class="space-y-1">
+    <%= form.label :provider %>
+    <%= form.select :provider,
+          ModelProfile::PROVIDERS.map { |key, settings| [ settings[:label], key ] },
+          { selected: profile&.provider || "openai" },
+          { data: { provider_fields_target: "select", action: "provider-fields#refresh" } } %>
+  </div>
+  <div class="space-y-1" data-provider-fields-target="baseUrl">
+    <%= form.label :base_url, "API base URL" %>
+    <%= form.text_field :base_url, value: profile&.base_url %>
+    <p class="hint">Any OpenAI-compatible endpoint: OpenRouter, Groq — or a local Ollama at http://localhost:11434/v1.</p>
+  </div>
+  <div class="space-y-1" data-provider-fields-target="model">
+    <%= form.label :model, "Model" %>
+    <%= form.text_field :model, value: profile&.model || "gpt-4o-mini" %>
+  </div>
+  <div class="space-y-1">
+    <%= form.label :api_key, "API key" %>
+    <%= form.password_field :api_key, placeholder: profile&.configured? ? "•••••••• (leave blank to keep)" : "sk-… or cg-…" %>
+    <p class="hint">Chroma Golem uses one key for everything — you pick the model on chromagolem.com.</p>
+  </div>
+  <p class="text-xs text-soft">
+    Text from analyzed documents is sent to this provider. Point a custom endpoint at a local model and nothing ever leaves your machine.
+  </p>
+  <%= hidden_field_tag :return_to, local_assigns[:return_to] if local_assigns[:return_to].present? %>
+  <%= form.submit "Save AI settings" %>
+<% end %>
