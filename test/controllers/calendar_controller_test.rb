@@ -13,6 +13,15 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Bob private", response.body
   end
 
+  test "shows multi-day events on every day they span" do
+    users(:one).events.create!(title: "Beach trip",
+      starts_at: Date.new(2026, 3, 10).noon, ends_at: Date.new(2026, 3, 13).noon)
+
+    get calendar_path(year: 2026, month: 3)
+    assert_response :success
+    assert_select "a[title='Beach trip']", count: 4 # one cell entry per spanned day, Mar 10-13
+  end
+
   test "renders a specific month" do
     get calendar_path(year: 2026, month: 1)
     assert_response :success

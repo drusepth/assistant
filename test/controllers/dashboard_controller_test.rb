@@ -17,4 +17,12 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_match "Overdue thing", response.body
     assert_match "Checkup", response.body
   end
+
+  test "shows ongoing multi-day events in upcoming" do
+    sign_in_as users(:one)
+    users(:one).events.create!(title: "Conference week", starts_at: 2.days.ago, ends_at: 2.days.from_now)
+
+    get root_path
+    assert_match "Conference week", response.body
+  end
 end

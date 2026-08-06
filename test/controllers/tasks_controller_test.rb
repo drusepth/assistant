@@ -32,6 +32,22 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_not @task.reload.completed?
   end
 
+  test "reschedules own task to today or tomorrow" do
+    @task.update!(due_on: 3.days.ago)
+
+    patch reschedule_task_path(@task, to: "today")
+    assert_equal Date.current, @task.reload.due_on
+
+    patch reschedule_task_path(@task, to: "tomorrow")
+    assert_equal Date.tomorrow, @task.reload.due_on
+  end
+
+  test "cannot reschedule another user's task" do
+    other = users(:two).tasks.create!(title: "Bob's errand", due_on: 3.days.ago)
+    patch reschedule_task_path(other, to: "today")
+    assert_response :not_found
+  end
+
   test "cannot modify another user's task even when shared" do
     shared = users(:two).tasks.create!(title: "Shared")
     AccessGrant.create!(grantor: users(:two), grantee: users(:one), subject: shared)

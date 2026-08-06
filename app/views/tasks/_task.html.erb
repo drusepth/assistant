@@ -25,4 +25,13 @@
       <%= render "shared/item_chips", item: task %>
     </div>
   </div>
+
+  <% if local_assigns[:reschedule] && task.user_id == Current.user.id && !task.completed? %>
+    <div class="flex shrink-0 items-center gap-1.5">
+      <%= button_to "→ Today", reschedule_task_path(task, to: "today"), method: :patch,
+            class: "btn btn-secondary btn-sm", title: "Move due date to today" %>
+      <%= button_to "→ Tomorrow", reschedule_task_path(task, to: "tomorrow"), method: :patch,
+            class: "btn btn-secondary btn-sm", title: "Move due date to tomorrow" %>
+    </div>
+  <% end %>
 </div>
