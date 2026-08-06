@@ -1,9 +1,9 @@
 class GoalsController < ApplicationController
-  before_action :set_own_goal, only: %i[ edit update destroy move ]
+  before_action :set_own_goal, only: %i[ edit update destroy complete reopen break_down ]
 
+  # Goals live inside the Tasks section now; the old boards URL just forwards.
   def index
-    goals = Goal.visible_to(Current.user).includes(:sections, :tasks, :user)
-    @columns = Goal.statuses.keys.index_with { |status| goals.select { |goal| goal.status == status } }
+    redirect_to tasks_path
   end
 
   def show
@@ -19,8 +19,9 @@ class GoalsController < ApplicationController
   def create
     @goal = Current.user.goals.new(goal_params)
     if @goal.save
-      @goal.enqueue_auto_sort!
-      redirect_to goals_path, notice: "Goal added."
+      @goal.enqueue_break_down!
+      notice = @goal.breaking_down? ? "Goal added — your assistant is breaking it into steps." : "Goal added."
+      redirect_to tasks_path, notice: notice
     else
       render :new, status: :unprocessable_entity
     end
@@ -39,15 +40,26 @@ class GoalsController < ApplicationController
 
   def destroy
     @goal.destroy!
-    redirect_to goals_path, notice: "Goal deleted."
+    redirect_to tasks_path, notice: "Goal deleted."
   end
 
-  def move
-    status = params.expect(:status)
-    raise ActionController::BadRequest, "unknown status" unless Goal.statuses.key?(status)
+  def complete
+    @goal.update!(status: :done)
+    redirect_back fallback_location: goal_path(@goal)
+  end
 
-    @goal.update!(status: status)
-    redirect_back fallback_location: goals_path
+  def reopen
+    @goal.update!(status: :active)
+    redirect_back fallback_location: goal_path(@goal)
+  end
+
+  def break_down
+    if @goal.auto_sort_profile
+      BreakDownGoalJob.perform_later(@goal, append: @goal.tasks.any?)
+      redirect_to @goal, notice: "Asking your assistant for steps."
+    else
+      redirect_to @goal, alert: "Configure a model in Settings to get AI-suggested steps."
+    end
   end
 
   private
@@ -56,6 +68,6 @@ class GoalsController < ApplicationController
     end
 
     def goal_params
-      params.expect(goal: [ :title, :description, :status, :target_on, section_ids: [] ])
+      params.expect(goal: [ :title, :description, :target_on, section_ids: [] ])
     end
 end

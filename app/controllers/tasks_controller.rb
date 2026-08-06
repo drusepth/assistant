@@ -1,15 +1,16 @@
 class TasksController < ApplicationController
-  before_action :set_own_task, only: %i[ edit update destroy complete reopen reschedule ]
+  DONE_COLUMN_LIMIT = 20
+
+  before_action :set_own_task, only: %i[ edit update destroy complete reopen reschedule move ]
 
   def index
-    scope = Task.visible_to(Current.user).includes(:sections, :user)
-    if params[:filter] == "completed"
-      @filter = "completed"
-      @tasks = scope.completed.order(completed_at: :desc)
-    else
-      @filter = "open"
-      @tasks = scope.open.order(Arel.sql("due_on IS NULL, due_on ASC"))
-    end
+    scope = Task.visible_to(Current.user).includes(:sections, :user, :goal)
+    open_tasks = scope.open.order(Arel.sql("due_on IS NULL, due_on ASC, created_at ASC")).to_a
+    @today_tasks, @later_tasks = open_tasks.partition(&:for_today?)
+    @done_tasks = scope.completed.order(completed_at: :desc).limit(DONE_COLUMN_LIMIT)
+
+    @goals = Goal.visible_to(Current.user).active.includes(:sections, :tasks, :user).order(created_at: :desc)
+    @new_goal = Current.user.goals.new
   end
 
   def show
@@ -59,6 +60,28 @@ class TasksController < ApplicationController
   def reschedule
     @task.update!(due_on: params[:to] == "tomorrow" ? Date.tomorrow : Date.current)
     redirect_back fallback_location: today_path
+  end
+
+  # Board moves. Done is completion, not a bucket, so moving in and out of
+  # that column completes/reopens the task.
+  def move
+    case params.expect(:column)
+    when "done"
+      @task.complete!
+    when "today"
+      @task.reopen! if @task.completed?
+      @task.update!(bucket: :today)
+    when "later"
+      @task.reopen! if @task.completed?
+      # A due date that has already arrived would pull the task straight back
+      # into Today, so "not today" also nudges the date to tomorrow.
+      updates = { bucket: :later }
+      updates[:due_on] = Date.tomorrow if @task.due_on && @task.due_on <= Date.current
+      @task.update!(updates)
+    else
+      raise ActionController::BadRequest, "unknown column"
+    end
+    redirect_back fallback_location: tasks_path
   end
 
   private

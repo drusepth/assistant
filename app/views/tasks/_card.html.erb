@@ -1,0 +1,48 @@
+<%# Board card. `column` is "later"/"today"/"done"; moves go one column at a time. %>
+<% own = task.user_id == Current.user.id %>
+<div class="card p-3">
+  <div class="flex items-start gap-2.5">
+    <% if own %>
+      <%= button_to task.completed? ? reopen_task_path(task) : complete_task_path(task), method: :patch,
+            class: "-m-1.5 mt-0 shrink-0 cursor-pointer p-1.5 text-soft hover:text-primary-600",
+            title: task.completed? ? "Reopen" : "Complete" do %>
+        <% if task.completed? %>
+          <%= icon(:check_circle, css_class: "size-5 text-primary-600") %>
+        <% else %>
+          <span class="block size-5 rounded-full border-2 border-stone-300 hover:border-primary-500"></span>
+        <% end %>
+      <% end %>
+    <% else %>
+      <span class="block size-5 shrink-0"></span>
+    <% end %>
+
+    <div class="min-w-0 flex-1">
+      <%= link_to task.title, task,
+            class: "text-sm font-medium hover:text-primary-700 #{task.completed? ? "text-soft line-through" : "text-ink"}" %>
+      <div class="mt-1 flex flex-wrap items-center gap-1.5">
+        <% if task.due_on && !task.completed? %>
+          <span class="text-xs <%= task.due_on < Date.current ? "font-medium text-red-600" : "text-soft" %>">
+            <%= task.due_on == Date.current ? "Due today" : "Due #{task.due_on.strftime("%b %-d")}" %>
+          </span>
+        <% end %>
+        <%= render "tasks/goal_chip", task: task %>
+        <%= render "shared/item_chips", item: task %>
+      </div>
+    </div>
+  </div>
+
+  <% moves = { "later" => [ nil, "today" ], "today" => [ "later", "done" ], "done" => [ "today", nil ] }.fetch(column) %>
+  <% if own %>
+    <div class="mt-2 flex items-center justify-between border-t border-edge pt-1.5">
+      <% back, forward = moves %>
+      <% if back %>
+        <%= button_to "←", move_task_path(task, column: back), method: :patch, class: "btn btn-ghost btn-sm",
+              title: "Move to #{back.humanize}", "aria-label": "Move to #{back.humanize}" %>
+      <% else %><span></span><% end %>
+      <% if forward %>
+        <%= button_to "→", move_task_path(task, column: forward), method: :patch, class: "btn btn-ghost btn-sm",
+              title: "Move to #{forward.humanize}", "aria-label": "Move to #{forward.humanize}" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

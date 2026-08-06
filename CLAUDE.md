@@ -35,10 +35,10 @@ Sections are **lenses, not silos**. ONE shared pool of primitives; sections are 
 
 Primitives (each `belongs_to :user`, includes `Sectionable` + `Visible`):
 - **Event** — dated things (appointments, deadlines, renewals)
-- **Task** — doable things, optional dates
+- **Task** — day-sized doable things with a clear done/not-done state; board-viewable (Later/Today/Done)
 - **Document** — files with understanding (Active Storage attachment + extracted text + AI summary)
 - **Person** — contacts and what matters about them (optionally linked to a household User)
-- **Goal** — multi-step things with progress; kanban-viewable; Situations are Goals spawning multi-tagged Tasks/Events
+- **Goal** — high-level outcomes ("get a job") AI-broken into day-sized Tasks (D17); lives inside the Tasks section; Situations are Goals spawning multi-tagged Tasks/Events
 - **Note** — everything the assistant knows about the user
 
 Every item is **multi-taggable** by section (e.g., "Mom's cardiology appointment" = Health + People).
@@ -56,7 +56,7 @@ Every item is **multi-taggable** by section (e.g., "Mom's cardiology appointment
 - **Calendar** — all Events, any tag; the flagship holistic view
 - **Today/Inbox** — all tasks + upcoming events
 - **Documents vault** — all docs, filterable by section
-- **Goals boards** — kanban
+- **Tasks board** — one merged Tasks section (D17): goal-capture input → AI breakdown, goals progress strip, Later/Today/Done task kanban
 - **Settings** — section toggles, per-section agent dials
 - **FTUE** (future) — asks which sections to default on
 
@@ -88,6 +88,6 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 
 ## Where we left off
 
-**Milestone 1 (Organize core, AI-lite — D13) is complete** and under test: the database layer (households/users/sessions, seeded sections taxonomy, six primitives, tagging, access grants with `visible_to`), the design system, the full Organize UI — CRUD for all six primitives, Dashboard, Today, Calendar, Documents vault (section filters), Goals boards (kanban), section pages, Settings (section toggles + section-level sharing), item-level sharing on every show page — onboarding/member management (D15: first-run `/setup`, link-based invitations, admin roles), and the one AI feature: document understanding (household `ModelProfile` configured in Settings → `Llm::Client` OpenAI-compatible adapter → `AnalyzeDocumentJob` → summary + section tags, auto-applied to untagged documents, suggest-and-click otherwise). **Capture is now zero-friction (D16)**: every primitive's new form is minimal (task = title, event = title + day, note = body, goal = title, person = name, document = file) and a per-primitive `Categorize*Job` auto-files sections plus implied dates/times/titles/relationships; date fields everywhere use the native picker + shortcut chips, and event forms use date + time parts (blank start time = all-day) instead of raw datetimes. Next steps, in order:
-1. Pressure-test Situations with "eviction notice" (Q7) — a Goal template spawning multi-tagged Tasks/Events, with AI drafting
+**Milestone 1 (Organize core, AI-lite — D13) is complete** and under test: the database layer (households/users/sessions, seeded sections taxonomy, six primitives, tagging, access grants with `visible_to`), the design system, the full Organize UI — CRUD for all six primitives, Dashboard, Today, Calendar, Documents vault (section filters), Goals boards (kanban), section pages, Settings (section toggles + section-level sharing), item-level sharing on every show page — onboarding/member management (D15: first-run `/setup`, link-based invitations, admin roles), and the one AI feature: document understanding (household `ModelProfile` configured in Settings → `Llm::Client` OpenAI-compatible adapter → `AnalyzeDocumentJob` → summary + section tags, auto-applied to untagged documents, suggest-and-click otherwise). **Capture is now zero-friction (D16)**: every primitive's new form is minimal (task = title, event = title + day, note = body, goal = title, person = name, document = file) and a per-primitive `Categorize*Job` auto-files sections plus implied dates/times/titles/relationships; date fields everywhere use the native picker + shortcut chips, and event forms use date + time parts (blank start time = all-day) instead of raw datetimes. **Tasks and Goals are now one section (D17)**: the Tasks page leads with a goal-capture input ("What do you want to accomplish?") → `BreakDownGoalJob` (one LLM call replacing `CategorizeGoalJob`) auto-creates 3–10 scheduled, section-tagged day-sized tasks and files the goal; below it a goals progress strip, then the Later/Today/Done task kanban (Today = pulled-in ∪ due/overdue; Done derived from `completed_at`). Goals lost their board and `backlog` status (active/done, auto-finish when the last step completes); goal pages have "suggest more steps" (append-only); task cards/rows show their goal as a flag chip; dashboard header has +Task/+Event/+Goal. Next steps, in order:
+1. Pressure-test Situations with "eviction notice" (Q7) — a Goal template spawning multi-tagged Tasks/Events, with AI drafting; it should ride on the D17 breakdown pipeline
 2. Then: revisit D14 open items (export, encryption of `model_profiles.api_key`) or start Milestone 2 (Tools mode)

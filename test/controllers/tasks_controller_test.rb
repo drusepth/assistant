@@ -20,6 +20,60 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Bob private", response.body
   end
 
+  test "index renders the board with tasks in the right columns" do
+    users(:one).tasks.create!(title: "Overdue thing", due_on: Date.yesterday)
+    users(:one).tasks.create!(title: "Someday thing")
+    users(:one).tasks.create!(title: "Finished thing", completed_at: Time.current)
+
+    get tasks_path
+    assert_response :success
+    %w[Later Today Done].each { |column| assert_match column, response.body }
+    assert_match "Overdue thing", response.body
+    assert_match "Finished thing", response.body
+    assert_match "What do you want to accomplish?", response.body
+  end
+
+  test "index shows active goals with their progress" do
+    goal = users(:one).goals.create!(title: "Find a new job", broken_down_at: Time.current)
+    users(:one).tasks.create!(title: "Update resume", goal: goal)
+
+    get tasks_path
+    assert_match "Find a new job", response.body
+    assert_match "0/1 steps", response.body
+  end
+
+  test "moves a task across the board" do
+    patch move_task_path(@task, column: "today")
+    assert @task.reload.today?
+
+    patch move_task_path(@task, column: "done")
+    assert @task.reload.completed?
+
+    patch move_task_path(@task, column: "today")
+    @task.reload
+    assert_not @task.completed?
+    assert @task.today?
+  end
+
+  test "moving a due task back to later reschedules it to tomorrow" do
+    @task.update!(due_on: Date.current, bucket: :today)
+
+    patch move_task_path(@task, column: "later")
+
+    @task.reload
+    assert @task.later?
+    assert_equal Date.tomorrow, @task.due_on
+  end
+
+  test "rejects an unknown column and other users' tasks" do
+    patch move_task_path(@task, column: "bogus")
+    assert_response :bad_request
+
+    other = users(:two).tasks.create!(title: "Bob's errand")
+    patch move_task_path(other, column: "today")
+    assert_response :not_found
+  end
+
   test "creates a task with section tags" do
     assert_difference("Task.count") do
       post tasks_path, params: { task: { title: "Budget review", section_ids: [ sections(:money).id ] } }
