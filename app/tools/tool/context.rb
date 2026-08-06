@@ -40,11 +40,18 @@ module Tool
 
       def blocks
         [
+          [ "Active goals", goal_lines ],
           [ "Appointments and events", event_lines ],
           [ "Notes", note_lines ],
           [ "Documents", document_lines ],
           [ "Open tasks", task_lines ]
         ]
+      end
+
+      def goal_lines
+        scope(Goal).active.order(updated_at: :desc).limit(ITEMS_PER_KIND).map do |goal|
+          "- #{goal.title} (#{goal.tasks.completed.count}/#{goal.tasks.count} steps done)"
+        end
       end
 
       def event_lines

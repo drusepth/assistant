@@ -129,7 +129,7 @@ Act-zone verification, ending green (`bin/rails test`, `bin/rubocop`) and with
 CLAUDE.md's "where we left off" updated. Order is by infrastructure dependency, not
 importance — the front-door tool (decode) needs its routing *targets* to exist first.
 
-### Wave 1 — shared plumbing + the single-document drafts (M2.3a)
+### ✅ Wave 1 — shared plumbing + the single-document drafts (M2.3a)
 
 Extract S1 from `DisputeLetter` (behavior-neutral refactor, existing tests stay
 green), add the Event helper, then four new tools that are each ~a prompt:
@@ -140,7 +140,7 @@ green), add the Event helper, then four new tools that are each ~a prompt:
 3. **`debt_collector_response`** (Disputes + Debt)
 4. **`deposit_demand`** (Disputes + Renting)
 
-### Wave 2 — owned-context drafts (M2.3b)
+### ✅ Wave 2 — owned-context drafts (M2.3b)
 
 Build `section_context` (S1's last piece), then:
 
@@ -148,20 +148,20 @@ Build `section_context` (S1's last piece), then:
 6. **`negotiation_prep`** (Career + Renting + Bills) — free-text context + optional
    document; exercises the optional-document path.
 
-### Wave 3 — the front door (M2.3c, D21)
+### ✅ Wave 3 — the front door (M2.3c, D21)
 
 `next_tools` routing + document-page entry point, then:
 
 7. **`decode_letter`** (Rights + Money + Health + vault) — routes to everything built
    in waves 1–2 plus the existing `dispute_letter`.
 
-### Wave 4 — the money-on-the-table tool (M2.3d)
+### ✅ Wave 4 — the money-on-the-table tool (M2.3d)
 
 `:select`/`:checkboxes` input kinds, then:
 
 8. **`benefits_screener`** (Money → Benefits).
 
-### Wave 5 — the tutor (M2.5, D22)
+### ✅ Wave 5 — the tutor (M2.5, D22)
 
 `tool_run_messages` + chat lifecycle + run-page chat UI, then:
 

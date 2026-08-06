@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_130001) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -206,6 +206,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130000) do
     t.index ["tool_run_id"], name: "index_tool_run_items_on_tool_run_id"
   end
 
+  create_table "tool_run_messages", force: :cascade do |t|
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.string "role", null: false
+    t.integer "tool_run_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tool_run_id", "created_at"], name: "index_tool_run_messages_on_tool_run_id_and_created_at"
+    t.index ["tool_run_id"], name: "index_tool_run_messages_on_tool_run_id"
+  end
+
   create_table "tool_runs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "error"
@@ -263,6 +273,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130000) do
   add_foreign_key "tasks", "goals"
   add_foreign_key "tasks", "users"
   add_foreign_key "tool_run_items", "tool_runs"
+  add_foreign_key "tool_run_messages", "tool_runs"
   add_foreign_key "tool_runs", "users"
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"

@@ -6,6 +6,7 @@
 class ToolRun < ApplicationRecord
   belongs_to :user
   has_many :tool_run_items, dependent: :destroy
+  has_many :tool_run_messages, dependent: :destroy
 
   enum :status, { queued: "queued", running: "running", done: "done", failed: "failed" }, default: :queued
 
@@ -33,6 +34,16 @@ class ToolRun < ApplicationRecord
   end
 
   def finished? = done? || failed?
+
+  # Chat runs (D22): done means *live* — the opening message is in and the
+  # composer stays open; there is no finished state short of leaving.
+  def chat? = tool.kind == :chat
+
+  # A reply is pending exactly when the newest message is the user's — a
+  # failed turn appends a notice, so the thinking indicator can't stick.
+  def awaiting_reply?
+    chat? && tool_run_messages.ordered.last&.user_role?
+  end
 
   private
     def required_inputs_present

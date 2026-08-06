@@ -20,6 +20,14 @@ class ToolRunsController < ApplicationController
     @tool_run = Current.user.tool_runs.find(params[:id])
   end
 
+  # "Save a recap" on a chat run — the explicit click that turns a session
+  # into an owned Note (D20: nothing lands without the user asking).
+  def recap
+    run = Current.user.tool_runs.find(params[:id])
+    ChatRecapJob.perform_later(run) if run.chat? && run.tool_run_messages.conversational.exists?
+    redirect_to run
+  end
+
   private
     def set_tool
       @tool = Tool.find!(params[:tool_slug])

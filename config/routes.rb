@@ -54,7 +54,12 @@ Rails.application.routes.draw do
 
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
-  resources :tool_runs, only: :show
+  resources :tool_runs, only: :show do
+    resources :messages, only: :create, controller: "tool_run_messages"
+    member do
+      post :recap
+    end
+  end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

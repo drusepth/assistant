@@ -6,7 +6,12 @@
     ) do |header| %>
   <% if @tool_run.finished? %>
     <% header.with_actions do %>
-      <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+      <% if @tool_run.chat? && @tool_run.done? %>
+        <%= button_to "Save a recap", recap_tool_run_path(@tool_run), method: :post, class: "btn btn-secondary" %>
+        <%= link_to "New session", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+      <% else %>
+        <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>
@@ -19,6 +24,31 @@
   <% elsif @tool_run.failed? %>
     <%= render Ui::CardComponent.new(title: "That didn't work") do %>
       <p class="text-sm text-red-600"><%= @tool_run.error %></p>
+    <% end %>
+  <% elsif @tool_run.chat? %>
+    <%= render Ui::CardComponent.new(padded: false) do %>
+      <div class="flex max-h-[65vh] flex-col-reverse gap-3 overflow-y-auto p-4">
+        <% if @tool_run.awaiting_reply? %>
+          <p class="text-xs text-soft">Thinking…</p>
+        <% end %>
+        <%= render partial: "tool_runs/message", collection: @tool_run.tool_run_messages.ordered.reverse %>
+      </div>
+      <div class="border-t border-edge p-3">
+        <%= form_with url: tool_run_messages_path(@tool_run), class: "flex gap-2" do %>
+          <%= text_field_tag :content, nil, class: "input flex-1", autocomplete: "off",
+                placeholder: "Ask, answer, or say where to go next…" %>
+          <%= submit_tag "Send", class: "btn btn-primary" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% @tool_run.items.grep(Note).each do |note| %>
+      <%= render Ui::CardComponent.new(title: note.title, subtitle: "Recap — saved to your notes") do |card| %>
+        <% card.with_actions do %>
+          <%= link_to "Open note", note, class: "btn btn-secondary btn-sm" %>
+        <% end %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= note.body %></p>
+      <% end %>
     <% end %>
   <% else %>
     <% items = @tool_run.items %>
