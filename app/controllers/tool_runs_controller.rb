@@ -1,6 +1,7 @@
 class ToolRunsController < ApplicationController
   before_action :set_tool, only: %i[ new create ]
   before_action :load_document_choices, only: %i[ new create ]
+  before_action :load_person_choices, only: %i[ new create ]
 
   def new
     @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params)
@@ -37,6 +38,12 @@ class ToolRunsController < ApplicationController
       return unless @tool.inputs.any?(&:document?)
 
       @document_choices = Document.visible_to(Current.user).order(created_at: :desc)
+    end
+
+    def load_person_choices
+      return unless @tool.inputs.any?(&:person?)
+
+      @person_choices = Person.visible_to(Current.user).order(:name)
     end
 
     # `new` accepts the same params so "Run again" and next-step links can

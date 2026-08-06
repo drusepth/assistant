@@ -73,6 +73,17 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
       text: /Start/
   end
 
+  test "new renders the person picker from visible people" do
+    users(:one).people.create!(name: "Rosa")
+    users(:two).people.create!(name: "Private Pete")
+
+    get new_tool_run_path("reconnect")
+
+    assert_response :success
+    assert_select "select#inputs_person_id option", text: "Rosa"
+    assert_select "select#inputs_person_id option", text: "Private Pete", count: 0
+  end
+
   test "new renders select and checkbox input kinds" do
     get new_tool_run_path("benefits_screener")
 

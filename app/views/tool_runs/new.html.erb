@@ -34,6 +34,17 @@
                   <%= link_to "upload one first", new_document_path, class: "text-primary-700 hover:underline" %>.
                 </p>
               <% end %>
+            <% elsif input.person? %>
+              <% if @person_choices.any? %>
+                <%= select_tag "inputs[#{input.name}]",
+                      options_from_collection_for_select(@person_choices, :id, :name, @tool_run.inputs[input.name]),
+                      include_blank: "Choose a person…", class: "input", id: "inputs_#{input.name}" %>
+              <% else %>
+                <p class="hint">
+                  Nobody in your people yet —
+                  <%= link_to "add someone first", new_person_path, class: "text-primary-700 hover:underline" %>.
+                </p>
+              <% end %>
             <% elsif input.select? %>
               <%= select_tag "inputs[#{input.name}]",
                     options_for_select(input.options, @tool_run.inputs[input.name]),

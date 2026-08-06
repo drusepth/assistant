@@ -9,6 +9,7 @@ module Tool
     Input = Data.define(:name, :label, :kind, :required, :hint, :options) do
       def required? = required
       def document? = kind == :document
+      def person? = kind == :person
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
     end
@@ -84,6 +85,15 @@ module Tool
         raise Llm::Error, "That document has no readable text yet — open it and run Analyze first." unless text
 
         text.truncate(MAX_DOCUMENT_CHARS)
+      end
+
+      # The person an input points at — same contract as chosen_document.
+      def chosen_person(input_name = :person_id)
+        return nil if inputs[input_name].blank?
+
+        (@chosen_people ||= {})[input_name.to_s] ||=
+          Person.visible_to(user).find_by(id: inputs[input_name]) ||
+            raise(Llm::Error, "That person is gone or no longer shared with you.")
       end
 
       # Owned items in the given sections (default: where the tool lives),
