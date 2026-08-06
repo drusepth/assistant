@@ -4,6 +4,12 @@ class DashboardController < ApplicationController
     @due_today_tasks = visible_tasks.open.where(due_on: Date.current)
     @upcoming_events = Event.visible_to(Current.user)
       .overlapping(Time.current..7.days.from_now.end_of_day).includes(:sections).limit(8)
+
+    # Blank records for the header's inline quick-add forms.
+    @quick_task = Current.user.tasks.new
+    @quick_note = Current.user.notes.new
+    @quick_event = Current.user.events.new
+    @quick_goal = Current.user.goals.new
   end
 
   private
