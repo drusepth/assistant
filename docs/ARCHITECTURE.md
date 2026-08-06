@@ -41,10 +41,10 @@ Six tables, deliberately boring. Every primitive `belongs_to :user` (its owner) 
 | Model | Own columns | Notes |
 |---|---|---|
 | `Event` | title, description, starts_at, ends_at, all_day, location, goal FK (opt) | Calendar feed |
-| `Task` | title, notes, due_on (opt), completed_at, goal FK (opt) | Today/Inbox feed |
+| `Task` | title, notes, due_on (opt), completed_at, bucket (later/today), goal FK (opt) | Today/Inbox feed; Later/Today/Done board (D17 — Done derived from completed_at, Today = bucket ∪ due) |
 | `Document` | title, description, extracted_text, summary + Active Storage `file` | extracted_text/summary filled by the AI pipeline later |
 | `Person` | name, relationship, email, phone, birthday, notes, linked_user FK (opt) | Contacts + context |
-| `Goal` | title, description, status (backlog/active/done), target_on | Kanban; has_many tasks/events (nullify). Situations (D7) = a Goal + spawned multi-tagged Tasks/Events |
+| `Goal` | title, description, status (active/done), target_on, broken_down_at | Lives inside the Tasks section (D17); `BreakDownGoalJob` plans it into scheduled tasks; auto-done when the last step completes; has_many tasks/events (nullify). Situations (D7) = a Goal + spawned multi-tagged Tasks/Events |
 | `Note` | title (opt), body | The memory layer's inspectable form |
 
 **`Sectionable`** — `section_taggings` (polymorphic join to `sections`, unique per item+section) gives multi-tagging and the `in_section(section)` scope. Cross-cutting views are just unscoped queries; section pages are `in_section` queries. No section ever owns a table.

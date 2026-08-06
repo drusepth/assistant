@@ -1,15 +1,27 @@
 <div class="card p-4">
-  <%= link_to goal.title, goal, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+  <div class="flex items-start justify-between gap-2">
+    <%= link_to goal.title, goal, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+    <% if goal.done? %>
+      <span class="chip bg-primary-100 text-primary-800">Done</span>
+    <% end %>
+  </div>
 
-  <% total = goal.tasks.size %>
-  <% done = goal.tasks.count(&:completed?) %>
-  <% if total.positive? %>
-    <div class="mt-2">
-      <div class="h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
-        <div class="h-full rounded-full bg-primary-500" style="width: <%= (done * 100.0 / total).round %>%"></div>
+  <% if goal.breaking_down? %>
+    <p class="mt-2 flex items-center gap-1.5 text-xs text-soft">
+      <span class="size-1.5 animate-pulse rounded-full bg-primary-500"></span>
+      Breaking this into steps…
+    </p>
+  <% else %>
+    <% total = goal.tasks.size %>
+    <% done = goal.tasks.count(&:completed?) %>
+    <% if total.positive? %>
+      <div class="mt-2">
+        <div class="h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
+          <div class="h-full rounded-full bg-primary-500" style="width: <%= (done * 100.0 / total).round %>%"></div>
+        </div>
+        <p class="mt-1 text-xs text-soft"><%= done %>/<%= total %> steps</p>
       </div>
-      <p class="mt-1 text-xs text-soft"><%= done %>/<%= total %> tasks</p>
-    </div>
+    <% end %>
   <% end %>
 
   <div class="mt-2 flex flex-wrap items-center gap-1.5">
@@ -18,23 +30,4 @@
     <% end %>
     <%= render "shared/item_chips", item: goal %>
   </div>
-
-  <% if goal.user_id == Current.user.id %>
-    <% statuses = Goal.statuses.keys %>
-    <% position = statuses.index(goal.status) %>
-    <div class="mt-3 flex items-center justify-between border-t border-edge pt-2">
-      <% if position.positive? %>
-        <%= button_to "←", move_goal_path(goal, status: statuses[position - 1]),
-              method: :patch, class: "btn btn-ghost btn-sm",
-              title: "Move to #{statuses[position - 1].humanize}",
-              "aria-label": "Move to #{statuses[position - 1].humanize}" %>
-      <% else %><span></span><% end %>
-      <% if position < statuses.size - 1 %>
-        <%= button_to "→", move_goal_path(goal, status: statuses[position + 1]),
-              method: :patch, class: "btn btn-ghost btn-sm",
-              title: "Move to #{statuses[position + 1].humanize}",
-              "aria-label": "Move to #{statuses[position + 1].humanize}" %>
-      <% end %>
-    </div>
-  <% end %>
 </div>

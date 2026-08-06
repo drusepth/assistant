@@ -3,8 +3,11 @@
     <%= link_to new_task_path, class: "btn btn-secondary" do %>
       <%= icon(:plus, css_class: "size-4") %> Task
     <% end %>
-    <%= link_to new_event_path, class: "btn btn-primary" do %>
+    <%= link_to new_event_path, class: "btn btn-secondary" do %>
       <%= icon(:plus, css_class: "size-4") %> Event
+    <% end %>
+    <%= link_to new_goal_path, class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Goal
     <% end %>
   <% end %>
 <% end %>
@@ -46,7 +49,7 @@
   <% end %>
 
   <%= render Ui::CardComponent.new(title: "Active goals", padded: false) do |card| %>
-    <% card.with_actions { link_to "Boards", goals_path, class: "btn btn-ghost btn-sm" } %>
+    <% card.with_actions { link_to "Tasks", tasks_path, class: "btn btn-ghost btn-sm" } %>
     <% if @active_goals.any? %>
       <div class="divide-y divide-edge">
         <% @active_goals.each do |goal| %>
@@ -54,7 +57,7 @@
             <%= link_to goal.title, goal, class: "text-sm font-medium text-ink hover:text-primary-700" %>
             <% total = goal.tasks.size %>
             <% if total.positive? %>
-              <span class="text-xs text-soft"><%= goal.tasks.count(&:completed?) %>/<%= total %> tasks</span>
+              <span class="text-xs text-soft"><%= goal.tasks.count(&:completed?) %>/<%= total %> steps</span>
             <% end %>
           </div>
         <% end %>

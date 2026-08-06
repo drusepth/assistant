@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_120001) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -84,9 +84,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_010000) do
   end
 
   create_table "goals", force: :cascade do |t|
+    t.datetime "broken_down_at"
     t.datetime "created_at", null: false
     t.text "description"
-    t.integer "status", default: 0, null: false
+    t.integer "status", default: 1, null: false
     t.date "target_on"
     t.string "title", null: false
     t.datetime "updated_at", null: false
@@ -178,6 +179,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_010000) do
   end
 
   create_table "tasks", force: :cascade do |t|
+    t.integer "bucket", default: 0, null: false
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.date "due_on"
@@ -186,6 +188,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_010000) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["bucket"], name: "index_tasks_on_bucket"
     t.index ["due_on"], name: "index_tasks_on_due_on"
     t.index ["goal_id"], name: "index_tasks_on_goal_id"
     t.index ["user_id"], name: "index_tasks_on_user_id"

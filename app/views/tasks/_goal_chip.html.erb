@@ -1,0 +1,14 @@
+<%# Which goal a task serves, shown on cards and rows. Links only to goals
+    the viewer owns — a shared task's unshared goal isn't reachable. %>
+<% if task.goal && !local_assigns[:hide_goal] %>
+  <% chip_classes = "inline-flex max-w-48 items-center gap-1 text-xs text-soft" %>
+  <% if task.goal.user_id == Current.user.id %>
+    <%= link_to goal_path(task.goal), class: "#{chip_classes} hover:text-primary-700" do %>
+      <%= icon(:flag, css_class: "size-3 shrink-0") %><span class="truncate"><%= task.goal.title %></span>
+    <% end %>
+  <% else %>
+    <span class="<%= chip_classes %>">
+      <%= icon(:flag, css_class: "size-3 shrink-0") %><span class="truncate"><%= task.goal.title %></span>
+    </span>
+  <% end %>
+<% end %>

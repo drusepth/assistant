@@ -22,6 +22,7 @@
           Due <%= task.due_on.strftime("%b %-d") %>
         </span>
       <% end %>
+      <%= render "tasks/goal_chip", task: task, hide_goal: local_assigns[:hide_goal] %>
       <%= render "shared/item_chips", item: task %>
     </div>
   </div>

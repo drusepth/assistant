@@ -27,6 +27,7 @@ Rails.application.routes.draw do
       patch :complete
       patch :reopen
       patch :reschedule
+      patch :move
     end
   end
   resources :documents do
@@ -38,7 +39,9 @@ Rails.application.routes.draw do
   resources :people
   resources :goals do
     member do
-      patch :move
+      patch :complete
+      patch :reopen
+      post :break_down
     end
   end
   resources :notes

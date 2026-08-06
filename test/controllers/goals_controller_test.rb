@@ -6,44 +6,65 @@ class GoalsControllerTest < ActionDispatch::IntegrationTest
     @goal = users(:one).goals.create!(title: "Find a new job")
   end
 
-  test "boards render columns" do
+  test "index redirects to the merged Tasks section" do
     get goals_path
-    assert_response :success
-    assert_match "Backlog", response.body
-    assert_match "Find a new job", response.body
+    assert_redirected_to tasks_path
   end
 
-  test "moves a goal between statuses" do
-    patch move_goal_path(@goal, status: "active")
+  test "creating a goal queues the AI breakdown" do
+    assert_enqueued_with(job: BreakDownGoalJob) do
+      post goals_path, params: { goal: { title: "Fight the eviction" } }
+    end
+    assert_redirected_to tasks_path
+  end
+
+  test "hand-tagged goals still get broken down" do
+    assert_enqueued_with(job: BreakDownGoalJob) do
+      post goals_path, params: { goal: { title: "Fight the eviction", section_ids: [ sections(:rights).id ] } }
+    end
+    assert_equal [ sections(:rights) ], Goal.last.sections.to_a
+  end
+
+  test "no breakdown without a configured model profile" do
+    sign_in_as users(:outsider)
+    assert_no_enqueued_jobs(only: BreakDownGoalJob) do
+      post goals_path, params: { goal: { title: "Get fit" } }
+    end
+  end
+
+  test "marks a goal done and reactivates it" do
+    patch complete_goal_path(@goal)
+    assert @goal.reload.done?
+
+    patch reopen_goal_path(@goal)
     assert @goal.reload.active?
   end
 
-  test "rejects an unknown status" do
-    patch move_goal_path(@goal, status: "bogus")
-    assert_response :bad_request
+  test "break_down queues an append run for a planned goal" do
+    @goal.tasks.create!(user: users(:one), title: "Existing step")
+
+    assert_enqueued_with(job: BreakDownGoalJob, args: [ @goal, { append: true } ]) do
+      post break_down_goal_path(@goal)
+    end
+    assert_redirected_to goal_path(@goal)
   end
 
-  test "creates a goal" do
-    assert_difference("Goal.count") do
-      post goals_path, params: { goal: { title: "Fight the eviction", status: "active", section_ids: [ sections(:rights).id ] } }
-    end
-  end
-
-  test "quick-adding a bare title queues auto-sorting" do
-    assert_enqueued_with(job: CategorizeGoalJob) do
-      post goals_path, params: { goal: { title: "Save $5k by December" } }
-    end
-  end
-
-  test "hand-tagged goals are not auto-sorted" do
-    assert_no_enqueued_jobs(only: CategorizeGoalJob) do
-      post goals_path, params: { goal: { title: "Fight the eviction", section_ids: [ sections(:rights).id ] } }
-    end
+  test "show renders steps without a duplicate goal chip" do
+    @goal.tasks.create!(user: users(:one), title: "Update resume")
+    get goal_path(@goal)
+    assert_response :success
+    assert_match "Update resume", response.body
   end
 
   test "new form is quick capture" do
     get new_goal_path
     assert_response :success
     assert_match "What are you working toward?", response.body
+  end
+
+  test "cannot act on another user's goal" do
+    other = users(:two).goals.create!(title: "Bob's goal")
+    patch complete_goal_path(other)
+    assert_response :not_found
   end
 end

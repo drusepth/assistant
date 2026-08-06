@@ -1,9 +1,17 @@
 <% own = @goal.user_id == Current.user.id %>
+<%= turbo_stream_from Current.user, :tasks if own %>
 
 <%= render Ui::PageHeaderComponent.new(title: @goal.title, subtitle: @goal.target_on && "Target: #{@goal.target_on.strftime("%B %-d, %Y")}") do |header| %>
   <% header.with_actions do %>
-    <span class="chip <%= @goal.done? ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-700" %>"><%= @goal.status.humanize %></span>
+    <% if @goal.done? %>
+      <span class="chip bg-primary-100 text-primary-800">Done</span>
+    <% end %>
     <% if own %>
+      <% if @goal.done? %>
+        <%= button_to "Reactivate", reopen_goal_path(@goal), method: :patch, class: "btn btn-secondary" %>
+      <% else %>
+        <%= button_to "Mark done", complete_goal_path(@goal), method: :patch, class: "btn btn-secondary" %>
+      <% end %>
       <%= link_to "Edit", edit_goal_path(@goal), class: "btn btn-secondary" %>
       <%= button_to "Delete", @goal, method: :delete, class: "btn btn-danger",
             data: { turbo_confirm: "Delete this goal? Its tasks and events stay, unlinked." } %>
@@ -19,14 +27,28 @@
       <% end %>
     <% end %>
 
-    <%= render Ui::CardComponent.new(title: "Tasks", padded: false) do |card| %>
+    <%= render Ui::CardComponent.new(title: "Steps", padded: false) do |card| %>
       <% if own %>
-        <% card.with_actions { link_to "Add task", new_task_path(goal_id: @goal.id), class: "btn btn-ghost btn-sm" } %>
+        <% card.with_actions do %>
+          <% if auto_sort_enabled? && !@goal.breaking_down? %>
+            <%= button_to break_down_goal_path(@goal), method: :post, class: "btn btn-ghost btn-sm" do %>
+              <%= @tasks.any? ? "Suggest more steps" : "Break into steps" %>
+            <% end %>
+          <% end %>
+          <%= link_to "Add task", new_task_path(goal_id: @goal.id), class: "btn btn-ghost btn-sm" %>
+        <% end %>
       <% end %>
       <% if @tasks.any? %>
-        <div class="divide-y divide-edge"><%= render @tasks %></div>
+        <div class="divide-y divide-edge">
+          <%= render partial: "tasks/task", collection: @tasks, locals: { hide_goal: true } %>
+        </div>
+      <% elsif @goal.breaking_down? %>
+        <p class="flex items-center justify-center gap-2 px-5 py-8 text-center text-sm text-soft">
+          <span class="size-1.5 animate-pulse rounded-full bg-primary-500"></span>
+          Your assistant is breaking this goal into steps…
+        </p>
       <% else %>
-        <p class="px-5 py-8 text-center text-sm text-soft">No tasks yet — break this goal into steps.</p>
+        <p class="px-5 py-8 text-center text-sm text-soft">No steps yet — break this goal into day-sized tasks.</p>
       <% end %>
     <% end %>
 
