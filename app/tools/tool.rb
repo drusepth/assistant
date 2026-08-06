@@ -7,6 +7,7 @@ module Tool
     decode_letter dispute_letter insurance_appeal debt_collector_response
     deposit_demand results_explainer doctor_visit_prep negotiation_prep
     benefits_screener cancel_subscription reconnect learn_something tutor
+    moving
   ].freeze
 
   module_function

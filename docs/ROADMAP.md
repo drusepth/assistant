@@ -87,7 +87,7 @@ Re-planned 2026-08 (second pass): the coverage slate expanded into the **high-im
 3. **The high-impact wave** *(M2.3a–d + M2.5 — see `TOOLS_PLAN.md`)* — results explainer, insurance appeal, debt-collector response, deposit demand, negotiation prep, doctor-visit prep, decode-this-letter, benefits screener, tutor.
 4. ✅ **Money → Subscriptions: "Cancel this subscription"** *(draft — built)* — formal written cancellation + phone script in one note, renewal deadline on the calendar, check-the-next-statement Task.
 5. ✅ **People: "Reconnect"** *(draft — built)* — reads a Person (new `:person` input kind) → message draft in the user's voice + grounded talking points; never invents shared memories. Deliberately seeds the Milestone 3 stay-in-touch watcher (its accept action runs this tool prefilled).
-6. **Situations** *(plan tools with rich cross-section briefs)* — **"Moving" first**: the widest-audience Situation, and now the Q7 cross-section pressure test. "Eviction notice", "lost my job", "new baby", "new diagnosis" follow demand; eviction is deferred until users ask.
+6. ✅ **Situations** *(plan tools with rich cross-section briefs)* — **"Moving" built (M2.4)**: `Tool::PlanBase` extracted from Learn-something makes a Situation ≈ a brief, and the Q7 pressure test passed — steps multi-tag across Renting/Money/People/Education/Bills through the unchanged shared pipeline. "Eviction notice", "lost my job", "new baby", "new diagnosis" follow demand; eviction stays deferred until users ask.
 
 ---
 
@@ -139,7 +139,7 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 1. ✅ **M2.1 — Anatomy + tools infra.** Act/Attend/Browse section page (Attend dormant), empty-state redesign, `Tool::Base` + registry, `tool_runs` + `ToolRunJob` + generic run page. Shipped with **Draft-a-dispute-letter** as the proving tool.
 2. ✅ **M2.2 — First plan tool: Learn something.** Proved the plan seam with zero new schema: `Goals::BreakDown#plan!` (call + apply extracted from the breakdown job, shared by both) and the optional `brief` param. (Replaced the eviction Situation here — see the slate note.)
 3. ✅ **M2.3 — High-impact wave, draft tools** (`TOOLS_PLAN.md` waves 1–4, all built): shared plumbing + letter family (results explainer, insurance appeal, debt-collector response, deposit demand) → owned-context drafts (doctor-visit prep, negotiation prep) → decode-this-letter + routing (D21) → benefits screener — plus the slate leftovers cancel-subscription and reconnect (new `:person` input kind).
-4. **M2.4 — Situations** as plan tools with richer briefs: "moving" first (the Q7 pressure test), others per demand.
+4. ✅ **M2.4 — Situations** as plan tools with richer briefs: "moving" built (the Q7 pressure test, passed); other situations ship per demand as one brief each.
 5. ✅ **M2.5 — Tutor + chat tools** (`TOOLS_PLAN.md` wave 5, D22, built): `tool_run_messages`, chat run lifecycle, the Education tutor with recap Notes.
 6. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
 7. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
