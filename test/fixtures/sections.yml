@@ -3,6 +3,16 @@ health:
   name: Health
   position: 1
 
+hobbies:
+  slug: hobbies
+  name: Hobbies
+  position: 2
+
+education:
+  slug: education
+  name: Education
+  position: 3
+
 career:
   slug: career
   name: Career

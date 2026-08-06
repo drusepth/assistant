@@ -12,9 +12,13 @@ module Goals
     Step = Data.define(:title, :notes, :due_on, :sections)
     Result = Data.define(:sections, :target_on, :steps)
 
-    def initialize(goal:, profile:)
+    # brief is optional framing from whatever captured the goal — a plan
+    # tool shaping its steps (D19). It rides the same prompt; plan tools
+    # add no pipeline and no schema of their own.
+    def initialize(goal:, profile:, brief: nil)
       @goal = goal
       @profile = profile
+      @brief = brief
     end
 
     def call
@@ -25,6 +29,25 @@ module Goals
         target_on: parsed_date(response["target_on"]),
         steps: parsed_steps(response["steps"])
       )
+    end
+
+    # Call + apply in one: files the goal (hand-tagged goals are left alone),
+    # fills a missing target date, creates the scheduled step tasks. Returns
+    # the created tasks; raises Llm::Error for callers to handle.
+    def plan!
+      result = call
+
+      @goal.sections = result.sections if @goal.sections.none?
+      @goal.update!(target_on: result.target_on) if @goal.target_on.nil? && result.target_on
+
+      result.steps.map do |step|
+        task = @goal.user.tasks.create!(
+          goal: @goal, title: step.title, notes: step.notes, due_on: step.due_on,
+          bucket: step.due_on && step.due_on <= Date.current ? :today : :later
+        )
+        task.sections = step.sections
+        task
+      end
     end
 
     private
@@ -64,6 +87,7 @@ module Goals
         parts << "Goal: #{@goal.title}"
         parts << "Description: #{@goal.description}" if @goal.description.present?
         parts << "Target date: #{@goal.target_on.iso8601}" if @goal.target_on
+        parts << "Framing from the tool that captured this goal:\n#{@brief}" if @brief.present?
         if @goal.tasks.any?
           listing = @goal.tasks.map { |task| "- #{task.title}#{" (done)" if task.completed?}" }.join("\n")
           parts << "Existing steps:\n#{listing}"

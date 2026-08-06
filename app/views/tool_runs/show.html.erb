@@ -1,0 +1,63 @@
+<%= turbo_stream_from @tool_run %>
+
+<%= render Ui::PageHeaderComponent.new(
+      title: @tool_run.tool.title,
+      subtitle: "Run on #{@tool_run.created_at.strftime("%B %-d, %Y")}"
+    ) do |header| %>
+  <% if @tool_run.finished? %>
+    <% header.with_actions do %>
+      <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="max-w-3xl space-y-6">
+  <% if @tool_run.queued? || @tool_run.running? %>
+    <%= render Ui::CardComponent.new do %>
+      <p class="text-sm text-soft">Working on it — this page updates by itself when the draft is ready.</p>
+    <% end %>
+  <% elsif @tool_run.failed? %>
+    <%= render Ui::CardComponent.new(title: "That didn't work") do %>
+      <p class="text-sm text-red-600"><%= @tool_run.error %></p>
+    <% end %>
+  <% else %>
+    <% items = @tool_run.items %>
+    <% drafts = items.grep(Note) %>
+    <% goals = items.grep(Goal) %>
+    <% rest = items - drafts - goals %>
+
+    <% drafts.each do |note| %>
+      <%= render Ui::CardComponent.new(title: note.title, subtitle: "Draft — saved to your notes") do |card| %>
+        <% card.with_actions do %>
+          <%= link_to "Open note", note, class: "btn btn-secondary btn-sm" %>
+        <% end %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= note.body %></p>
+      <% end %>
+    <% end %>
+
+    <% if goals.any? %>
+      <%= render Ui::CardComponent.new(title: "The plan", subtitle: "Saved to your Tasks board", padded: false) do %>
+        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render goals %></div>
+      <% end %>
+    <% end %>
+
+    <% if rest.any? %>
+      <%= render Ui::CardComponent.new(
+            title: @tool_run.tool.kind == :plan ? "The steps" : "Follow-ups",
+            subtitle: "Added to your tasks", padded: false
+          ) do %>
+        <div class="divide-y divide-edge"><%= render rest %></div>
+      <% end %>
+    <% end %>
+
+    <% if @tool_run.items.empty? %>
+      <%= render Ui::CardComponent.new do %>
+        <p class="text-sm text-soft">The run finished but produced nothing — try again with more detail.</p>
+      <% end %>
+    <% end %>
+
+    <p class="text-xs text-soft">
+      Drafts are yours to review, fill in, and send — the app never sends anything on your behalf.
+    </p>
+  <% end %>
+</div>

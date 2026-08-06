@@ -10,7 +10,7 @@ class NotesController < ApplicationController
   end
 
   def new
-    @note = Current.user.notes.new
+    @note = Current.user.notes.new(params.permit(section_ids: []))
   end
 
   def create

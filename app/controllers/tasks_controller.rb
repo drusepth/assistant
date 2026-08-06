@@ -18,7 +18,7 @@ class TasksController < ApplicationController
   end
 
   def new
-    @task = Current.user.tasks.new(params.permit(:due_on, :goal_id))
+    @task = Current.user.tasks.new(params.permit(:due_on, :goal_id, section_ids: []))
   end
 
   def create

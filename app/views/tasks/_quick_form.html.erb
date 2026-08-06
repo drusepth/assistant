@@ -12,6 +12,7 @@
   <% if task.goal %>
     <p class="hint">Will be added to the goal “<%= task.goal.title %>”.</p>
   <% end %>
+  <%= render "shared/pretagged_sections", form: form, item: task %>
   <%= hidden_field_tag :return_to, local_assigns[:return_to] if local_assigns[:return_to].present? %>
   <div class="flex items-center gap-2">
     <%= form.submit "Add task" %>

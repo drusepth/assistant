@@ -58,6 +58,15 @@ Date UX: date fields use the native picker (typeable) plus one-click shortcut ch
 **D17. Tasks and Goals are one section; goals are AI-planned.**
 Goals and Tasks merged into a single **Tasks** section (the separate Goals boards page is gone; `/goals` redirects). The two stay distinct models with distinct meanings: a Goal is a high-level outcome ("get a job"); a Task is day-sized with a clear done/not-done state. The section leads with one input — "What do you want to accomplish?" — which always creates a Goal, and `BreakDownGoalJob` (one LLM call, replacing `CategorizeGoalJob`) breaks it into 3–10 scheduled, section-tagged tasks *and* files the goal itself. Steps auto-apply (D16 discipline: silent on failure, hand-set fields never overwritten, pruning is one click); the goal page has "suggest more steps," which shows the model the existing plan and appends only what's missing. The **kanban moved from goals to tasks** with daily-workload columns **Later / Today / Done**: Today = pulled-in-by-hand ∪ due-today/overdue (so breakdown-scheduled tasks surface themselves each morning with no cron), Done is derived from `completed_at`, and "not today" bumps a due task to tomorrow so it resurfaces. Goals lost their board and their `backlog` status (now active/done, auto-finishing when the last step completes, reactivating when one reopens) and render as a progress strip above the board; task cards/rows show a flag chip for their goal. This is the mechanism Situations (D7) will ride on — a Situation is a Goal with a richer breakdown prompt. — *Locked.*
 
+**D18. Section pages are three zones: Act / Attend / Browse.**
+Every section page composes all three modes: **Act** (tool cards registered for the section — present even when the section is empty, replacing the dead-end empty state), **Attend** (pending agent suggestions tagged with the section — the pull-side slice of the Dashboard's push feed), **Browse** (the existing filtered primitive lists + section-pre-tagged quick capture). Subsection pages get the identical anatomy; subsection-registered tools also appear on the parent. Full design in `ROADMAP.md` §1. — *Provisional until the M2.1 build pass.*
+
+**D19. A Tool is a first-party pipeline: owned context → LLM call(s) → draft primitives, suggest-and-apply.**
+Two kinds: **plan tools** (Goal + multi-tagged Tasks/Events via the D17 breakdown pipeline with a tool-specific prompt — Situations (D7) are exactly this) and **draft tools** (reviewable artifact as a draft Note/Document + optional follow-ups). Tools are code (`app/tools/`, `Tool::Base` + registry — behavior is code even though taxonomy is data per D12); runs are rows (`tool_runs`: inputs, status, output, created primitives; live-updating run page). Output is always draft output — the app never sends anything externally in M2. All M2 tools are **Tier A** (reason over owned data only; no assumed web capability — the model-agnostic constraint). Full design + first tool slate in `ROADMAP.md` §2. — *Provisional until the M2.1 build pass.*
+
+**D20. The agent proposes; the user disposes.**
+The agent's only write surface is a new `suggestions` table (Sectionable; rationale, action payload, fingerprint deduping, pending/accepted/dismissed/snoozed). Signals come from deterministic **watchers** (`app/watchers/`, SQL-first, LLM only for phrasing/ranking/digest). Per-section dials on `user_sections`: **Off / Quiet (default: weekly, in-app only) / Active (daily, + Today)**. Cross-user suggestions read strictly through `visible_to` (D9). Notification channels deferred (Q10). Full design in `ROADMAP.md` §3. — *Provisional until the M3.1 build pass.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -78,4 +87,14 @@ Decided in principle: care and coverage navigation in Health; medical billing di
 **Q5. FTUE flow design.** — *Not started.*
 
 **Q7. First deep-dive to pressure-test the model.**
-Current plan: after Milestone 1, pressure-test with the **"eviction notice" Situation** rather than a section alone — it exercises Rights *and* the cross-section spawning mechanics (D7) in one pass. — *Planned, not started.*
+Current plan: after Milestone 1, pressure-test with the **"eviction notice" Situation** rather than a section alone — it exercises Rights *and* the cross-section spawning mechanics (D7) in one pass. Now scheduled as build step **M2.2**: the eviction Situation is the first *plan tool* (D19), so the pressure test rides the tools infrastructure instead of preceding it.
+Reprioritized 2026-08: the plan-tool *mechanism* was proved by "Learn something" (M2.2 as built) instead, and the cross-section pressure test now rides the first Situation shipped — **"moving"**, the widest-audience candidate (M2.4). Eviction itself is deferred until users ask: low-frequency, narrow audience, and nothing about it is architecturally special anymore — it's one more plan tool with a rich brief. — *Mechanism proven; cross-section test planned (M2.4).*
+
+**Q8. Contact-recency signal for the stay-in-touch watcher.**
+"It's been a while since you talked to Mom" needs a signal we don't store: likely `people.last_contacted_on` (one-tap "log contact" + updated on suggestion accept) combined with inference from Events/Notes involving the person. Design before building the watcher (M3.2). — *Not started.*
+
+**Q9. Tier-B tool capabilities (live external data).**
+Tools that need the live web (real provider directories, current benefit rules) are deferred; M2 tools are Tier A only (owned data). Revisit whether a `capabilities` flag on `ModelProfile` is worth building once provider browsing support stabilizes, or keep leaning on user-supplied documents. — *Not started.*
+
+**Q10. Agent notification channels.**
+Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. Email/push/webhook channels need their own design. — *Not started.*

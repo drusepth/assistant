@@ -101,6 +101,12 @@ patterns — everything reusable lives in one redesignable place.
    role management and member removal from Settings
 5. ✅ Document AI pipeline: `ModelProfile` + `Llm::Client` adapter +
    `AnalyzeDocumentJob` (summary + suggested tags, human-applied)
-6. Situation pressure-test: "eviction notice" (Q7)
+6. ✅ Tools foundation (M2.1 — D18/D19, see `ROADMAP.md`): section pages
+   lead with an Act zone of tool cards; empty states offer tools + capture
+   pre-tagged with the section; `Tool::Base` + explicit registry
+   (`app/tools/`), `tool_runs`/`tool_run_items` + `ToolRunJob` + live run
+   page; first tool: Draft a dispute letter (Rights → Disputes)
+7. Situation pressure-test: "eviction notice" as the first *plan* tool
+   (Q7, build step M2.2)
 
 Deferred deliberately: encryption at rest & deployment hardening (post-foundation, per D10), community packs (D11), voice, FTUE, agent mode.

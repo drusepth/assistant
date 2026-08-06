@@ -12,7 +12,7 @@ class EventsController < ApplicationController
   def new
     # Quick capture is a title and a day: the event starts as all-day, and
     # auto-sorting fills in a time if the title implies one.
-    @event = Current.user.events.new(starts_date: params[:date]&.to_date)
+    @event = Current.user.events.new(params.permit(section_ids: []).merge(starts_date: params[:date]&.to_date))
   end
 
   def create

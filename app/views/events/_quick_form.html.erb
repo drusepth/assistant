@@ -10,6 +10,7 @@
   <%= form.field :starts_date, label_text: "When" do %>
     <%= render "shared/date_shortcuts_field", form: form, method: :starts_date, required: true %>
   <% end %>
+  <%= render "shared/pretagged_sections", form: form, item: event %>
   <%= hidden_field_tag :return_to, local_assigns[:return_to] if local_assigns[:return_to].present? %>
   <div class="flex items-center gap-2">
     <%= form.submit "Add event" %>
