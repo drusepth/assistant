@@ -31,6 +31,20 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_match "Incorrect API key", error.message
   end
 
+  test "router-style providers: model omitted when nil, extra params included" do
+    client = Llm::Client.new(base_url: "https://api.chromagolem.com/v1", api_key: "cg-key",
+      extra_params: { client_id: "household_1" })
+
+    stub_request(:post, "https://api.chromagolem.com/v1/chat/completions")
+      .with(headers: { "Authorization" => "Bearer cg-key" }) { |request|
+        body = JSON.parse(request.body)
+        !body.key?("model") && body["client_id"] == "household_1"
+      }
+      .to_return(status: 200, body: { choices: [ { message: { content: "Hi!" } } ] }.to_json)
+
+    assert_equal "Hi!", client.chat([ { role: "user", content: "Hi" } ])
+  end
+
   test "raises on invalid JSON content and unreachable hosts" do
     stub_request(:post, @endpoint)
       .to_return(status: 200, body: { choices: [ { message: { content: "not json" } } ] }.to_json)

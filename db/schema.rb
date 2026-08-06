@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_234001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_010000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -116,7 +116,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_234001) do
     t.string "base_url", default: "https://api.openai.com/v1", null: false
     t.datetime "created_at", null: false
     t.integer "household_id", null: false
-    t.string "model", default: "gpt-4o-mini", null: false
+    t.string "model", default: "gpt-4o-mini"
+    t.string "provider", default: "openai", null: false
     t.datetime "updated_at", null: false
     t.index ["household_id"], name: "index_model_profiles_on_household_id", unique: true
   end

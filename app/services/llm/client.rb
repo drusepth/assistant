@@ -9,17 +9,22 @@ module Llm
     OPEN_TIMEOUT = 10
     READ_TIMEOUT = 120 # local models can be slow; be patient
 
-    def initialize(base_url:, api_key:, model:)
+    # model may be nil for router-style providers that pick the model
+    # server-side; extra_params are provider-specific body additions
+    # (e.g. Chroma Golem's client_id).
+    def initialize(base_url:, api_key:, model: nil, extra_params: {})
       @base_url = base_url.chomp("/")
       @api_key = api_key
       @model = model
+      @extra_params = extra_params
     end
 
     # messages: [{role:, content:}, ...]. With json: true, asks the server
     # for a JSON object response and returns the parsed Hash; otherwise
     # returns the raw content String.
     def chat(messages, json: false, temperature: 0.2)
-      body = { model: @model, messages: messages, temperature: temperature }
+      body = { messages: messages, temperature: temperature, **@extra_params }
+      body[:model] = @model if @model
       body[:response_format] = { type: "json_object" } if json
 
       content = extract_content(post("/chat/completions", body))

@@ -68,7 +68,7 @@ Every item is **multi-taggable** by section (e.g., "Mom's cardiology appointment
 
 ### Model integration
 
-Single **OpenAI-compatible chat-completions adapter** (configurable base URL + key + model name). Remote models first; local models (Ollama, llama.cpp, LM Studio) become a config swap later. Security/encryption hardening deliberately deferred until the foundation is built.
+Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI (key + model), Chroma Golem (key only; router-style), or a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Remote models first; local models are a custom-endpoint config swap. Security/encryption hardening deliberately deferred until the foundation is built.
 
 ## Tech stack
 

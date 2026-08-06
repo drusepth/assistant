@@ -76,7 +76,7 @@ No moral/ethical stances are encoded (D9): defaults are private, every grant is 
 
 ## Model integration (D10 — built)
 
-- `ModelProfile`: one per household for now (base_url, model, api_key), managed by admins from Settings. Defaults point at OpenAI (`https://api.openai.com/v1`, `gpt-4o-mini`); any OpenAI-compatible endpoint works by changing base_url (Ollama, OpenRouter, Groq). api_key plaintext for now — encryption deferred per D10. Multiple profiles / per-task routing later.
+- `ModelProfile`: one per household for now, managed by admins from Settings via a **provider picker** (`ModelProfile::PROVIDERS`): **OpenAI** (key + model name), **Chroma Golem** (key only — router-style, model chosen on their site; we send an opaque `client_id` per their API convention), and **Custom endpoint** (raw base_url + model, for Ollama/OpenRouter/Groq/llama.cpp). All presets ride the same adapter. api_key plaintext for now — encryption deferred per D10. Multiple profiles / per-task routing later.
 - `Llm::Client` (`app/services/llm/`): the one adapter — OpenAI-compatible chat completions over Net::HTTP, JSON response mode, friendly `Llm::Error`s. No vendor gem.
 - Document understanding: upload (or Analyze button) → `AnalyzeDocumentJob` → `Documents::Analyze` extracts text (PDF via pdf-reader; text/markdown/CSV; other types fail with a friendly message) → one chat call returns `{summary, sections}` against the seeded taxonomy → stored on the Document with status queued/processing/analyzed/failed.
 - Trust ladder (D6): section suggestions are chips with per-chip Apply buttons on the document page — the AI never tags anything itself.
