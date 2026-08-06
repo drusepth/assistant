@@ -23,6 +23,7 @@ class TasksController < ApplicationController
   def create
     @task = Current.user.tasks.new(task_params)
     if @task.save
+      @task.enqueue_auto_sort!
       redirect_to tasks_path, notice: "Task added."
     else
       render :new, status: :unprocessable_entity

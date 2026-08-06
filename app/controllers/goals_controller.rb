@@ -19,6 +19,7 @@ class GoalsController < ApplicationController
   def create
     @goal = Current.user.goals.new(goal_params)
     if @goal.save
+      @goal.enqueue_auto_sort!
       redirect_to goals_path, notice: "Goal added."
     else
       render :new, status: :unprocessable_entity

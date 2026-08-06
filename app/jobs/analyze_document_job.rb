@@ -14,6 +14,9 @@ class AnalyzeDocumentJob < ApplicationJob
       analysis_status: :analyzed,
       analysis_error: nil
     )
+    # Untagged documents get filed automatically (D16); once the user has
+    # tagged a document themselves, suggestions stay suggest-and-click.
+    document.sections = document.suggested_section_records if document.sections.none?
   rescue Llm::Error, Documents::Analyze::UnsupportedFileType => e
     document.update!(analysis_status: :failed, analysis_error: e.message)
   rescue StandardError

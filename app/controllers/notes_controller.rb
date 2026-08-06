@@ -16,6 +16,7 @@ class NotesController < ApplicationController
   def create
     @note = Current.user.notes.new(note_params)
     if @note.save
+      @note.enqueue_auto_sort!
       redirect_to @note, notice: "Note saved."
     else
       render :new, status: :unprocessable_entity

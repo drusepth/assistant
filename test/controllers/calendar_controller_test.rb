@@ -19,7 +19,9 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
 
     get calendar_path(year: 2026, month: 3)
     assert_response :success
-    assert_select "a[title='Beach trip']", count: 4 # one cell entry per spanned day, Mar 10-13
+    # One cell entry per spanned day, Mar 10-13: a text link on desktop and a dot on mobile.
+    assert_select "a.truncate[title='Beach trip']", count: 4
+    assert_select "a[aria-label='Beach trip']", count: 4
   end
 
   test "renders a specific month" do

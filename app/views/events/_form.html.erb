@@ -1,12 +1,12 @@
 <%= form_with model: event, class: "space-y-4" do |form| %>
   <%= form.field :title, placeholder: "What's happening?" %>
+  <%= form.field :starts_date, label_text: "When" do %>
+    <%= render "shared/date_shortcuts_field", form: form, method: :starts_date %>
+  <% end %>
   <div class="grid gap-4 sm:grid-cols-2">
-    <%= form.field :starts_at, as: :datetime_local_field, label_text: "Starts" %>
-    <%= form.field :ends_at, as: :datetime_local_field, label_text: "Ends" %>
+    <%= form.field :starts_time, as: :time_field, label_text: "Starts at", hint: "Leave blank for all day." %>
+    <%= form.field :ends_time, as: :time_field, label_text: "Ends at" %>
   </div>
-  <label class="flex items-center gap-2 text-sm text-ink">
-    <%= form.check_box :all_day %> All day
-  </label>
   <%= form.field :location %>
   <%= form.field :description, as: :text_area %>
   <%= form.field :goal_id, label_text: "Goal" do %>

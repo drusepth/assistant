@@ -16,6 +16,12 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert Document.last.file.attached?
   end
 
+  test "uploads with no title, falling back to the file name" do
+    post documents_path, params: { document: { file: fixture_file_upload("sample.txt", "text/plain") } }
+
+    assert_equal "Sample", Document.last.title
+  end
+
   test "vault filters by section" do
     lease = users(:one).documents.create!(title: "Lease agreement")
     lease.sections << sections(:rights)

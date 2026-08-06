@@ -1,6 +1,9 @@
 class Goal < ApplicationRecord
   include Visible
   include Sectionable
+  include AutoSortable
+
+  AUTO_SORT_JOB = CategorizeGoalJob
 
   has_many :tasks, dependent: :nullify
   has_many :events, dependent: :nullify

@@ -1,6 +1,9 @@
 class Task < ApplicationRecord
   include Visible
   include Sectionable
+  include AutoSortable
+
+  AUTO_SORT_JOB = CategorizeTaskJob
 
   belongs_to :goal, optional: true
 
