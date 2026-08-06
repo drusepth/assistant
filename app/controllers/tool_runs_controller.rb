@@ -26,9 +26,8 @@ class ToolRunsController < ApplicationController
     end
 
     def load_document_choices
-      return unless @tool.inputs.any?(&:document?)
-
-      @document_choices = Document.visible_to(Current.user).order(created_at: :desc)
+      @document_choices = Document.visible_to(Current.user).order(created_at: :desc) if @tool.inputs.any?(&:document?)
+      @person_choices = Person.visible_to(Current.user).order(:name) if @tool.inputs.any?(&:person?)
     end
 
     # `new` accepts the same params so "Run again" can prefill from a
