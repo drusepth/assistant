@@ -6,6 +6,12 @@ class DashboardController < ApplicationController
       .overlapping(Time.current..7.days.from_now.end_of_day).includes(:sections).limit(8)
     @active_goals = Goal.visible_to(Current.user).active.includes(:tasks)
     @recent_documents = Document.visible_to(Current.user).order(created_at: :desc).includes(:sections).limit(5)
+
+    # Blank records for the header's inline quick-add forms.
+    @quick_task = Current.user.tasks.new
+    @quick_note = Current.user.notes.new
+    @quick_event = Current.user.events.new
+    @quick_goal = Current.user.goals.new
   end
 
   private
