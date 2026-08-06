@@ -1,4 +1,6 @@
 class AnalyzeDocumentJob < ApplicationJob
+  include RetriesModelCalls
+
   queue_as :default
 
   def perform(document)
@@ -18,11 +20,18 @@ class AnalyzeDocumentJob < ApplicationJob
     # tagged a document themselves, suggestions stay suggest-and-click.
     document.sections = document.suggested_section_records if document.sections.none?
   rescue Llm::Error, Documents::Analyze::UnsupportedFileType => e
+    # A retry is coming: leave the document showing "processing" rather than
+    # flashing a failure the next attempt may well clear. (An unsupported file
+    # type is never transient, so it lands here on the first pass.)
+    raise if will_retry?(e)
+
     document.update!(analysis_status: :failed, analysis_error: e.message)
-  rescue StandardError
+    record_failure(e, user: document.user, context: { document_id: document.id })
+  rescue StandardError => e
     # A bug, not a user-facing condition: don't leave the document stuck in
     # "processing", but let the error propagate to the job backend's log.
     document.update!(analysis_status: :failed, analysis_error: "Something went wrong during analysis — try again.")
+    record_failure(e, user: document.user, context: { document_id: document.id })
     raise
   end
 end

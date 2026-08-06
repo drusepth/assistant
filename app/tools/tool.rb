@@ -23,7 +23,7 @@ module Tool
   # Tools flow both ways along the taxonomy: one registered on a subsection
   # (rights → disputes) shows on the parent page too, and one registered on
   # a parent (hobbies) shows on every subsection page — user-created hobby
-  # lenses (D21) can't be registered on ahead of time, so the Hobbies tools
+  # lenses (D25) can't be registered on ahead of time, so the Hobbies tools
   # belong on each hobby's page.
   def for_section(section)
     slugs = [ section.slug, section.parent&.slug, *section.children.map(&:slug) ].compact

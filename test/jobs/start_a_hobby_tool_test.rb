@@ -63,8 +63,8 @@ class StartAHobbyToolTest < ActiveJob::TestCase
     assert_includes @run.reload.items.grep(Goal).sole.sections, existing
   end
 
-  test "a provider error fails the run but leaves an ordinary retryable goal" do
-    stub_request(:post, ENDPOINT).to_return(status: 500, body: "boom")
+  test "a permanent provider error fails the run but leaves an ordinary retryable goal" do
+    stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
 
     ToolRunJob.perform_now(@run)
 

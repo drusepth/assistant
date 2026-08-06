@@ -1,6 +1,6 @@
 module Tool
   # The Hobbies front door (docs/HOBBIES.md): turn curiosity into a first
-  # taste. Creates the hobby's lens (D21) and rides the shared plan-tool
+  # taste. Creates the hobby's lens (D25) and rides the shared plan-tool
   # contract — the brief steers hard toward doing the hobby cheaply within
   # days, against the two classic ways starting dies: gear acquisition and
   # endless research.

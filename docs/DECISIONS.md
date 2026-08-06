@@ -65,9 +65,24 @@ Every section page composes all three modes: **Act** (tool cards registered for 
 Two kinds: **plan tools** (Goal + multi-tagged Tasks/Events via the D17 breakdown pipeline with a tool-specific prompt — Situations (D7) are exactly this) and **draft tools** (reviewable artifact as a draft Note/Document + optional follow-ups). Tools are code (`app/tools/`, `Tool::Base` + registry — behavior is code even though taxonomy is data per D12); runs are rows (`tool_runs`: inputs, status, output, created primitives; live-updating run page). Output is always draft output — the app never sends anything externally in M2. All M2 tools are **Tier A** (reason over owned data only; no assumed web capability — the model-agnostic constraint). Full design + first tool slate in `ROADMAP.md` §2. — *Provisional until the M2.1 build pass.*
 
 **D20. The agent proposes; the user disposes.**
-The agent's only write surface is a new `suggestions` table (Sectionable; rationale, action payload, fingerprint deduping, pending/accepted/dismissed/snoozed). Signals come from deterministic **watchers** (`app/watchers/`, SQL-first, LLM only for phrasing/ranking/digest). Per-section dials on `user_sections`: **Off / Quiet (default: weekly, in-app only) / Active (daily, + Today)**. Cross-user suggestions read strictly through `visible_to` (D9). Notification channels deferred (Q10). Full design in `ROADMAP.md` §3. — *Built through M3.2 (suggestions table, five watchers including neglected-hobby, Off/Quiet/Active dials in Settings honored by weekly/daily scans) plus M3.3's phrased weekly digest (LLM phrases, never decides; silent failure). Remaining: cross-user coordination suggestions (needs its own design) and notification channels (Q10).*
+The agent's only write surface is a new `suggestions` table (Sectionable; rationale, action payload, fingerprint deduping, pending/accepted/dismissed/snoozed). Signals come from deterministic **watchers** (`app/watchers/`, SQL-first, LLM only for phrasing/ranking/digest). Per-section dials on `user_sections`: **Off / Quiet (default: weekly, in-app only) / Active (daily, + Today)**. Cross-user suggestions read strictly through `visible_to` (D9). Notification channels deferred (Q10). Full design in `ROADMAP.md` §3. — *Built through M3.2 (suggestions table, five watchers including neglected-hobby, Off/Quiet/Active dials in Settings honored by weekly/daily scans) plus M3.3's phrased weekly digest (LLM phrases, never decides; silent failure). Cross-user coordination and notification channels followed in M4 — see D21/D22.*
 
-**D21. Hobbies are user-created sub-lenses of the Hobbies section.**
+**D21. Cross-user coordination is ordinary watchers over `visible_to` scopes.**
+No household-level agent, no new data model, no new privacy machinery: a cross-user watcher queries `visible_to(user)` instead of user-owned scopes, so it structurally cannot see or reference an unshared item. Each member's agent speaks only to its own user; symmetric suggestions on both sides of a share are correct behavior; staleness resolves by dismissal (fingerprints never re-propose). Deterministic-first still applies — v1 is same-day sync, not location inference; LLM upgrades phrase the same signal, never replace it. Design in `ROADMAP.md` §5.1. — *Built (M4.4: same-day sync); the visible_to-only rule held with zero new machinery.*
+
+**D22. Notification channels: webhook → Web Push → email-if-configured, Active sections only.**
+No SMTP assumption (D15) and no third-party push dependency: a user-pasted webhook URL first (covers ntfy/Home Assistant/Matrix — the self-hoster ecosystem), per-instance VAPID Web Push second, optional instance SMTP last. Quiet means in-app only — **only Active sections may notify**; batched per scan; payloads carry counts and titles, never bodies (a lock screen is not private by default). Design in `ROADMAP.md` §5.2. — *Built (M4.3, all three channels in one pass per the 2026-08 product call). Resolves Q10.*
+
+**D23. Silence is a product feature and an operations bug: swallowed failures get logged to `app_errors` and surfaced at `/admin`.**
+Best-effort AI work deliberately hides its failures from the person who triggered it (D16) — a model that times out leaves a task unsorted rather than showing a stack trace. That is right for the user and wrong for whoever runs the box, who otherwise never learns the model has been down for a week. Every `rescue` that swallows now also calls `AppError.record` (source, error class, message, backtrace, actor, context ids); `record` rescues itself, because logging a failure must never cause one. The table is a 500-row ring buffer — an unattended self-hosted instance shouldn't grow it forever.
+`/admin` (household admins per D15, not a hardcoded user id) shows model-profile status, job-backend status, and the log. It reports **counts, never contents**, for other members' failed runs and documents: the admin flag is a household role, not a master key, and items stay private until shared (D9). Solid Queue is production-only here, so its panel degrades to an explanatory note rather than crashing in development. — *Provisional until the M3 watcher pass, which may want to read this table.*
+
+**D24. Retry the model when it might answer differently; give up when it won't.**
+A flat `Llm::Error` made every failure look alike, so the only options were retry-everything (four wasted calls and a delayed log entry for a bad API key) or retry-nothing. `Llm::Client` now classifies: `Llm::TransientError` for 408/409/425/429/5xx, transport failures, and invalid JSON (sampling noise — another draw often parses); plain `Llm::Error` for 4xx config problems, an unexpected response shape (not an OpenAI-compatible endpoint), and everything tools raise by hand ("no model configured", "that document is gone"). Base-class-is-permanent is the deliberate default: a new raise site fails honestly rather than retrying four times.
+`RetriesModelCalls` adds `retry_on Llm::TransientError, wait: :polynomially_longer, attempts: 4` (~3s/18s/83s). Jobs keep their own rescue and open it with `raise if will_retry?(e)` — re-raise hands it to ActiveJob, falling through means last attempt, so the existing give-up path runs unchanged. Because a job stops re-raising on its final attempt, retry_on's exhaustion path is never reached and no model failure escapes to the job backend; there is also no handler-ordering subtlety to get wrong later.
+`will_retry?` does second duty on user-visible state: a pending retry leaves the document "processing", the run "running", and the goal "breaking into steps…" rather than flashing a failure the next attempt may clear. One `AppError` is recorded per run, not per attempt. — *Provisional: attempt budget is a guess; the /admin log is what will tell us whether four is right.*
+
+**D25. Hobbies are user-created sub-lenses of the Hobbies section.**
 A hobby is a lens, not a Goal/Event/Note: a user-created child section of Hobbies — the first user-written rows in the D12 taxonomy (`sections.custom`, the only sections that can be removed; removing one keeps its items, which just lose the tag). Slugs share the taxonomy's global namespace (numbered on collision) and feed the LLM taxonomy listing, so categorizers and breakdowns can file straight into a hobby. Lenses are household-shared like the rest of the taxonomy; tagged items stay private per D9. Capture: the Hobbies page leads with "What do you do for fun?" (suggestion chips + free text, `Hobbies::Lens`), and the Start-a-hobby tool creates the lens too; no other tool creates lenses as a side effect. The tool registry surfaces parent-registered tools on every subsection page (and subsection tools on the parent, as before), since lenses can't be registered on ahead of time. Full design in `docs/HOBBIES.md`. — *Provisional until real-household use proves it.*
 
 ## Resolved questions
@@ -80,7 +95,7 @@ The lens model answers its own question — if an item fits two sections, tag it
 
 **Q6. Technical stack.** — *Resolved; see D14.*
 
-**Q11. Hobby representation.** — *Resolved; see D21.*
+**Q11. Hobby representation.** — *Resolved; see D25.*
 
 ## Open questions
 
@@ -89,7 +104,7 @@ Decided in principle: care and coverage navigation in Health; medical billing di
 
 **Q4. Project name.** — *Not started; repo is "assistant" as a working title.*
 
-**Q5. FTUE flow design.** — *Not started.*
+**Q5. FTUE flow design.** — *Designed (`ROADMAP.md` §5.4): four skippable steps (sections → agent voice → model → import), `users.onboarded_at` gate, invited members skip the admin step. Build at M4.1.*
 
 **Q7. First deep-dive to pressure-test the model.**
 Current plan: after Milestone 1, pressure-test with the **"eviction notice" Situation** rather than a section alone — it exercises Rights *and* the cross-section spawning mechanics (D7) in one pass. Now scheduled as build step **M2.2**: the eviction Situation is the first *plan tool* (D19), so the pressure test rides the tools infrastructure instead of preceding it.
@@ -102,5 +117,4 @@ Resolved (M3.2): `people.last_contacted_on`, set by a one-tap **"Log contact tod
 Tools that need the live web (real provider directories, current benefit rules) are deferred; M2 tools are Tier A only (owned data). Revisit whether a `capabilities` flag on `ModelProfile` is worth building once provider browsing support stabilizes, or keep leaning on user-supplied documents. — *Not started.*
 
 **Q10. Agent notification channels.**
-Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. Email/push/webhook channels need their own design. — *Not started.*
-
+Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. — *Direction decided: see D22 (webhook → Web Push → email-if-configured; Active sections only). Build at M4.3.*

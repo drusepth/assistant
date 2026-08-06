@@ -11,13 +11,21 @@ class AgentScanJob < ApplicationJob
   end
 
   def perform(user, cadence: "weekly")
+    noteworthy = []
+
     Watcher.all.each do |watcher|
       level = dial_for(user, watcher)
       next if level == "off"
       next if cadence == "daily" && level != "active"
 
-      watcher.new(user).scan
+      scan = watcher.new(user)
+      scan.scan
+      # Only Active sections may reach beyond the app (D22) — Quiet means
+      # in-app, that's the dial's meaning.
+      noteworthy.concat(scan.proposals) if level == "active"
     end
+
+    NotifyJob.perform_later(user, noteworthy.map(&:title)) if noteworthy.any?
 
     generate_digest(user) if cadence == "weekly"
   end
@@ -30,9 +38,14 @@ class AgentScanJob < ApplicationJob
       return unless profile&.configured?
 
       Users::WeeklyDigest.new(user: user, profile: profile).call
-    rescue Llm::Error
+    rescue Llm::Error => e
+      # Still silent for the user — but not for whoever runs the box (D23).
+      # No retry: the digest rides the weekly scan, and re-running the job
+      # would re-run every watcher to re-attempt one phrasing call.
+      AppError.record(e, source: self.class.name, user: user, context: { digest: true })
       nil
     end
+
     def dial_for(user, watcher)
       sections = Section.where(slug: watcher.section_slugs)
       return UserSection::DEFAULT_AGENT_LEVEL if sections.empty?

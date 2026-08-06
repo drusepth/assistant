@@ -3,7 +3,7 @@
 Section deep-dive for **Hobbies** — design for how the section earns its place
 across all three modes (D6). Everything here rides existing infrastructure
 (D17 breakdown, D19 tools, D20 watchers) except where explicitly flagged. The
-one new decision it needed — hobby representation — is **D21** in
+one new decision it needed — hobby representation — is **D25** in
 `DECISIONS.md`; the first slice (sub-lenses, capture, and three tools) is
 built, marked ✅ in §6.
 
@@ -28,7 +28,7 @@ a started project, or a human connection, not a better-groomed log.
 Everything else in this doc needs to know *what the hobbies are* and *where the
 user is with each one*. Two-part answer, both riding existing structures:
 
-### Hobby = user-created sub-lens (D21 — built)
+### Hobby = user-created sub-lens (D25 — built)
 
 A hobby is not a Goal (it doesn't complete), not an Event (not dated), not a
 Note (it's a lens, not a fact). It is exactly what a **section** is: a filter
@@ -53,7 +53,7 @@ pitch:
 - Later, per-hobby agent dials — the D20 dial machinery already lives on
   `user_sections`.
 
-This was the first place users write to the taxonomy table; D21 resolved it:
+This was the first place users write to the taxonomy table; D25 resolved it:
 lenses carry `sections.custom` (the only removable sections — removal keeps
 the items, which just lose the tag), slugs share the global namespace with
 numbered collision handling, colors inherit from the parent as the helper
@@ -215,7 +215,7 @@ All Tier A unless marked. Ordered roughly by funnel width.
 
 ## 6. Build order
 
-1. ✅ **Representation (D21)** — sub-lens creation (`Hobbies::Lens`), the
+1. ✅ **Representation (D25)** — sub-lens creation (`Hobbies::Lens`), the
    "What do you do for fun?" capture on the Hobbies page, lens removal,
    parent-tool surfacing on subsection pages.
 2. ✅ **Two tools to make the section alive** — "Start a hobby" (plan; also

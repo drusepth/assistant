@@ -62,7 +62,7 @@ class LearnSomethingToolTest < ActiveJob::TestCase
   end
 
   test "a provider error fails the run but leaves an ordinary retryable goal" do
-    stub_request(:post, ENDPOINT).to_return(status: 500, body: "boom")
+    stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
 
     ToolRunJob.perform_now(@run)
 

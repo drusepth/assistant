@@ -1,6 +1,6 @@
 require "test_helper"
 
-# Hobby lenses (D21): user-created child sections of Hobbies, sharing one
+# Hobby lenses (D25): user-created child sections of Hobbies, sharing one
 # slug namespace with the seeded taxonomy.
 class Hobbies::LensTest < ActiveSupport::TestCase
   test "creates a custom child of Hobbies with a parameterized slug" do

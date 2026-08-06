@@ -1,5 +1,5 @@
 module Hobbies
-  # A hobby is a lens (D21): a user-created child section of Hobbies — the
+  # A hobby is a lens (D25): a user-created child section of Hobbies — the
   # first user-written rows in the D12 taxonomy. The lens machinery (tagging,
   # section pages, calendar filters, sharing grants, the LLM taxonomy
   # listing) then applies to each hobby for free. Lenses are household-shared

@@ -10,7 +10,7 @@ class Section < ApplicationRecord
   validates :name, presence: true
 
   scope :top_level, -> { where(parent_id: nil).order(:position) }
-  # User-created lenses (D21: hobby sub-lenses) — the only sections that can
+  # User-created lenses (D25: hobby sub-lenses) — the only sections that can
   # be removed; the seeded taxonomy cannot.
   scope :custom, -> { where(custom: true) }
 

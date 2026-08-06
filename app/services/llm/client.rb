@@ -9,6 +9,19 @@ module Llm
     OPEN_TIMEOUT = 10
     READ_TIMEOUT = 120 # local models can be slow; be patient
 
+    # Statuses that say "not now" rather than "not ever": rate limits, a
+    # gateway hiccup, a local model still loading. Everything else in the 4xx
+    # range is a request or configuration problem that will fail identically
+    # on the next attempt, so it's raised as a permanent Llm::Error.
+    RETRYABLE_STATUSES = %w[ 408 409 425 429 500 502 503 504 ].freeze
+
+    # Connection-level failures are transient by definition — nothing about the
+    # request was rejected, it never got an answer.
+    TRANSPORT_ERRORS = [
+      Timeout::Error, Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::EHOSTUNREACH,
+      Errno::ENETUNREACH, Errno::EPIPE, SocketError, OpenSSL::SSL::SSLError
+    ].freeze
+
     # model may be nil for router-style providers that pick the model
     # server-side; extra_params are provider-specific body additions
     # (e.g. Chroma Golem's client_id).
@@ -45,23 +58,28 @@ module Llm
         end
 
         unless response.is_a?(Net::HTTPSuccess)
-          raise Error, "The model provider returned #{response.code}: #{error_message(response.body)}"
+          error_class = RETRYABLE_STATUSES.include?(response.code) ? TransientError : Error
+          raise error_class, "The model provider returned #{response.code}: #{error_message(response.body)}"
         end
 
         JSON.parse(response.body)
-      rescue Timeout::Error, Errno::ECONNREFUSED, Errno::ECONNRESET, SocketError, OpenSSL::SSL::SSLError => e
-        raise Error, "Couldn't reach the model provider: #{e.message}"
+      rescue *TRANSPORT_ERRORS => e
+        raise TransientError, "Couldn't reach the model provider: #{e.message}"
       end
 
+      # Structural, not flaky: a response without a choices array means the
+      # endpoint isn't OpenAI-compatible, which retrying won't change.
       def extract_content(payload)
         payload.dig("choices", 0, "message", "content") or
           raise Error, "The model provider returned an unexpected response shape."
       end
 
+      # Flaky, not structural: the endpoint spoke the right protocol and the
+      # model simply sampled badly. Another draw often parses.
       def parse_json(content)
         JSON.parse(content)
       rescue JSON::ParserError
-        raise Error, "The model returned invalid JSON."
+        raise TransientError, "The model returned invalid JSON."
       end
 
       def error_message(body)

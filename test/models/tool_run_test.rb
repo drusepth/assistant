@@ -33,7 +33,7 @@ class ToolRunTest < ActiveSupport::TestCase
 
     lens = Hobbies::Lens.find_or_create!("Guitar")
     assert_includes Tool.for_section(lens), Tool::FindYourPeople,
-      "a tool on a parent shows on each subsection's page — hobby lenses (D21) can't be registered on ahead of time"
+      "a tool on a parent shows on each subsection's page — hobby lenses (D25) can't be registered on ahead of time"
     assert_empty Tool.for_section(sections(:career))
   end
 
