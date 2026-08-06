@@ -1,6 +1,8 @@
 require "test_helper"
 
 class TasksControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     sign_in_as users(:one)
     @task = users(:one).tasks.create!(title: "Mine")
@@ -23,6 +25,25 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
       post tasks_path, params: { task: { title: "Budget review", section_ids: [ sections(:money).id ] } }
     end
     assert_equal [ sections(:money) ], Task.last.sections.to_a
+  end
+
+  test "quick-adding a bare title queues auto-sorting" do
+    assert_enqueued_with(job: CategorizeTaskJob) do
+      post tasks_path, params: { task: { title: "Renew passport by Friday" } }
+    end
+  end
+
+  test "hand-tagged tasks are not auto-sorted" do
+    assert_no_enqueued_jobs(only: CategorizeTaskJob) do
+      post tasks_path, params: { task: { title: "Budget review", section_ids: [ sections(:money).id ] } }
+    end
+  end
+
+  test "no auto-sorting without a configured model profile" do
+    sign_in_as users(:outsider)
+    assert_no_enqueued_jobs(only: CategorizeTaskJob) do
+      post tasks_path, params: { task: { title: "Renew passport" } }
+    end
   end
 
   test "completes and reopens own task" do

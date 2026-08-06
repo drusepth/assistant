@@ -51,6 +51,9 @@ Rails 8.1, Ruby 3.3+, SQLite (the user's life is literally one file they own), S
 **D15. Onboarding: first-run setup + link-based invitations.**
 A fresh instance redirects every visit to `/setup`, which creates the household and its first (admin) user in one form — solo users are fully onboarded there and never see invite concepts. Admins invite others by generating **signed join links** from Settings (name only; copied and sent over whatever channel the household already uses). No email delivery dependency — self-hosted instances rarely have SMTP. Tokens are single-use, expire in 7 days, die on revoke. No public signup, no account merging. Admins can promote/demote others and remove members; acting on yourself is forbidden, which structurally guarantees ≥1 admin. — *Locked.*
 
+**D16. Task capture is one field; AI files the rest.**
+The new-task form was a wall of fields (notes, due date, goal, ~20 section checkboxes) that made the user do the machine's job. Capture is now a single "What needs doing?" input — quick-add bar on the Tasks index plus a minimal `/tasks/new` — and `CategorizeTaskJob` (best-effort, silent on failure) auto-applies section tags and any due date implied by the title. This deliberately sits one rung up the trust ladder from documents (suggest-and-click, D6): a mis-tagged task is low-stakes and fixable in the edit form, which keeps all fields for refinement. Hand-picked tags and user-set due dates are never overwritten. — *Locked.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**

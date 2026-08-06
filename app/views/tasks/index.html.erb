@@ -2,10 +2,12 @@
   <% header.with_actions do %>
     <%= link_to "Open", tasks_path, class: "btn btn-sm #{@filter == "open" ? "btn-primary" : "btn-secondary"}" %>
     <%= link_to "Completed", tasks_path(filter: "completed"), class: "btn btn-sm #{@filter == "completed" ? "btn-primary" : "btn-secondary"}" %>
-    <%= link_to new_task_path, class: "btn btn-primary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Task
-    <% end %>
   <% end %>
+<% end %>
+
+<%= form_with model: Task.new, class: "mb-4 flex items-center gap-2" do |form| %>
+  <%= form.text_field :title, placeholder: quick_add_placeholder, required: true, class: "flex-1" %>
+  <%= form.submit "Add" %>
 <% end %>
 
 <% if @tasks.any? %>
@@ -13,8 +15,6 @@
 <% else %>
   <%= render Ui::EmptyStateComponent.new(
         title: @filter == "completed" ? "No completed tasks yet" : "No open tasks",
-        description: "Tasks are doable things — errands, paperwork, follow-ups — taggable across your sections."
-      ) do |empty| %>
-    <% empty.with_action { link_to "New task", new_task_path, class: "btn btn-primary" } %>
-  <% end %>
+        description: "Tasks are doable things — errands, paperwork, follow-ups. Type one above to add it."
+      ) %>
 <% end %>
