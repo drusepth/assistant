@@ -21,6 +21,9 @@ Rails.application.routes.draw do
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
 
+  namespace :events do
+    resource :import, only: %i[ new create ]
+  end
   resources :events
   resources :tasks do
     member do

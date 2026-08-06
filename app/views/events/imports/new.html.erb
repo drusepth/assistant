@@ -1,0 +1,25 @@
+<%= render Ui::PageHeaderComponent.new(title: "Import calendar", subtitle: "Bring in the calendar you already keep") %>
+
+<div class="max-w-xl">
+  <div class="card p-6">
+    <%= form_with url: events_import_path, class: "space-y-4" do |form| %>
+      <%= form.field :file, label_text: "Calendar file" do %>
+        <%= form.file_field :file, accept: ".ics,.ical,.csv,text/calendar,text/csv", required: true %>
+      <% end %>
+      <div class="space-y-1 text-sm text-soft">
+        <p>Export your calendar from wherever it lives, then upload the file here:</p>
+        <ul class="list-disc space-y-0.5 pl-5">
+          <li><strong>Google Calendar</strong> — calendar.google.com &rarr; Settings &rarr; Import &amp; export &rarr; Export (unzip the download to get an .ics per calendar)</li>
+          <li><strong>Apple Calendar</strong> — select a calendar &rarr; File &rarr; Export &rarr; Export&hellip; (.ics)</li>
+          <li><strong>Outlook</strong> — Calendar &rarr; File &rarr; Save Calendar (.ics), or Import/Export &rarr; Export to a file (CSV)</li>
+          <li><strong>Anything else</strong> — any CSV with a title column and a date column works</li>
+        </ul>
+        <p>Titles, dates and times, locations, and descriptions come across; organizers and links are kept in the description. Repeating events are filled in up to a year ahead. Events already on your calendar (same title and time) are skipped, never overwritten.</p>
+      </div>
+      <div class="flex items-center gap-2 pt-2">
+        <%= form.submit "Import" %>
+        <%= link_to "Cancel", calendar_path, class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  </div>
+</div>
