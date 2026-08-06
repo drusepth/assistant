@@ -1,5 +1,5 @@
 class PeopleController < ApplicationController
-  before_action :set_own_person, only: %i[ edit update destroy ]
+  before_action :set_own_person, only: %i[ edit update destroy log_contact ]
 
   def index
     @people = Person.visible_to(Current.user).order(:name).includes(:sections, :user)
@@ -37,6 +37,13 @@ class PeopleController < ApplicationController
   def destroy
     @person.destroy!
     redirect_to people_path, notice: "Person removed."
+  end
+
+  # The Q8 contact-recency signal, one tap. Deliberately manual — the app
+  # can't see your texts and shouldn't pretend to.
+  def log_contact
+    @person.update!(last_contacted_on: Date.current)
+    redirect_back fallback_location: person_path(@person), notice: "Noted — you talked to #{@person.name} today."
   end
 
   private

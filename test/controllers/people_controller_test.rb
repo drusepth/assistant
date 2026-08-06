@@ -3,6 +3,17 @@ require "test_helper"
 class PeopleControllerTest < ActionDispatch::IntegrationTest
   setup { sign_in_as users(:one) }
 
+  test "log_contact stamps today on your own person only" do
+    person = users(:one).people.create!(name: "Mom")
+    patch log_contact_person_path(person)
+    assert_equal Date.current, person.reload.last_contacted_on
+
+    other = users(:two).people.create!(name: "Bob's friend")
+    patch log_contact_person_path(other)
+    assert_response :not_found
+    assert_nil other.reload.last_contacted_on
+  end
+
   test "creates a person linked to a household member" do
     assert_difference("Person.count") do
       post people_path, params: {

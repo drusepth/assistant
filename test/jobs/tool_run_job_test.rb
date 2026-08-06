@@ -17,7 +17,7 @@ class ToolRunJobTest < ActiveJob::TestCase
 
   test "drafts the letter as a filed note, adds follow-ups, and finishes the run" do
     stub_llm(
-      letter: { title: "Dispute of account 12345", body: "To whom it may concern,\n\nI dispute..." },
+      draft: { title: "Dispute of account 12345", body: "To whom it may concern,\n\nI dispute..." },
       follow_ups: [
         { title: "Mail the letter", due_on: Date.current.iso8601 },
         { title: "Chase a reply if silent for 30 days", due_on: nil }
@@ -43,7 +43,7 @@ class ToolRunJobTest < ActiveJob::TestCase
   end
 
   test "a letter without a title falls back to the document's" do
-    stub_llm(letter: { title: nil, body: "Dear billing office," }, follow_ups: [])
+    stub_llm(draft: { title: nil, body: "Dear billing office," }, follow_ups: [])
 
     ToolRunJob.perform_now(@run)
 
@@ -62,12 +62,12 @@ class ToolRunJobTest < ActiveJob::TestCase
   end
 
   test "a missing letter body fails the run" do
-    stub_llm(letter: { title: "x", body: "" }, follow_ups: [])
+    stub_llm(draft: { title: "x", body: "" }, follow_ups: [])
 
     ToolRunJob.perform_now(@run)
 
     assert @run.reload.failed?
-    assert_match(/didn't return a letter/, @run.error)
+    assert_match(/didn't return a draft/, @run.error)
   end
 
   test "a vanished document fails the run without calling the model" do
@@ -101,11 +101,11 @@ class ToolRunJobTest < ActiveJob::TestCase
   end
 
   private
-    def stub_llm(letter:, follow_ups:)
+    def stub_llm(draft:, follow_ups:)
       stub_request(:post, ENDPOINT).to_return(
         status: 200,
         body: { choices: [ { message: { content: {
-          letter: letter, follow_ups: follow_ups
+          draft: draft, follow_ups: follow_ups
         }.to_json } } ] }.to_json
       )
     end
