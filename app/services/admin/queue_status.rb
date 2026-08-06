@@ -34,6 +34,7 @@ module Admin
       SolidQueue::FailedExecution.includes(:job).order(created_at: :desc).limit(limit).map do |execution|
         error = (execution.error || {}).with_indifferent_access
         {
+          id: execution.id,
           job_class: execution.job&.class_name || "unknown",
           error_class: error[:exception_class].to_s.presence || "unknown",
           message: error[:message].to_s,
@@ -59,7 +60,41 @@ module Admin
       failures.map { |failure| failure_report(failure) }.join("\n\n#{"-" * 40}\n\n")
     end
 
+    # Re-dispatches the failed job; true when there was one to retry. A job
+    # whose class was renamed retries clean once a deploy brings the new name
+    # (or an alias for the old one).
+    def retry_failure(id)
+      with_failure(id) { |failure| failure.retry }
+    end
+
+    # Drops the execution and its job — the remedy for a failure that will
+    # never succeed (e.g. a class that no longer exists and shouldn't run).
+    def discard_failure(id)
+      with_failure(id) { |failure| failure.discard }
+    end
+
+    def discard_all_failures
+      return false unless available?
+
+      SolidQueue::FailedExecution.discard_all_in_batches
+      true
+    rescue StandardError
+      false
+    end
+
     private
+      def with_failure(id)
+        return false unless available?
+
+        failure = SolidQueue::FailedExecution.find_by(id: id)
+        return false unless failure
+
+        yield failure
+        true
+      rescue StandardError
+        false
+      end
+
       def safe_count(model)
         return nil unless available?
 

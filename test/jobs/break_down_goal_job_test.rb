@@ -99,6 +99,16 @@ class BreakDownGoalJobTest < ActiveJob::TestCase
     assert_requested :post, ENDPOINT, times: RetriesModelCalls::ATTEMPTS
   end
 
+  test "a job queued under the pre-D17 name still deserializes and runs" do
+    @goal.tasks.create!(user: users(:one), title: "Already planned")
+    payload = BreakDownGoalJob.new(@goal).serialize.merge("job_class" => "CategorizeGoalJob")
+
+    assert_nothing_raised { ActiveJob::Base.execute(payload) }
+
+    assert_not_nil @goal.reload.broken_down_at, "the aliased job really ran"
+    assert_not_requested :post, ENDPOINT
+  end
+
   test "skips users without a configured model profile" do
     goal = users(:outsider).goals.create!(title: "Get fit")
 

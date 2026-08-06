@@ -47,6 +47,9 @@
           <button type="button" class="btn btn-secondary btn-sm"
                   data-clipboard-target="button" data-action="clipboard#copy">Copy all</button>
         </span>
+        <%= button_to "Discard all", discard_all_admin_failed_jobs_path, method: :delete,
+              class: "btn btn-danger btn-sm",
+              form: { data: { turbo_confirm: "Discard every failed job? They will never run." } } %>
       <% end %>
     <% end %>
 
@@ -80,6 +83,13 @@
                   <pre class="mt-1.5 overflow-x-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-soft"><%= failure[:backtrace] %></pre>
                 </details>
               <% end %>
+              <div class="mt-2 flex gap-2">
+                <%= button_to "Retry", retry_admin_failed_job_path(failure[:id]), method: :post,
+                      class: "btn btn-secondary btn-sm" %>
+                <%= button_to "Discard", discard_admin_failed_job_path(failure[:id]), method: :delete,
+                      class: "btn btn-danger btn-sm",
+                      form: { data: { turbo_confirm: "Discard this failed job? It will never run." } } %>
+              </div>
             </li>
           <% end %>
         </ul>
