@@ -52,6 +52,14 @@ Rails.application.routes.draw do
   end
   resources :notes
 
+  resources :suggestions, only: [] do
+    member do
+      post :accept
+      post :dismiss
+      post :snooze
+    end
+  end
+
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
   resources :tool_runs, only: :show do

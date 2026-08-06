@@ -38,6 +38,14 @@
   <p class="mt-1 text-xs text-primary-800/70">AI synthesis across your sections arrives in a later milestone; this summary is computed locally.</p>
 </div>
 
+<% if @suggestions.any? %>
+  <div class="mb-6">
+    <%= render Ui::CardComponent.new(title: "Suggestions", subtitle: "The assistant proposes — you decide", padded: false) do %>
+      <div class="divide-y divide-edge"><%= render @suggestions %></div>
+    <% end %>
+  </div>
+<% end %>
+
 <div class="grid gap-6 lg:grid-cols-2">
   <%= render Ui::CardComponent.new(title: "Needs attention", padded: false) do |card| %>
     <% card.with_actions { link_to "Today view", today_path, class: "btn btn-ghost btn-sm" } %>

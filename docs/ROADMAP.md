@@ -141,7 +141,7 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 3. ✅ **M2.3 — High-impact wave, draft tools** (`TOOLS_PLAN.md` waves 1–4, all built): shared plumbing + letter family (results explainer, insurance appeal, debt-collector response, deposit demand) → owned-context drafts (doctor-visit prep, negotiation prep) → decode-this-letter + routing (D21) → benefits screener — plus the slate leftovers cancel-subscription and reconnect (new `:person` input kind).
 4. ✅ **M2.4 — Situations** as plan tools with richer briefs: "moving" built (the Q7 pressure test, passed); other situations ship per demand as one brief each.
 5. ✅ **M2.5 — Tutor + chat tools** (`TOOLS_PLAN.md` wave 5, D22, built): `tool_run_messages`, chat run lifecycle, the Education tutor with recap Notes.
-6. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
+6. ✅ **M3.1 — Suggestions core**: `suggestions` table (fingerprint-deduped, action payload re-validated at accept time), Attend zone + Dashboard suggestions feed, checkup-cadence watcher (SQL signal, concrete-date payload), `AgentScanFanoutJob` weekly via recurring.yml — everything hardwired to Quiet.
 7. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
 8. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
 

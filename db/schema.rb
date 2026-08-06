@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_130001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -179,6 +179,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130001) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "suggestions", force: :cascade do |t|
+    t.json "action", default: {}, null: false
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.string "fingerprint", null: false
+    t.string "kind", default: "nudge", null: false
+    t.date "snoozed_until"
+    t.string "status", default: "pending", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.string "watcher_slug", null: false
+    t.index ["user_id", "fingerprint"], name: "index_suggestions_on_user_id_and_fingerprint", unique: true
+    t.index ["user_id", "status"], name: "index_suggestions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_suggestions_on_user_id"
+  end
+
   create_table "tasks", force: :cascade do |t|
     t.integer "bucket", default: 0, null: false
     t.datetime "completed_at"
@@ -270,6 +287,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130001) do
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "suggestions", "users"
   add_foreign_key "tasks", "goals"
   add_foreign_key "tasks", "users"
   add_foreign_key "tool_run_items", "tool_runs"
