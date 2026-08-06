@@ -8,7 +8,17 @@ class ApplicationController < ActionController::Base
 
   default_form_builder ApplicationFormBuilder
 
+  before_action :require_onboarding
+
   private
+    # First-run flow (Q5): a signed-in user who hasn't onboarded lands in
+    # /welcome. Controllers reachable before/without onboarding skip this.
+    def require_onboarding
+      return unless Current.user
+      return if Current.user.onboarded_at
+
+      redirect_to onboarding_path(step: 1)
+    end
     def require_admin
       redirect_to settings_path, alert: "Only household admins can do that." unless Current.user.admin?
     end

@@ -11,15 +11,26 @@ Rails.application.routes.draw do
 
   resources :household_members, only: %i[ update destroy ]
 
+  get "welcome(/:step)" => "onboarding#show", as: :onboarding, constraints: { step: /[1-4]/ }
+  patch "welcome/:step" => "onboarding#update", constraints: { step: /[1-4]/ }
+
   root "dashboard#show"
   get "today" => "today#show", as: :today
   get "calendar(/:year/:month)" => "calendar#show", as: :calendar,
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
   get "sections/:slug" => "sections#show", as: :section
+  resources :hobbies, only: %i[ create destroy ]
 
   resource :settings, only: %i[ show update ]
+  resource :export, only: %i[ create ]
+  resources :notification_channels, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
+  resources :linked_accounts, only: %i[ create update destroy ] do
+    member do
+      post :sync
+    end
+  end
 
   namespace :events do
     resource :import, only: %i[ new create ]
@@ -42,7 +53,11 @@ Rails.application.routes.draw do
   namespace :people do
     resource :import, only: %i[ new create ]
   end
-  resources :people
+  resources :people do
+    member do
+      patch :log_contact
+    end
+  end
   resources :goals do
     member do
       patch :complete
@@ -54,9 +69,9 @@ Rails.application.routes.draw do
 
   resources :suggestions, only: [] do
     member do
-      post :accept
-      post :dismiss
-      post :snooze
+      patch :accept
+      patch :dismiss
+      patch :snooze
     end
   end
 
@@ -66,6 +81,13 @@ Rails.application.routes.draw do
     resources :messages, only: :create, controller: "tool_run_messages"
     member do
       post :recap
+    end
+  end
+
+  namespace :admin do
+    root "overview#show"
+    resources :errors, only: :index do
+      collection { delete :destroy_all }
     end
   end
 

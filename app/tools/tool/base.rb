@@ -2,14 +2,30 @@ module Tool
   # Declarative superclass for tool definitions. A subclass names itself for
   # the Act zone (title/description), registers on section slugs, declares
   # the minimal inputs its form asks for (D16: only what can't be read from
-  # owned data), and implements the LLM round-trip: `messages` builds the
-  # call from inputs + owned context, `handle` lands the response as draft
-  # primitives recorded on the run.
+  # owned data), and implements the LLM round-trip.
+  #
+  # Draft tools (kind :draft) share one response contract — DRAFT_FORMAT —
+  # and the default `handle` lands it: a draft Note plus up to MAX_FOLLOW_UPS
+  # follow-up Tasks, all filed under `filing`. A draft tool usually only
+  # writes `messages` and overrides `filing`/`fallback_title` when the
+  # defaults aren't right.
+  #
+  # Plan tools (kind :plan) override `call` with one line: `plan_goal!` —
+  # goal capture with framing, riding the same Goals::BreakDown pipeline as
+  # every goal. No tool adds schema or pipeline of its own.
+  #
+  # Chat tools (kind :chat) ride ChatBase — see that class and D29.
+  #
+  # Beneath the three kinds sits a shared helper layer (TOOLS_PLAN):
+  # visibility-walled `chosen_document`, budgeted `section_context`,
+  # `create_*` landing helpers (deadlines land as all-day calendar Events),
+  # and `store_next_tools` — the D28 routing seam.
   class Base
     Input = Data.define(:name, :label, :kind, :required, :hint, :options) do
       def required? = required
       def document? = kind == :document
       def person? = kind == :person
+      def hobby? = kind == :hobby
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
     end
@@ -18,10 +34,21 @@ module Tool
     class_attribute :section_slugs, instance_accessor: false, default: []
     class_attribute :input_definitions, instance_accessor: false, default: []
 
-    MAX_DOCUMENT_CHARS = 15_000
     MAX_FOLLOW_UPS = 3
     MAX_DEADLINES = 3
     MAX_NEXT_TOOLS = 2
+    MAX_DOCUMENT_CHARS = 15_000
+
+    DRAFT_FORMAT = <<~PROMPT.freeze
+      Respond with a JSON object:
+      {"draft": {"title": "...", "body": "..."},
+       "follow_ups": [{"title": "...", "due_on": "YYYY-MM-DD" or null}, ...]}.
+      follow_ups are at most #{MAX_FOLLOW_UPS} small concrete actions, each completable
+      within a single day; set due_on only when a real deadline is stated or
+      clearly implied, resolved against today's date.
+      Invent nothing — where a detail is unknown, leave a [BRACKETED
+      PLACEHOLDER] for the user to fill in.
+    PROMPT
 
     class << self
       def slug = name.demodulize.underscore
@@ -40,15 +67,54 @@ module Tool
       @user = run.user
     end
 
-    # The template method ToolRunJob calls: one JSON chat call, then the
-    # subclass lands the result. Everything user-facing that can go wrong
-    # raises Llm::Error so the run fails with a friendly message.
+    # The template method ToolRunJob calls. Everything user-facing that can
+    # go wrong raises Llm::Error so the run fails with a friendly message.
     def call
       handle(profile.client.chat(messages, json: true))
     end
 
     private
       attr_reader :run, :user
+
+      # Default landing for the DRAFT_FORMAT contract.
+      def handle(response)
+        body = response.dig("draft", "body")
+        raise Llm::Error, "The model didn't return a draft — try again." if body.blank?
+
+        create_note(title: response.dig("draft", "title").presence || fallback_title, body: body)
+        create_follow_ups(response["follow_ups"])
+      end
+
+      # Where a draft tool's output is filed. Default: where the tool lives,
+      # plus the filing of whatever owned items the run read (a letter about
+      # a Health-tagged bill lands in Disputes and Health).
+      def filing
+        @filing ||= (self.class.section_records + filing_sources.compact.flat_map(&:sections)).uniq
+      end
+
+      # Owned items whose sections the output inherits; subclasses override.
+      def filing_sources = []
+
+      def fallback_title = "#{self.class.title} — draft"
+
+      # The whole plan-tool contract: create a plain Goal, hand it to the
+      # shared breakdown pipeline with framing, record what comes back.
+      def plan_goal!(title:, brief:, description: nil)
+        goal = record(user.goals.create!(title: title, description: description))
+        begin
+          Goals::BreakDown.new(goal: goal, profile: profile, brief: brief).plan!.each { |task| record(task) }
+          # The plan is always findable where the tool lives, on top of
+          # whatever the model filed it under.
+          goal.sections = (goal.sections.to_a + self.class.section_records).uniq
+        ensure
+          # Stamp even on failure so the goal card can't spin forever — a
+          # failed run leaves an ordinary unplanned goal the user can retry
+          # from its own page, and the board refreshes either way.
+          goal.update_column(:broken_down_at, Time.current)
+          Turbo::StreamsChannel.broadcast_refresh_to(user, :tasks)
+        end
+        goal
+      end
 
       def profile
         profile = user.household.model_profile
@@ -87,15 +153,6 @@ module Tool
         text.truncate(MAX_DOCUMENT_CHARS)
       end
 
-      # The person an input points at — same contract as chosen_document.
-      def chosen_person(input_name = :person_id)
-        return nil if inputs[input_name].blank?
-
-        (@chosen_people ||= {})[input_name.to_s] ||=
-          Person.visible_to(user).find_by(id: inputs[input_name]) ||
-            raise(Llm::Error, "That person is gone or no longer shared with you.")
-      end
-
       # Owned items in the given sections (default: where the tool lives),
       # through the visibility wall, as a budgeted prompt block.
       def section_context(slugs = self.class.section_slugs, budget: Context::DEFAULT_BUDGET)
@@ -103,16 +160,6 @@ module Tool
       end
 
       # ── Landing primitives ─────────────────────────────────────────────
-
-      # Everything a tool creates is filed where the tool lives, plus the
-      # filing of whatever owned items the run read (the DisputeLetter rule:
-      # a letter about a Health-tagged bill lands in Disputes and Health).
-      def filing
-        @filing ||= (self.class.section_records + filing_sources.compact.flat_map(&:sections)).uniq
-      end
-
-      # Owned items whose sections the output inherits; subclasses override.
-      def filing_sources = []
 
       def create_note(title:, body:)
         note = record(user.notes.create!(title:, body:))
@@ -159,7 +206,7 @@ module Tool
         end
       end
 
-      # ── Routing (D21) ──────────────────────────────────────────────────
+      # ── Routing (D28) ──────────────────────────────────────────────────
 
       # Tools compose by routing, never by calling each other: the model
       # proposes follow-on tools, code sanitizes — only slugs the caller

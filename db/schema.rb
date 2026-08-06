@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_210002) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -51,6 +51,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "app_errors", force: :cascade do |t|
+    t.text "backtrace"
+    t.json "context", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.string "error_class", null: false
+    t.text "message", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["created_at"], name: "index_app_errors_on_created_at"
+    t.index ["source", "created_at"], name: "index_app_errors_on_source_and_created_at"
+    t.index ["user_id"], name: "index_app_errors_on_user_id"
   end
 
   create_table "documents", force: :cascade do |t|
@@ -112,6 +126,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
     t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
   end
 
+  create_table "linked_accounts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.json "credentials", default: {}, null: false
+    t.json "disabled_scopes", default: [], null: false
+    t.string "provider", null: false
+    t.string "sync_error"
+    t.datetime "synced_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "provider"], name: "index_linked_accounts_on_user_id_and_provider", unique: true
+    t.index ["user_id"], name: "index_linked_accounts_on_user_id"
+  end
+
   create_table "model_profiles", force: :cascade do |t|
     t.string "api_key"
     t.string "base_url", default: "https://api.openai.com/v1", null: false
@@ -132,11 +159,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
     t.index ["user_id"], name: "index_notes_on_user_id"
   end
 
+  create_table "notification_channels", force: :cascade do |t|
+    t.json "config", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "kind", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "kind"], name: "index_notification_channels_on_user_id_and_kind"
+    t.index ["user_id"], name: "index_notification_channels_on_user_id"
+  end
+
   create_table "people", force: :cascade do |t|
     t.text "address"
     t.date "birthday"
     t.datetime "created_at", null: false
     t.string "email"
+    t.date "last_contacted_on"
     t.integer "linked_user_id"
     t.string "name", null: false
     t.text "notes"
@@ -161,6 +200,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
 
   create_table "sections", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.boolean "custom", default: false, null: false
     t.string "name", null: false
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
@@ -247,6 +287,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
   end
 
   create_table "user_sections", force: :cascade do |t|
+    t.string "agent_level", default: "quiet", null: false
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
     t.integer "position"
@@ -261,9 +302,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
   create_table "users", force: :cascade do |t|
     t.boolean "admin", default: false, null: false
     t.datetime "created_at", null: false
+    t.text "digest"
+    t.datetime "digest_generated_at"
     t.string "email_address", null: false
     t.integer "household_id", null: false
     t.string "name", null: false
+    t.datetime "onboarded_at"
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
@@ -274,14 +318,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_130002) do
   add_foreign_key "access_grants", "users", column: "grantor_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "app_errors", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
   add_foreign_key "goals", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"
+  add_foreign_key "linked_accounts", "users"
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"
+  add_foreign_key "notification_channels", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
   add_foreign_key "section_taggings", "sections"

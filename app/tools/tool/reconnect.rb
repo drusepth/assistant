@@ -1,45 +1,29 @@
 module Tool
-  # Relationships fade by default; a small nudge and a ready-to-send message
-  # beat good intentions. Reads a Person and what's recorded about them into
-  # a short message in the user's own voice plus grounded talking points.
-  # The hard guardrail: never invent shared memories — warmth that isn't
-  # backed by a recorded fact stays generic. This tool deliberately seeds
-  # the Milestone 3 stay-in-touch watcher: its accept action runs this
-  # prefilled (ROADMAP §3).
+  # Staying in touch is the People section's core promise: pick a person,
+  # get a warm message draft plus talking points from what you've noted
+  # about them. Deliberately seeds the M3 stay-in-touch watcher, whose
+  # accept action opens this tool prefilled.
   class Reconnect < Base
     self.title = "Reconnect with someone"
-    self.description = "A ready-to-send message and talking points, from what you know about them."
+    self.description = "A warm message draft and talking points, from what you know about them."
     self.section_slugs = %w[ people ]
     self.kind = :draft
 
     input :person_id, kind: :person, required: true,
-      label: "Who?"
-    input :occasion,
-      label: "Any reason or occasion?",
-      hint: "Optional — “her birthday's coming up”, “just checking in”."
-
-    MAX_TALKING_POINTS = 5
-    MAX_FOLLOW_UPS = 2
+      label: "Who do you want to reach out to?"
+    input :context,
+      label: "Anything going on?",
+      hint: "Optional — “her birthday's coming up”, “heard he changed jobs”."
 
     SYSTEM_PROMPT = <<~PROMPT.freeze
       You are the reconnect feature of a private, self-hosted life assistant.
-      The user wants to get back in touch with someone; draft the opener for
-      them. Respond with a JSON object:
-      {"message": {"title": "...", "body": "..."},
-       "talking_points": ["...", ...],
-       "follow_ups": [{"title": "...", "due_on": "YYYY-MM-DD" or null}, ...]}.
-      The message is a short, warm text-or-email opener written in the user's
-      own casual voice — a few sentences, no greeting-card language, no
-      apology-spiral about the silence (one light acknowledgment at most). Ground
-      it in the recorded facts: the relationship, the occasion, something known
-      about them. Never invent shared memories, inside jokes, or events the
-      provided data doesn't state — when little is recorded, stay warmly generic
-      and ask a real question instead.
-      talking_points: up to #{MAX_TALKING_POINTS} short prompts for the conversation once it
-      starts, each grounded in a recorded fact ("ask how the new job is going")
-      or honestly open ("find out what they've been up to — it's been a while").
-      follow_ups: at most #{MAX_FOLLOW_UPS} — send the message, and when momentum warrants,
-      a suggestion to make a concrete plan; due_on resolved against today.
+      The user wants to reach out to someone they haven't talked to in a while.
+      The draft is a short, warm message (readable as a text or an email) plus,
+      under it, 3 bullet talking points drawn from what's known about the
+      person. Sound like a person, not a card: specific over generic, no
+      guilt about the gap, one genuine question they'd actually want to answer.
+      follow_ups: at most one — send it.
+      #{DRAFT_FORMAT}
     PROMPT
 
     private
@@ -53,35 +37,25 @@ module Tool
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "The user's name: #{user.name}"
-        parts << "Occasion: #{inputs[:occasion]}" if inputs[:occasion].present?
-        parts << "The person, as recorded:\n#{person_facts}"
+        parts << "Reaching out to: #{person.name}"
+        parts << "Relationship: #{person.relationship}" if person.relationship.present?
+        parts << "Birthday: #{person.birthday.strftime("%B %-d")}" if person.birthday
+        parts << "Last logged contact: #{person.last_contacted_on.iso8601}" if person.respond_to?(:last_contacted_on) && person.last_contacted_on
+        parts << "What the user has noted about them:\n#{person.notes.truncate(2_000)}" if person.notes.present?
+        parts << "What's going on: #{inputs[:context]}" if inputs[:context].present?
         parts.join("\n\n")
       end
 
-      def person_facts
-        facts = [ "Name: #{person.name}" ]
-        facts << "Relationship: #{person.relationship}" if person.relationship.present?
-        facts << "Birthday: #{person.birthday.iso8601}" if person.birthday
-        facts << "Notes about them: #{person.notes}" if person.notes.present?
-        facts.join("\n")
+      def person
+        @person ||= Person.visible_to(user).find_by(id: inputs[:person_id]) ||
+          raise(Llm::Error, "That person is gone or no longer shared with you.")
       end
 
-      def person = chosen_person
+      def fallback_title = "Message to #{person.name}"
 
-      def filing_sources = [ person ]
-
-      def handle(response)
-        body = response.dig("message", "body")
-        raise Llm::Error, "The model didn't return a message — try again." if body.blank?
-
-        create_note(
-          title: response.dig("message", "title").presence || "Reconnect with #{person.name}",
-          body: [
-            body,
-            bulleted_block("Talking points", response["talking_points"], limit: MAX_TALKING_POINTS)
-          ].compact.join("\n\n")
-        )
-        create_follow_ups(response["follow_ups"], limit: MAX_FOLLOW_UPS)
+      # Filed under People plus wherever the person themselves is filed.
+      def filing
+        @filing ||= (self.class.section_records + person.sections).uniq
       end
   end
 end

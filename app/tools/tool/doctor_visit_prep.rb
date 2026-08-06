@@ -1,46 +1,33 @@
 module Tool
-  # The visit is fifteen minutes; the history is years. The first tool that
-  # reads a *section* rather than a single document: everything Health-tagged
-  # the user can see becomes a one-page visit sheet — dated history, what's
-  # unresolved, and the questions worth the appointment time. Strictly what
-  # the vault states: gaps become [BRACKETED PLACEHOLDER] lines, never
-  # plausible history (D16 discipline applied to reading, not just writing).
+  # Walk into an appointment with everything in one place: the questions
+  # worth asking and a one-page history pulled from the user's own Health
+  # items. Preparation and comprehension, never diagnosis (PRODUCT.md's
+  # Health scoping). Reads the user's own data only — a shared spouse's
+  # appointment is not your history.
   class DoctorVisitPrep < Base
     self.title = "Prep for a doctor visit"
-    self.description = "A one-page visit sheet from what you've tracked — history, what's unresolved, what to ask."
+    self.description = "A question list and one-page history summary to bring to your appointment."
     self.section_slugs = %w[ health ]
     self.kind = :draft
 
-    input :reason, required: true,
+    input :reason,
       label: "What's the visit about?",
-      hint: "“Annual physical”, “follow-up on the MRI with Dr. Chen”."
+      hint: "Optional — “annual physical”, “knee pain follow-up”."
 
-    MAX_QUESTIONS = 8
-    MAX_FOLLOW_UPS = 2
-
-    FOOTER = "Built only from what you've tracked in this app — bring anything newer with you.".freeze
+    LOOKBACK = 24.months
+    MAX_ITEMS = 10
 
     SYSTEM_PROMPT = <<~PROMPT.freeze
-      You are the doctor-visit-prep feature of a private, self-hosted life
-      assistant. The user has an appointment coming up; build the one-page sheet
-      they should walk in with, from their tracked health data. Respond with a
-      JSON object:
-      {"prep": {"title": "...", "body": "..."},
-       "questions": ["...", ...],
-       "follow_ups": [{"title": "...", "due_on": "YYYY-MM-DD" or null}, ...]}.
-      The prep body is the visit sheet: the reason for the visit; a short dated
-      timeline of relevant history drawn strictly from the provided data — visits,
-      symptoms, results, medications — most recent first; and anything the data
-      shows as unresolved (an abnormal result never followed up, a symptom that
-      keeps recurring). Use only what the provided data states: never fill gaps
-      with plausible history, and where something a doctor will ask for is missing
-      (current medications, allergies), include a [BRACKETED PLACEHOLDER] line for
-      the user to complete before the visit.
-      questions: up to #{MAX_QUESTIONS} short, concrete questions worth asking at this visit,
-      each grounded in the data or the visit reason — an unexplained result, a due
-      screening, a medication question. Never "any questions you have".
-      follow_ups: at most #{MAX_FOLLOW_UPS}, and only preparation actions (gather a record,
-      write down current medications), with due_on resolved against today's date.
+      You are the doctor-visit prep feature of a private, self-hosted life
+      assistant. From the user's own health records below, the draft is a prep
+      sheet they can bring to an appointment, with three parts: questions worth
+      asking the doctor; a brief history summary (symptoms, visits, medications
+      mentioned — organized, in plain language); and anything from the records
+      the doctor should probably see. You prepare and organize — you NEVER
+      diagnose, speculate about conditions, or recommend treatment; questions
+      are for the doctor to answer.
+      follow_ups are practical (gather a missing record, book the slot).
+      #{DRAFT_FORMAT}
     PROMPT
 
     private
@@ -53,29 +40,31 @@ module Tool
 
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
-        parts << "The visit: #{inputs[:reason]}"
-        context = section_context
-        parts << if context.empty?
-          "No tracked health data yet — build the sheet from the visit reason, with placeholders for the rest."
-        else
-          "What the user has tracked (Health):\n#{context.to_prompt}"
+        parts << "What the visit is about: #{inputs[:reason]}" if inputs[:reason].present?
+        parts << listing("Health events (past two years and upcoming)",
+          health(user.events.where(starts_at: LOOKBACK.ago..)).order(:starts_at)) { |e| "#{e.starts_at.to_date.iso8601} — #{e.title}" }
+        parts << listing("Open health tasks", health(user.tasks.open), &:title)
+        parts << listing("Health notes", health(user.notes).order(updated_at: :desc)) { |n| [ n.title, n.body.truncate(500) ].compact.join(": ") }
+        parts << listing("Health documents", health(user.documents)) { |d| [ d.title, d.summary&.truncate(300) ].compact.join(" — ") }
+        parts.compact.join("\n\n")
+      end
+
+      def health(scope)
+        scope.in_section(health_section_ids).limit(MAX_ITEMS)
+      end
+
+      def health_section_ids
+        @health_section_ids ||= begin
+          section = Section.find_by(slug: "health")
+          section ? [ section.id, *section.children.ids ] : []
         end
-        parts.join("\n\n")
       end
 
-      def handle(response)
-        body = response.dig("prep", "body")
-        raise Llm::Error, "The model didn't return a visit sheet — try again." if body.blank?
-
-        create_note(
-          title: response.dig("prep", "title").presence || "Visit sheet — #{inputs[:reason]}",
-          body: [
-            body,
-            bulleted_block("Questions to ask", response["questions"], limit: MAX_QUESTIONS),
-            FOOTER
-          ].compact.join("\n\n")
-        )
-        create_follow_ups(response["follow_ups"], limit: MAX_FOLLOW_UPS)
+      def listing(label, records)
+        rows = records.map { |record| "- #{yield(record)}" }
+        rows.any? ? "#{label}:\n#{rows.join("\n")}" : nil
       end
+
+      def fallback_title = "Doctor-visit prep sheet"
   end
 end

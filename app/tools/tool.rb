@@ -6,8 +6,9 @@ module Tool
   SLUGS = %w[
     decode_letter dispute_letter insurance_appeal debt_collector_response
     deposit_demand results_explainer doctor_visit_prep negotiation_prep
-    benefits_screener cancel_subscription reconnect learn_something tutor
-    moving
+    benefits_screener learn_something tutor
+    cancel_subscription reconnect moving
+    start_a_hobby what_should_i_make_next find_your_people
   ].freeze
 
   module_function
@@ -22,10 +23,13 @@ module Tool
     find(slug) || raise(ActiveRecord::RecordNotFound, "no tool named #{slug.inspect}")
   end
 
-  # Tools registered on a section or any of its subsections — a tool living
-  # on rights → disputes shows on both the Disputes and the Rights page.
+  # Tools flow both ways along the taxonomy: one registered on a subsection
+  # (rights → disputes) shows on the parent page too, and one registered on
+  # a parent (hobbies) shows on every subsection page — user-created hobby
+  # lenses (D25) can't be registered on ahead of time, so the Hobbies tools
+  # belong on each hobby's page.
   def for_section(section)
-    slugs = [ section.slug, *section.children.map(&:slug) ]
+    slugs = [ section.slug, section.parent&.slug, *section.children.map(&:slug) ].compact
     all.select { |tool| tool.section_slugs.intersect?(slugs) }
   end
 end

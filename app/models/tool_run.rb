@@ -21,7 +21,7 @@ class ToolRun < ApplicationRecord
 
   NextStep = Data.define(:tool, :inputs, :reason)
 
-  # Follow-on tools this run proposed (D21) — sanitized at write time by
+  # Follow-on tools this run proposed (D28) — sanitized at write time by
   # Tool::Base#store_next_tools, re-resolved against the registry at read
   # time so a retired slug can never break the page.
   def next_steps
@@ -35,7 +35,7 @@ class ToolRun < ApplicationRecord
 
   def finished? = done? || failed?
 
-  # Chat runs (D22): done means *live* — the opening message is in and the
+  # Chat runs (D29): done means *live* — the opening message is in and the
   # composer stays open; there is no finished state short of leaving.
   def chat? = tool.kind == :chat
 

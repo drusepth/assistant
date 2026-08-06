@@ -1,5 +1,5 @@
 module Tool
-  # The chat tool kind (D22): a conversation, not a one-shot pipeline,
+  # The chat tool kind (D29): a conversation, not a one-shot pipeline,
   # riding the whole run lifecycle — Act-zone card, run page (which doubles
   # as the chat surface), history. Three verbs:
   #

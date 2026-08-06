@@ -1,7 +1,6 @@
 class ToolRunsController < ApplicationController
   before_action :set_tool, only: %i[ new create ]
-  before_action :load_document_choices, only: %i[ new create ]
-  before_action :load_person_choices, only: %i[ new create ]
+  before_action :load_input_choices, only: %i[ new create ]
 
   def new
     @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params)
@@ -21,8 +20,8 @@ class ToolRunsController < ApplicationController
     @tool_run = Current.user.tool_runs.find(params[:id])
   end
 
-  # "Save a recap" on a chat run — the explicit click that turns a session
-  # into an owned Note (D20: nothing lands without the user asking).
+  # "Save a recap" on a chat run (D29) — the explicit click that turns a
+  # session into an owned Note (D20: nothing lands without the user asking).
   def recap
     run = Current.user.tool_runs.find(params[:id])
     ChatRecapJob.perform_later(run) if run.chat? && run.tool_run_messages.conversational.exists?
@@ -34,16 +33,12 @@ class ToolRunsController < ApplicationController
       @tool = Tool.find!(params[:tool_slug])
     end
 
-    def load_document_choices
-      return unless @tool.inputs.any?(&:document?)
-
-      @document_choices = Document.visible_to(Current.user).order(created_at: :desc)
-    end
-
-    def load_person_choices
-      return unless @tool.inputs.any?(&:person?)
-
-      @person_choices = Person.visible_to(Current.user).order(:name)
+    def load_input_choices
+      @document_choices = Document.visible_to(Current.user).order(created_at: :desc) if @tool.inputs.any?(&:document?)
+      @person_choices = Person.visible_to(Current.user).order(:name) if @tool.inputs.any?(&:person?)
+      # Hobby lenses (D25); with none yet the form falls back to free text,
+      # so the Hobbies tools work before any lens exists.
+      @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
     end
 
     # `new` accepts the same params so "Run again" and next-step links can

@@ -1,4 +1,4 @@
-# The composer on a chat-kind run's page (D22): store the user's turn,
+# The composer on a chat-kind run's page (D29): store the user's turn,
 # enqueue the reply. Only the run's owner ever reaches the run at all.
 class ToolRunMessagesController < ApplicationController
   def create

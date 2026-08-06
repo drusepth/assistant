@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The universal front door (D21): decode any scary mail, put its deadlines
+# The universal front door (D28): decode any scary mail, put its deadlines
 # on the calendar, and offer the specialized response tool prefilled. The
 # model proposes routes; code sanitizes them.
 class DecodeLetterToolTest < ActiveJob::TestCase

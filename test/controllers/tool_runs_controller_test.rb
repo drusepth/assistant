@@ -19,6 +19,16 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a hobby input is a free-text field until lenses exist, then a picker" do
+    get new_tool_run_path("find_your_people")
+    assert_response :success
+    assert_select "input[type=text]#inputs_hobby"
+
+    Hobbies::Lens.find_or_create!("Guitar")
+    get new_tool_run_path("find_your_people")
+    assert_select "select#inputs_hobby option", "Guitar"
+  end
+
   test "create enqueues the run and lands on its page" do
     assert_enqueued_with job: ToolRunJob do
       post run_tool_path("dispute_letter"), params: { inputs: { document_id: @document.id, intent: "remove the charge" } }
@@ -50,7 +60,7 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "new prefills inputs from the query string — the D21 routing entry point" do
+  test "new prefills inputs from the query string — the D28 routing entry point" do
     get new_tool_run_path("insurance_appeal", inputs: { document_id: @document.id, intent: "it was an emergency" })
 
     assert_response :success

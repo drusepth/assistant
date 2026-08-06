@@ -1,14 +1,24 @@
 <%= render Ui::PageHeaderComponent.new(title: @section.qualified_name) do |header| %>
-  <% if @section.children.any? %>
+  <% if @section.children.any? || @section.custom? %>
     <% header.with_actions do %>
       <% @section.children.each do |child| %>
         <%= render Ui::SectionChipComponent.new(section: child) %>
+      <% end %>
+      <% if @section.custom? %>
+        <%= button_to "Remove this hobby", hobby_path(@section), method: :delete, class: "btn btn-ghost",
+              data: { turbo_confirm: "Remove #{@section.name}? Your items stay — they just lose this tag." } %>
       <% end %>
     <% end %>
   <% end %>
 <% end %>
 
 <div class="space-y-8">
+  <%# Hobby identity capture (D25) — the section needs to know what the
+      hobbies are before its tools and lenses can do anything. %>
+  <% if @section.slug == "hobbies" %>
+    <%= render "sections/hobby_capture", hobbies: @section %>
+  <% end %>
+
   <%# Act zone (D18): what the app can do here — present even, especially,
       when the section is empty. %>
   <% if @tools.any? %>
@@ -22,16 +32,12 @@
     </div>
   <% end %>
 
-  <%# Attend zone (D18/D20): pending suggestions tagged with this section —
-      the pull-side slice of the Dashboard's feed. Renders nothing until a
-      watcher has something to say. %>
+  <%# Attend zone (D18): the pull-side slice of the agent's suggestions —
+      the Dashboard is the push surface for the same rows. %>
   <% if @suggestions.any? %>
-    <div>
-      <h2 class="mb-3 text-sm font-medium text-soft">Suggestions</h2>
-      <%= render Ui::CardComponent.new(padded: false) do %>
-        <div class="divide-y divide-edge"><%= render @suggestions %></div>
-      <% end %>
-    </div>
+    <%= render Ui::CardComponent.new(title: "Needs your attention", padded: false) do %>
+      <div class="divide-y divide-edge"><%= render @suggestions %></div>
+    <% end %>
   <% end %>
 
   <%# Browse zone: the lens itself. The empty state is quick capture

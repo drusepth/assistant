@@ -1,43 +1,36 @@
 module Watcher
-  # The first watcher (M3.1): a year of health silence is a signal, and it
-  # comes entirely from SQL — no Health-tagged event on the user's calendar
-  # in the past QUIET_MONTHS and none upcoming. Accepting lands a concrete
-  # placeholder Event on a quiet weekday about two weeks out — a real date
-  # the user can drag beats a vague intention. Fingerprinted by year, so a
-  # dismissal quiets it until next year, not forever.
+  # The first watcher (M3.1): if a user has no Health-tagged event in the
+  # past year and none coming up, suggest booking a checkup. Scans only the
+  # user's own events — a spouse's shared appointment is not your checkup.
   class CheckupCadence < Base
     self.section_slugs = %w[ health ]
 
-    QUIET_MONTHS = 12
+    LOOKBACK = 12.months
 
     def scan
-      return unless health_section
-      return if user.events.in_section(health_section.id)
-        .where(starts_at: QUIET_MONTHS.months.ago..).exists?
+      return if health_section_ids.empty?
+      return if Event.where(user: user).in_section(health_section_ids)
+                     .where(starts_at: LOOKBACK.ago..).exists?
 
       propose(
-        fingerprint: Date.current.year.to_s,
-        title: "You might be due for a checkup",
-        body: "Nothing health-related has been on your calendar for a year, and nothing is coming up. Routine checkups are how small things stay small.",
-        action: {
-          "type" => "create_event",
-          "event" => { "title" => "Book a checkup", "date" => suggested_date.iso8601 }
-        }
+        fingerprint: period,
+        title: "Book a health checkup",
+        body: "Nothing health-related on your calendar in the last year, and nothing coming up. " \
+              "A routine visit is how small things stay small.",
+        action: { "task" => { "title" => "Book a checkup appointment" } }
       )
     end
 
     private
-      def health_section
-        @health_section ||= Section.find_by(slug: "health")
+      def health_section_ids
+        @health_section_ids ||= begin
+          health = Section.find_by(slug: "health")
+          health ? [ health.id, *health.children.ids ] : []
+        end
       end
 
-      def suggested_date
-        (14..28).each do |offset|
-          date = Date.current + offset
-          next if date.on_weekend?
-          return date unless user.events.where(starts_at: date.in_time_zone.all_day).exists?
-        end
-        Date.current + 14
-      end
+      # Fingerprints include a half-year bucket: a dismissal quiets this
+      # nudge for the rest of the half, then it may fairly return.
+      def period = "#{Date.current.year}h#{Date.current.month <= 6 ? 1 : 2}"
   end
 end

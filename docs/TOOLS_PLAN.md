@@ -7,7 +7,7 @@ they need. This expands ROADMAP.md §2's "first tool slate" — items already bu
 parked there (cancel-subscription, reconnect, Situations) are unaffected and slot in
 after or between waves.
 
-Proposed decisions here are logged as **D21–D22** in `DECISIONS.md` (provisional until
+Proposed decisions here are logged as **D28–D29** in `DECISIONS.md` (provisional until
 their build passes prove them, same convention as D18–D20).
 
 ---
@@ -64,7 +64,7 @@ prompt and its landing logic:
   truncate per item, stop at budget). Needed by doctor-visit prep (wave 2) and the
   tutor (wave 5); built in wave 1 only as far as wave 2 needs it.
 
-### S2. Tool routing — `next_tools` (wave 3, **D21**)
+### S2. Tool routing — `next_tools` (wave 3, **D28**)
 
 Decode-this-letter's whole value is *routing*: it must end with "this is an insurance
 denial — draft the appeal?" and one click must open that tool with the document already
@@ -86,7 +86,7 @@ Routing is data in `output`, not behavior: no tool ever *runs* another tool. The
 clicks through a prefilled form and the normal run lifecycle applies. (Trust-ladder
 discipline, same as D19/D20.)
 
-### S3. Chat tools — a third kind (wave 5, **D22**)
+### S3. Chat tools — a third kind (wave 5, **D29**)
 
 Tutoring is a conversation, not a one-shot pipeline. Rather than bolt a separate chat
 feature onto the app, chat becomes the third tool kind, reusing the entire run
@@ -148,7 +148,7 @@ Build `section_context` (S1's last piece), then:
 6. **`negotiation_prep`** (Career + Renting + Bills) — free-text context + optional
    document; exercises the optional-document path.
 
-### ✅ Wave 3 — the front door (M2.3c, D21)
+### ✅ Wave 3 — the front door (M2.3c, D28)
 
 `next_tools` routing + document-page entry point, then:
 
@@ -161,7 +161,7 @@ Build `section_context` (S1's last piece), then:
 
 8. **`benefits_screener`** (Money → Benefits).
 
-### ✅ Wave 5 — the tutor (M2.5, D22)
+### ✅ Wave 5 — the tutor (M2.5, D29)
 
 `tool_run_messages` + chat lifecycle + run-page chat UI, then:
 
@@ -374,18 +374,18 @@ updated.
 
 ## 6. Decisions proposed (for DECISIONS.md)
 
-- **D21. Tools compose by routing, not by calling each other.** A run's `output` may
+- **D28. Tools compose by routing, not by calling each other.** A run's `output` may
   carry sanitized `next_tools` prefills rendered as next-step cards; decode-letter is
   the universal front door; documents get a decode entry point. No tool ever invokes
   another — the user always clicks through a prefilled form.
-- **D22. Chat is a tool kind, not a separate feature.** `kind: :chat` +
+- **D29. Chat is a tool kind, not a separate feature.** `kind: :chat` +
   `tool_run_messages`; run page doubles as the chat surface; `done` = live; primitives
   land only via explicit "Save a recap". The tutor is the proving tool.
 
 Open questions raised (candidates for the DECISIONS.md list):
-- **Q11 — jurisdiction.** Deposit demand and benefits screener are state-sensitive.
+- **Q12 — jurisdiction.** Deposit demand and benefits screener are state-sensitive.
   V1 handles it with placeholders + a form field; a household "state/country" setting
   would serve every Rights tool at once. Decide when a second tool needs it.
-- **Q12 — chat transcript retention.** Tutor transcripts accumulate; recaps are the
+- **Q13 — chat transcript retention.** Tutor transcripts accumulate; recaps are the
   durable artifact. Prune old transcripts? Export them (D14's export leftover)?
   Decide before M3.

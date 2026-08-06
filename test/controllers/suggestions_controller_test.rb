@@ -4,68 +4,78 @@ class SuggestionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     sign_in_as users(:one)
     @suggestion = users(:one).suggestions.create!(
-      watcher_slug: "checkup_cadence", fingerprint: "checkup_cadence:2026",
-      title: "You might be due for a checkup",
-      action: { "type" => "create_event", "event" => { "title" => "Book a checkup", "date" => "2026-08-20" } }
+      watcher_slug: "checkup_cadence", fingerprint: "checkup_cadence/test",
+      title: "Book a health checkup",
+      action: { "task" => { "title" => "Book a checkup appointment" } }
     )
     @suggestion.sections << sections(:health)
   end
 
-  test "accept materializes the payload and reports where it landed" do
-    assert_difference -> { users(:one).events.count } do
-      post accept_suggestion_path(@suggestion)
+  test "accept materializes the task and marks the suggestion accepted" do
+    assert_difference "users(:one).tasks.count" do
+      patch accept_suggestion_path(@suggestion)
     end
 
     assert_redirected_to root_path
-    assert_equal "Added to your calendar.", flash[:notice]
     assert @suggestion.reload.accepted?
+
+    task = users(:one).tasks.last
+    assert_equal "Book a checkup appointment", task.title
+    assert_equal [ sections(:health) ], task.sections.to_a
   end
 
-  test "accepting a run_tool suggestion hands off to the prefilled form" do
-    person = users(:one).people.create!(name: "Rosa")
+  test "accept on a tool action redirects to the prefilled run form" do
     suggestion = users(:one).suggestions.create!(
-      watcher_slug: "checkup_cadence", fingerprint: "stay_in_touch:#{person.id}",
-      title: "It's been a while since you talked to Rosa",
-      action: { "type" => "run_tool", "slug" => "reconnect", "inputs" => { "person_id" => person.id.to_s } }
+      watcher_slug: "checkup_cadence", fingerprint: "checkup_cadence/tool-test",
+      title: "Pick Spanish back up",
+      action: { "tool" => { "slug" => "learn_something", "inputs" => { "topic" => "Spanish" } } }
     )
 
-    post accept_suggestion_path(suggestion)
+    assert_no_difference "users(:one).tasks.count" do
+      patch accept_suggestion_path(suggestion)
+    end
 
-    assert_redirected_to new_tool_run_path("reconnect", inputs: { person_id: person.id.to_s })
+    assert_redirected_to new_tool_run_path("learn_something", inputs: { topic: "Spanish" })
     assert suggestion.reload.accepted?
   end
 
-  test "snooze and dismiss quiet the suggestion" do
-    post snooze_suggestion_path(@suggestion)
-    assert @suggestion.reload.snoozed?
-    assert_equal Date.current + 7, @suggestion.snoozed_until
-
-    post dismiss_suggestion_path(@suggestion)
+  test "dismiss and snooze update status without creating anything" do
+    assert_no_difference "users(:one).tasks.count" do
+      patch dismiss_suggestion_path(@suggestion)
+    end
     assert @suggestion.reload.dismissed?
+
+    @suggestion.update!(status: :pending)
+    patch snooze_suggestion_path(@suggestion)
+    assert @suggestion.reload.snoozed?
+    assert_equal 2.weeks.from_now.to_date, @suggestion.snoozed_until
   end
 
   test "only the owner can act on a suggestion" do
     sign_in_as users(:two)
-    post accept_suggestion_path(@suggestion)
+
+    patch accept_suggestion_path(@suggestion)
     assert_response :not_found
+    assert @suggestion.reload.pending?
   end
 
-  test "the dashboard and the section's Attend zone surface the suggestion" do
+  test "the dashboard and the section page surface actionable suggestions" do
     get root_path
-    assert_match "You might be due for a checkup", response.body
-    assert_select "form[action=?]", accept_suggestion_path(@suggestion)
+    assert_match "Book a health checkup", response.body
+    assert_match "From your assistant", response.body
 
     get section_path("health")
-    assert_match "You might be due for a checkup", response.body
-
-    get section_path("career")
-    assert_no_match(/due for a checkup/, response.body)
+    assert_match "Book a health checkup", response.body
+    assert_match "Needs your attention", response.body
   end
 
-  test "accepted suggestions leave the surfaces" do
-    @suggestion.accept!
+  test "dismissed suggestions disappear from both surfaces" do
+    @suggestion.dismiss!
 
     get root_path
-    assert_no_match(/due for a checkup/, response.body)
+    assert_no_match "Book a health checkup", response.body
+
+    get section_path("health")
+    assert_no_match "Book a health checkup", response.body
   end
 end

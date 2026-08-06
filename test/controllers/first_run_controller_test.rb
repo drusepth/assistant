@@ -31,8 +31,9 @@ class FirstRunControllerTest < ActionDispatch::IntegrationTest
     assert_equal "The Riveras", user.household.name
 
     follow_redirect!
-    assert_response :success
-    assert_match "Dashboard", response.body
+    assert_redirected_to onboarding_path(step: 1), "a fresh admin starts in the welcome flow (Q5)"
+    follow_redirect!
+    assert_match "What parts of life", response.body
   end
 
   test "household name defaults from the first name" do
@@ -50,8 +51,15 @@ class FirstRunControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+    # A fresh instance is one with no households: wipe every model except the
+    # seeded taxonomy. Derived from the schema (with FK enforcement deferred,
+    # so order doesn't matter) — a hand-kept list here broke every time a
+    # branch added a table with fixtures.
     def empty_the_instance
-      [ Invitation, ModelProfile, AccessGrant, Session, UserSection, SectionTagging,
-        Task, Event, Document, Person, Note, Goal, User, Household ].each(&:delete_all)
+      Rails.application.eager_load!
+      models = ApplicationRecord.descendants.reject { |model| model.abstract_class? || model == Section }
+      ApplicationRecord.connection.disable_referential_integrity do
+        models.each(&:delete_all)
+      end
     end
 end

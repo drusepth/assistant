@@ -65,8 +65,8 @@ class BreakDownGoalJobTest < ActiveJob::TestCase
     assert_equal 1, @goal.tasks.count
   end
 
-  test "provider errors leave the goal unplanned but still stamp broken_down_at" do
-    stub_request(:post, ENDPOINT).to_return(status: 500, body: "boom")
+  test "permanent provider errors leave the goal unplanned but still stamp broken_down_at" do
+    stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
 
     BreakDownGoalJob.perform_now(@goal)
 
@@ -74,6 +74,29 @@ class BreakDownGoalJobTest < ActiveJob::TestCase
     assert_empty @goal.tasks
     assert_not_nil @goal.broken_down_at, "a failed attempt must not leave the goal spinning"
     assert_not @goal.breaking_down?
+  end
+
+  test "a transient error leaves the goal breaking down while a retry is pending" do
+    stub_request(:post, ENDPOINT).to_return(status: 429, body: "slow down")
+
+    BreakDownGoalJob.perform_now(@goal)
+
+    @goal.reload
+    assert_nil @goal.broken_down_at, "a pending retry must not drop the goal out of breaking-down and back"
+    assert @goal.breaking_down?
+    assert_enqueued_jobs 1, only: BreakDownGoalJob
+  end
+
+  test "a transient error that never clears stamps broken_down_at once out of chances" do
+    stub_request(:post, ENDPOINT).to_return(status: 429, body: "slow down")
+
+    perform_enqueued_jobs { BreakDownGoalJob.perform_later(@goal) }
+
+    @goal.reload
+    assert_empty @goal.tasks
+    assert_not_nil @goal.broken_down_at
+    assert_not @goal.breaking_down?
+    assert_requested :post, ENDPOINT, times: RetriesModelCalls::ATTEMPTS
   end
 
   test "skips users without a configured model profile" do

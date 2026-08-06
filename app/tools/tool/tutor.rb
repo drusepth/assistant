@@ -1,6 +1,6 @@
 module Tool
   # Infinite patient 1:1 tutoring, for the user or their kid — the service
-  # the wealthy buy by the hour. The proving tool for the chat kind (D22),
+  # the wealthy buy by the hour. The proving tool for the chat kind (D29),
   # and the owned-memory moat working as designed: the system prompt carries
   # the Education lens — Learn-something plans, their step progress, and the
   # recap Notes past sessions saved — so Tuesday's tutor knows Monday

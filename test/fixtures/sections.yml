@@ -46,17 +46,17 @@ bills:
   parent: money
   position: 5
 
-subscriptions:
-  slug: subscriptions
-  name: Subscriptions
-  parent: money
-  position: 6
-
 benefits:
   slug: benefits
   name: Benefits
   parent: money
   position: 7
+
+subscriptions:
+  slug: subscriptions
+  name: Subscriptions
+  parent: money
+  position: 6
 
 rights:
   slug: rights

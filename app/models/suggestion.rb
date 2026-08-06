@@ -1,91 +1,71 @@
-# The agent's only write surface (D20): watchers propose rows here, and
-# nothing touches user data until the user accepts — acceptance is always
-# one explicit click. Sectionable is what makes the Attend zone and the
-# Dashboard feed plain in_section/unscoped queries — the lens model working
-# unchanged. Suggestions are personal (a watcher scans your own data), so
-# there is no Visible and no sharing.
+# The agent's entire output surface (D20): the agent proposes, the user
+# disposes. Watchers write rows here; nothing else in the app is ever
+# created, changed, or completed by the agent — accepting a suggestion is
+# what materializes anything, and acceptance is always one explicit click.
+# Suggestions are personal (no Visible — never shared) and Sectionable, so
+# the Dashboard feed and each section's Attend zone are plain queries.
 class Suggestion < ApplicationRecord
   include Sectionable
 
   belongs_to :user
 
-  enum :kind, { nudge: "nudge", heads_up: "heads_up", insight: "insight" }
-  enum :status, { pending: "pending", accepted: "accepted", dismissed: "dismissed", snoozed: "snoozed" }
+  enum :kind, { nudge: "nudge", heads_up: "heads_up", insight: "insight" }, default: :nudge
+  enum :status, { pending: "pending", accepted: "accepted", dismissed: "dismissed", snoozed: "snoozed" },
+    default: :pending
 
   validates :title, :watcher_slug, presence: true
+  # The fingerprint (watcher + subject, chosen by the watcher) is what keeps
+  # a dismissed nudge from reappearing on every scan.
   validates :fingerprint, presence: true, uniqueness: { scope: :user_id }
 
-  # What the surfaces show: pending, plus snoozes that have come back around.
-  scope :attention, -> { pending.or(snoozed.where(snoozed_until: ..Date.current)) }
-  scope :newest_first, -> { order(created_at: :desc) }
+  scope :actionable, -> {
+    where(status: :pending).or(where(status: :snoozed, snoozed_until: ..Date.current))
+  }
 
-  # The action payload is written by a watcher (code, not a model), and
-  # still validated here at execution time — accept never runs anything a
-  # current watcher couldn't have written.
-  ACTION_TYPES = %w[ create_event create_task run_tool ].freeze
+  SNOOZE_FOR = 2.weeks
 
-  def action_type
-    type = action["type"].to_s
-    type if ACTION_TYPES.include?(type)
+  def snooze!
+    update!(status: :snoozed, snoozed_until: SNOOZE_FOR.from_now.to_date)
   end
 
-  # For run_tool actions: the registered tool, or nil if it was retired.
-  def routed_tool
-    Tool.find(action["slug"].to_s) if action_type == "run_tool"
+  def dismiss!
+    update!(status: :dismissed)
   end
+
+  # Materializes the action payload as ordinary primitives, tagged with the
+  # suggestion's own sections, and returns what it created (nil for payloads
+  # the controller handles itself, e.g. a tool redirect).
+  def accept!
+    created = materialize
+    update!(status: :accepted)
+    created
+  end
+
+  def tool_action = action["tool"]
 
   def accept_label
-    case action_type
-    when "create_event" then "Add to calendar"
-    when "create_task" then "Add task"
-    when "run_tool" then "Start"
-    else "Got it"
-    end
-  end
+    return "Add task" if action["task"]
+    return "Add event" if action["event"]
+    return "Open tool" if tool_action
 
-  # Accepting materializes the payload as ordinary owned primitives (or, for
-  # run_tool, just marks accepted — the controller sends the user to the
-  # prefilled form, and the normal run lifecycle takes it from there).
-  def accept!
-    case action_type
-    when "create_event" then create_action_event
-    when "create_task" then create_action_task
-    end
-    update!(status: :accepted)
-  end
-
-  def dismiss! = update!(status: :dismissed)
-
-  def snooze!(until_date = Date.current + 7)
-    update!(status: :snoozed, snoozed_until: until_date)
+    "Accept"
   end
 
   private
-    def create_action_event
-      payload = action.fetch("event", {})
-      date = parsed_date(payload["date"]) || Date.current
-      event = user.events.create!(
-        title: payload["title"].presence || title,
-        starts_at: date.in_time_zone, all_day: true
-      )
-      event.sections = sections
-    end
-
-    def create_action_task
-      payload = action.fetch("task", {})
-      due_on = parsed_date(payload["due_on"])
-      task = user.tasks.create!(
-        title: payload["title"].presence || title, due_on: due_on,
-        bucket: due_on && due_on <= Date.current ? :today : :later
-      )
-      task.sections = sections
-    end
-
-    def parsed_date(value)
-      return nil if value.blank?
-
-      Date.iso8601(value.to_s)
-    rescue Date::Error
-      nil
+    def materialize
+      if (attrs = action["task"])
+        task = user.tasks.create!(
+          title: attrs["title"], notes: attrs["notes"],
+          due_on: attrs["due_on"].presence, bucket: :today
+        )
+        task.sections = sections.to_a
+        task
+      elsif (attrs = action["event"])
+        event = user.events.create!(
+          title: attrs["title"], starts_at: attrs["starts_at"], all_day: attrs.fetch("all_day", true)
+        )
+        event.sections = sections.to_a
+        event
+      end
     end
 end

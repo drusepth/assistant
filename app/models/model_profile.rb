@@ -15,6 +15,10 @@ class ModelProfile < ApplicationRecord
 
   belongs_to :household
 
+  # At-rest encryption (D14 leftover, closed in M4.1). Keys are generated
+  # per-instance on first boot — see config/initializers/active_record_encryption.rb.
+  encrypts :api_key
+
   validates :provider, inclusion: { in: PROVIDERS.keys }
   validates :model, presence: true, if: :model_required?
   validates :base_url, presence: true, if: -> { provider == "custom" }

@@ -80,14 +80,14 @@ The canonical "find in-network cardiologists" example gets a Tier-A reframing: *
 
 Ordered to prove the frame (one draft tool, one plan tool), then spread everyday coverage. Reprioritized 2026-08: disputes and evictions are **low-frequency, high-stakes** — right for the mission, wrong for making the app feel alive in week one — so the everyday tools and the broadest Situation moved up.
 
-Re-planned 2026-08 (second pass): the coverage slate expanded into the **high-impact tool wave** — nine tools in five waves (letter family, owned-context drafts, the decode-letter front door + routing (D21), the benefits screener, and the chat-kind tutor (D22)). Full build plan, per-tool specs, and infrastructure seams in **`TOOLS_PLAN.md`**; the list below keeps only what that plan doesn't cover.
-
 1. ✅ **Rights → Disputes: "Draft a dispute letter"** *(draft — built, M2.1)* — proves the draft contract; reads a chosen Document (bill, denial, collection notice) + one line of user intent → formal letter + follow-up Tasks.
 2. ✅ **Education: "Learn something"** *(plan — built, M2.2)* — proves the plan contract end-to-end: topic → Goal + paced, filed, scheduled steps through the shared breakdown pipeline.
-3. **The high-impact wave** *(M2.3a–d + M2.5 — see `TOOLS_PLAN.md`)* — results explainer, insurance appeal, debt-collector response, deposit demand, negotiation prep, doctor-visit prep, decode-this-letter, benefits screener, tutor.
-4. ✅ **Money → Subscriptions: "Cancel this subscription"** *(draft — built)* — formal written cancellation + phone script in one note, renewal deadline on the calendar, check-the-next-statement Task.
-5. ✅ **People: "Reconnect"** *(draft — built)* — reads a Person (new `:person` input kind) → message draft in the user's voice + grounded talking points; never invents shared memories. Deliberately seeds the Milestone 3 stay-in-touch watcher (its accept action runs this tool prefilled).
-6. ✅ **Situations** *(plan tools with rich cross-section briefs)* — **"Moving" built (M2.4)**: `Tool::PlanBase` extracted from Learn-something makes a Situation ≈ a brief, and the Q7 pressure test passed — steps multi-tag across Renting/Money/People/Education/Bills through the unchanged shared pipeline. "Eviction notice", "lost my job", "new baby", "new diagnosis" follow demand; eviction stays deferred until users ask.
+3. **Health: "Doctor-visit prep"** *(draft)* — reads Health-tagged items → question list + one-page history summary to bring to the appointment.
+4. **Money → Subscriptions: "Cancel this subscription"** *(draft)* — cancellation letter/script + a reminder Task.
+5. **People: "Reconnect"** *(draft)* — reads a Person + what's known about them → message draft + catch-up talking points. Deliberately seeds the Milestone 3 stay-in-touch watcher (its accept action runs this tool).
+6. **Situations** *(plan tools with rich cross-section briefs)* — **"Moving" first**: the widest-audience Situation, and now the Q7 cross-section pressure test. "Eviction notice", "lost my job", "new baby", "new diagnosis" follow demand; eviction is deferred until users ask.
+
+Items 3–6 are ✅ built (M2.3/M2.4, see `STATUS.md`). Beyond this slate, the **high-impact tool wave** (`TOOLS_PLAN.md`, D28–D29) added nine more: the decode-letter front door + `next_tools` routing, the appeal/response letter family, results explainer, negotiation prep, the benefits screener, and the chat-kind tutor.
 
 ---
 
@@ -105,6 +105,7 @@ New table **`suggestions`**: user, title, body (the rationale — *why* the app 
 
 Each watcher is a class in `app/watchers/` with a `slug`, `sections`, and `scan(user)` that emits candidate suggestions. **The signal comes from SQL, not model calls** — cheap, private, and it works identically with every model (including none). The LLM is optional garnish: phrasing, ranking, and the Dashboard's synthesized digest. Launch watchers:
 
+- ✅ **Neglected hobby** (Hobbies — `docs/HOBBIES.md` §4) — a hobby lens (D25) with no activity in 6 weeks and nothing upcoming → one nudge, accept = put a session on the calendar on a free day. Pure SQL over existing taggings — no new signal needed.
 - **Checkup cadence** (Health) — no Health-tagged event in the past N months and none upcoming → "you're due for a checkup," accept = create the Event, with free-day candidates read from the calendar.
 - **Stay in touch** (People) — a person's contact recency exceeds their usual rhythm → "it's been a while since you talked to Mom," accept = run the Reconnect tool prefilled.
 - **Renewal radar** (Money/Rights) — a renewal/lease-end/expiry Event approaching with no follow-up work attached → "your lease ends in 60 days."
@@ -138,11 +139,70 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 
 1. ✅ **M2.1 — Anatomy + tools infra.** Act/Attend/Browse section page (Attend dormant), empty-state redesign, `Tool::Base` + registry, `tool_runs` + `ToolRunJob` + generic run page. Shipped with **Draft-a-dispute-letter** as the proving tool.
 2. ✅ **M2.2 — First plan tool: Learn something.** Proved the plan seam with zero new schema: `Goals::BreakDown#plan!` (call + apply extracted from the breakdown job, shared by both) and the optional `brief` param. (Replaced the eviction Situation here — see the slate note.)
-3. ✅ **M2.3 — High-impact wave, draft tools** (`TOOLS_PLAN.md` waves 1–4, all built): shared plumbing + letter family (results explainer, insurance appeal, debt-collector response, deposit demand) → owned-context drafts (doctor-visit prep, negotiation prep) → decode-this-letter + routing (D21) → benefits screener — plus the slate leftovers cancel-subscription and reconnect (new `:person` input kind).
-4. ✅ **M2.4 — Situations** as plan tools with richer briefs: "moving" built (the Q7 pressure test, passed); other situations ship per demand as one brief each.
-5. ✅ **M2.5 — Tutor + chat tools** (`TOOLS_PLAN.md` wave 5, D22, built): `tool_run_messages`, chat run lifecycle, the Education tutor with recap Notes.
-6. ✅ **M3.1 — Suggestions core**: `suggestions` table (fingerprint-deduped, action payload re-validated at accept time), Attend zone + Dashboard suggestions feed, checkup-cadence watcher (SQL signal, concrete-date payload), `AgentScanFanoutJob` weekly via recurring.yml — everything hardwired to Quiet.
-7. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
-8. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
+3. ✅ **M2.3 — Coverage slate**: doctor-visit prep, cancel-subscription, reconnect — each one declarative class on the shared Base contracts (DRAFT_FORMAT + `plan_goal!`), plus a `person` input kind.
+4. ✅ **M2.4 — Situations**: "Plan a move" — the Q7 cross-section test, shipped as a plan tool with a rich brief and nothing else. Further Situations (lost-my-job, new-baby, eviction) are one class each, per demand.
+5. ✅ **M3.1 — Suggestions core**: `suggestions` table (fingerprint-deduped, snooze/dismiss/accept with action payloads), Attend zone + Dashboard "From your assistant" feed, checkup-cadence watcher, weekly scan via Solid Queue recurring — everything hardwired to Quiet.
+6. ✅ **M3.2 — Dials + watchers**: Off/Quiet/Active per section in Settings (`user_sections.agent_level`), honored by weekly/daily cadences (loudest dial among a watcher's sections wins); stay-in-touch (Q8 resolved: manual "Log contact" signal), renewal radar, goal stall — joined by **neglected-hobby** from the Hobbies build (`docs/HOBBIES.md` §4).
+7. **M3.3 — Garnish + reach**: ✅ the LLM-phrased Dashboard digest (phrasing only — deterministic facts in, two warm sentences out, silent failure). Remaining: cross-user coordination suggestions (needs its own design pass — shared-data semantics across household members), notification channels (Q10), Tier-B capabilities (Q9).
 
 Still parked from before, unchanged: D14 leftovers (export, `model_profiles.api_key` encryption) slot in whenever — they don't block this sequence.
+
+---
+
+## 5. Milestone 4 — what remains (designed 2026-08)
+
+Four items survived the first three milestones. Designs below; proposed decisions logged as **D21–D22** in `DECISIONS.md`.
+
+### 5.1 Cross-user coordination (D21)
+
+The D8 ambition ("book us back-to-back so we can carpool") turns out to need **no new machinery** — the visibility model was built for exactly this:
+
+> **A cross-user watcher is an ordinary watcher whose queries use `visible_to(user)` scopes instead of user-owned scopes.**
+
+Everything else follows from rules we already have:
+
+- **Each member's agent speaks only to its own user.** There is no household-level agent; a coordination suggestion is one user's suggestion, produced by their own scan, over data they can already see. If both spouses share calendars, both may get the suggestion independently — that's correct, not a bug (each sees their own angle; fingerprints are per-user).
+- **The suggestion body may reference only visible items.** This is enforced structurally: the watcher literally cannot query anything else. The agent can never leak, or even hint at, an unshared item (D9's guarantee, restated for prose output).
+- **Staleness is handled the boring way.** If Alice accepts and the situation resolves, Bob's copy is dismissable; watchers never re-propose a fingerprint. No cross-user suggestion locking.
+
+**First watcher: same-day sync.** The deterministic-first rule (D20) makes the fancy versions (location matching, "carpool-able") fuzzy, so v1 is the honest core: two household members with timed events on the same day within a few hours of each other, where at least one event is shared → heads-up to each sharing participant — "You and Bob are both out Thursday morning" — accept creates a "Coordinate Thursday with Bob" task. Location-aware upgrades come later, likely as LLM-phrased *garnish over the same deterministic signal*, never as the signal itself.
+
+### 5.2 Notification channels (D22, resolves Q10)
+
+The constraint: self-hosted instances rarely have SMTP (D15), and local-first means no push service account we own. Three channels, built in this order:
+
+1. **Webhook** *(build first — trivial, most in-spirit)*: user pastes a URL in Settings; the agent POSTs a minimal JSON payload. This immediately covers ntfy (self-hostable push), Home Assistant, Matrix bridges — the ecosystem our users already run. One column, one job, huge reach.
+2. **Web Push** *(the mainstream answer)*: browser push via VAPID keys generated per-instance at boot — no third party, works wherever the app is served over HTTPS. This is the channel for "normal" household members.
+3. **Email, if configured** *(last)*: optional SMTP settings in instance Settings; when present, the weekly digest can go to inboxes. Never assumed, never required.
+
+Delivery policy rides the dials: **only Active sections may notify** (Quiet stays in-app — that's what Quiet means), notifications are batched per scan (one message: "3 suggestions from your assistant", not three pings), and payloads carry **counts and titles only** — bodies stay in the app, since a lock-screen is not private by default.
+
+Schema: `notification_channels` (user, kind, config JSON, enabled) + a `Notify` fan-out job called at the end of `AgentScanJob` for newly created Active-section suggestions.
+
+### 5.3 D14 leftovers: export and key encryption
+
+**Export** — the mission item: the user's life must be *portable*, not just stored.
+- **Per-user, own-data-only** (D9: what's shared *with* you isn't yours to take): every primitive serialized as JSON-lines per model, plus the raw files of your documents, zipped.
+- One button in Settings → background `ExportJob` → downloadable archive; the archive format is documented so anything can import it. (The full-instance backup story stays what it always was: copy the `storage/` volume.)
+
+**`model_profiles.api_key` encryption** — Active Record Encryption (`encrypts :api_key`), with the self-hosting wrinkle solved at the entrypoint: the container's boot script generates AR encryption keys on first run if absent and persists them in the storage volume, so one-command install stays one command and existing plaintext rows are backfilled by a migration that re-saves them. No user action, no new secrets to manage manually.
+
+### 5.4 FTUE (resolves Q5)
+
+The gap: `/setup` creates the household, then drops you on an empty Dashboard. The vision line — a 22-year-old renter and a 60-year-old caregiver should see different apps — is one short, skippable flow (`users.onboarded_at`, redirect after first sign-in while nil):
+
+1. **Pick your sections** — the seven top-level sections as cards, all pre-checked; unchecking writes explicit `user_sections` rows. No personas, no quiz — the sections *are* the personas.
+2. **Set the assistant's voice** — one screen explaining the trust ladder in two sentences, with a single choice: suggestions **Quiet** (default, weekly, in-app) or **Off** for now; per-section dials are pointed at, not configured here.
+3. **Connect a model** *(admin only, skippable)* — the existing provider picker, with the honest line that Organize works fine with no model at all.
+4. **Bring your life in** — three buttons that already exist: import contacts, import calendar, upload a document. Ends on the Dashboard.
+
+Every step skippable; the whole flow revisitable from Settings. Invited members get steps 1, 2, and 4 only.
+
+### Build order
+
+1. ✅ **M4.1** — FTUE (four skippable steps at /welcome, `users.onboarded_at` gate) + api_key encryption (per-instance keys generated on first boot into storage/)
+2. ✅ **M4.2** — Export (`Users::Export`: own-data-only JSON-lines + document files, one Settings button, documented manifest)
+3. ✅ **M4.3** — All three channels in one pass (per the 2026-08 product call): webhook + Web Push (per-instance VAPID, service worker) + email-if-configured, fan-out via `NotifyJob`, Active-dial-only, titles-never-bodies
+4. ✅ **M4.4** — Same-day sync watcher: D21 proven — one ordinary watcher class whose only difference is `visible_to` scopes; location/LLM garnish per demand
+
+Q9 (Tier-B tool capabilities — live web data) stays deliberately parked until model-side browsing stabilizes or a first-party data pack makes sense; nothing above depends on it.

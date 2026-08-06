@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The chat kind's proving tool (D22): opening message from owned Education
+# The chat kind's proving tool (D29): opening message from owned Education
 # context, replies over a windowed transcript, and a recap Note as the only
 # primitive — saved on explicit request, and what gives the next session
 # its memory.
