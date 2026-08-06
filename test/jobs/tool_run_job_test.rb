@@ -50,15 +50,37 @@ class ToolRunJobTest < ActiveJob::TestCase
     assert_equal "Dispute letter — Hospital bill", @run.items.grep(Note).first.title
   end
 
-  test "provider errors fail the run with a friendly message" do
-    stub_request(:post, ENDPOINT).to_return(status: 500, body: "boom")
+  test "permanent provider errors fail the run with a friendly message" do
+    stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
 
     ToolRunJob.perform_now(@run)
 
     @run.reload
     assert @run.failed?
-    assert_match(/model provider returned 500/, @run.error)
+    assert_match(/model provider returned 401/, @run.error)
     assert_empty @run.items
+  end
+
+  test "a transient error keeps the run running while a retry is pending" do
+    stub_request(:post, ENDPOINT).to_return(status: 500, body: "boom")
+
+    ToolRunJob.perform_now(@run)
+
+    @run.reload
+    assert @run.running?, "the live run page shouldn't flash a failure a retry may clear"
+    assert_nil @run.error
+    assert_enqueued_jobs 1, only: ToolRunJob
+  end
+
+  test "a transient error that never clears fails the run once out of chances" do
+    stub_request(:post, ENDPOINT).to_return(status: 500, body: "boom")
+
+    perform_enqueued_jobs { ToolRunJob.perform_later(@run) }
+
+    @run.reload
+    assert @run.failed?
+    assert_match(/model provider returned 500/, @run.error)
+    assert_requested :post, ENDPOINT, times: RetriesModelCalls::ATTEMPTS
   end
 
   test "a missing letter body fails the run" do

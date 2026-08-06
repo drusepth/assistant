@@ -47,14 +47,51 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     end
   end
 
-  test "provider errors mark the document failed with a friendly message" do
-    stub_request(:post, ENDPOINT).to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json)
+  test "permanent provider errors mark the document failed with a friendly message" do
+    stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
 
     AnalyzeDocumentJob.perform_now(@document)
 
     @document.reload
     assert @document.analysis_failed?
+    assert_match "Incorrect API key", @document.analysis_error
+    assert_requested :post, ENDPOINT, times: 1
+  end
+
+  test "a transient error keeps the document processing while a retry is pending" do
+    stub_request(:post, ENDPOINT).to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json)
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    @document.reload
+    assert @document.analysis_processing?, "a pending retry must not flash a failure at the user"
+    assert_nil @document.analysis_error
+    assert_enqueued_jobs 1, only: AnalyzeDocumentJob
+  end
+
+  test "a transient error that clears analyses the document on the retry" do
+    stub_request(:post, ENDPOINT)
+      .to_return(status: 503, body: "gateway down").then
+      .to_return(status: 200, body: { choices: [ { message: { content: {
+        summary: "A lease.", sections: [ "renting" ]
+      }.to_json } } ] }.to_json)
+
+    perform_enqueued_jobs { AnalyzeDocumentJob.perform_later(@document) }
+
+    @document.reload
+    assert @document.analysis_analyzed?
+    assert_nil @document.analysis_error
+  end
+
+  test "a transient error that never clears marks the document failed once out of chances" do
+    stub_request(:post, ENDPOINT).to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json)
+
+    perform_enqueued_jobs { AnalyzeDocumentJob.perform_later(@document) }
+
+    @document.reload
+    assert @document.analysis_failed?
     assert_match "Rate limit", @document.analysis_error
+    assert_requested :post, ENDPOINT, times: RetriesModelCalls::ATTEMPTS
   end
 
   test "unsupported file types fail without calling the provider" do

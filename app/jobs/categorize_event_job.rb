@@ -1,4 +1,6 @@
 class CategorizeEventJob < ApplicationJob
+  include RetriesModelCalls
+
   queue_as :default
 
   def perform(event)
@@ -14,8 +16,10 @@ class CategorizeEventJob < ApplicationJob
       event.update!(starts_at: result.starts_at, ends_at: result.ends_at, all_day: false)
     end
   rescue Llm::Error => e
-    # Best-effort: an unreachable or misbehaving model just leaves the event
+    raise if will_retry?(e)
+
+    # Best-effort: once the model is out of chances the event just stays
     # unsorted, and the user can tag it from the edit form.
-    AppError.record(e, source: self.class.name, user: event.user, context: { event_id: event.id })
+    record_failure(e, user: event.user, context: { event_id: event.id })
   end
 end

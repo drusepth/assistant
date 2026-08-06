@@ -1,4 +1,6 @@
 class CategorizePersonJob < ApplicationJob
+  include RetriesModelCalls
+
   queue_as :default
 
   def perform(person)
@@ -10,8 +12,10 @@ class CategorizePersonJob < ApplicationJob
     person.sections = result.sections
     person.update!(relationship: result.relationship) if person.relationship.blank? && result.relationship.present?
   rescue Llm::Error => e
-    # Best-effort: an unreachable or misbehaving model just leaves the person
+    raise if will_retry?(e)
+
+    # Best-effort: once the model is out of chances the person just stays
     # unfiled, and the user can tag them from the edit form.
-    AppError.record(e, source: self.class.name, user: person.user, context: { person_id: person.id })
+    record_failure(e, user: person.user, context: { person_id: person.id })
   end
 end

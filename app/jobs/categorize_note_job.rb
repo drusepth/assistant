@@ -1,4 +1,6 @@
 class CategorizeNoteJob < ApplicationJob
+  include RetriesModelCalls
+
   queue_as :default
 
   def perform(note)
@@ -10,8 +12,10 @@ class CategorizeNoteJob < ApplicationJob
     note.sections = result.sections
     note.update!(title: result.title) if note.title.blank? && result.title.present?
   rescue Llm::Error => e
-    # Best-effort: an unreachable or misbehaving model just leaves the note
+    raise if will_retry?(e)
+
+    # Best-effort: once the model is out of chances the note just stays
     # unfiled, and the user can title and tag it from the edit form.
-    AppError.record(e, source: self.class.name, user: note.user, context: { note_id: note.id })
+    record_failure(e, user: note.user, context: { note_id: note.id })
   end
 end

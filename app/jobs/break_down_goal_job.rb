@@ -1,4 +1,6 @@
 class BreakDownGoalJob < ApplicationJob
+  include RetriesModelCalls
+
   queue_as :default
 
   # append: false is the create-time breakdown and only ever fills an
@@ -12,16 +14,26 @@ class BreakDownGoalJob < ApplicationJob
 
     Goals::BreakDown.new(goal: goal, profile: profile).plan!
   rescue Llm::Error => e
-    # Best-effort (D16): an unreachable or misbehaving model leaves the goal
-    # as a single unplanned item — the user can add steps by hand or retry
-    # from the goal page.
-    AppError.record(e, source: self.class.name, user: goal.user, context: { goal_id: goal.id, append: append })
+    if will_retry?(e)
+      @retrying = true
+      raise
+    end
+
+    # Best-effort (D16): out of chances, the goal is left as a single unplanned
+    # item — the user can add steps by hand or retry from the goal page.
+    record_failure(e, user: goal.user, context: { goal_id: goal.id, append: append })
   ensure
     # Stamp even on failure so the "breaking into steps…" state can't stick,
-    # and refresh the owner's board either way.
-    if goal&.persisted?
+    # and refresh the owner's board either way — but not between retries, or
+    # the goal would drop out of that state and back into it on every attempt.
+    settle(goal) unless @retrying
+  end
+
+  private
+    def settle(goal)
+      return unless goal&.persisted?
+
       goal.update_column(:broken_down_at, Time.current)
       Turbo::StreamsChannel.broadcast_refresh_to(goal.user, :tasks)
     end
-  end
 end
