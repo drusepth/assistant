@@ -95,3 +95,19 @@ See `docs/STATUS.md` — the build log: what is built, and what is next.
 It lives outside this file on purpose. The log changes on nearly every branch,
 and while it lived here it made CLAUDE.md the most conflict-prone file in the
 repo. Add new milestones there, one entry per line.
+
+## Parallel branches: conflict hygiene
+
+Several branches land concurrently, so two rules for the global sequences:
+
+- **Decision numbers and migration timestamps are claimed at merge time, not
+  branch time.** Just before merging/pushing a branch that adds either, fetch
+  origin/main, take the next free D-number (grep `**D` in `docs/DECISIONS.md`)
+  and renumber yours (grep your `D\d+` references in code comments too), and
+  generate migrations with `bin/rails g migration` so they carry real
+  second-resolution timestamps — never hand-rounded ones like `…180000`.
+- **Registry hub files conflict by design; that's fine.** Lists everyone
+  appends to (`ICON_PATHS`, `routes.rb`, `User` has_many, `Tool::SLUGS`,
+  fixture files) merge with a trivial keep-both — resolve, don't redesign.
+  `db/schema.rb` is never hand-merged: take main's copy and re-run
+  `bin/rails db:migrate` to regenerate it.
