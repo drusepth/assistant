@@ -1,11 +1,43 @@
-# One user's agent scan (D20): wake expired snoozes, then let every watcher
-# look. Deterministic and cheap — no model calls — so running it for a user
-# with nothing to notice costs a handful of SQL queries.
+# Runs watchers for one user, honoring the per-section dials (D20, M3.2):
+# Off = never; Quiet = the weekly scan; Active = daily too. The loudest
+# dial among a watcher's sections wins; a watcher with no sections (e.g.
+# goal stall) runs at the Quiet default. Output stays in-app either way.
 class AgentScanJob < ApplicationJob
   queue_as :default
 
-  def perform(user)
-    user.suggestions.wake_expired_snoozes!
-    Watcher.all.each { |watcher| watcher.new(user).scan }
+  # Fan-out entry points for the recurring schedules (config/recurring.yml).
+  def self.scan_all(cadence: :weekly)
+    User.find_each { |user| perform_later(user, cadence: cadence.to_s) }
   end
+
+  def perform(user, cadence: "weekly")
+    Watcher.all.each do |watcher|
+      level = dial_for(user, watcher)
+      next if level == "off"
+      next if cadence == "daily" && level != "active"
+
+      watcher.new(user).scan
+    end
+
+    generate_digest(user) if cadence == "weekly"
+  end
+
+  private
+    # LLM phrasing rides the weekly scan, after the deterministic work, and
+    # fails silently — the Dashboard's local summary never depends on it.
+    def generate_digest(user)
+      profile = user.household.model_profile
+      return unless profile&.configured?
+
+      Users::WeeklyDigest.new(user: user, profile: profile).call
+    rescue Llm::Error
+      nil
+    end
+    def dial_for(user, watcher)
+      sections = Section.where(slug: watcher.section_slugs)
+      return UserSection::DEFAULT_AGENT_LEVEL if sections.empty?
+
+      levels = sections.map { |section| user.agent_level_for(section.parent || section) }
+      UserSection::AGENT_LEVELS.reverse.find { |level| levels.include?(level) }
+    end
 end

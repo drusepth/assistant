@@ -1,9 +1,9 @@
 module Watcher
-  # Superclass for watchers: subclasses implement `scan` and emit through
-  # `suggest`, which enforces the fingerprint contract — an already-pending,
-  # dismissed, or snoozed suggestion for the same subject is never
-  # re-emitted. An accepted one may recur: the condition can genuinely
-  # happen again.
+  # Superclass for watchers. A subclass declares the section slugs it
+  # watches and implements `scan`, calling `propose` for anything worth the
+  # user's attention. `propose` is fingerprint-deduped: a suggestion the
+  # user dismissed (or already has) is never recreated, so re-running a
+  # scan is always safe.
   class Base
     class_attribute :section_slugs, instance_accessor: false, default: []
 
@@ -20,14 +20,15 @@ module Watcher
     private
       attr_reader :user
 
-      def suggest(fingerprint:, title:, body: nil, kind: :nudge, sections: [], action: {})
-        return if user.suggestions.where(fingerprint: fingerprint).where.not(status: :accepted).exists?
+      def propose(fingerprint:, title:, body: nil, kind: :nudge, action: {}, sections: self.class.section_slugs)
+        scoped = "#{self.class.slug}/#{fingerprint}"
+        return if user.suggestions.exists?(fingerprint: scoped)
 
         suggestion = user.suggestions.create!(
-          watcher_slug: self.class.slug, fingerprint: fingerprint,
+          watcher_slug: self.class.slug, fingerprint: scoped,
           title: title, body: body, kind: kind, action: action
         )
-        suggestion.sections = sections
+        suggestion.sections = Section.where(slug: sections)
         suggestion
       end
   end

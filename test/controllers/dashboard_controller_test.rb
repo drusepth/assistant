@@ -70,20 +70,23 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
   test "pending suggestions surface on the dashboard; other members' don't" do
     sign_in_as users(:one)
     users(:two).suggestions.create!(
-      watcher_slug: "neglected_hobby", fingerprint: "f2", title: "Bob's nudge", action: { "type" => "create_event" }
+      watcher_slug: "neglected_hobby", fingerprint: "f2", title: "Bob's nudge",
+      action: { "event" => { "title" => "Practice", "starts_at" => Date.tomorrow.iso8601 } }
     )
 
     get root_path
-    assert_no_match "Suggestions", response.body
+    assert_no_match "From your assistant", response.body
     assert_no_match "Bob's nudge", response.body
 
     users(:one).suggestions.create!(
       watcher_slug: "neglected_hobby", fingerprint: "f1",
-      title: "It's been a while since anything Guitar", action: { "type" => "create_event" }
+      title: "It's been a while since anything Guitar",
+      action: { "event" => { "title" => "Guitar session", "starts_at" => Date.tomorrow.iso8601 } }
     )
 
     get root_path
+    assert_match "From your assistant", response.body
     assert_match "been a while since anything Guitar", response.body
-    assert_match "Put it on the calendar", response.body
+    assert_match "Add event", response.body
   end
 end

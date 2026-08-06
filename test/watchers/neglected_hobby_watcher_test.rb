@@ -1,7 +1,7 @@
 require "test_helper"
 
 # The flagship Hobbies watcher: pure SQL, one gentle nudge per quiet lens,
-# fingerprint-deduped so it never nags twice.
+# fingerprint-deduped (with a monthly bucket) so it never nags twice.
 class NeglectedHobbyWatcherTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
@@ -14,21 +14,32 @@ class NeglectedHobbyWatcherTest < ActiveSupport::TestCase
     assert suggestion.pending?
     assert suggestion.nudge?
     assert_equal "neglected_hobby", suggestion.watcher_slug
-    assert_equal "neglected_hobby:#{@lens.id}", suggestion.fingerprint
+    assert_equal "neglected_hobby/lens:#{@lens.id}/#{Date.current.strftime("%Y-%m")}", suggestion.fingerprint
     assert_includes suggestion.title, "Guitar"
     assert_includes suggestion.sections, sections(:hobbies)
     assert_includes suggestion.sections, @lens
+    assert_equal "Add event", suggestion.accept_label
 
-    assert_equal "create_event", suggestion.action["type"]
-    assert_equal "Guitar session", suggestion.action["title"]
-    assert_equal Date.tomorrow.iso8601, suggestion.action["on"], "tomorrow is free, so tomorrow"
-    assert_includes suggestion.action["section_ids"], @lens.id
+    event = suggestion.action["event"]
+    assert_equal "Guitar session", event["title"]
+    assert_equal Date.tomorrow.iso8601, event["starts_at"], "tomorrow is free, so tomorrow"
+    assert event["all_day"]
+  end
+
+  test "accepting materializes the session as an all-day event tagged with the lens" do
+    event = scan.sole.accept!
+
+    assert_equal "Guitar session", event.title
+    assert event.all_day?
+    assert_equal Date.tomorrow, event.starts_at.to_date
+    assert_includes event.sections, @lens
+    assert_includes event.sections, sections(:hobbies)
   end
 
   test "the suggested day skips days that already have events" do
     @user.events.create!(title: "Busy", starts_at: Date.tomorrow.in_time_zone.change(hour: 10))
 
-    assert_equal (Date.tomorrow + 1).iso8601, scan.sole.action["on"]
+    assert_equal (Date.tomorrow + 1).iso8601, scan.sole.action.dig("event", "starts_at")
   end
 
   test "a lens younger than the window is left alone" do
@@ -67,7 +78,7 @@ class NeglectedHobbyWatcherTest < ActiveSupport::TestCase
     assert_equal 1, scan.count
   end
 
-  test "a pending or dismissed suggestion is never re-emitted; an accepted one may recur" do
+  test "one nudge per lens per month, whatever the user did with it" do
     scan
     assert_no_difference "Suggestion.count" do
       scan
@@ -78,9 +89,10 @@ class NeglectedHobbyWatcherTest < ActiveSupport::TestCase
       scan
     end
 
-    @user.suggestions.sole.update!(status: :accepted)
-    assert_difference "Suggestion.count", 1 do
-      scan
+    travel 32.days do
+      assert_difference "Suggestion.count", 1 do
+        Watcher::NeglectedHobby.new(@user).scan
+      end
     end
   end
 

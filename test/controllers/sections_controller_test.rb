@@ -85,8 +85,9 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
   test "the Attend zone shows pending suggestions tagged with the section, on parent and lens pages" do
     lens = Hobbies::Lens.find_or_create!("Guitar")
     suggestion = users(:one).suggestions.create!(
-      watcher_slug: "neglected_hobby", fingerprint: "neglected_hobby:#{lens.id}",
-      title: "It's been a while since anything Guitar", action: { "type" => "create_event" }
+      watcher_slug: "neglected_hobby", fingerprint: "neglected_hobby/lens:#{lens.id}",
+      title: "It's been a while since anything Guitar",
+      action: { "event" => { "title" => "Guitar session", "starts_at" => Date.tomorrow.iso8601 } }
     )
     suggestion.sections = [ sections(:hobbies), lens ]
 

@@ -4,7 +4,8 @@ class SectionsController < ApplicationController
     section_ids = [ @section.id, *@section.children.ids ]
 
     @tools = Tool.for_section(@section)
-    @suggestions = Current.user.suggestions.attend.in_section(section_ids).includes(:sections)
+    @suggestions = Current.user.suggestions.actionable.in_section(section_ids)
+      .order(created_at: :desc).includes(:sections)
 
     @events = Event.visible_to(Current.user).in_section(section_ids).upcoming.includes(:sections, :user)
     @tasks = Task.visible_to(Current.user).in_section(section_ids).open.includes(:sections, :user)

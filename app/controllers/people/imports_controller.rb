@@ -3,10 +3,15 @@ class People::ImportsController < ApplicationController
   end
 
   def create
-    file = params[:file]
-    return redirect_to new_people_import_path, alert: "Choose a file to import." if file.blank?
+    import =
+      if params[:contacts].present? # picked on-device via the Contact Picker API
+        People::Import.new(user: Current.user, file: StringIO.new(params[:contacts]), filename: "device-contacts.json")
+      elsif params[:file].present?
+        People::Import.new(user: Current.user, file: params[:file])
+      end
+    return redirect_to new_people_import_path, alert: "Choose a file to import." if import.nil?
 
-    result = People::Import.new(user: Current.user, file: file).call
+    result = import.call
 
     if result.error
       redirect_to new_people_import_path, alert: result.error

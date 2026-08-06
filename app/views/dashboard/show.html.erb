@@ -35,12 +35,18 @@
   <% else %>
     <p class="text-sm font-medium text-primary-900">All clear — nothing overdue, nothing due today.</p>
   <% end %>
-  <p class="mt-1 text-xs text-primary-800/70">AI synthesis across your sections arrives in a later milestone; this summary is computed locally.</p>
+  <% if Current.user.digest.present? && Current.user.digest_generated_at&.after?(8.days.ago) %>
+    <p class="mt-2 text-sm text-primary-900/90"><%= Current.user.digest %></p>
+    <p class="mt-1 text-xs text-primary-800/70">Your assistant's weekly read — phrased by AI from the locally-computed facts above, refreshed each scan.</p>
+  <% else %>
+    <p class="mt-1 text-xs text-primary-800/70">This summary is computed locally; your assistant's phrased weekly digest appears after the first weekly scan.</p>
+  <% end %>
 </div>
 
 <% if @suggestions.any? %>
   <div class="mb-6">
-    <%= render Ui::CardComponent.new(title: "Suggestions", subtitle: "Noticed by the app — nothing happens unless you say so.", padded: false) do %>
+    <%= render Ui::CardComponent.new(title: "From your assistant",
+          subtitle: "Suggestions from a weekly look at your own data — accept, snooze, or dismiss", padded: false) do %>
       <div class="divide-y divide-edge"><%= render @suggestions %></div>
     <% end %>
   </div>

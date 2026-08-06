@@ -15,7 +15,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
 
   test "lands a guide note and follow-up tasks filed under the hobby" do
     stub_llm(
-      guide: { title: "Finding climbing people in Tulsa", body: "Where climbers gather:\n- Search Meetup for climbing groups" },
+      draft: { title: "Finding climbing people in Tulsa", body: "Where climbers gather:\n- Search Meetup for climbing groups" },
       follow_ups: [
         { title: "Check Meetup for climbing groups this week", due_on: Date.current.iso8601 },
         { title: "Ask at the local gym about intro nights", due_on: nil }
@@ -42,7 +42,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
   test "the model call carries the hobby, the area, and the lens's notes" do
     note = users(:one).notes.create!(title: "Level", body: "Bouldering V2, never climbed outdoors")
     note.sections = [ @lens ]
-    stub_llm(guide: { title: "t", body: "b" }, follow_ups: [])
+    stub_llm(draft: { title: "t", body: "b" }, follow_ups: [])
 
     ToolRunJob.perform_now(@run)
 
@@ -54,7 +54,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
 
   test "at most three follow-ups are created" do
     stub_llm(
-      guide: { title: "t", body: "b" },
+      draft: { title: "t", body: "b" },
       follow_ups: (1..5).map { |n| { title: "Task #{n}", due_on: nil } }
     )
 
@@ -64,7 +64,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
   end
 
   test "a missing guide fails the run with a friendly error" do
-    stub_llm(guide: { title: "t", body: "" }, follow_ups: [])
+    stub_llm(draft: { title: "t", body: "" }, follow_ups: [])
 
     ToolRunJob.perform_now(@run)
 
@@ -78,7 +78,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(
       tool_slug: "find_your_people", inputs: { "hobby" => "Fencing" }
     )
-    stub_llm(guide: { title: "t", body: "b" }, follow_ups: [])
+    stub_llm(draft: { title: "t", body: "b" }, follow_ups: [])
 
     assert_no_difference "Section.count" do
       ToolRunJob.perform_now(run)
@@ -89,11 +89,11 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
   end
 
   private
-    def stub_llm(guide:, follow_ups:)
+    def stub_llm(draft:, follow_ups:)
       stub_request(:post, ENDPOINT).to_return(
         status: 200,
         body: { choices: [ { message: { content: {
-          guide: guide, follow_ups: follow_ups
+          draft: draft, follow_ups: follow_ups
         }.to_json } } ] }.to_json
       )
     end

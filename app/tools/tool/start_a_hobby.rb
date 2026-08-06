@@ -1,9 +1,9 @@
 module Tool
   # The Hobbies front door (docs/HOBBIES.md): turn curiosity into a first
-  # taste. Creates the hobby's lens (D21) and rides the shared breakdown
-  # pipeline like every plan tool — the brief steers hard toward doing the
-  # hobby cheaply within days, against the two classic ways starting dies:
-  # gear acquisition and endless research.
+  # taste. Creates the hobby's lens (D21) and rides the shared plan-tool
+  # contract — the brief steers hard toward doing the hobby cheaply within
+  # days, against the two classic ways starting dies: gear acquisition and
+  # endless research.
   class StartAHobby < Base
     self.title = "Start a hobby"
     self.description = "Curious about something? Get a cheap first taste on the calendar this week."
@@ -26,19 +26,11 @@ module Tool
     BRIEF
 
     def call
+      # The lens exists before the model call, so the breakdown can file
+      # steps under it too.
       lens = Hobbies::Lens.find_or_create!(inputs[:hobby])
-      goal = record(user.goals.create!(title: "Get into #{lens.name}", description: inputs[:about].presence))
-
-      begin
-        Goals::BreakDown.new(goal: goal, profile: profile, brief: BRIEF).plan!.each { |task| record(task) }
-        # Filed under Hobbies and the hobby's own lens (created before the
-        # model call, so steps can be filed under it too), on top of
-        # whatever else the model chose.
-        goal.sections = (goal.sections.to_a + self.class.section_records + [ lens ]).uniq
-      ensure
-        goal.update_column(:broken_down_at, Time.current)
-        Turbo::StreamsChannel.broadcast_refresh_to(user, :tasks)
-      end
+      goal = plan_goal!(title: "Get into #{lens.name}", brief: BRIEF, description: inputs[:about].presence)
+      goal.sections = (goal.sections.to_a + [ lens ]).uniq
     end
   end
 end

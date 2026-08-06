@@ -1,18 +1,21 @@
-# The Agent mode's signal source (D20): a watcher is a deterministic scan
-# over a user's own data that emits candidate suggestions. The signal comes
-# from SQL, not model calls — cheap, private, and identical with every model
-# (including none). Watchers are code with an explicit registry, exactly
-# like tools (D11/D19): first-party only.
+# The agent's signal layer (D20): watchers are deterministic scans — SQL
+# over the user's own data, no model calls — that emit Suggestions. The LLM
+# is optional garnish reserved for later milestones (phrasing, ranking, the
+# digest); the *decision* that something deserves attention is always plain
+# code. Like tools, watchers are first-party only and this explicit slug
+# list is the whole registry.
 module Watcher
-  SLUGS = %w[ neglected_hobby ].freeze
+  SLUGS = %w[ checkup_cadence stay_in_touch renewal_radar goal_stall neglected_hobby ].freeze
 
   module_function
 
-  def all = SLUGS.map { |slug| find!(slug) }
+  def all = SLUGS.map { |slug| find(slug) }
+
+  def find(slug)
+    const_get(slug.to_s.camelize) if SLUGS.include?(slug.to_s)
+  end
 
   def find!(slug)
-    raise ActiveRecord::RecordNotFound, "no watcher named #{slug.inspect}" unless SLUGS.include?(slug.to_s)
-
-    const_get(slug.to_s.camelize)
+    find(slug) || raise(ActiveRecord::RecordNotFound, "no watcher named #{slug.inspect}")
   end
 end

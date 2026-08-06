@@ -1,9 +1,9 @@
-# The agent's only write surface (D20): a watcher noticed something and the
-# app is speaking up. Nothing materializes until the user accepts — one
-# explicit click — and the fingerprint (watcher + subject) keeps a dismissed
-# nudge from reappearing on the next scan. Sectionable is what makes the
-# Attend zone and the Dashboard feed plain in_section/unscoped queries.
-# Suggestions are the owner's private surface (no Visible).
+# The agent's entire output surface (D20): the agent proposes, the user
+# disposes. Watchers write rows here; nothing else in the app is ever
+# created, changed, or completed by the agent — accepting a suggestion is
+# what materializes anything, and acceptance is always one explicit click.
+# Suggestions are personal (no Visible — never shared) and Sectionable, so
+# the Dashboard feed and each section's Attend zone are plain queries.
 class Suggestion < ApplicationRecord
   include Sectionable
 
@@ -13,46 +13,59 @@ class Suggestion < ApplicationRecord
   enum :status, { pending: "pending", accepted: "accepted", dismissed: "dismissed", snoozed: "snoozed" },
     default: :pending
 
-  validates :watcher_slug, :fingerprint, :title, presence: true
+  validates :title, :watcher_slug, presence: true
+  # The fingerprint (watcher + subject, chosen by the watcher) is what keeps
+  # a dismissed nudge from reappearing on every scan.
+  validates :fingerprint, presence: true, uniqueness: { scope: :user_id }
 
-  scope :attend, -> { pending.order(created_at: :desc) }
+  scope :actionable, -> {
+    where(status: :pending).or(where(status: :snoozed, snoozed_until: ..Date.current))
+  }
 
-  # Accepting performs the action payload and returns what it created.
+  SNOOZE_FOR = 2.weeks
+
+  def snooze!
+    update!(status: :snoozed, snoozed_until: SNOOZE_FOR.from_now.to_date)
+  end
+
+  def dismiss!
+    update!(status: :dismissed)
+  end
+
+  # Materializes the action payload as ordinary primitives, tagged with the
+  # suggestion's own sections, and returns what it created (nil for payloads
+  # the controller handles itself, e.g. a tool redirect).
   def accept!
-    item = perform_action
+    created = materialize
     update!(status: :accepted)
-    item
+    created
   end
 
-  def dismiss! = update!(status: :dismissed)
+  def tool_action = action["tool"]
 
-  def snooze!(until_time = 1.week.from_now)
-    update!(status: :snoozed, snoozed_until: until_time)
-  end
+  def accept_label
+    return "Add task" if action["task"]
+    return "Add event" if action["event"]
+    return "Open tool" if tool_action
 
-  # Expired snoozes return to pending — run at the top of each scan, so
-  # "later" means later, not never.
-  def self.wake_expired_snoozes!
-    snoozed.where(snoozed_until: ..Time.current).update_all(status: "pending", snoozed_until: nil)
+    "Accept"
   end
 
   private
-    # One action type so far (M3.1); more arrive with the watcher slate
-    # (create this Task, run this Tool prefilled).
-    def perform_action
-      case action["type"]
-      when "create_event"
-        event = user.events.create!(title: action["title"].to_s, starts_at: action_date.in_time_zone, all_day: true)
-        event.sections = Section.where(id: Array(action["section_ids"]))
+    def materialize
+      if (attrs = action["task"])
+        task = user.tasks.create!(
+          title: attrs["title"], notes: attrs["notes"],
+          due_on: attrs["due_on"].presence, bucket: :today
+        )
+        task.sections = sections.to_a
+        task
+      elsif (attrs = action["event"])
+        event = user.events.create!(
+          title: attrs["title"], starts_at: attrs["starts_at"], all_day: attrs.fetch("all_day", true)
+        )
+        event.sections = sections.to_a
         event
-      else
-        raise ActiveRecord::RecordInvalid.new(self)
       end
-    end
-
-    def action_date
-      Date.iso8601(action["on"].to_s)
-    rescue Date::Error
-      Date.tomorrow
     end
 end

@@ -13,10 +13,11 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
-
-  # The agent's weekly look at everyone's data (D20). M3.1 hardwires the
-  # Quiet dial: weekly, in-app only; M3.2's per-section dials take over
-  # cadence from here.
+  # The agent's cadences (D20): weekly covers Quiet + Active sections,
+  # daily covers Active only. Fingerprint dedup makes overlap harmless.
   weekly_agent_scan:
-    class: AgentScanFanOutJob
-    schedule: every monday at 7am
+    command: "AgentScanJob.scan_all(cadence: :weekly)"
+    schedule: every monday at 8am
+  daily_agent_scan:
+    command: "AgentScanJob.scan_all(cadence: :daily)"
+    schedule: every day at 8:30am

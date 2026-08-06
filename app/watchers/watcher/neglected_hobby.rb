@@ -16,18 +16,15 @@ module Watcher
         next if touched_since_cutoff?(lens) || upcoming_event?(lens)
 
         session_on = free_day
-        suggest(
-          fingerprint: "neglected_hobby:#{lens.id}",
+        propose(
+          # A monthly bucket, like goal-stall: a dismissal quiets this lens
+          # for the rest of the month, then it may fairly return.
+          fingerprint: "lens:#{lens.id}/#{Date.current.strftime("%Y-%m")}",
           title: "It's been a while since anything #{lens.name}",
           body: "Nothing #{lens.name} has been added, scheduled, or checked off since " \
             "#{cutoff.to_date.strftime("%B %-d")}. #{session_on.strftime("%A")} looks free if you want a session.",
-          sections: [ hobbies, lens ],
-          action: {
-            "type" => "create_event",
-            "title" => "#{lens.name} session",
-            "on" => session_on.iso8601,
-            "section_ids" => [ hobbies.id, lens.id ]
-          }
+          action: { "event" => { "title" => "#{lens.name} session", "starts_at" => session_on.iso8601, "all_day" => true } },
+          sections: [ "hobbies", lens.slug ]
         )
       end
     end

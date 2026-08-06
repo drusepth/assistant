@@ -32,10 +32,10 @@
     </div>
   <% end %>
 
-  <%# Attend zone (D18): pending agent suggestions tagged with this section —
-      the pull-side slice of the Dashboard's feed. %>
+  <%# Attend zone (D18): the pull-side slice of the agent's suggestions —
+      the Dashboard is the push surface for the same rows. %>
   <% if @suggestions.any? %>
-    <%= render Ui::CardComponent.new(title: "Suggestions", padded: false) do %>
+    <%= render Ui::CardComponent.new(title: "Needs your attention", padded: false) do %>
       <div class="divide-y divide-edge"><%= render @suggestions %></div>
     <% end %>
   <% end %>

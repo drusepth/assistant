@@ -1,7 +1,6 @@
 class ToolRunsController < ApplicationController
   before_action :set_tool, only: %i[ new create ]
-  before_action :load_document_choices, only: %i[ new create ]
-  before_action :load_hobby_choices, only: %i[ new create ]
+  before_action :load_input_choices, only: %i[ new create ]
 
   def new
     @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params)
@@ -26,18 +25,12 @@ class ToolRunsController < ApplicationController
       @tool = Tool.find!(params[:tool_slug])
     end
 
-    def load_document_choices
-      return unless @tool.inputs.any?(&:document?)
-
-      @document_choices = Document.visible_to(Current.user).order(created_at: :desc)
-    end
-
-    # Hobby lenses (D21) to pick from; with none yet the form falls back to
-    # a free-text field, so the tools work before any lens exists.
-    def load_hobby_choices
-      return unless @tool.inputs.any?(&:hobby?)
-
-      @hobby_choices = Section.find_by(slug: "hobbies")&.children || Section.none
+    def load_input_choices
+      @document_choices = Document.visible_to(Current.user).order(created_at: :desc) if @tool.inputs.any?(&:document?)
+      @person_choices = Person.visible_to(Current.user).order(:name) if @tool.inputs.any?(&:person?)
+      # Hobby lenses (D21); with none yet the form falls back to free text,
+      # so the Hobbies tools work before any lens exists.
+      @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
     end
 
     # `new` accepts the same params so "Run again" can prefill from a

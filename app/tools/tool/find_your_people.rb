@@ -14,7 +14,6 @@ module Tool
     input :area, label: "Your city or area",
       hint: "Optional — tailors where to look."
 
-    MAX_FOLLOW_UPS = 3
     MAX_NOTES = 5
     MAX_NOTE_CHARS = 300
 
@@ -25,17 +24,14 @@ module Tool
       what you know: recommend kinds of places and well-known platforms or
       organizations, and give concrete search recipes ("search Meetup for …",
       "ask at the library front desk about …") — never invent a specific local
-      club, venue, address, schedule, or price. Respond with a JSON object:
-      {"guide": {"title": "...", "body": "..."},
-       "follow_ups": [{"title": "...", "due_on": "YYYY-MM-DD" or null}, ...]}.
-      The guide's body covers, with short headed lists: where people who do this
+      club, venue, address, schedule, or price.
+      #{DRAFT_FORMAT}
+      The draft's body covers, with short headed lists: where people who do this
       hobby actually gather, online and in person, specific to the hobby and
       tailored to the user's area when given; how to vet a group and what a
       first visit looks like; and two or three questions to ask when reaching
-      out. Practical and encouraging, no filler. follow_ups are at most #{MAX_FOLLOW_UPS} small
-      concrete actions ("check Meetup for climbing groups this week"), each
-      completable in a day; set due_on only for natural time-boxes, resolved
-      against today's date.
+      out. Practical and encouraging, no filler. follow_ups are small concrete
+      actions ("check Meetup for climbing groups this week").
     PROMPT
 
     private
@@ -57,28 +53,6 @@ module Tool
         parts.join("\n\n")
       end
 
-      def handle(response)
-        body = response.dig("guide", "body")
-        raise Llm::Error, "The model didn't return a guide — try again." if body.blank?
-
-        guide = record(user.notes.create!(
-          title: response.dig("guide", "title").presence || "Finding your people — #{hobby_name}",
-          body: body
-        ))
-        guide.sections = filing
-
-        Array(response["follow_ups"]).first(MAX_FOLLOW_UPS).each do |step|
-          next unless step.is_a?(Hash) && step["title"].present?
-
-          due_on = parsed_date(step["due_on"])
-          task = record(user.tasks.create!(
-            title: step["title"].to_s, due_on: due_on,
-            bucket: due_on && due_on <= Date.current ? :today : :later
-          ))
-          task.sections = filing
-        end
-      end
-
       def hobby_name = lens&.name || inputs[:hobby].to_s.squish
 
       # Matches an existing lens for filing and context; deliberately never
@@ -92,5 +66,7 @@ module Tool
       def filing
         @filing ||= (self.class.section_records + [ lens ].compact).uniq
       end
+
+      def fallback_title = "Finding your people — #{hobby_name}"
   end
 end

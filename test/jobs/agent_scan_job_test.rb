@@ -1,25 +1,30 @@
 require "test_helper"
 
 class AgentScanJobTest < ActiveJob::TestCase
-  test "a scan wakes expired snoozes and lets every watcher look" do
-    lens = Hobbies::Lens.find_or_create!("Guitar")
-    lens.update_columns(created_at: 8.weeks.ago)
-
-    AgentScanJob.perform_now(users(:one))
-
-    suggestion = users(:one).suggestions.sole
-    assert suggestion.pending?
-    assert_equal "neglected_hobby", suggestion.watcher_slug
-
-    suggestion.update!(status: :snoozed, snoozed_until: 1.minute.ago)
-    AgentScanJob.perform_now(users(:one))
-    assert suggestion.reload.pending?, "an expired snooze comes back instead of a duplicate"
-    assert_equal 1, users(:one).suggestions.count
+  # The weekly scan also attempts the phrased digest; a failing provider
+  # must never break the deterministic half.
+  setup do
+    stub_request(:post, "https://api.openai.com/v1/chat/completions").to_return(status: 500, body: "down")
   end
 
-  test "the fan-out enqueues one scan per user" do
-    AgentScanFanOutJob.perform_now
+  test "scans every watcher for the user" do
+    AgentScanJob.perform_now(users(:one))
 
-    assert_enqueued_jobs User.count, only: AgentScanJob
+    assert_equal 1, users(:one).suggestions.count
+    assert_equal "checkup_cadence", users(:one).suggestions.sole.watcher_slug
+  end
+
+  test "a watcher on a disabled section stays silent" do
+    users(:one).user_sections.create!(section: sections(:health), enabled: false)
+
+    AgentScanJob.perform_now(users(:one))
+
+    assert_empty users(:one).suggestions
+  end
+
+  test "scan_all fans out one job per user" do
+    assert_enqueued_jobs User.count, only: AgentScanJob do
+      AgentScanJob.scan_all
+    end
   end
 end

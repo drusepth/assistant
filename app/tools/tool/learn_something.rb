@@ -25,20 +25,7 @@ module Tool
     BRIEF
 
     def call
-      goal = record(user.goals.create!(title: goal_title, description: inputs[:angle].presence))
-
-      begin
-        Goals::BreakDown.new(goal: goal, profile: profile, brief: BRIEF).plan!.each { |task| record(task) }
-        # The plan is always findable where the tool lives, on top of
-        # whatever the model filed it under.
-        goal.sections = (goal.sections.to_a + self.class.section_records).uniq
-      ensure
-        # Stamp even on failure so the goal card can't spin forever — a
-        # failed run leaves an ordinary unplanned goal the user can retry
-        # from its own page, and the board refreshes either way.
-        goal.update_column(:broken_down_at, Time.current)
-        Turbo::StreamsChannel.broadcast_refresh_to(user, :tasks)
-      end
+      plan_goal!(title: goal_title, brief: BRIEF, description: inputs[:angle].presence)
     end
 
     private

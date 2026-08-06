@@ -48,6 +48,14 @@ class User < ApplicationRecord
     end
   end
 
+  # The agent dial for a top-level section (D20): a disabled section is
+  # implicitly off; absence of a row means the Quiet default.
+  def agent_level_for(section)
+    return "off" unless section_enabled?(section)
+
+    user_sections.find_by(section: section)&.agent_level || UserSection::DEFAULT_AGENT_LEVEL
+  end
+
   def enabled_sections
     disabled_ids = user_sections.where(enabled: false).pluck(:section_id)
     ordered_sections.reject { |section| disabled_ids.include?(section.id) }
