@@ -17,6 +17,10 @@ services:
     envVars:
       - key: RAILS_MASTER_KEY
         sync: false
+      # Run the Solid Queue supervisor inside Puma (config/puma.rb) —
+      # without this, enqueued jobs sit in the queue database forever.
+      - key: SOLID_QUEUE_IN_PUMA
+        value: "true"
     # All SQLite databases (primary, cache, queue, cable) live in
     # /rails/storage — this disk keeps them across deploys and restarts.
     # Note: a service with a disk runs a single instance, which is also
