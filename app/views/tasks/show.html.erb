@@ -26,18 +26,18 @@
         <% if @task.due_on %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Due</dt>
-            <dd><%= @task.due_on.strftime("%B %-d, %Y") %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= @task.due_on.strftime("%B %-d, %Y") %></dd>
           </div>
         <% end %>
         <% if @task.goal %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Goal</dt>
-            <dd><%= link_to @task.goal.title, @task.goal, class: "text-primary-700 hover:underline" %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= link_to @task.goal.title, @task.goal, class: "text-primary-700 hover:underline" %></dd>
           </div>
         <% end %>
         <div class="flex gap-2">
           <dt class="w-24 shrink-0 text-soft">Sections</dt>
-          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @task %></dd>
+          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @task %></dd>
         </div>
         <% if @task.notes.present? %>
           <div>

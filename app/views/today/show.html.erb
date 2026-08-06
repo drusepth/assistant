@@ -9,7 +9,9 @@
 <div class="space-y-6">
   <% if @overdue_tasks.any? %>
     <%= render Ui::CardComponent.new(title: "Overdue", padded: false) do %>
-      <div class="divide-y divide-edge"><%= render @overdue_tasks %></div>
+      <div class="divide-y divide-edge">
+        <%= render partial: "tasks/task", collection: @overdue_tasks, locals: { reschedule: true } %>
+      </div>
     <% end %>
   <% end %>
 
@@ -23,21 +25,73 @@
 
   <%= render Ui::CardComponent.new(title: "Today's events", padded: false) do %>
     <% if @today_events.any? %>
-      <div class="divide-y divide-edge"><%= render @today_events %></div>
+      <div class="divide-y divide-edge">
+        <% @today_events.each do |event| %>
+          <div class="<%= "opacity-50" if event.finished? %>"><%= render event %></div>
+        <% end %>
+      </div>
     <% else %>
       <p class="px-5 py-8 text-center text-sm text-soft">No events today.</p>
     <% end %>
   <% end %>
 
-  <% if @week_events.any? %>
+  <% weekend_prep = @prep_range.count > 1 %>
+  <%= render Ui::CardComponent.new(
+        title: weekend_prep ? "Get ready for the weekend" : "Get ready for tomorrow",
+        subtitle: weekend_prep ? "Saturday through Monday" : "Tasks due and events happening tomorrow",
+        padded: false) do |card| %>
+    <% card.with_actions do %>
+      <%= link_to new_task_path(due_on: Date.tomorrow), class: "btn btn-secondary btn-sm" do %>
+        <%= icon(:plus, css_class: "size-3.5") %> Task for tomorrow
+      <% end %>
+    <% end %>
+
+    <% if @early_events.any? %>
+      <div class="border-b border-edge bg-amber-50 px-5 py-2.5 text-xs text-amber-800">
+        Early start tomorrow: <%= @early_events.map { |event| "#{event.title} at #{event.starts_at.strftime("%-l:%M %p")}" }.to_sentence %> — worth prepping tonight.
+      </div>
+    <% end %>
+
+    <% if @prep_tasks.any? || @prep_events.any? %>
+      <% if weekend_prep %>
+        <% @prep_range.each do |day| %>
+          <% day_tasks = @prep_tasks.select { |task| task.due_on == day } %>
+          <% day_events = @prep_events.select { |event| [ event.starts_at.to_date, @prep_range.first ].max == day } %>
+          <% next if day_tasks.empty? && day_events.empty? %>
+          <p class="border-b border-edge bg-stone-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-soft"><%= day.strftime("%A") %></p>
+          <div class="divide-y divide-edge border-b border-edge last:border-b-0">
+            <%= render day_tasks %>
+            <%= render day_events %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="divide-y divide-edge">
+          <%= render @prep_tasks %>
+          <%= render @prep_events %>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="px-5 py-8 text-center text-sm text-soft">Nothing on the books <%= weekend_prep ? "this weekend" : "for tomorrow" %> yet.</p>
+    <% end %>
+  <% end %>
+
+  <% if @week_events_by_day.any? %>
     <%= render Ui::CardComponent.new(title: "Coming up this week", padded: false) do %>
-      <div class="divide-y divide-edge"><%= render @week_events %></div>
+      <% @week_events_by_day.each do |day, events| %>
+        <p class="border-b border-edge bg-stone-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-soft"><%= day.strftime("%A, %b %-d") %></p>
+        <div class="divide-y divide-edge border-b border-edge last:border-b-0"><%= render events %></div>
+      <% end %>
     <% end %>
   <% end %>
 
   <% if @unscheduled_tasks.any? %>
     <%= render Ui::CardComponent.new(title: "Unscheduled", subtitle: "Open tasks with no date", padded: false) do %>
       <div class="divide-y divide-edge"><%= render @unscheduled_tasks %></div>
+      <% if @unscheduled_count > @unscheduled_tasks.length %>
+        <div class="border-t border-edge px-4 py-2.5">
+          <%= link_to "View all #{@unscheduled_count} unscheduled tasks →", tasks_path, class: "text-xs font-medium text-primary-700 hover:text-primary-800" %>
+        </div>
+      <% end %>
     <% end %>
   <% end %>
 </div>

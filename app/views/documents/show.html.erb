@@ -20,12 +20,12 @@
         <% if @document.file.attached? %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">File</dt>
-            <dd><%= @document.file.filename %> (<%= number_to_human_size(@document.file.byte_size) %>)</dd>
+            <dd class="min-w-0 wrap-anywhere"><%= @document.file.filename %> (<%= number_to_human_size(@document.file.byte_size) %>)</dd>
           </div>
         <% end %>
         <div class="flex gap-2">
           <dt class="w-24 shrink-0 text-soft">Sections</dt>
-          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @document %></dd>
+          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @document %></dd>
         </div>
         <% if @document.description.present? %>
           <div>

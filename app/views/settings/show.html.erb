@@ -10,7 +10,7 @@
           <span class="size-2.5 rounded-full <%= section_dot_classes(section) %>"></span>
           <span class="text-sm font-medium text-ink"><%= section.name %></span>
           <% if section.children.any? %>
-            <span class="text-xs text-soft"><%= section.children.map(&:name).join(" · ") %></span>
+            <span class="min-w-0 text-xs text-soft"><%= section.children.map(&:name).join(" · ") %></span>
           <% end %>
         </label>
       <% end %>
@@ -22,7 +22,7 @@
     <% if @section_grants.any? %>
       <ul class="mb-4 space-y-2">
         <% @section_grants.each do |grant| %>
-          <li class="flex items-center justify-between gap-2 rounded-lg border border-edge px-4 py-2.5 text-sm">
+          <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-edge px-4 py-2.5 text-sm">
             <span>
               <span class="font-medium text-ink"><%= grant.subject.qualified_name %></span>
               <span class="text-soft">→ <%= grant.grantee.name %></span>
@@ -38,9 +38,9 @@
         <%= hidden_field_tag :subject_type, "Section" %>
         <%= select_tag :subject_id,
               options_from_collection_for_select(Section.order(:parent_id, :position), :id, :qualified_name),
-              class: "input flex-1" %>
+              class: "input min-w-40 flex-1" %>
         <span class="text-sm text-soft">with</span>
-        <%= select_tag :grantee_id, options_from_collection_for_select(@household_members, :id, :name), class: "input flex-1" %>
+        <%= select_tag :grantee_id, options_from_collection_for_select(@household_members, :id, :name), class: "input min-w-40 flex-1" %>
         <%= form.submit "Share" %>
       <% end %>
     <% else %>
@@ -85,7 +85,7 @@
   <%= render Ui::CardComponent.new(title: "Household", subtitle: Current.user.household.name) do %>
     <ul class="space-y-2">
       <% Current.user.household.users.order(:name).each do |member| %>
-        <li class="flex items-center gap-3 rounded-lg border border-edge px-4 py-2.5 text-sm">
+        <li class="flex flex-wrap items-center gap-3 rounded-lg border border-edge px-4 py-2.5 text-sm">
           <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-800">
             <%= member.name.split.map(&:first).join[0, 2].upcase %>
           </span>
@@ -116,7 +116,7 @@
 
         <% @pending_invitations.each do |invitation| %>
           <div class="mb-2 rounded-lg border border-edge px-4 py-3" data-controller="clipboard">
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="text-sm font-medium text-ink">For <%= invitation.name %></span>
               <span class="flex items-center gap-1.5">
                 <button type="button" class="btn btn-secondary btn-sm"
@@ -130,8 +130,8 @@
           </div>
         <% end %>
 
-        <%= form_with url: invitations_path, class: "flex items-center gap-2" do |form| %>
-          <%= text_field_tag "invitation[name]", nil, class: "input flex-1", placeholder: "Their name", required: true %>
+        <%= form_with url: invitations_path, class: "flex flex-wrap items-center gap-2" do |form| %>
+          <%= text_field_tag "invitation[name]", nil, class: "input min-w-40 flex-1", placeholder: "Their name", required: true %>
           <%= form.submit "Create invite link" %>
         <% end %>
       </div>

@@ -1,7 +1,7 @@
 <div class="flex items-center gap-3 px-4 py-3">
   <% if task.user_id == Current.user.id %>
     <%= button_to task.completed? ? reopen_task_path(task) : complete_task_path(task), method: :patch,
-          class: "shrink-0 cursor-pointer text-soft hover:text-primary-600",
+          class: "-m-2 shrink-0 cursor-pointer p-2 text-soft hover:text-primary-600",
           title: task.completed? ? "Reopen" : "Complete" do %>
       <% if task.completed? %>
         <%= icon(:check_circle, css_class: "size-5 text-primary-600") %>
@@ -25,4 +25,13 @@
       <%= render "shared/item_chips", item: task %>
     </div>
   </div>
+
+  <% if local_assigns[:reschedule] && task.user_id == Current.user.id && !task.completed? %>
+    <div class="flex shrink-0 items-center gap-1.5">
+      <%= button_to "→ Today", reschedule_task_path(task, to: "today"), method: :patch,
+            class: "btn btn-secondary btn-sm", title: "Move due date to today" %>
+      <%= button_to "→ Tomorrow", reschedule_task_path(task, to: "tomorrow"), method: :patch,
+            class: "btn btn-secondary btn-sm", title: "Move due date to tomorrow" %>
+    </div>
+  <% end %>
 </div>

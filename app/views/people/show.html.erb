@@ -17,30 +17,30 @@
         <% if @person.email.present? %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Email</dt>
-            <dd><%= mail_to @person.email, nil, class: "text-primary-700 hover:underline" %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= mail_to @person.email, nil, class: "text-primary-700 hover:underline" %></dd>
           </div>
         <% end %>
         <% if @person.phone.present? %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Phone</dt>
-            <dd><%= phone_to @person.phone, nil, class: "text-primary-700 hover:underline" %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= phone_to @person.phone, nil, class: "text-primary-700 hover:underline" %></dd>
           </div>
         <% end %>
         <% if @person.birthday %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Birthday</dt>
-            <dd><%= @person.birthday.strftime("%B %-d") %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= @person.birthday.strftime("%B %-d") %></dd>
           </div>
         <% end %>
         <% if @person.linked_user %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Account</dt>
-            <dd><span class="chip bg-primary-50 text-primary-800"><%= @person.linked_user.name %> (household member)</span></dd>
+            <dd class="min-w-0 wrap-anywhere"><span class="chip bg-primary-50 text-primary-800"><%= @person.linked_user.name %> (household member)</span></dd>
           </div>
         <% end %>
         <div class="flex gap-2">
           <dt class="w-24 shrink-0 text-soft">Sections</dt>
-          <dd class="flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @person %></dd>
+          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @person %></dd>
         </div>
         <% if @person.notes.present? %>
           <div>

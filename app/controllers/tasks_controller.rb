@@ -1,5 +1,5 @@
 class TasksController < ApplicationController
-  before_action :set_own_task, only: %i[ edit update destroy complete reopen ]
+  before_action :set_own_task, only: %i[ edit update destroy complete reopen reschedule ]
 
   def index
     scope = Task.visible_to(Current.user).includes(:sections, :user)
@@ -54,6 +54,11 @@ class TasksController < ApplicationController
   def reopen
     @task.reopen!
     redirect_back fallback_location: tasks_path
+  end
+
+  def reschedule
+    @task.update!(due_on: params[:to] == "tomorrow" ? Date.tomorrow : Date.current)
+    redirect_back fallback_location: today_path
   end
 
   private

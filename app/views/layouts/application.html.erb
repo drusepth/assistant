@@ -21,12 +21,33 @@
 
   <body class="bg-canvas text-ink antialiased">
     <% if authenticated? %>
-      <div class="flex min-h-screen">
-        <aside class="flex w-64 shrink-0 flex-col border-r border-edge bg-surface">
-          <%= link_to root_path, class: "flex items-center gap-2 px-6 py-5" do %>
+      <div data-controller="nav" data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close">
+        <header class="sticky top-0 z-20 flex items-center gap-1 border-b border-edge bg-surface px-2 py-1.5 lg:hidden">
+          <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink"
+                  data-action="nav#toggle" aria-label="Open menu">
+            <%= icon(:bars_3, css_class: "size-6") %>
+          </button>
+          <%= link_to root_path, class: "flex items-center gap-2 px-2 py-2" do %>
             <span class="size-2.5 rounded-full bg-primary-500"></span>
             <span class="text-base font-bold tracking-tight">Assistant</span>
           <% end %>
+        </header>
+
+        <div class="hidden fixed inset-0 z-30 bg-black/40 lg:hidden" data-nav-target="backdrop" data-action="click->nav#close"></div>
+
+        <div class="min-h-screen lg:flex">
+        <aside class="fixed inset-y-0 left-0 z-40 flex h-dvh w-64 shrink-0 -translate-x-full flex-col border-r border-edge bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-none"
+               data-nav-target="drawer">
+          <div class="flex items-center justify-between pr-2">
+            <%= link_to root_path, class: "flex items-center gap-2 px-6 py-5" do %>
+              <span class="size-2.5 rounded-full bg-primary-500"></span>
+              <span class="text-base font-bold tracking-tight">Assistant</span>
+            <% end %>
+            <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink lg:hidden"
+                    data-action="nav#close" aria-label="Close menu">
+              <%= icon(:x_mark, css_class: "size-6") %>
+            </button>
+          </div>
 
           <nav class="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
             <div class="space-y-0.5">
@@ -52,20 +73,21 @@
 
           <div class="space-y-1 border-t border-edge p-3">
             <%= nav_link_to "Settings", settings_path, :cog %>
-            <div class="flex items-center justify-between px-3 py-1">
-              <span class="truncate text-xs text-soft"><%= Current.user.name %></span>
+            <div class="flex items-center justify-between gap-2 px-3 py-1">
+              <span class="min-w-0 truncate text-xs text-soft"><%= Current.user.name %></span>
               <%= button_to "Sign out", session_path, method: :delete,
-                    class: "cursor-pointer text-xs text-soft hover:text-ink" %>
+                    class: "cursor-pointer rounded-md px-2 py-2 text-xs text-soft hover:text-ink" %>
             </div>
           </div>
         </aside>
 
         <main class="min-w-0 flex-1">
-          <div class="mx-auto max-w-6xl px-8 py-8">
+          <div class="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
             <%= render Ui::FlashComponent.new(flash: flash) %>
             <%= yield %>
           </div>
         </main>
+        </div>
       </div>
     <% else %>
       <main class="flex min-h-screen items-center justify-center p-6">
