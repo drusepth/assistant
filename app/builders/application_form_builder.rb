@@ -26,7 +26,76 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
   end
 
   def file_field(method, options = {})
-    super(method, merge_classes(options, "block w-full text-sm text-soft file:mr-3 file:btn file:btn-secondary file:btn-sm"))
+    accept_hint = options[:accept]
+
+    input_data = (options[:data] || {}).merge(
+      file_input_target: "input",
+      action: "change->file-input#updateState"
+    )
+
+    input_options = options.merge(
+      class: [ "absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10", options[:class] ].compact.join(" "),
+      data: input_data
+    )
+
+    input_html = super(method, input_options)
+
+    @template.content_tag(:div,
+      class: "file-input-dropzone group",
+      data: {
+        controller: "file-input",
+        action: "dragover->file-input#dragOver dragleave->file-input#dragLeave drop->file-input#drop"
+      }
+    ) do
+      @template.safe_join([
+        input_html,
+        @template.content_tag(:div, class: "flex flex-col items-center justify-center gap-1.5 pointer-events-none", data: { file_input_target: "idle" }) do
+          @template.safe_join([
+            @template.tag.svg(
+              @template.tag.path(
+                d: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12",
+                stroke: "currentColor", stroke_width: "2", stroke_linecap: "round", stroke_linejoin: "round"
+              ),
+              xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", class: "size-8 text-primary-600 group-hover:scale-110 transition-transform duration-150"
+            ),
+            @template.content_tag(:p, class: "text-sm text-ink") do
+              @template.safe_join([
+                @template.content_tag(:span, "Click to choose a file", class: "font-semibold text-primary-700 underline decoration-primary-300 decoration-2 underline-offset-2 group-hover:decoration-primary-600"),
+                " or drag & drop here"
+              ])
+            end,
+            accept_hint ? @template.content_tag(:p, "Accepted formats: #{accept_hint}", class: "text-xs font-medium text-soft truncate max-w-xs") : nil
+          ].compact)
+        end,
+        @template.content_tag(:div, class: "hidden flex-col items-center justify-center gap-1.5 pointer-events-none", data: { file_input_target: "selected" }) do
+          @template.safe_join([
+            @template.content_tag(:div, class: "flex items-center justify-center size-9 rounded-full bg-primary-100 text-primary-700 mb-0.5") do
+              @template.tag.svg(
+                @template.tag.path(
+                  d: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+                  stroke: "currentColor", stroke_width: "2", stroke_linecap: "round", stroke_linejoin: "round"
+                ),
+                xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", class: "size-6"
+              )
+            end,
+            @template.content_tag(:div, class: "flex items-center gap-2 max-w-full px-3 py-1 rounded-lg bg-surface border border-edge shadow-xs") do
+              @template.safe_join([
+                @template.tag.svg(
+                  @template.tag.path(
+                    d: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+                    stroke: "currentColor", stroke_width: "2", stroke_linecap: "round", stroke_linejoin: "round"
+                  ),
+                  xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", class: "size-4 text-primary-600 shrink-0"
+                ),
+                @template.content_tag(:span, "", class: "text-sm font-semibold text-ink truncate max-w-[200px] sm:max-w-xs", data: { file_input_target: "filename" }),
+                @template.content_tag(:span, "", class: "text-xs font-normal text-soft shrink-0", data: { file_input_target: "filesize" })
+              ])
+            end,
+            @template.content_tag(:p, "Click or drop a new file to replace", class: "text-xs text-soft font-medium")
+          ])
+        end
+      ])
+    end
   end
 
   def check_box(method, options = {}, checked_value = "1", unchecked_value = "0")

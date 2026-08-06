@@ -62,6 +62,9 @@
   .field-error {
     @apply text-xs text-red-600;
   }
+  .file-input-dropzone {
+    @apply relative flex flex-col items-center justify-center w-full min-h-[112px] p-6 text-center rounded-xl border-2 border-dashed border-primary-300 bg-primary-50/40 hover:bg-primary-50/80 hover:border-primary-500 focus-within:border-primary-600 focus-within:ring-4 focus-within:ring-primary-500/15 transition-all cursor-pointer select-none;
+  }
 
   .card {
     @apply rounded-xl border border-edge bg-surface shadow-xs;
