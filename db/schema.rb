@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_180000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -110,6 +110,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_170000) do
     t.datetime "updated_at", null: false
     t.index ["household_id"], name: "index_invitations_on_household_id"
     t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
+  end
+
+  create_table "linked_accounts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.json "credentials", default: {}, null: false
+    t.json "disabled_scopes", default: [], null: false
+    t.string "provider", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "provider"], name: "index_linked_accounts_on_user_id_and_provider", unique: true
+    t.index ["user_id"], name: "index_linked_accounts_on_user_id"
   end
 
   create_table "model_profiles", force: :cascade do |t|
@@ -274,6 +285,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_170000) do
   add_foreign_key "goals", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"
+  add_foreign_key "linked_accounts", "users"
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"
   add_foreign_key "people", "users"

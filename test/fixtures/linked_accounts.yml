@@ -1,0 +1,8 @@
+alice_email:
+  user: one
+  provider: email
+  credentials:
+    host: imap.example.com
+    username: one@example.com
+    password: app-password
+  disabled_scopes: []

@@ -14,6 +14,7 @@ class User < ApplicationRecord
   has_many :notes, dependent: :destroy
   has_many :tool_runs, dependent: :destroy
   has_many :suggestions, dependent: :destroy
+  has_many :linked_accounts, dependent: :destroy
 
   has_many :granted_access_grants, class_name: "AccessGrant", foreign_key: :grantor_id,
     inverse_of: :grantor, dependent: :destroy
