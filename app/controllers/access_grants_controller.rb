@@ -18,10 +18,12 @@ class AccessGrantsController < ApplicationController
   end
 
   private
+    # Look the class up from a fixed allowlist — never reflect on params.
     def find_subject
-      type = params[:subject_type]
-      raise ActiveRecord::RecordNotFound unless AccessGrant::ITEM_TYPES.include?(type) || type == "Section"
+      subject_classes = [ Event, Task, Document, Person, Goal, Note, Section ]
+      klass = subject_classes.find { |candidate| candidate.name == params[:subject_type] }
+      raise ActiveRecord::RecordNotFound if klass.nil?
 
-      type.constantize.find(params[:subject_id])
+      klass.find(params[:subject_id])
     end
 end
