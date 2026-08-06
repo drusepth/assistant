@@ -34,6 +34,24 @@ budget:
   parent: money
   position: 1
 
+debt:
+  slug: debt
+  name: Debt
+  parent: money
+  position: 2
+
+bills:
+  slug: bills
+  name: Bills
+  parent: money
+  position: 5
+
+benefits:
+  slug: benefits
+  name: Benefits
+  parent: money
+  position: 7
+
 subscriptions:
   slug: subscriptions
   name: Subscriptions

@@ -6,6 +6,7 @@
 class ToolRun < ApplicationRecord
   belongs_to :user
   has_many :tool_run_items, dependent: :destroy
+  has_many :tool_run_messages, dependent: :destroy
 
   enum :status, { queued: "queued", running: "running", done: "done", failed: "failed" }, default: :queued
 
@@ -18,7 +19,31 @@ class ToolRun < ApplicationRecord
     tool_run_items.includes(:item).map(&:item).compact
   end
 
+  NextStep = Data.define(:tool, :inputs, :reason)
+
+  # Follow-on tools this run proposed (D28) — sanitized at write time by
+  # Tool::Base#store_next_tools, re-resolved against the registry at read
+  # time so a retired slug can never break the page.
+  def next_steps
+    Array(output["next_tools"]).filter_map do |entry|
+      next unless entry.is_a?(Hash)
+
+      tool = Tool.find(entry["slug"])
+      NextStep.new(tool: tool, inputs: entry["inputs"] || {}, reason: entry["reason"]) if tool
+    end
+  end
+
   def finished? = done? || failed?
+
+  # Chat runs (D29): done means *live* — the opening message is in and the
+  # composer stays open; there is no finished state short of leaving.
+  def chat? = tool.kind == :chat
+
+  # A reply is pending exactly when the newest message is the user's — a
+  # failed turn appends a notice, so the thinking indicator can't stick.
+  def awaiting_reply?
+    chat? && tool_run_messages.ordered.last&.user_role?
+  end
 
   private
     def required_inputs_present

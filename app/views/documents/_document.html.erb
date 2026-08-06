@@ -10,4 +10,7 @@
       <%= render "shared/item_chips", item: document %>
     </div>
   </div>
+
+  <%= link_to "Decode", new_tool_run_path("decode_letter", inputs: { document_id: document.id }),
+        class: "btn btn-ghost btn-sm shrink-0" %>
 </div>

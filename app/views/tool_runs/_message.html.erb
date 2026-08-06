@@ -1,0 +1,15 @@
+<% if message.user_role? %>
+  <div class="flex justify-end">
+    <div class="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-primary-600 px-4 py-2 text-sm text-white">
+      <%= message.content %>
+    </div>
+  </div>
+<% elsif message.assistant_role? %>
+  <div class="flex justify-start">
+    <div class="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-2 text-sm text-ink">
+      <%= message.content %>
+    </div>
+  </div>
+<% else %>
+  <p class="px-2 text-center text-xs italic text-soft"><%= message.content %></p>
+<% end %>

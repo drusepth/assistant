@@ -40,6 +40,18 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Not analyzed yet", response.body
   end
 
+  test "the document page and vault rows offer the decode-letter front door" do
+    document = users(:one).documents.create!(title: "Scary envelope")
+
+    get document_path(document)
+    assert_select "a[href=?]", new_tool_run_path("decode_letter", inputs: { document_id: document.id }),
+      text: "Decode this"
+
+    get documents_path
+    assert_select "a[href=?]", new_tool_run_path("decode_letter", inputs: { document_id: document.id }),
+      text: "Decode"
+  end
+
   test "creating a document queues analysis when a model is configured" do
     assert_enqueued_with(job: AnalyzeDocumentJob) do
       post documents_path, params: { document: { title: "Lease" } }

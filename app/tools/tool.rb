@@ -4,7 +4,10 @@
 # this explicit slug list is the whole registry: first-party only (D11).
 module Tool
   SLUGS = %w[
-    dispute_letter learn_something doctor_visit_prep cancel_subscription reconnect moving
+    decode_letter dispute_letter insurance_appeal debt_collector_response
+    deposit_demand results_explainer doctor_visit_prep negotiation_prep
+    benefits_screener learn_something tutor
+    cancel_subscription reconnect moving
     start_a_hobby what_should_i_make_next find_your_people
   ].freeze
 

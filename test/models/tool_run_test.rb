@@ -34,7 +34,22 @@ class ToolRunTest < ActiveSupport::TestCase
     lens = Hobbies::Lens.find_or_create!("Guitar")
     assert_includes Tool.for_section(lens), Tool::FindYourPeople,
       "a tool on a parent shows on each subsection's page — hobby lenses (D25) can't be registered on ahead of time"
-    assert_empty Tool.for_section(sections(:career))
+    assert_includes Tool.for_section(sections(:career)), Tool::NegotiationPrep
+    assert_includes Tool.for_section(sections(:health)), Tool::ResultsExplainer
+  end
+
+  test "next_steps re-resolves stored slugs and skips retired ones" do
+    run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", inputs: { "document_id" => "1" })
+    run.update!(output: { "next_tools" => [
+      { "slug" => "insurance_appeal", "inputs" => { "document_id" => "7" }, "reason" => "why" },
+      { "slug" => "tool_we_deleted_in_v2", "inputs" => {} },
+      "not even a hash"
+    ] })
+
+    steps = run.next_steps
+    assert_equal [ Tool::InsuranceAppeal ], steps.map(&:tool)
+    assert_equal({ "document_id" => "7" }, steps.first.inputs)
+    assert_equal "why", steps.first.reason
   end
 
   test "items returns the primitives a run created" do

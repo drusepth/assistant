@@ -20,6 +20,14 @@ class ToolRunsController < ApplicationController
     @tool_run = Current.user.tool_runs.find(params[:id])
   end
 
+  # "Save a recap" on a chat run (D29) — the explicit click that turns a
+  # session into an owned Note (D20: nothing lands without the user asking).
+  def recap
+    run = Current.user.tool_runs.find(params[:id])
+    ChatRecapJob.perform_later(run) if run.chat? && run.tool_run_messages.conversational.exists?
+    redirect_to run
+  end
+
   private
     def set_tool
       @tool = Tool.find!(params[:tool_slug])
@@ -33,9 +41,10 @@ class ToolRunsController < ApplicationController
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
     end
 
-    # `new` accepts the same params so "Run again" can prefill from a
-    # previous run's inputs.
+    # `new` accepts the same params so "Run again" and next-step links can
+    # prefill from earlier inputs. Checkbox inputs arrive as arrays.
     def input_params
-      params.fetch(:inputs, {}).permit(*@tool.inputs.map(&:name)).to_h
+      permitted = @tool.inputs.map { |input| input.checkboxes? ? { input.name => [] } : input.name }
+      params.fetch(:inputs, {}).permit(*permitted).to_h
     end
 end

@@ -87,6 +87,8 @@ Ordered to prove the frame (one draft tool, one plan tool), then spread everyday
 5. **People: "Reconnect"** *(draft)* — reads a Person + what's known about them → message draft + catch-up talking points. Deliberately seeds the Milestone 3 stay-in-touch watcher (its accept action runs this tool).
 6. **Situations** *(plan tools with rich cross-section briefs)* — **"Moving" first**: the widest-audience Situation, and now the Q7 cross-section pressure test. "Eviction notice", "lost my job", "new baby", "new diagnosis" follow demand; eviction is deferred until users ask.
 
+Items 3–6 are ✅ built (M2.3/M2.4, see `STATUS.md`). Beyond this slate, the **high-impact tool wave** (`TOOLS_PLAN.md`, D28–D29) added nine more: the decode-letter front door + `next_tools` routing, the appeal/response letter family, results explainer, negotiation prep, the benefits screener, and the chat-kind tutor.
+
 ---
 
 ## 3. Milestone 3 — Agent (D20)
