@@ -35,6 +35,12 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Draft a dispute letter", response.body
   end
 
+  test "education leads with the learn-something tool" do
+    get section_path("education")
+    assert_response :success
+    assert_match "Learn something", response.body
+  end
+
   test "the empty state offers capture pre-tagged with the section" do
     get section_path("health")
     assert_response :success

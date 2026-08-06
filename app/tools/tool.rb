@@ -3,7 +3,7 @@
 # Tools are code, not data (they're behavior, unlike the D12 taxonomy), and
 # this explicit slug list is the whole registry: first-party only (D11).
 module Tool
-  SLUGS = %w[ dispute_letter ].freeze
+  SLUGS = %w[ dispute_letter learn_something ].freeze
 
   module_function
 

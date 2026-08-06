@@ -10,18 +10,7 @@ class BreakDownGoalJob < ApplicationJob
     return unless profile
     return if goal.tasks.any? && !append
 
-    result = Goals::BreakDown.new(goal: goal, profile: profile).call
-
-    goal.sections = result.sections if goal.sections.none? # hand-tagged goals are left alone
-    goal.update!(target_on: result.target_on) if goal.target_on.nil? && result.target_on
-
-    result.steps.each do |step|
-      task = goal.user.tasks.create!(
-        goal: goal, title: step.title, notes: step.notes, due_on: step.due_on,
-        bucket: step.due_on && step.due_on <= Date.current ? :today : :later
-      )
-      task.sections = step.sections
-    end
+    Goals::BreakDown.new(goal: goal, profile: profile).plan!
   rescue Llm::Error
     # Best-effort (D16): an unreachable or misbehaving model leaves the goal
     # as a single unplanned item — the user can add steps by hand or retry

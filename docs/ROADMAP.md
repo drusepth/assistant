@@ -40,10 +40,8 @@ Tools never produce free-floating chat output. Every result lands as primitives 
 
 ### Two kinds of tool
 
-- **Plan tools** create a Goal plus 3–10 scheduled, multi-tagged Tasks/Events — by riding the existing D17 `BreakDownGoalJob` pipeline with a tool-specific system prompt and context. **Situations (D7) are exactly plan tools**: "eviction notice" is a plan tool with a rich prompt that spawns Rights + Money + People-tagged work. The Q7 pressure test is therefore Milestone 2's pilot, not a separate detour.
-- **Draft tools** produce a reviewable text artifact — a dispute letter, a doctor-visit prep sheet, a study explainer — stored as a draft Note or Document linked to the run, optionally with follow-up Tasks/Events (e.g. "mail by Friday" when a letter has a deadline).
-
-The eviction Situation deliberately composes both (a plan *and* a drafted answer letter), which is why it's the pressure test.
+- **Plan tools** create a Goal plus 3–10 scheduled, multi-tagged Tasks/Events — by riding the existing D17 pipeline: the tool creates a plain Goal and hands it to the same `Goals::BreakDown` that plans every goal, passing an optional **brief** (framing text injected into the one shared prompt) that shapes the steps. A plan tool adds **no schema and no pipeline of its own** — it is goal capture with framing. **Situations (D7) are exactly plan tools** with richer briefs spanning sections.
+- **Draft tools** produce a reviewable text artifact — a dispute letter, a doctor-visit prep sheet — stored as a draft Note or Document linked to the run, optionally with follow-up Tasks/Events (e.g. "mail by Friday" when a letter has a deadline).
 
 ### Tool definitions (code, not DB)
 
@@ -80,14 +78,14 @@ The canonical "find in-network cardiologists" example gets a Tier-A reframing: *
 
 ### First tool slate
 
-Ordered to prove the frame, then spread coverage — roughly one tool per section:
+Ordered to prove the frame (one draft tool, one plan tool), then spread everyday coverage. Reprioritized 2026-08: disputes and evictions are **low-frequency, high-stakes** — right for the mission, wrong for making the app feel alive in week one — so the everyday tools and the broadest Situation moved up.
 
-1. **Rights → Disputes: "Draft a dispute letter"** *(draft)* — the mission's heart; reads a chosen Document (bill, denial, collection notice) + one line of user intent → formal letter + deadline Task/Event. First tool built; ships with the infra.
-2. **Situations: "Eviction notice"** *(plan + draft)* — the Q7 pressure test; rich breakdown prompt spawning multi-tagged Tasks/Events plus a drafted response letter.
+1. ✅ **Rights → Disputes: "Draft a dispute letter"** *(draft — built, M2.1)* — proves the draft contract; reads a chosen Document (bill, denial, collection notice) + one line of user intent → formal letter + follow-up Tasks.
+2. ✅ **Education: "Learn something"** *(plan — built, M2.2)* — proves the plan contract end-to-end: topic → Goal + paced, filed, scheduled steps through the shared breakdown pipeline.
 3. **Health: "Doctor-visit prep"** *(draft)* — reads Health-tagged items → question list + one-page history summary to bring to the appointment.
-4. **Education: "Learn something"** *(plan)* — study plan as Goal + scheduled Tasks; steps can expand into explainer Notes on demand.
-5. **Money → Subscriptions: "Cancel this subscription"** *(draft)* — cancellation letter/script + a reminder Task.
-6. **People: "Reconnect"** *(draft)* — reads a Person + what's known about them → message draft + catch-up talking points. Deliberately seeds the Milestone 3 stay-in-touch watcher (its accept action runs this tool).
+4. **Money → Subscriptions: "Cancel this subscription"** *(draft)* — cancellation letter/script + a reminder Task.
+5. **People: "Reconnect"** *(draft)* — reads a Person + what's known about them → message draft + catch-up talking points. Deliberately seeds the Milestone 3 stay-in-touch watcher (its accept action runs this tool).
+6. **Situations** *(plan tools with rich cross-section briefs)* — **"Moving" first**: the widest-audience Situation, and now the Q7 cross-section pressure test. "Eviction notice", "lost my job", "new baby", "new diagnosis" follow demand; eviction is deferred until users ask.
 
 ---
 
@@ -136,11 +134,12 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 
 ## 4. Build sequence
 
-1. **M2.1 — Anatomy + tools infra.** Act/Attend/Browse section page (Attend dormant), empty-state redesign, `Tool::Base` + registry, `tool_runs` + `ToolRunJob` + generic run page. Ships with **Draft-a-dispute-letter** as the proving tool.
-2. **M2.2 — Eviction Situation** as the first plan tool — this *is* the Q7 pressure test, now riding tool infra.
-3. **M2.3 — Coverage slate**: doctor-visit prep, learn-something, cancel-subscription, reconnect.
-4. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
-5. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
-6. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
+1. ✅ **M2.1 — Anatomy + tools infra.** Act/Attend/Browse section page (Attend dormant), empty-state redesign, `Tool::Base` + registry, `tool_runs` + `ToolRunJob` + generic run page. Shipped with **Draft-a-dispute-letter** as the proving tool.
+2. ✅ **M2.2 — First plan tool: Learn something.** Proved the plan seam with zero new schema: `Goals::BreakDown#plan!` (call + apply extracted from the breakdown job, shared by both) and the optional `brief` param. (Replaced the eviction Situation here — see the slate note.)
+3. **M2.3 — Coverage slate**: doctor-visit prep, cancel-subscription, reconnect — each is one declarative class now.
+4. **M2.4 — Situations** as plan tools with richer briefs: "moving" first (the Q7 pressure test), others per demand.
+5. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
+6. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
+7. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
 
 Still parked from before, unchanged: D14 leftovers (export, `model_profiles.api_key` encryption) slot in whenever — they don't block this sequence.
