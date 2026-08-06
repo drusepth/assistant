@@ -59,6 +59,77 @@
     <% end %>
   <% end %>
 
+  <%= render Ui::CardComponent.new(title: "Connected accounts", subtitle: "Link your other services so the assistant can draw on them — you control what each one shares") do %>
+    <div class="space-y-3">
+      <% LinkedAccount::PROVIDERS.each do |provider, settings| %>
+        <% account = @linked_accounts[provider] %>
+        <div class="rounded-lg border px-4 py-3 <%= account ? "border-primary-300 bg-primary-50/50" : "border-edge" %>">
+          <div class="flex flex-wrap items-center gap-2">
+            <%= icon(:link, css_class: "size-4 #{account ? "text-primary-600" : "text-stone-300"}") %>
+            <span class="text-sm font-medium text-ink"><%= settings[:label] %></span>
+            <% if account %>
+              <span class="chip bg-primary-50 text-primary-800"><%= account.full_access? ? "Full access" : "Limited access" %></span>
+              <%= button_to "Disconnect", linked_account_path(account), method: :delete, class: "btn btn-danger btn-sm ml-auto",
+                    data: { turbo_confirm: "Disconnect #{settings[:label]}? Its credentials will be deleted." } %>
+            <% end %>
+          </div>
+          <p class="mt-1 text-xs text-soft"><%= settings[:description] %></p>
+
+          <% if account %>
+            <%# Scope dials: everything a link can share is on by default; unchecking
+                narrows what the assistant may use. Same visible-config rule as D9. %>
+            <%= form_with url: linked_account_path(account), method: :patch, class: "mt-3 space-y-2" do |form| %>
+              <% settings[:scopes].each do |scope, scope_label| %>
+                <label class="flex items-center gap-2 text-sm text-ink">
+                  <%= check_box_tag "enabled_scopes[]", scope, account.allows?(scope),
+                        id: "#{provider}_scope_#{scope}", class: "size-4 rounded accent-primary-600" %>
+                  <%= scope_label %>
+                </label>
+              <% end %>
+              <%= form.submit "Save access", class: "btn-sm" %>
+            <% end %>
+
+            <% if account.syncable? %>
+              <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-edge pt-3">
+                <span class="text-xs <%= account.sync_error ? "text-red-600" : "text-soft" %>">
+                  <% if account.sync_error %>
+                    Last sync failed: <%= account.sync_error %>
+                  <% elsif account.synced_at %>
+                    Synced <%= time_ago_in_words(account.synced_at) %> ago
+                  <% else %>
+                    Not synced yet
+                  <% end %>
+                </span>
+                <%= button_to "Sync now", sync_linked_account_path(account), method: :post, class: "btn btn-secondary btn-sm ml-auto" %>
+              </div>
+            <% end %>
+          <% else %>
+            <details class="mt-2">
+              <summary class="cursor-pointer text-sm font-medium text-primary-700">Connect</summary>
+              <%= form_with url: linked_accounts_path, class: "mt-3 space-y-3" do |form| %>
+                <%= hidden_field_tag :provider, provider, id: "provider_#{provider}" %>
+                <% settings[:fields].each do |field| %>
+                  <div class="space-y-1">
+                    <%= label_tag "#{provider}_#{field[:key]}", field[:label], class: "label" %>
+                    <% tag_options = { id: "#{provider}_#{field[:key]}", class: "input", placeholder: field[:placeholder], required: true } %>
+                    <% if field[:secret] %>
+                      <%= password_field_tag "credentials[#{field[:key]}]", nil, **tag_options %>
+                    <% else %>
+                      <%= text_field_tag "credentials[#{field[:key]}]", nil, **tag_options %>
+                    <% end %>
+                    <% if field[:hint] %><p class="hint"><%= field[:hint] %></p><% end %>
+                  </div>
+                <% end %>
+                <p class="text-xs text-soft">Linking gives the assistant full access to this service — you can narrow it right after.</p>
+                <%= form.submit "Link #{settings[:label]}", class: "btn-sm" %>
+              <% end %>
+            </details>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
   <% if Current.user.admin? %>
     <% profile = Current.user.household.model_profile %>
     <%= render Ui::CardComponent.new(title: "AI model", subtitle: profile&.configured? ? "Configured — #{profile.display_name}" : "Not configured — document understanding is off") do %>

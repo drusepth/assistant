@@ -22,10 +22,18 @@ class Events::Import
     Events::Import::GenericCsv
   ].freeze
 
-  def initialize(user:, file:)
+  # Takes either an uploaded file or raw content + filename — the latter is
+  # how live syncs (Events::CaldavSync) reuse this exact pipeline, so a
+  # sync and an upload can never parse or dedupe differently.
+  def initialize(user:, file: nil, content: nil, filename: nil)
     @user = user
-    @filename = file.respond_to?(:original_filename) ? file.original_filename : File.basename(file.to_path)
-    @content = normalize_encoding(file.read)
+    if file
+      @filename = file.respond_to?(:original_filename) ? file.original_filename : File.basename(file.to_path)
+      @content = normalize_encoding(file.read)
+    else
+      @filename = filename.to_s
+      @content = normalize_encoding(content.to_s.dup)
+    end
   end
 
   def call

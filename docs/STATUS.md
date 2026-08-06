@@ -27,6 +27,10 @@ repo when it lived inside `CLAUDE.md`.
 
 - **The Hobbies section is built out (D25, `docs/HOBBIES.md`)**: hobbies are user-created child sections of Hobbies — the first user-written taxonomy rows (`sections.custom`, the only removable sections; items survive removal minus the tag; slugs dedupe against the global namespace and feed the LLM listing) — created via `Hobbies::Lens` from the Hobbies page's "What do you do for fun?" capture card (suggestion chips + free text) or by the Start-a-hobby tool; `Tool.for_section` surfaces parent-registered tools on subsection pages (and vice versa) so Hobbies tools appear on every lens page, and a `:hobby` input kind renders a lens picker (free text before any lens exists). Three Hobbies tools: **Start a hobby** (plan; creates the lens + a cheapest-first-taste Goal via `plan_goal!`), **What should I make next?** (draft; idea-menu Note from lens-tagged goals/notes/documents — evergreen framing, never presented as news), **Find your people** (draft; Tier-A-honest where-to-look guide on the shared DRAFT_FORMAT contract, never invents local venues; upgrades in place when Q9 resolves). Plus a fifth watcher, **neglected hobby**: a lens quiet for 6 weeks with nothing upcoming → one nudge whose accept puts an all-day session on the first free day (monthly fingerprint buckets, the goal-stall convention).
 
+- **Connected accounts are built (D26)**: `linked_accounts` (per-user, one row per provider) links outside services — email/IMAP, address book/CardDAV, calendar/CalDAV, Facebook, LinkedIn — from a Settings card; providers are registry entries in `LinkedAccount::PROVIDERS` (adding one = one entry: label, credential fields, scopes), access is scope-gated per link defaulting to full access (only switched-off scopes are stored, so new provider scopes default on like section toggles), and consumers must read through `allows?` (fails closed). Credentials plaintext for now — encrypting them via the M4 AR-encryption setup is a pending follow-up.
+- **Contacts + calendar sync are live (D26's first consumers)**: a shared `Dav::Client` (plain Net::HTTP, RFC 6352/4791 discovery + well-known fallback; accepts a direct collection URL too) powers `People::CarddavSync` → `People::Import` and `Events::CaldavSync` → `Events::Import` (REPORT time-range matching the Ics import window) — same dedupe as file uploads, read-only, scope-gated inside the service; registry entries name their consumer (`sync_service:`) and one `SyncLinkedAccountJob` dispatches, firing on link + "Sync now" button, recording `synced_at`/`sync_error` shown on the Settings card. Email/Facebook/LinkedIn don't sync yet.
+- **OAuth direction is locked (D27, not yet built)**: one-click "Sign in with Google" via a project-hosted **link relay** — tiny, open-source, stateless (owns the OAuth app + fixed redirect URI, bounces callbacks to the instance, exchanges code→token, stores nothing), relay URL a config value with BYO client_id/secret as the always-available escape hatch, so it can't become a landlord chokepoint; D26 scope keys map to real OAuth consent scopes; Google provider ships contacts+calendar first (free verification tier), Gmail later (restricted scopes need paid CASA review; app-password IMAP covers it meanwhile).
+
 ## Next up
 
 All want their own design conversation first:
@@ -35,3 +39,8 @@ All want their own design conversation first:
 2. Tier-B tool capabilities (Q9)
 3. Project name (Q4)
 4. Community packs (D11 revisit)
+
+Ready to build without one:
+
+5. More linked-account consumers (D26): email next (IMAP, richest surface); recurring background sync; `linked_accounts.credentials` encryption riding the M4 setup
+6. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)
