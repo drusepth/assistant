@@ -57,12 +57,60 @@ class CategorizeTaskJobTest < ActiveJob::TestCase
     assert_not_requested :post, ENDPOINT
   end
 
-  test "provider errors leave the task unsorted instead of raising" do
-    stub_request(:post, ENDPOINT).to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json)
+  test "a permanent provider error leaves the task unsorted instead of raising" do
+    stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
 
     CategorizeTaskJob.perform_now(@task)
 
     assert_empty @task.reload.sections
+    assert_requested :post, ENDPOINT, times: 1
+    assert_no_enqueued_jobs
+  end
+
+  test "a swallowed provider error is still recorded for /admin" do
+    stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
+
+    assert_difference -> { AppError.count }, 1 do
+      CategorizeTaskJob.perform_now(@task)
+    end
+
+    recorded = AppError.recent.first
+    assert_equal "CategorizeTaskJob", recorded.source
+    assert_equal "Llm::Error", recorded.error_class
+    assert_equal users(:one), recorded.user
+    assert_equal @task.id, recorded.context["task_id"]
+  end
+
+  test "a transient provider error is retried rather than swallowed" do
+    stub_request(:post, ENDPOINT).to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json)
+
+    assert_no_difference -> { AppError.count } do
+      CategorizeTaskJob.perform_now(@task)
+    end
+
+    assert_enqueued_jobs 1, only: CategorizeTaskJob
+  end
+
+  test "a rate limit that clears sorts the task on the retry" do
+    stub_request(:post, ENDPOINT)
+      .to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json).then
+      .to_return(status: 200, body: { choices: [ { message: { content: { sections: [ "rights" ], due_on: nil }.to_json } } ] }.to_json)
+
+    perform_enqueued_jobs { CategorizeTaskJob.perform_later(@task) }
+
+    assert_equal [ sections(:rights) ], @task.reload.sections.to_a
+    assert_equal 0, AppError.count, "a failure the retry fixed isn't worth logging"
+  end
+
+  test "a rate limit that never clears gives up after the attempt budget" do
+    stub_request(:post, ENDPOINT).to_return(status: 429, body: { error: { message: "Rate limit reached" } }.to_json)
+
+    perform_enqueued_jobs { CategorizeTaskJob.perform_later(@task) }
+
+    assert_empty @task.reload.sections
+    assert_requested :post, ENDPOINT, times: RetriesModelCalls::ATTEMPTS
+    assert_equal 1, AppError.count, "one record for the whole run, not one per attempt"
+    assert_equal "Llm::TransientError", AppError.recent.first.error_class
   end
 
   test "an invalid due date from the model is ignored" do

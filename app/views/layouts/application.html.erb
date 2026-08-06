@@ -58,7 +58,7 @@
             </div>
 
             <div>
-              <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Facets</p>
+              <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Your life</p>
               <div class="space-y-0.5">
                 <% Current.user.enabled_sections.each do |section| %>
                   <%= section_nav_link(section) %>
@@ -77,6 +77,9 @@
           </nav>
 
           <div class="space-y-1 border-t border-edge p-3">
+            <% if Current.user.admin? %>
+              <%= nav_link_to "Admin", admin_root_path, :warning %>
+            <% end %>
             <%= nav_link_to "Settings", settings_path, :cog %>
             <div class="flex items-center justify-between gap-2 px-3 py-1">
               <span class="min-w-0 truncate text-xs text-soft"><%= Current.user.name %></span>

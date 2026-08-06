@@ -38,9 +38,14 @@ class AgentScanJob < ApplicationJob
       return unless profile&.configured?
 
       Users::WeeklyDigest.new(user: user, profile: profile).call
-    rescue Llm::Error
+    rescue Llm::Error => e
+      # Still silent for the user — but not for whoever runs the box (D23).
+      # No retry: the digest rides the weekly scan, and re-running the job
+      # would re-run every watcher to re-attempt one phrasing call.
+      AppError.record(e, source: self.class.name, user: user, context: { digest: true })
       nil
     end
+
     def dial_for(user, watcher)
       sections = Section.where(slug: watcher.section_slugs)
       return UserSection::DEFAULT_AGENT_LEVEL if sections.empty?
