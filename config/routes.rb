@@ -22,6 +22,7 @@ Rails.application.routes.draw do
 
   resource :settings, only: %i[ show update ]
   resource :export, only: %i[ create ]
+  resources :notification_channels, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
 

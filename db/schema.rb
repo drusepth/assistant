@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_190000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -130,6 +130,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_180000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_notes_on_user_id"
+  end
+
+  create_table "notification_channels", force: :cascade do |t|
+    t.json "config", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "kind", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "kind"], name: "index_notification_channels_on_user_id_and_kind"
+    t.index ["user_id"], name: "index_notification_channels_on_user_id"
   end
 
   create_table "people", force: :cascade do |t|
@@ -277,6 +288,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_180000) do
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"
+  add_foreign_key "notification_channels", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
   add_foreign_key "section_taggings", "sections"

@@ -50,6 +50,9 @@ gem "pdf-reader"
 # Zip assembly for the per-user data export (M4.2)
 gem "rubyzip", "~> 3.0", require: "zip"
 
+# Browser push notifications via per-instance VAPID keys (M4.3)
+gem "web-push", "~> 3.0"
+
 # Parse CSV address-book exports (stdlib csv leaves the default gems in Ruby 3.4)
 gem "csv"
 

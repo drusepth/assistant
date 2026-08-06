@@ -66,6 +66,44 @@
     <% end %>
   <% end %>
 
+  <%= render Ui::CardComponent.new(title: "Notifications", subtitle: "Where the assistant may reach you — only sections set to Active ever notify, titles only") do %>
+    <% channels = Current.user.notification_channels.order(:created_at) %>
+    <% if channels.any? %>
+      <ul class="mb-4 space-y-2">
+        <% channels.each do |channel| %>
+          <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-edge px-4 py-2.5 text-sm">
+            <span class="min-w-0 truncate <%= "opacity-50" unless channel.enabled? %>">
+              <%= channel.label %><%= " (disabled)" unless channel.enabled? %>
+            </span>
+            <%= button_to "Remove", notification_channel_path(channel), method: :delete, class: "btn btn-danger btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <div class="space-y-3">
+      <%= form_with url: notification_channels_path, class: "flex flex-wrap items-end gap-2" do %>
+        <%= hidden_field_tag :kind, "webhook" %>
+        <div class="min-w-64 flex-1 space-y-1">
+          <label class="label" for="webhook_url">Webhook URL</label>
+          <%= text_field_tag :url, nil, class: "input", id: "webhook_url", placeholder: "https://ntfy.sh/your-topic — works with ntfy, Home Assistant, Matrix hooks" %>
+        </div>
+        <%= submit_tag "Add webhook", class: "btn btn-secondary" %>
+      <% end %>
+      <%= form_with url: notification_channels_path, class: "flex flex-wrap items-end gap-2" do %>
+        <%= hidden_field_tag :kind, "email" %>
+        <div class="min-w-64 flex-1 space-y-1">
+          <label class="label" for="email_address_channel">Email</label>
+          <%= text_field_tag :address, nil, class: "input", id: "email_address_channel", placeholder: "you@example.com — needs the instance to have SMTP configured" %>
+        </div>
+        <%= submit_tag "Add email", class: "btn btn-secondary" %>
+      <% end %>
+      <div data-controller="web-push" data-web-push-vapid-key-value="<%= Rails.application.config.x.web_push.public_key %>" class="flex flex-wrap items-center gap-2">
+        <button type="button" class="btn btn-secondary" data-action="web-push#subscribe">Enable browser push on this device</button>
+        <span class="text-xs text-soft" data-web-push-target="status"></span>
+      </div>
+    </div>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Your data", subtitle: "Everything you own — items as JSON, documents as files — in one zip") do %>
     <div class="flex flex-wrap items-center gap-3">
       <%= button_to "Build export", export_path, method: :post, class: "btn btn-secondary" %>
