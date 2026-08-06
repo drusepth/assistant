@@ -67,6 +67,12 @@ Two kinds: **plan tools** (Goal + multi-tagged Tasks/Events via the D17 breakdow
 **D20. The agent proposes; the user disposes.**
 The agent's only write surface is a new `suggestions` table (Sectionable; rationale, action payload, fingerprint deduping, pending/accepted/dismissed/snoozed). Signals come from deterministic **watchers** (`app/watchers/`, SQL-first, LLM only for phrasing/ranking/digest). Per-section dials on `user_sections`: **Off / Quiet (default: weekly, in-app only) / Active (daily, + Today)**. Cross-user suggestions read strictly through `visible_to` (D9). Notification channels deferred (Q10). Full design in `ROADMAP.md` §3. — *Provisional until the M3.1 build pass.*
 
+**D21. Tools compose by routing, not by calling each other.**
+A tool's run `output` may carry a sanitized `next_tools` payload — `{slug, inputs, reason}` prefills validated against the registry and the target's declared inputs — rendered on the run page as next-step cards linking to prefilled invocation forms (the controller already supports prefill via "Run again"). **Decode-this-letter is the universal front door**: it triages any scary document and *offers* the specialized response tool at the moment of crisis, which is how low-frequency high-stakes tools get discovered without menus. Documents get a "Decode this" entry point on show pages and vault rows. No tool ever invokes another tool — the user always clicks through a form (trust-ladder discipline). Full design in `TOOLS_PLAN.md` §2/S2. — *Provisional until the wave-3 build pass.*
+
+**D22. Chat is a tool kind, not a separate feature.**
+Third tool kind `:chat` (after plan/draft): a new `tool_run_messages` table (role, content) under the existing `tool_runs`; the run page doubles as the chat surface; `ToolRunJob` generates the opening message from owned context and `done` means *live* (composer stays open, turns run through a `ChatTurnJob`). Primitives land only via an explicit "Save a recap" action (one wrap-up call → a filed Note recorded on the run) — no auto-writes, per D20. Context window stays lean (system prompt + last N turns) for the model-agnostic constraint. The tutor (Education) is the proving tool; recap Notes are what give future sessions continuity — the owned-memory moat working as designed. Full design in `TOOLS_PLAN.md` §2/S3. — *Provisional until the wave-5 build pass.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -98,3 +104,9 @@ Tools that need the live web (real provider directories, current benefit rules) 
 
 **Q10. Agent notification channels.**
 Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. Email/push/webhook channels need their own design. — *Not started.*
+
+**Q11. Jurisdiction signal for state-sensitive tools.**
+Deposit demand and the benefits screener are state-sensitive (return deadlines, program variants). V1 handles it with `[BRACKETED PLACEHOLDERS]` and a per-run form field; a household-level "state/country" setting would serve every Rights/Money tool at once. Decide when a second tool needs it. — *Not started.*
+
+**Q12. Chat transcript retention.**
+Tutor transcripts accumulate under `tool_run_messages`; recap Notes are the durable owned artifact. Whether old transcripts should be pruned, and whether they join the D14 export, needs deciding before M3. — *Not started.*

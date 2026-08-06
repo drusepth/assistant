@@ -80,9 +80,11 @@ The canonical "find in-network cardiologists" example gets a Tier-A reframing: *
 
 Ordered to prove the frame (one draft tool, one plan tool), then spread everyday coverage. Reprioritized 2026-08: disputes and evictions are **low-frequency, high-stakes** — right for the mission, wrong for making the app feel alive in week one — so the everyday tools and the broadest Situation moved up.
 
+Re-planned 2026-08 (second pass): the coverage slate expanded into the **high-impact tool wave** — nine tools in five waves (letter family, owned-context drafts, the decode-letter front door + routing (D21), the benefits screener, and the chat-kind tutor (D22)). Full build plan, per-tool specs, and infrastructure seams in **`TOOLS_PLAN.md`**; the list below keeps only what that plan doesn't cover.
+
 1. ✅ **Rights → Disputes: "Draft a dispute letter"** *(draft — built, M2.1)* — proves the draft contract; reads a chosen Document (bill, denial, collection notice) + one line of user intent → formal letter + follow-up Tasks.
 2. ✅ **Education: "Learn something"** *(plan — built, M2.2)* — proves the plan contract end-to-end: topic → Goal + paced, filed, scheduled steps through the shared breakdown pipeline.
-3. **Health: "Doctor-visit prep"** *(draft)* — reads Health-tagged items → question list + one-page history summary to bring to the appointment.
+3. **The high-impact wave** *(M2.3a–d + M2.5 — see `TOOLS_PLAN.md`)* — results explainer, insurance appeal, debt-collector response, deposit demand, negotiation prep, doctor-visit prep, decode-this-letter, benefits screener, tutor.
 4. **Money → Subscriptions: "Cancel this subscription"** *(draft)* — cancellation letter/script + a reminder Task.
 5. **People: "Reconnect"** *(draft)* — reads a Person + what's known about them → message draft + catch-up talking points. Deliberately seeds the Milestone 3 stay-in-touch watcher (its accept action runs this tool).
 6. **Situations** *(plan tools with rich cross-section briefs)* — **"Moving" first**: the widest-audience Situation, and now the Q7 cross-section pressure test. "Eviction notice", "lost my job", "new baby", "new diagnosis" follow demand; eviction is deferred until users ask.
@@ -136,10 +138,11 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 
 1. ✅ **M2.1 — Anatomy + tools infra.** Act/Attend/Browse section page (Attend dormant), empty-state redesign, `Tool::Base` + registry, `tool_runs` + `ToolRunJob` + generic run page. Shipped with **Draft-a-dispute-letter** as the proving tool.
 2. ✅ **M2.2 — First plan tool: Learn something.** Proved the plan seam with zero new schema: `Goals::BreakDown#plan!` (call + apply extracted from the breakdown job, shared by both) and the optional `brief` param. (Replaced the eviction Situation here — see the slate note.)
-3. **M2.3 — Coverage slate**: doctor-visit prep, cancel-subscription, reconnect — each is one declarative class now.
+3. **M2.3 — High-impact wave, draft tools** (`TOOLS_PLAN.md` waves 1–4): shared plumbing + letter family (results explainer, insurance appeal, debt-collector response, deposit demand) → owned-context drafts (doctor-visit prep, negotiation prep) → decode-this-letter + routing (D21) → benefits screener. Cancel-subscription and reconnect slot in anywhere here — each is still one declarative class.
 4. **M2.4 — Situations** as plan tools with richer briefs: "moving" first (the Q7 pressure test), others per demand.
-5. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
-6. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
-7. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
+5. **M2.5 — Tutor + chat tools** (`TOOLS_PLAN.md` wave 5, D22): `tool_run_messages`, chat run lifecycle, the Education tutor with recap Notes.
+6. **M3.1 — Suggestions core**: `suggestions` table, Attend zone + Dashboard attention feed, checkup-cadence watcher, everything hardwired to Quiet.
+7. **M3.2 — Dials + watchers**: dials in Settings, remaining watchers (incl. Q8's contact-recency design), weekly/daily scheduling.
+8. **M3.3 — Garnish + reach**: LLM-phrased digest on the Dashboard, cross-user coordination suggestions, revisit notification channels (Q10) and Tier-B capabilities (Q9).
 
 Still parked from before, unchanged: D14 leftovers (export, `model_profiles.api_key` encryption) slot in whenever — they don't block this sequence.
