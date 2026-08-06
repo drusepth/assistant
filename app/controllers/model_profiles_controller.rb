@@ -7,9 +7,9 @@ class ModelProfilesController < ApplicationController
     attributes.delete(:api_key) if attributes[:api_key].blank? # blank = keep the stored key
 
     if profile.update(attributes)
-      redirect_to settings_path, notice: "AI model settings saved."
+      redirect_to return_to_path(settings_path), notice: "AI model settings saved."
     else
-      redirect_to settings_path, alert: profile.errors.full_messages.to_sentence
+      redirect_to return_to_path(settings_path), alert: profile.errors.full_messages.to_sentence
     end
   end
 end

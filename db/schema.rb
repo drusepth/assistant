@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_180000) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -258,6 +258,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_170000) do
     t.string "email_address", null: false
     t.integer "household_id", null: false
     t.string "name", null: false
+    t.datetime "onboarded_at"
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true

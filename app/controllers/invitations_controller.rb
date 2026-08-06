@@ -1,5 +1,6 @@
 class InvitationsController < ApplicationController
   allow_unauthenticated_access only: %i[ show accept ]
+  skip_before_action :require_onboarding
   before_action :require_admin, only: %i[ create destroy ]
   before_action :redirect_signed_in_users, only: %i[ show accept ]
   before_action :set_invitation, only: %i[ show accept ]
