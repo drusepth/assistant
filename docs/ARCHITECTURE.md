@@ -115,7 +115,17 @@ patterns — everything reusable lives in one redesignable place.
    deterministic watchers (`app/watchers/` + `Watcher::SLUGS` registry),
    `AgentScanJob` weekly fan-out (hardwired Quiet), Dashboard feed +
    section Attend zones; first watcher: checkup cadence
-9. Coverage tools (M2.3), Situations (M2.4), agent dials + more
-   watchers (M3.2)
+9. ✅ Coverage tools + first Situation (M2.3/M2.4): doctor-visit prep,
+   cancel-subscription, reconnect (person input kind), "Plan a move" —
+   all on shared `Tool::Base` contracts (DRAFT_FORMAT / plan_goal!)
+10. ✅ Agent dials + watcher slate + digest (M3.2/M3.3):
+    `user_sections.agent_level` (Off/Quiet/Active) in Settings, honored
+    by weekly/daily scan cadences; stay-in-touch (manual
+    `people.last_contacted_on`, Q8), renewal radar, goal stall;
+    `Users::WeeklyDigest` phrases the Dashboard banner (LLM phrases,
+    never decides; silent failure)
+11. Remaining: cross-user coordination suggestions (design first),
+    notification channels (Q10), D14 leftovers (export, api_key
+    encryption), FTUE (Q5)
 
 Deferred deliberately: encryption at rest & deployment hardening (post-foundation, per D10), community packs (D11), voice, FTUE, agent mode.

@@ -42,7 +42,11 @@ Rails.application.routes.draw do
   namespace :people do
     resource :import, only: %i[ new create ]
   end
-  resources :people
+  resources :people do
+    member do
+      patch :log_contact
+    end
+  end
   resources :goals do
     member do
       patch :complete

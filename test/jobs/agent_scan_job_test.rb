@@ -1,6 +1,12 @@
 require "test_helper"
 
 class AgentScanJobTest < ActiveJob::TestCase
+  # The weekly scan also attempts the phrased digest; a failing provider
+  # must never break the deterministic half.
+  setup do
+    stub_request(:post, "https://api.openai.com/v1/chat/completions").to_return(status: 500, body: "down")
+  end
+
   test "scans every watcher for the user" do
     AgentScanJob.perform_now(users(:one))
 
