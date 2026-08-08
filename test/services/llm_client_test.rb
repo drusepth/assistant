@@ -107,15 +107,15 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
   end
 
-  test "invalid JSON errors describe the reply's shape without quoting it" do
-    reply = "My secret plan: quit the job at Initech"
+  test "invalid JSON errors describe the reply's shape and preview its first lines" do
+    reply = "Sure! Here is the plan you asked for.\nStep one: update the resume."
     stub_request(:post, @endpoint)
       .to_return(status: 200, body: { choices: [ { message: { content: reply }, finish_reason: "stop" } ] }.to_json)
 
     error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
     assert_match "#{reply.length} chars", error.message
     assert_match "no JSON at all", error.message
-    assert_no_match(/Initech/, error.message)
+    assert_match "Sure! Here is the plan", error.message
   end
 
   test "invalid JSON errors call out a reply truncated by the token limit" do
@@ -127,7 +127,17 @@ class LlmClientTest < ActiveSupport::TestCase
     error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
     assert_match "cut off by the token limit", error.message
     assert_match "unparseable", error.message
-    assert_no_match(/resume/, error.message)
+  end
+
+  test "the preview quotes only the first lines of the reply, truncated" do
+    reply = "line one\nline two\nline three\ndeep in the reply: a private detail\n" + ("x" * 500)
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: reply }, finish_reason: "stop" } ] }.to_json)
+
+    error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+    assert_match "line three", error.message
+    assert_no_match(/private detail/, error.message)
+    assert_operator error.message.length, :<, 400
   end
 
   test "raises on invalid JSON content and unreachable hosts" do

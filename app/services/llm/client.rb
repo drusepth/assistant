@@ -81,7 +81,8 @@ module Llm
         JSON.parse(content)
       rescue JSON::ParserError
         embedded_json(content) or
-          raise(TransientError, "The model returned invalid JSON (#{reply_shape(content, finish_reason)}).")
+          raise(TransientError, "The model returned invalid JSON (#{reply_shape(content, finish_reason)}). " \
+            "Reply began: #{reply_preview(content)}")
       end
 
       # Providers that ignore response_format — local models especially — often
@@ -95,12 +96,13 @@ module Llm
         nil
       end
 
-      # Diagnosis without disclosure: this message lands in the /admin error
-      # log, and a raw reply can echo a private item back (a goal breakdown
-      # quotes the goal), so describe the reply's shape rather than quoting
-      # it — see AppError. finish_reason "length" is the tell for a reply
-      # truncated by the provider's token limit, the one invalid-JSON cause
-      # that no amount of retrying or salvaging fixes.
+      # This message lands in the /admin error log, so it quotes only a short
+      # preview, not the full reply — a reply echoes the private item it was
+      # about, and the first lines are where formatting bugs (a fence, a
+      # preamble sentence) show themselves anyway. The shape facts cover the
+      # rest; finish_reason "length" is the tell for a reply truncated by the
+      # provider's token limit, the one invalid-JSON cause that no amount of
+      # retrying or salvaging fixes.
       def reply_shape(content, finish_reason)
         shape = [ "#{content.length} chars" ]
         shape << "cut off by the token limit (finish_reason: length)" if finish_reason == "length"
@@ -108,6 +110,12 @@ module Llm
         shape << (content.include?("{") || content.include?("[") ?
           "contains an unparseable {...} block" : "contains no JSON at all")
         shape.join(", ")
+      end
+
+      # inspect, so a leading fence or stray whitespace is visible verbatim
+      # ("```json\n{\"steps\"…") instead of dissolving into the log's layout.
+      def reply_preview(content)
+        content.lines.first(3).join.truncate(200).inspect
       end
 
       def error_message(body)
