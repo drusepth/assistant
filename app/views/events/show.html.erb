@@ -40,6 +40,20 @@
           <dt class="w-24 shrink-0 text-soft">Sections</dt>
           <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @event %></dd>
         </div>
+        <%# The care radar's correction path (docs/HEALTH.md §3): when the
+            keywords miss ("Dr. Chen, 2pm"), the user's word wins. %>
+        <% if own && @event.sections.any? { |section| (section.parent || section).slug == "health" } %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 pt-1.5 text-soft">Counts as</dt>
+            <dd class="min-w-0">
+              <%= form_with model: @event, class: "flex items-center gap-2" do %>
+                <%= select_tag "event[care_kind]", care_kind_options(@event), class: "input w-auto py-1 text-sm" %>
+                <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
+              <% end %>
+              <p class="hint mt-1">Routine care, for the Health page's radar.</p>
+            </dd>
+          </div>
+        <% end %>
         <% if @event.description.present? %>
           <div>
             <dt class="mb-1 text-soft">Description</dt>

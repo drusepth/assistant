@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   post "join/:token" => "invitations#accept"
 
   resources :household_members, only: %i[ update destroy ]
+  resource :household, only: %i[ update ]
 
   get "welcome(/:step)" => "onboarding#show", as: :onboarding, constraints: { step: /[1-4]/ }
   patch "welcome/:step" => "onboarding#update", constraints: { step: /[1-4]/ }
@@ -20,6 +21,11 @@ Rails.application.routes.draw do
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
   get "sections/:slug" => "sections#show", as: :section
   resources :hobbies, only: %i[ create destroy ]
+
+  get "health/care-settings" => "care_settings#show", as: :care_settings
+  patch "health/care-settings" => "care_settings#update"
+  delete "health/care-settings/:kind_key" => "care_settings#destroy", as: :care_setting
+  post "health/medications" => "medications#create", as: :medications
 
   resource :settings, only: %i[ show update ]
   resource :export, only: %i[ create ]
@@ -77,7 +83,7 @@ Rails.application.routes.draw do
 
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
-  resources :tool_runs, only: :show do
+  resources :tool_runs, only: %i[ show destroy ] do
     resources :messages, only: :create, controller: "tool_run_messages"
     member do
       post :recap

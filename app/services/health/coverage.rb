@@ -13,13 +13,20 @@ module Health
       /health plan/i, /\bhmo\b/i, /\bppo\b/i, /\bepo\b/i, /\bhdhp\b/i
     ].freeze
 
+    # Pinned plans (health_plan: true) lead; within a group, newest first.
     def self.documents(user, limit: 5)
       Document.visible_to(user).order(created_at: :desc).includes(:sections, :user)
         .select { |document| match?(document) }
+        .sort_by { |document| [ document.health_plan ? 0 : 1, -document.created_at.to_i ] }
         .first(limit)
     end
 
+    # The owner's word beats the keywords (docs/HEALTH.md §4): health_plan
+    # true pins a document here, false banishes it, nil means the heuristic
+    # decides.
     def self.match?(document)
+      return document.health_plan unless document.health_plan.nil?
+
       haystack = [ document.title, document.summary ].compact.join("\n")
       PATTERNS.any? { |pattern| haystack.match?(pattern) }
     end

@@ -107,6 +107,54 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Routine care", response.body
   end
 
+  test "the Act zone hides tools the lead panels already carry" do
+    get section_path("health")
+    assert_response :success
+    assert_no_match "A plan for finding the right in-network provider", response.body,
+      "find-care's card is gone — the radar's prefilled links carry it"
+    assert_match "Prep for a doctor visit", response.body, "un-paneled tools keep their cards"
+  end
+
+  test "household care shows exactly what other members share (kids are users too)" do
+    kid = users(:two)
+    shared = kid.events.create!(title: "Dentist", starts_at: 2.weeks.from_now, all_day: true)
+    shared.sections << sections(:health)
+    AccessGrant.create!(grantor: kid, grantee: users(:one), subject: shared)
+    hidden = kid.events.create!(title: "Eye exam", starts_at: 3.weeks.from_now, all_day: true)
+    hidden.sections << sections(:health)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Household care", response.body
+    assert_match "Dental — booked", response.body
+    assert_no_match "Vision —", response.body, "the unshared eye exam stays invisible"
+  end
+
+  test "no shared health events means no household care card" do
+    get section_path("health")
+    assert_no_match "Household care", response.body
+  end
+
+  test "a booked radar tile offers visit prep prefilled" do
+    booked = users(:one).events.create!(title: "Annual physical", starts_at: 3.weeks.from_now, all_day: true)
+    booked.sections << sections(:health)
+
+    get section_path("health")
+    assert_match "Prep for this visit", response.body
+    assert_match new_tool_run_path("doctor_visit_prep", inputs: { reason: "Annual physical" }), response.body
+  end
+
+  test "the medications card lists meds and takes new ones" do
+    med = users(:one).notes.create!(kind: Note::MEDICATION, title: "Lisinopril 10mg", body: "one every morning")
+    med.sections << sections(:health)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Medications", response.body
+    assert_match "Lisinopril 10mg", response.body
+    assert_match medications_path, response.body
+  end
+
   test "the Hobbies page asks what you do for fun and suggests hobbies" do
     get section_path("hobbies")
     assert_response :success

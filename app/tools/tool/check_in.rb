@@ -64,10 +64,20 @@ module Tool
 
     # The one guardrail that must not depend on the model: the crisis notice
     # opens every session, rendered in the transcript but never sent to the
-    # model (notices never are).
+    # model (notices never are). The find-a-therapist next-step card is
+    # code-authored the same way — the model can only say the words; the
+    # card makes them one click.
     def call
       run.tool_run_messages.create!(role: :notice, content: CRISIS_NOTICE)
       super
+      store_next_tools(
+        [ {
+          "slug" => "find_care",
+          "inputs" => { "specialty" => "therapist or counselor" },
+          "reason" => "When you're ready for a human — a plan for finding one that takes your insurance."
+        } ],
+        allowed: %w[ find_care ]
+      )
     end
 
     private

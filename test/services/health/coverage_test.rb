@@ -19,6 +19,15 @@ class Health::CoverageTest < ActiveSupport::TestCase
     assert_equal [ shared ], Health::Coverage.documents(@user)
   end
 
+  test "the owner's word beats the keywords: pinned leads, banished disappears" do
+    banished = @user.documents.create!(title: "Car insurance policy", health_plan: false)
+    pinned = @user.documents.create!(title: "Benefits booklet", health_plan: true, created_at: 1.year.ago)
+    keyword = @user.documents.create!(title: "Acme SBC deductible summary")
+
+    assert_equal [ pinned, keyword ], Health::Coverage.documents(@user)
+    assert_not_includes Health::Coverage.documents(@user), banished
+  end
+
   test "respects the limit, newest first" do
     older = @user.documents.create!(title: "Old insurance card", created_at: 2.years.ago)
     newer = @user.documents.create!(title: "New insurance card")

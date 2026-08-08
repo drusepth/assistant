@@ -59,6 +59,7 @@ module Tool
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "Provider needed: #{inputs[:specialty]}"
         parts << "What matters to the user: #{inputs[:details]}" if inputs[:details].present?
+        parts << region_line
         parts << coverage_block
         parts.compact.join("\n\n")
       end

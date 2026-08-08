@@ -22,6 +22,17 @@ class HealthToolsTest < ActiveJob::TestCase
     assert_requested(:post, ENDPOINT) { |request| request.body.include?("Acme Health PPO") }
   end
 
+  test "find-care carries the household region when set (D34)" do
+    users(:one).household.update!(region: "Texas, USA")
+
+    stub_draft(body: "In Texas...")
+    run = users(:one).tool_runs.create!(tool_slug: "find_care", inputs: { "specialty" => "dentist" })
+    ToolRunJob.perform_now(run)
+
+    assert run.reload.done?
+    assert_requested(:post, ENDPOINT) { |request| request.body.include?("Texas, USA") }
+  end
+
   test "find-care never sees another user's unshared insurance documents" do
     users(:two).documents.create!(title: "Bob's health insurance card", summary: "MegaCorp HMO")
 

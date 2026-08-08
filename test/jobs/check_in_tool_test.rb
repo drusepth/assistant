@@ -30,6 +30,10 @@ class CheckInToolTest < ActiveJob::TestCase
         request.body.include?("NOT a therapist") &&
         !request.body.include?("Suicide & Crisis Lifeline")
     end
+
+    step = @run.next_steps.sole
+    assert_equal "find_care", step.tool.slug, "the find-a-therapist card is code-authored"
+    assert_equal "therapist or counselor", step.inputs["specialty"]
   end
 
   test "past check-in recaps carry into the next session's system prompt" do

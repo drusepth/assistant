@@ -60,6 +60,18 @@ module SectionsHelper
 
   def care_month(date) = date.strftime("%b %Y")
 
+  # The "Counts as" select on a health event (docs/HEALTH.md §3): the
+  # user's word beats the keywords. Auto shows what classification would
+  # say, so choosing it is informed.
+  def care_kind_options(event)
+    radar = Health::CareRadar.new(Current.user)
+    auto = radar.classify(event.title)
+    options = [ [ "Auto — #{auto ? auto.label : "not routine care"}", "" ] ]
+    options += radar.kinds.map { |kind| [ kind.label, kind.key ] }
+    options << [ "Not routine care", Health::CareRadar::EXCLUDED ]
+    options_for_select(options, event.care_kind)
+  end
+
   # Chip suggestions for the hobby capture card — a broad, cheap-to-start
   # spread, minus the lenses the household already has.
   HOBBY_SUGGESTIONS = [

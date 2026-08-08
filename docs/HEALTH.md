@@ -66,11 +66,29 @@ capture, tool-created deadline events) feeds the radar for free.
   make the panel lie, and unknown is an honest, actionable state.
 - **Own events only** — a spouse's shared appointment is not your checkup
   (the watcher's rule from M3.1, inherited).
-- **Every state has its next click**: booked → the appointment; due /
+- **Every state has its next click**: booked → the appointment and
+  "Prep for this visit" (doctor-visit-prep prefilled with it); due /
   not tracked → "Find a provider" (find-care, specialty prefilled) and
   event capture with the title prefilled ("Log a past visit" for
   unknowns — one past-dated event is all the radar needs to start
   tracking a kind).
+- **Tunable (D35, `care_settings`)**: mute a kind, override its
+  interval, or add custom kinds ("Dermatology", every 12 months —
+  classifying by their own label, whole phrase only so "Skin check"
+  can't swallow "checkup"). Settings belong to the user whose care it
+  is; a missing row means registry defaults.
+- **Correctable (`events.care_kind`)**: when the keywords miss ("Dr.
+  Chen, 2pm"), a "Counts as" select on the event page lets the user's
+  word beat the classifier — including "Not routine care" for
+  health-tagged events that aren't visits (refills use this
+  automatically).
+- **Household care (D35)**: kids are users too. Each member's care lives
+  on their own account; the parent's Health page shows a "Household
+  care" strip of other members' radars computed over *exactly the events
+  they share* — `visible_to` is the only read path (D9/D21), so a kid
+  who shares their Health calendar shows up ("Maya: dental booked
+  Mar 4") and one who doesn't stays invisible. Each member's own kinds
+  and intervals apply; whoever's driving sees what's booked.
 
 ## 4. The insurance stack
 
@@ -97,10 +115,17 @@ prefilled with the newest plan docs:
   warning appended by code. This is also the accept-target of the
   per-kind watcher and the radar's "Find a provider" links.
 
+The keyword heuristic is correctable the same way the radar is
+(`documents.health_plan`, set on the document page): the owner can pin a
+plan the keywords miss or banish the car-insurance policy they caught —
+the owner's word beats the pattern, and pinned plans lead the card.
+
 Together with the existing family — decode-letter (the front door),
 results-explainer, doctor-visit-prep, insurance-appeal — Health now
 covers the full loop: *something arrives → understand it → act on it →
-be prepared for the visit → appeal what's wrong.*
+be prepared for the visit → appeal what's wrong.* State-sensitive
+tools additionally read the household's region setting (D34) when the
+admin has set one.
 
 ## 5. The agent: per-kind cadence
 
@@ -156,7 +181,13 @@ cardiologist. What ships instead covers what people actually reach for:
 The Mind card on the Health page carries all three, the
 pick-your-last-check-in-back-up continuity link, and the
 support-not-therapy line in plain sight — the trust ladder applied to
-the most trust-sensitive feature in the app.
+the most trust-sensitive feature in the app. Two more guarantees are
+code-authored: every session carries a find-a-therapist next-step card
+(the model can only say the words; the card makes them one click), and
+the transcript is the user's to destroy (D33) — a Delete button on
+every run, plus automatic pruning of chat runs idle past 90 days.
+Recap Notes, the explicit memory, always survive; transcripts never
+join the export.
 
 **Deliberately not built:** mood tracking without an opt-in signal
 (guessed mood nudges are the wrong-"call your mom" problem at 10× the
@@ -165,14 +196,25 @@ may one day notice a practice lapsing, an event; never "you seem
 down"), and anything that stores clinical-sounding labels the user
 didn't write themselves.
 
-## 7. Later rungs (in rough order of earn)
+## 7. Medications (D36)
 
-- **Per-user cadence settings** — track/ignore per kind, custom
-  intervals, per-member kinds (kids' well-visits). First thing to build
-  when someone asks the radar to shut up about vision.
-- **Medications** — the highest-value missing tracker. Likely a
-  structured-note pattern + a refill watcher (renewal-radar shaped), not
-  a new primitive; needs its own design pass.
+A medication is not a new primitive: it's a **Note with
+`kind: "medication"`** (name as title, dose/schedule as body) plus an
+optional all-day **refill Event** — both filed under Health by the
+Medications card's add form. Every existing surface then works unpaid:
+the refill gets lead time from the renewal-radar watcher ("refill"
+joined its keywords, Health joined its sections), doctor-visit-prep
+reads the med list automatically (it already reads Health notes), meds
+export and share like any note, and the radar ignores refill events
+(`care_kind: "none"`, set by code). What this deliberately isn't:
+dose-time reminders (that's an alarm clock's job, and being nagged
+nightly by your life assistant is how it gets turned off) or adherence
+tracking. The next honest rung is a med-list block in the
+doctor-visit-prep and check-in prompts called out explicitly, if the
+generic notes context proves too diluted.
+
+## 8. Later rungs (in rough order of earn)
+
 - **Symptom journal** — a chat-kind tool (D29, tutor-shaped): log in
   plain language, recap Notes accumulate into exactly what
   doctor-visit-prep wants to read.

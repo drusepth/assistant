@@ -21,8 +21,9 @@
 
   <%# The Health lead panel (docs/HEALTH.md): routine-care radar + coverage. %>
   <% if @section.slug == "health" %>
-    <%= render "sections/health_care", statuses: @care_statuses,
-          coverage_documents: @coverage_documents, last_check_in: @last_check_in, section: @section %>
+    <%= render "sections/health_care", statuses: @care_statuses, family_care: @family_care,
+          coverage_documents: @coverage_documents, medications: @medications,
+          last_check_in: @last_check_in, section: @section %>
   <% end %>
 
   <%# Act zone (D18): what the app can do here — present even, especially,

@@ -12,6 +12,10 @@
       <% else %>
         <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
       <% end %>
+      <%= button_to "Delete", @tool_run, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: @tool_run.chat? ?
+              "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." :
+              "Delete this run? Anything it created (notes, tasks, events) stays." } %>
     <% end %>
   <% end %>
 <% end %>
@@ -135,28 +139,29 @@
       <% end %>
     <% end %>
 
-    <% next_steps = @tool_run.next_steps %>
-    <% if next_steps.any? %>
-      <%= render Ui::CardComponent.new(title: "Suggested next steps", subtitle: "One click — the form comes prefilled") do %>
-        <div class="divide-y divide-edge">
-          <% next_steps.each do |step| %>
-            <div class="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-ink"><%= step.tool.title %></p>
-                <% if step.reason %>
-                  <p class="mt-0.5 text-xs text-soft"><%= step.reason %></p>
-                <% end %>
-              </div>
-              <%= link_to "Start →", new_tool_run_path(step.tool.slug, inputs: step.inputs),
-                    class: "btn btn-secondary btn-sm shrink-0" %>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-    <% end %>
-
     <p class="text-xs text-soft">
       Drafts are yours to review, fill in, and send — the app never sends anything on your behalf.
     </p>
+  <% end %>
+
+  <%# Next-step cards render for chat and draft runs alike — a check-in's
+      find-a-therapist card is the D28 seam doing trust work. %>
+  <% if @tool_run.done? && (next_steps = @tool_run.next_steps).any? %>
+    <%= render Ui::CardComponent.new(title: "Suggested next steps", subtitle: "One click — the form comes prefilled") do %>
+      <div class="divide-y divide-edge">
+        <% next_steps.each do |step| %>
+          <div class="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-ink"><%= step.tool.title %></p>
+              <% if step.reason %>
+                <p class="mt-0.5 text-xs text-soft"><%= step.reason %></p>
+              <% end %>
+            </div>
+            <%= link_to "Start →", new_tool_run_path(step.tool.slug, inputs: step.inputs),
+                  class: "btn btn-secondary btn-sm shrink-0" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   <% end %>
 </div>

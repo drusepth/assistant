@@ -60,9 +60,10 @@ module Tool
 
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "The user's household and expected care: #{inputs[:household]}" if inputs[:household].present?
+        parts << region_line
         parts << "Plan A (titled “#{plan_a.title}”):\n#{document_text(plan_a).truncate(MAX_PLAN_CHARS)}"
         parts << "Plan B (titled “#{plan_b.title}”):\n#{document_text(plan_b).truncate(MAX_PLAN_CHARS)}"
-        parts.join("\n\n")
+        parts.compact.join("\n\n")
       end
 
       def plan_a = chosen_document(:plan_a_id)
