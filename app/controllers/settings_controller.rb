@@ -5,7 +5,9 @@ class SettingsController < ApplicationController
     @household_members = household_members
     @section_grants = Current.user.granted_access_grants.where(subject_type: "Section")
       .includes(:grantee, :subject)
-    @linked_accounts = Current.user.linked_accounts.index_by(&:provider)
+    # Grouped, not indexed: a provider may be linked more than once
+    # (multi: true — one row per mailbox).
+    @linked_accounts = Current.user.linked_accounts.order(:created_at).group_by(&:provider)
   end
 
   def update

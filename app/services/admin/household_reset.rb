@@ -46,6 +46,10 @@ module Admin
 
       household.destroy!
       clear_instance_leftovers
+      # The mirror database has no foreign keys back to here
+      # (D-mirror-database), so mail that belonged to the accounts just
+      # deleted is swept explicitly rather than trusted to cascade.
+      Email::Mirror.purge_orphans
 
       summary
     end

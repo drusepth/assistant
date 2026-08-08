@@ -62,52 +62,33 @@
   <%= render Ui::CardComponent.new(title: "Connected accounts", subtitle: "Link your other services so the assistant can draw on them — you control what each one shares") do %>
     <div class="space-y-3">
       <% LinkedAccount::PROVIDERS.each do |provider, settings| %>
-        <% account = @linked_accounts[provider] %>
-        <div class="rounded-lg border px-4 py-3 <%= account ? "border-primary-300 bg-primary-50/50" : "border-edge" %>">
+        <% accounts = @linked_accounts.fetch(provider, []) %>
+        <div class="rounded-lg border px-4 py-3 <%= accounts.any? ? "border-primary-300 bg-primary-50/50" : "border-edge" %>">
           <div class="flex flex-wrap items-center gap-2">
-            <%= icon(:link, css_class: "size-4 #{account ? "text-primary-600" : "text-stone-300"}") %>
+            <%= icon(:link, css_class: "size-4 #{accounts.any? ? "text-primary-600" : "text-stone-300"}") %>
             <span class="text-sm font-medium text-ink"><%= settings[:label] %></span>
-            <% if account %>
-              <span class="chip bg-primary-50 text-primary-800"><%= account.full_access? ? "Full access" : "Limited access" %></span>
-              <%= button_to "Disconnect", linked_account_path(account), method: :delete, class: "btn btn-danger btn-sm ml-auto",
-                    data: { turbo_confirm: "Disconnect #{settings[:label]}? Its credentials will be deleted." } %>
-            <% end %>
           </div>
           <p class="mt-1 text-xs text-soft"><%= settings[:description] %></p>
 
-          <% if account %>
-            <%# Scope dials: everything a link can share is on by default; unchecking
-                narrows what the assistant may use. Same visible-config rule as D9. %>
-            <%= form_with url: linked_account_path(account), method: :patch, class: "mt-3 space-y-2" do |form| %>
-              <% settings[:scopes].each do |scope, scope_label| %>
-                <label class="flex items-center gap-2 text-sm text-ink">
-                  <%= check_box_tag "enabled_scopes[]", scope, account.allows?(scope),
-                        id: "#{provider}_scope_#{scope}", class: "size-4 rounded accent-primary-600" %>
-                  <%= scope_label %>
-                </label>
-              <% end %>
-              <%= form.submit "Save access", class: "btn-sm" %>
-            <% end %>
+          <%= render partial: "settings/linked_account", collection: accounts, as: :account %>
 
-            <% if account.syncable? %>
-              <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-edge pt-3">
-                <span class="text-xs <%= account.sync_error ? "text-red-600" : "text-soft" %>">
-                  <% if account.sync_error %>
-                    Last sync failed: <%= account.sync_error %>
-                  <% elsif account.synced_at %>
-                    Synced <%= time_ago_in_words(account.synced_at) %> ago
-                  <% else %>
-                    Not synced yet
-                  <% end %>
-                </span>
-                <%= button_to "Sync now", sync_linked_account_path(account), method: :post, class: "btn btn-secondary btn-sm ml-auto" %>
-              </div>
-            <% end %>
-          <% else %>
+          <%# Multi-link providers (email) can always add another mailbox;
+              single-link providers connect once. %>
+          <% if accounts.empty? || settings[:multi] %>
             <details class="mt-2">
-              <summary class="cursor-pointer text-sm font-medium text-primary-700">Connect</summary>
+              <summary class="cursor-pointer text-sm font-medium text-primary-700">
+                <%= accounts.any? ? "Connect another" : "Connect" %>
+              </summary>
               <%= form_with url: linked_accounts_path, class: "mt-3 space-y-3" do |form| %>
                 <%= hidden_field_tag :provider, provider, id: "provider_#{provider}" %>
+                <% if settings[:multi] %>
+                  <div class="space-y-1">
+                    <%= label_tag "#{provider}_label", "Label", class: "label" %>
+                    <%= text_field_tag :label, nil, id: "#{provider}_label", class: "input",
+                          placeholder: "Personal, Work…", required: true %>
+                    <p class="hint">You can link more than one <%= settings[:label].downcase %> account — the label tells them apart.</p>
+                  </div>
+                <% end %>
                 <% settings[:fields].each do |field| %>
                   <div class="space-y-1">
                     <%= label_tag "#{provider}_#{field[:key]}", field[:label], class: "label" %>
@@ -128,6 +109,41 @@
         </div>
       <% end %>
     </div>
+  <% end %>
+
+  <% if Current.user.linked_accounts.where(provider: "email").exists? %>
+    <%= render Ui::CardComponent.new(title: "Mail", subtitle: "The daily digest and what you've taught the assistant about senders") do %>
+      <%= form_with url: mail_settings_path, method: :patch, class: "flex flex-wrap items-end gap-3" do |form| %>
+        <div class="space-y-1">
+          <label class="label" for="mail_digest_hour">Digest time (household clock)</label>
+          <%= select_tag :mail_digest_hour,
+                options_for_select((0..23).map { |hour| [ Time.new(2000, 1, 1, hour).strftime("%-l %p"), hour ] }, Current.user.mail_digest_hour),
+                id: "mail_digest_hour", class: "input w-auto" %>
+        </div>
+        <label class="flex items-center gap-2 pb-2 text-sm">
+          <%= check_box_tag :mail_digest_notify, "1", Current.user.mail_digest_notify?, class: "size-4 rounded accent-primary-600" %>
+          Send a pointer to my notification channels (titles only)
+        </label>
+        <%= form.submit "Save", class: "btn-sm" %>
+      <% end %>
+      <p class="mt-2 text-xs text-soft">On a day with no important mail, no digest appears and nothing is sent.</p>
+
+      <% rules = Current.user.email_sender_rules.order(:email) %>
+      <% if rules.any? %>
+        <div class="mt-4 border-t border-edge pt-3">
+          <h3 class="mb-2 text-sm font-semibold text-ink">Sender rules you've taught it</h3>
+          <ul class="space-y-1.5">
+            <% rules.each do |rule| %>
+              <li class="flex items-center gap-2 text-sm">
+                <span class="chip <%= rule.rule == "vip" ? "bg-primary-50 text-primary-800" : "bg-stone-100 text-stone-600" %>"><%= rule.rule == "vip" ? "always important" : "muted" %></span>
+                <span class="min-w-0 truncate text-ink"><%= rule.email %></span>
+                <%= button_to "Remove", email_sender_rule_path(rule), method: :delete, class: "btn btn-ghost btn-sm ml-auto" %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
   <% end %>
 
   <% if Current.user.admin? %>

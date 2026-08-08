@@ -35,6 +35,38 @@
   </div>
 <% end %>
 
+<%# The daily mail digest (EMAIL_PLAN.md §7): deterministic selection,
+    optional phrased line, feedback buttons teaching sender rules.
+    Renders nothing on a quiet day — silence is a feature. %>
+<% digest = Current.user.mail_digest %>
+<% if digest.present? && Array(digest["items"]).any? && digest["date"] == Date.current.iso8601 %>
+  <div class="mb-6">
+    <%= render Ui::CardComponent.new(title: "Mail",
+          subtitle: "Today's mail worth a look — from your linked #{"mailbox".pluralize(Current.user.linked_accounts.where(provider: "email").count)}", padded: false) do %>
+      <% if digest["phrased"].present? %>
+        <p class="border-b border-edge px-5 py-3 text-sm text-primary-900/90"><%= digest["phrased"] %></p>
+      <% end %>
+      <div class="divide-y divide-edge">
+        <% Array(digest["items"]).each do |item| %>
+          <div class="flex flex-wrap items-center gap-2 px-5 py-2.5 text-sm">
+            <%= link_to mail_path(item["id"]), class: "min-w-0 flex-1" do %>
+              <span class="font-medium text-ink"><%= item["from"] %></span>
+              <span class="text-soft">— <%= item["subject"] %></span>
+              <% if item["deadline_on"] %><span class="chip bg-amber-100 text-amber-800">deadline <%= item["deadline_on"] %></span><% end %>
+            <% end %>
+            <span class="flex shrink-0 items-center gap-1">
+              <%= button_to "More like this", email_sender_rules_path(email: item["from_email"], rule: "vip"),
+                    method: :post, class: "btn btn-ghost btn-sm", title: "Always treat mail from this sender as important" %>
+              <%= button_to "Not important", email_sender_rules_path(email: item["from_email"], rule: "mute"),
+                    method: :post, class: "btn btn-ghost btn-sm", title: "Stop surfacing mail from this sender" %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
 <div class="grid gap-6 lg:grid-cols-2">
   <%= render Ui::CardComponent.new(title: "Needs attention", padded: false) do |card| %>
     <% card.with_actions { link_to "Today view", today_path, class: "btn btn-ghost btn-sm" } %>

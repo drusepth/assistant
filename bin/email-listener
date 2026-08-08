@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# The IMAP IDLE listener (EMAIL_PLAN.md E6): run alongside the web server
+# and worker for real-time urgent alerts. Optional — without it, alert
+# links poll every few minutes instead.
+require_relative "../config/environment"
+
+Email::IdleListener.new.run

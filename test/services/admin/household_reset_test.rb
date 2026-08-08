@@ -139,4 +139,27 @@ class Admin::HouseholdResetTest < ActiveSupport::TestCase
     assert_not Admin::HouseholdReset.confirmed?("")
     assert_not Admin::HouseholdReset.confirmed?(nil)
   end
+  test "mirrored mail goes with the household, even when nothing cascades to it" do
+    household = households(:smith)
+    account = users(:one).linked_accounts.create!(
+      provider: "email", label: "Work",
+      credentials: { host: "imap.example.com", username: "one@work.example", password: "pw" })
+    folder = EmailFolder.create!(user_id: users(:one).id, linked_account_id: account.id,
+      name: "INBOX", role: "inbox")
+    message = EmailMessage.create!(user_id: users(:one).id, linked_account_id: account.id,
+      email_folder: folder, uid: 1, message_id: "reset@x", thread_key: "reset@x", direction: "inbound")
+    EmailTombstone.create!(linked_account_id: account.id, message_id: "removed@x")
+    EmailMessageItem.create!(email_message: message, item_type: "Task", item_id: 1)
+    # The mirror has no foreign keys into the primary database
+    # (D-mirror-database), so simulate the link vanishing without its
+    # destroy callback running — the case the orphan sweep exists for.
+    LinkedAccount.where(id: account.id).delete_all
+
+    Admin::HouseholdReset.call(household)
+
+    assert_equal 0, EmailMessage.count
+    assert_equal 0, EmailFolder.count
+    assert_equal 0, EmailTombstone.count
+    assert_equal 0, EmailMessageItem.count
+  end
 end

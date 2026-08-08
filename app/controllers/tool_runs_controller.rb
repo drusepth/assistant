@@ -47,6 +47,23 @@ class ToolRunsController < ApplicationController
     redirect_back fallback_location: run
   end
 
+  # Ask-your-email answers render on the run page without landing anything;
+  # this is the explicit door into the primitive pool (D-mirror-layer) — one click,
+  # one Note, auto-filed per D16.
+  def save_answer
+    run = Current.user.tool_runs.find(params[:id])
+    answer = run.output["answer"]
+    if answer.present? && run.items.grep(Note).empty?
+      body = [ answer["body"],
+               Array(answer["citations"]).map { |citation| "— #{citation["from"]}#{", #{citation["date"]}" if citation["date"].present?}" }.join("\n").presence
+             ].compact.join("\n\nSources:\n")
+      note = Current.user.notes.create!(title: "From your mail: #{answer["question"].to_s.first(80)}", body: body)
+      note.enqueue_auto_sort!
+      run.tool_run_items.create!(item: note)
+    end
+    redirect_to run
+  end
+
   # "Try again" after a failed turn: drop the failure notice and re-enqueue
   # the reply — the user's message is answered without retyping it.
   def retry_reply
@@ -71,6 +88,10 @@ class ToolRunsController < ApplicationController
       # Hobby lenses (D25); with none yet the form falls back to free text,
       # so the Hobbies tools work before any lens exists.
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
+      # Mirrored mail is strictly the owner's (D-mirror-layer) — no visible_to path.
+      if @tool.inputs.any?(&:email_message?)
+        @email_choices = EmailMessage.where(user_id: Current.user.id).newest_first.limit(50)
+      end
     end
 
     # `new` accepts the same params so "Run again" and next-step links can

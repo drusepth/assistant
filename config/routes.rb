@@ -35,6 +35,15 @@ Rails.application.routes.draw do
   resources :job_feeds, only: %i[ create destroy ]
 
   resource :settings, only: %i[ show update ]
+  resource :household, only: %i[ update ]
+
+  resources :mail, only: %i[ index show destroy ], controller: "mail" do
+    member do
+      post :promote
+      post :remind
+      post :triage
+    end
+  end
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]
@@ -42,8 +51,11 @@ Rails.application.routes.draw do
   resources :linked_accounts, only: %i[ create update destroy ] do
     member do
       post :sync
+      patch :settings, action: :update_settings
     end
   end
+  resources :email_sender_rules, only: %i[ create destroy ]
+  resource :mail_settings, only: %i[ update ]
 
   namespace :events do
     resource :import, only: %i[ new create ]
@@ -115,6 +127,7 @@ Rails.application.routes.draw do
     member do
       post :recap
       post :retry_reply
+      post :save_answer
     end
   end
 

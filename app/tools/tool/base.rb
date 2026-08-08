@@ -28,6 +28,7 @@ module Tool
       def hobby? = kind == :hobby
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
+      def email_message? = kind == :email_message
       def textarea? = kind == :textarea
       def date? = kind == :date
     end
