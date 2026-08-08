@@ -20,7 +20,7 @@ class AccessGrantsController < ApplicationController
   end
 
   private
-    # The D30 convenience: "share with everyone" is ordinary per-member
+    # The D31 convenience: "share with everyone" is ordinary per-member
     # grants created in bulk — no new mechanism, and a member who joins the
     # household later still sees nothing until shared with explicitly.
     def share_with_household

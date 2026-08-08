@@ -6,7 +6,7 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
-# The storage seam (D31): one ENV-driven, S3-compatible service covering AWS
+# The storage seam (D32): one ENV-driven, S3-compatible service covering AWS
 # S3, Cloudflare R2, Backblaze B2, and self-hosted MinIO — pick it with
 # ACTIVE_STORAGE_SERVICE=s3. Endpoint stays unset for AWS itself; MinIO also
 # needs STORAGE_FORCE_PATH_STYLE=true. Full setup docs: docs/STORAGE.md.

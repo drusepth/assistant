@@ -1,4 +1,4 @@
-# A user-owned container of their own photos (D30): deliberate curation
+# A user-owned container of their own photos (D31): deliberate curation
 # ("Summer 2026"), not a section lens — one photo lives in many albums.
 # Albums are the normal unit of photo sharing: grant the album, and its
 # photos travel with it (the album clause in Photo's read path).

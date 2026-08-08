@@ -8,8 +8,9 @@ module Goals
   class BreakDown
     MAX_SECTIONS = 3
     MAX_STEPS = 10
+    MAX_QUESTIONS = 3
 
-    Step = Data.define(:title, :notes, :due_on, :sections)
+    Step = Data.define(:title, :notes, :due_on, :sections, :questions)
     Result = Data.define(:sections, :target_on, :steps)
 
     # brief is optional framing from whatever captured the goal — a plan
@@ -43,6 +44,7 @@ module Goals
       result.steps.map do |step|
         task = @goal.user.tasks.create!(
           goal: @goal, title: step.title, notes: step.notes, due_on: step.due_on,
+          guiding_questions: step.questions,
           bucket: step.due_on && step.due_on <= Date.current ? :today : :later
         )
         task.sections = step.sections
@@ -66,7 +68,8 @@ module Goals
           {"sections": ["slug", ...],
            "target_on": "YYYY-MM-DD" or null,
            "steps": [{"title": "...", "notes": "..." or null,
-                      "due_on": "YYYY-MM-DD" or null, "sections": ["slug", ...]}, ...]}.
+                      "due_on": "YYYY-MM-DD" or null, "sections": ["slug", ...],
+                      "questions": ["...", ...]}, ...]}.
           Steps must be small concrete actions completable within a single day, each
           with a clear done/not-done outcome, listed in the order they should happen.
           Use 3 to #{MAX_STEPS} steps for a substantial goal; a trivial goal may need only one.
@@ -79,6 +82,11 @@ module Goals
           Set target_on only when the goal states or clearly implies a deadline
           ("by December", "before the lease ends in June"), resolved against today's
           date; otherwise use null.
+          For each step that is mental work an assistant could help with in
+          conversation — deciding, brainstorming, drafting, planning, researching —
+          give one or two short opening questions, posed directly to the user, that
+          would move that step toward an answer. Use an empty questions array for
+          physical errands a conversation wouldn't help with.
         PROMPT
       end
 
@@ -104,7 +112,8 @@ module Goals
             title: step["title"].to_s,
             notes: step["notes"].is_a?(String) ? step["notes"].presence : nil,
             due_on: parsed_date(step["due_on"]),
-            sections: Llm::Taxonomy.match(step["sections"], limit: MAX_SECTIONS)
+            sections: Llm::Taxonomy.match(step["sections"], limit: MAX_SECTIONS),
+            questions: Array(step["questions"]).grep(String).map(&:strip).reject(&:empty?).first(MAX_QUESTIONS)
           )
         end
       end

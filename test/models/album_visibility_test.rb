@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The D30 sharing clause: a grant on an album exposes the album and the
+# The D31 sharing clause: a grant on an album exposes the album and the
 # photos inside it — nothing more, and never another user's photo.
 class AlbumVisibilityTest < ActiveSupport::TestCase
   setup do

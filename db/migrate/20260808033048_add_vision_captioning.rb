@@ -1,7 +1,7 @@
 class AddVisionCaptioning < ActiveRecord::Migration[8.1]
   def change
     # We can't probe whether an OpenAI-compatible endpoint accepts images —
-    # the household admin declares it (D30/W5).
+    # the household admin declares it (D31/W5).
     add_column :model_profiles, :vision, :boolean, default: false, null: false
 
     add_column :photos, :caption_status, :string

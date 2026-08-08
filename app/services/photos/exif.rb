@@ -1,5 +1,5 @@
 module Photos
-  # Deterministic EXIF reading for ingestion (D30): capture time and GPS out
+  # Deterministic EXIF reading for ingestion (D31): capture time and GPS out
   # of the original's metadata, via the libvips the variant pipeline already
   # depends on. Best-effort by design — a photo without (or with mangled)
   # EXIF is normal, so every parse failure is just "no value", never an error.

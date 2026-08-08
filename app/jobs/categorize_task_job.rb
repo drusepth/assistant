@@ -10,7 +10,12 @@ class CategorizeTaskJob < ApplicationJob
 
     result = Tasks::Categorize.new(task: task, profile: profile).call
     task.sections = result.sections
-    task.update!(due_on: result.due_on) if task.due_on.nil? && result.due_on
+    updates = {}
+    updates[:due_on] = result.due_on if task.due_on.nil? && result.due_on
+    # The same call also seeds the task-page conversation (D30) — questions
+    # only land for think-y tasks; errands keep the stock opener.
+    updates[:guiding_questions] = result.questions if result.questions.any?
+    task.update!(updates) if updates.any?
   rescue Llm::Error => e
     raise if will_retry?(e)
 

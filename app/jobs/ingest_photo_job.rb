@@ -1,4 +1,4 @@
-# Photo ingestion (D30): deterministic and LLM-free — EXIF capture
+# Photo ingestion (D31): deterministic and LLM-free — EXIF capture
 # time/location into columns, then the WEBP variants pre-rendered so the
 # grid and lightbox never block on first view.
 class IngestPhotoJob < ApplicationJob

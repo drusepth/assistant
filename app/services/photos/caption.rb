@@ -1,5 +1,5 @@
 module Photos
-  # The optional AI garnish over photos (D30/W5): one multimodal call to the
+  # The optional AI garnish over photos (D31/W5): one multimodal call to the
   # household's vision-declared model for a plain caption plus suggested
   # section tags — suggestions are only ever suggestions (trust ladder, D6).
   # The model sees the stripped :large variant, never the EXIF-bearing

@@ -13,7 +13,9 @@ The design language and where to change it. The stack is **Tailwind CSS v4**
    `.field-error`, `.card`, `.chip`.
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
-   `Ui::SectionChip`. Structural, slotted, reused everywhere.
+   `Ui::SectionChip`, `Ui::QuickAdd` (header + button whose capture form
+   drops down beneath it; needs an enclosing `data-controller="quick-add"`).
+   Structural, slotted, reused everywhere.
 4. **Forms** — `app/builders/application_form_builder.rb` is the default form
    builder app-wide. `f.field :title` renders label + input + errors with the
    system's classes; all input helpers pick up `.input` automatically.

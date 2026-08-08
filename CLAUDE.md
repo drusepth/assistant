@@ -86,7 +86,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/DECISIONS.md` — decision log + open questions
 - `docs/ROADMAP.md` — Milestones 2 (Tools) & 3 (Agent) design: section page anatomy, tool pipeline, agent/suggestion architecture (D18–D20)
 - `docs/TOOLS_PLAN.md` — the high-impact tool wave: nine tools in five waves, per-tool specs, the three infra seams (shared draft plumbing, `next_tools` routing (D28), chat tools (D29))
-- `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D30–D31)
+- `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D31–D32)
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions
 
@@ -112,4 +112,10 @@ Several branches land concurrently, so two rules for the global sequences:
   appends to (`ICON_PATHS`, `routes.rb`, `User` has_many, `Tool::SLUGS`,
   fixture files) merge with a trivial keep-both — resolve, don't redesign.
   `db/schema.rb` is never hand-merged: take main's copy and re-run
-  `bin/rails db:migrate` to regenerate it.
+  `bin/rails db:migrate` to regenerate it. `docs/STATUS.md` no longer
+  conflicts at all: it merges with `merge=union` (see `.gitattributes`), so
+  colliding appends keep both lines automatically — the tradeoff is that you
+  must only append to it, never rewrite existing lines. Note GitHub's web UI
+  ignores merge attributes, so a PR may still *show* a STATUS.md conflict —
+  a local `git fetch origin main && git merge origin/main` resolves it
+  hands-free; push the merge and the PR clears.
