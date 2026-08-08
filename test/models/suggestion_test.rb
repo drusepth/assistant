@@ -52,7 +52,18 @@ class SuggestionTest < ActiveSupport::TestCase
   test "accept labels follow the action payload" do
     assert_equal "Add task", create_suggestion("h", action: { "task" => { "title" => "x" } }).accept_label
     assert_equal "Open tool", create_suggestion("i", action: { "tool" => { "slug" => "learn_something" } }).accept_label
+    assert_equal "Do it today", create_suggestion("k", action: { "schedule_task" => { "id" => 1 } }).accept_label
     assert_equal "Accept", create_suggestion("j").accept_label
+  end
+
+  test "accept notices distinguish creating from scheduling" do
+    task = @user.tasks.create!(title: "Fix the gutter")
+
+    assert_equal "Added “Fix the gutter”.",
+      create_suggestion("l", action: { "task" => { "title" => "x" } }).accept_notice(task)
+    assert_equal "“Fix the gutter” is now due today.",
+      create_suggestion("m", action: { "schedule_task" => { "id" => task.id } }).accept_notice(task)
+    assert_equal "Done.", create_suggestion("n").accept_notice(nil)
   end
 
   private
