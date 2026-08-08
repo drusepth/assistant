@@ -30,6 +30,7 @@ class People::Import
     People::Import::DeviceJson,
     People::Import::GoogleCsv,
     People::Import::OutlookCsv,
+    People::Import::LinkedinCsv,
     People::Import::GenericCsv
   ].freeze
 

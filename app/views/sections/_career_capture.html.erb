@@ -1,0 +1,27 @@
+<%# The career-signal capture (docs/CAREER.md §1, D30): the win log and the
+    comp timeline are what the raise case, resume tailoring, and interview
+    prep read — capture stays one line, the assistant does the filing. %>
+<%= render Ui::CardComponent.new(
+      title: "Your work, on the record",
+      subtitle: "Wins and pay changes logged here become the receipts for raise cases, resumes, and interview prep."
+    ) do %>
+  <div class="space-y-3">
+    <%= form_with url: career_win_path, class: "flex gap-2" do %>
+      <%= text_field_tag :text, nil, class: "input",
+            placeholder: "Log a win — “caught the inventory error before the audit”" %>
+      <%= submit_tag "Log win", class: "btn btn-primary" %>
+    <% end %>
+    <%= form_with url: career_comp_change_path, class: "flex flex-wrap gap-2" do %>
+      <%= text_field_tag :summary, nil, class: "input flex-1",
+            placeholder: "Log a pay change — “Raise: $19 → $21/hr”" %>
+      <%= date_field_tag :on, Date.current, class: "input w-auto" %>
+      <%= submit_tag "Log change", class: "btn btn-secondary" %>
+    <% end %>
+    <p class="text-sm text-soft">
+      Pay stubs added to <%= link_to "Documents", documents_path, class: "underline" %> join the same
+      timeline automatically, and a
+      <%= link_to "“Tell me about your work” note", new_note_path(section_ids: [ career.id ], title: "About my work"), class: "underline" %>
+      gives every Career tool its context.
+    </p>
+  </div>
+<% end %>

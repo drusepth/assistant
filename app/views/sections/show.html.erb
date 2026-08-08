@@ -17,6 +17,10 @@
       hobbies are before its tools and lenses can do anything. %>
   <% if @section.slug == "hobbies" %>
     <%= render "sections/hobby_capture", hobbies: @section %>
+  <% elsif @section.slug == "career" %>
+    <%# Career-signal capture (D30) — same idea: the section asks for the
+        signal its tools and watchers run on. %>
+    <%= render "sections/career_capture", career: @section %>
   <% end %>
 
   <%# Act zone (D18): what the app can do here — present even, especially,

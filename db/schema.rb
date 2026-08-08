@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_030901) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_051307) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -72,6 +72,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_030901) do
     t.string "analysis_status"
     t.datetime "created_at", null: false
     t.text "description"
+    t.json "extracted_facts", default: {}, null: false
     t.text "extracted_text"
     t.json "suggested_sections", default: []
     t.text "summary"

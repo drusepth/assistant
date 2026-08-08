@@ -11,7 +11,13 @@ module Documents
     STORED_TEXT_LIMIT = 20_000
     MAX_SUGGESTIONS = 3
 
-    Result = Data.define(:summary, :section_slugs, :extracted_text)
+    Result = Data.define(:summary, :section_slugs, :extracted_text, :facts)
+
+    # Career-aware extraction (D30, docs/CAREER.md §1): the fields kept from
+    # a pay-stub read. Code whitelists, so the stored JSON never grows keys
+    # the consumers don't know.
+    PAY_STUB_FIELDS = %w[ employer pay_date period_start period_end rate hours overtime_hours gross net ].freeze
+    MAX_DEDUCTIONS = 12
 
     def initialize(document:, profile:)
       @document = document
@@ -25,7 +31,8 @@ module Documents
       Result.new(
         summary: response["summary"].to_s.strip,
         section_slugs: valid_slugs(response["sections"]),
-        extracted_text: text&.truncate(STORED_TEXT_LIMIT)
+        extracted_text: text&.truncate(STORED_TEXT_LIMIT),
+        facts: extracted_facts(response)
       )
     end
 
@@ -67,6 +74,12 @@ module Documents
           Respond with a JSON object: {"summary": "...", "sections": ["slug", ...]}.
           The summary is 2-4 sentences; mention any deadlines, amounts, or required actions.
           Choose at most #{MAX_SUGGESTIONS} sections, only from the provided list, ordered by relevance.
+          If — and only if — the document is a pay stub or paycheck record, also include
+          "pay_stub": {"employer": "...", "pay_date": "YYYY-MM-DD", "period_start": "YYYY-MM-DD",
+          "period_end": "YYYY-MM-DD", "rate": "hourly pay rate", "hours": "...", "overtime_hours": "...",
+          "gross": "...", "net": "...", "deductions": [{"label": "...", "amount": "..."}, ...]}.
+          Copy numbers exactly as printed and omit any field the stub doesn't state;
+          for any other kind of document, omit "pay_stub" entirely.
         PROMPT
       end
 
@@ -85,6 +98,22 @@ module Documents
       def valid_slugs(slugs)
         known = Section.where(slug: Array(slugs).map(&:to_s)).pluck(:slug)
         Array(slugs).map(&:to_s).select { |slug| known.include?(slug) }.first(MAX_SUGGESTIONS)
+      end
+
+      def extracted_facts(response)
+        stub = response["pay_stub"]
+        return {} unless stub.is_a?(Hash)
+
+        kept = stub.slice(*PAY_STUB_FIELDS)
+          .transform_values { |value| value.to_s.strip }
+          .reject { |_field, value| value.blank? }
+        deductions = Array(stub["deductions"]).first(MAX_DEDUCTIONS).filter_map do |deduction|
+          next unless deduction.is_a?(Hash) && deduction["label"].present?
+
+          { "label" => deduction["label"].to_s.strip, "amount" => deduction["amount"].to_s.strip }
+        end
+        kept["deductions"] = deductions if deductions.any?
+        kept.present? ? { "pay_stub" => kept } : {}
       end
   end
 end
