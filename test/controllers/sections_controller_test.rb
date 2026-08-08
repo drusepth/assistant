@@ -133,6 +133,22 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Routine care", response.body
   end
 
+  test "the Career panel leads with the signal capture, the timeline, and the scout's feeds" do
+    Career::WinLog.log!(user: users(:one), text: "Caught the inventory error before the audit")
+    Career::CompChange.log!(user: users(:one), summary: "Raise: $19 → $21/hr", on: 14.months.ago.to_date)
+    users(:one).job_feeds.create!(url: "https://boards.greenhouse.io/acme", label: "Acme board")
+
+    get section_path("career")
+
+    assert_response :success
+    assert_match "Your work, on the record", response.body
+    assert_match "Caught the inventory error before the audit", response.body
+    assert_match "14 months ago", response.body
+    assert_match "Acme board", response.body
+    assert_select "form[action=?]", career_win_path
+    assert_select "form[action=?]", job_feeds_path
+  end
+
   test "the Act zone hides tools the lead panels already carry" do
     get section_path("health")
     assert_response :success

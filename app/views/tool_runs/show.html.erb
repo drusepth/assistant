@@ -90,8 +90,14 @@
       <% end %>
     <% end %>
 
+    <%# Ask-then-send (D-career-web): the compose panel IS the review — the
+        user's own mailbox, their edits, one explicit click. %>
+    <% if @tool_run.tool_slug == "tailor_application" && @tool_run.done? %>
+      <%= render "tool_runs/email_application", tool_run: @tool_run %>
+    <% end %>
+
     <p class="text-xs text-soft">
-      Drafts are yours to review, fill in, and send — the app never sends anything on your behalf.
+      Drafts are yours to review, fill in, and send — nothing ever goes out without your explicit click.
     </p>
   <% end %>
 

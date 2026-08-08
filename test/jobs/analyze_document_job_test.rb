@@ -47,6 +47,57 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     end
   end
 
+  test "a pay stub's facts are extracted, whitelisted, and stored" do
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A pay stub from Acme.", sections: [ "career" ],
+        pay_stub: {
+          employer: "Acme Logistics", pay_date: "2026-03-15", rate: "$19.00",
+          hours: "80", gross: "$1,520.00", net: "$1,201.33",
+          deductions: [ { label: "Federal income tax", amount: "$142.00" }, "garbage" ],
+          surprise_key: "dropped"
+        }
+      }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    facts = @document.reload.extracted_facts["pay_stub"]
+    assert_equal "Acme Logistics", facts["employer"]
+    assert_equal "$19.00", facts["rate"]
+    assert_equal [ { "label" => "Federal income tax", "amount" => "$142.00" } ], facts["deductions"]
+    assert_nil facts["surprise_key"]
+    # A first stub has nothing to compare against — no comp event.
+    assert_empty Career::CompChange.scope(users(:one))
+  end
+
+  test "a rate change against the previous stub lands on the comp timeline" do
+    users(:one).documents.create!(title: "March stub",
+      extracted_facts: { "pay_stub" => { "rate" => "19", "pay_date" => "2026-03-15" } })
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A pay stub.", sections: [ "career" ],
+        pay_stub: { rate: "21", pay_date: "2026-04-15" }
+      }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    event = Career::CompChange.scope(users(:one)).sole
+    assert_equal "Comp change: $19.00 → $21.00/hr", event.title
+    assert_equal [ sections(:career) ], event.sections.to_a
+  end
+
+  test "documents with no pay-stub facts store an empty facts hash" do
+    stub_llm(summary: "A lease.", sections: [ "renting" ])
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert_equal({}, @document.reload.extracted_facts)
+  end
+
   test "permanent provider errors mark the document failed with a friendly message" do
     stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "Incorrect API key" } }.to_json)
 

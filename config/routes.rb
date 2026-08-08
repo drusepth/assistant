@@ -28,6 +28,10 @@ Rails.application.routes.draw do
   delete "health/care-settings/:kind_key" => "care_settings#destroy", as: :care_setting
   post "health/medications" => "medications#create", as: :medications
 
+  post "career/win" => "career#create_win", as: :career_win
+  post "career/comp_change" => "career#create_comp_change", as: :career_comp_change
+  resources :job_feeds, only: %i[ create destroy ]
+
   resource :settings, only: %i[ show update ]
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]
@@ -105,6 +109,7 @@ Rails.application.routes.draw do
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
   resources :tool_runs, only: %i[ show destroy ] do
     resources :messages, only: :create, controller: "tool_run_messages"
+    resource :application_email, only: :create
     member do
       post :recap
       post :retry_reply
@@ -113,6 +118,8 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root "overview#show"
+    post "datasets/refresh" => "datasets#refresh", as: :refresh_datasets
+    post "datasets/import" => "datasets#import", as: :import_datasets
     resources :errors, only: :index do
       collection { delete :destroy_all }
     end

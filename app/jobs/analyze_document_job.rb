@@ -12,6 +12,7 @@ class AnalyzeDocumentJob < ApplicationJob
     document.update!(
       summary: result.summary,
       extracted_text: result.extracted_text,
+      extracted_facts: result.facts,
       suggested_sections: result.section_slugs,
       analysis_status: :analyzed,
       analysis_error: nil
@@ -19,6 +20,7 @@ class AnalyzeDocumentJob < ApplicationJob
     # Untagged documents get filed automatically (D16); once the user has
     # tagged a document themselves, suggestions stay suggest-and-click.
     document.sections = document.suggested_section_records if document.sections.none?
+    record_comp_change(document)
   rescue Llm::Error, Documents::Analyze::UnsupportedFileType => e
     # A retry is coming: leave the document showing "processing" rather than
     # flashing a failure the next attempt may well clear. (An unsupported file
@@ -34,4 +36,14 @@ class AnalyzeDocumentJob < ApplicationJob
     record_failure(e, user: document.user, context: { document_id: document.id })
     raise
   end
+
+  private
+    # A rate change against the previous stub lands on the comp timeline
+    # (D-career-signal). The analysis itself succeeded — a timeline hiccup is recorded,
+    # never surfaced as a failed document.
+    def record_comp_change(document)
+      Career::RecordCompChange.new(document).call
+    rescue StandardError => e
+      record_failure(e, user: document.user, context: { document_id: document.id })
+    end
 end

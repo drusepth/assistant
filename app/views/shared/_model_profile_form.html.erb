@@ -30,6 +30,17 @@
       <span class="block text-xs text-soft">Turns on photo descriptions. Only the household's own photos are ever sent, and only when someone clicks Describe.</span>
     </span>
   </label>
+  <label class="flex items-start gap-2 text-sm text-ink">
+    <%= form.check_box :web_capable, { checked: profile&.web_capable? }, "1", "0" %>
+    <span>
+      This model can browse the web itself
+      <span class="block text-xs text-soft">
+        Only for providers with built-in search (OpenRouter <code>:online</code>, Perplexity-style).
+        Tools then let it look up current facts instead of leaving placeholders. Leave off for
+        plain APIs and local models — the app can still fetch links you paste either way.
+      </span>
+    </span>
+  </label>
   <p class="text-xs text-soft">
     Text from analyzed documents is sent to this provider. Point a custom endpoint at a local model and nothing ever leaves your machine.
   </p>
