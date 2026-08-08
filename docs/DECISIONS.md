@@ -2,10 +2,11 @@
 
 Decision log from design sessions. Format: decision, reasoning, status.
 
-**ID convention:** decisions D1–D32 are numbered historically and keep those
+**ID convention:** decisions D1–D37 are numbered historically and keep those
 numbers forever. New decisions use kebab slugs — `**D-photos-primitive.**` —
 because parallel branches sharing a counter collide (D30 was claimed twice in
-one day); slugs can't. See CLAUDE.md § conflict hygiene.
+one day, then the renumbered D31 collided again the same day); slugs can't.
+See CLAUDE.md § conflict hygiene.
 
 ## Decided
 
@@ -107,10 +108,31 @@ Third tool kind `:chat` (after draft/plan): one new table, `tool_run_messages` (
 **D30. Task pages host a conversation, and tasks hold an answer.**
 Plenty of tasks are mental work — decide, brainstorm, draft — that can be *done* in a chat, so every task page embeds the D29 chat surface (extracted to a shared partial) via `task_chat`, a sectionless chat tool bound to its task through a new polymorphic `tool_runs.subject` instead of a form input. The opening costs nothing: the capture-time model calls that already run per task (`Tasks::Categorize` on quick capture, `Goals::BreakDown` on goal planning) now also return per-task `guiding_questions` — stored coaching questions the page shows as the assistant's opening turns (stock fallback otherwise), with the run created lazily on the user's first message, so a task page never spends a model call until the user talks back. The outcome gets a durable home, `tasks.resolution`: an answer card on the task page (save, or save-&-complete — writing the answer is how a mental task finishes), and the chat's recap verb repurposed — "Save as the answer" distills the conversation onto the task instead of filing a Note. Openers and answers ride the existing privacy walls: conversations are owner-only, the saved answer follows the task's sharing.
 
-**D31. Photo is the seventh primitive; albums are containers; sharing rides access grants.**
+**D31. Health leads with logistics; the care radar is a derived view; metric streams stay out (for now).**
+The Health page's lead panel — per-kind routine-care status (checkup/dental/vision: booked / on track / due / not tracked) — is `Health::CareRadar`: deterministic keyword classification over the user's own Health-tagged events, zero new schema, so the radar can never disagree with the calendar it reads and every existing feed (CalDAV sync, imports, quick capture) feeds it for free. Classification is conservative (an unplaceable event counts as nothing rather than the wrong thing) and own-events-only (a spouse's shared appointment is not your checkup). The checkup-cadence watcher rides the same classification per kind under stay-in-touch signal discipline — per-kind nudges only with per-kind history, accept opens find-care prefilled; the zero-history generic nudge survives unchanged. Insurance is vault documents surfaced by keyword (`Health::Coverage`) plus three Tier-A tools (find-care, insurance-explainer, compare-plans; Q3's coverage-here/disputes-in-Rights boundary holds). Wearable/fitness sources are deliberately deferred: Google Fit's API is dead, Health Connect is on-device-only, Apple Health exports are manual files — the durable assets are appointments and paperwork, already connected. Full design in `docs/HEALTH.md`. — *Built.*
+
+**D32. Mental health ships as support, not therapy.**
+The mind half of Health (docs/HEALTH.md §6) is three entry points on the Health page's Mind card: **check-in** (chat kind — guided modes via quick replies: unpack a stressor, breathing/grounding one step per turn, prep for a real therapy session; "just listen" honored as-is), **start-a-calm-practice** (plan kind — meditation/yoga/walks as tiny, scheduled, nothing-to-buy steps through the shared breakdown), and **find-a-therapist** (find-care prefilled — no new tool). The boundary is the Tier-A capability-honesty rule at its highest stakes: an LLM chat is not a therapist and is never presented as one — the system prompt forbids diagnosing, naming suspected conditions, and medication advice, and steers warmly toward a human therapist when things sound heavy; the one guardrail that must not depend on model behavior doesn't — a code-appended crisis notice (988 / local crisis line) opens every session, visible in the transcript, never sent to the model — and the support-not-therapy line prints on the Mind card itself. Recaps are explicit-save Notes filed under Health that feed the next session's prompt (continuity without surveillance). Deliberately unbuilt: mood inference, any agent nudge about mental state, and stored clinical labels the user didn't write. — *Built.*
+
+**D33. Chat transcripts are ephemeral; recaps are the record.** *(resolves Q13)*
+Tool runs grew a Delete button (chat copy: the transcript is gone for good; saved recaps stay) — for check-ins that's a trust feature, since the transcript is the most sensitive text in the app. `PruneChatTranscriptsJob` (weekly, Solid Queue recurring) deletes chat runs with no message in 90 days, whole — transcript and history entry — while recap Notes live on as ordinary owned notes; draft runs are history and are never pruned. Transcripts stay out of the M4 export: the recap is the durable, portable artifact, chosen explicitly (D20), and that's the memory contract — what you saved is yours forever, what you merely said evaporates. — *Built.*
+
+**D34. Jurisdiction is one household-level free-text field.** *(resolves Q12)*
+`households.region` ("Texas, USA"), admin-edited in Settings next to the model profile (the D15 admin split). Tools read it through `Tool::Base#region_line` — injected into find-care, insurance-explainer, compare-plans, and deposit-demand prompts when present; blank means tools keep asking or use `[BRACKETED PLACEHOLDERS]` exactly as before. The benefits screener keeps its own required state select (a free-text region can't safely map to a programs list). Free text over a country/state enum because the target audience is global self-hosters and the consumer is a prompt, not a join. — *Built.*
+
+**D35. The care radar is tunable, correctable, and household-visible — and kids are users.**
+Three escape hatches for the derived view (extends D31): **tuning** (`care_settings` — mute a kind, override its interval, add custom kinds that classify by their own label, whole phrase only; a missing row means registry defaults), **correction** (`events.care_kind` — a "Counts as" select on health events; the user's word beats the keywords, and `"none"` excludes an event from the radar entirely), and **household care** (each member's care lives on their own account — children included, as ordinary users — and the Health page shows other members' radars computed over exactly the events they share with you: `visible_to` is the only read path (D9/D21), each member's own settings apply, and a member who shares nothing doesn't appear). Booked tiles also route to doctor-visit-prep prefilled, and the Health Act zone hides the five tools the lead panels already carry with better context. — *Built.*
+
+**D36. A medication is a Note with a kind, plus a refill Event.**
+No new primitive: the Medications card files a Note (`notes.kind = "medication"`, name as title, dose/schedule as body) and optionally an all-day "Refill …" Event, both under Health. Every existing surface then works unpaid — renewal-radar gives refills lead time ("refill" keyword, Health section), doctor-visit-prep reads the med list because it already reads Health notes, meds export/share as notes, and refill events are radar-excluded by code (`care_kind: "none"`). Deliberately not built: dose-time reminders and adherence tracking — an assistant that nags nightly gets turned off. `notes.kind` is a primitive-level attribute (like `events.care_kind`), not a section-owned table, so the lens model holds. — *Built.*
+
+**D37. Section pages compose per-section panels by convention.**
+Born from a merge: the Hobbies, subsection-tile, and Health buildouts all edited `SectionsController`, `sections/show.html.erb`, and `SectionsHelper`, and collided. Now a section's lead panel is discovered, not wired: `Sections::Panel.for(section, viewer)` resolves `Sections::Panels::<Slug>` (nil for sections without one — they get the generic subsection browse grid), the panel object carries all section-specific page data as memoized methods plus `hidden_tool_slugs` for Act-zone curation, and the view renders `sections/panels/_<slug>.html.erb` with the panel as a local. Building out a section therefore adds files (a panel class, a panel partial, services, tools, watchers) and edits only registries — two section buildouts in parallel touch disjoint files. The shared page files change only when the *anatomy* (D18) changes. — *Built.*
+
+**D-photos-primitive. Photo is the seventh primitive; albums are containers; sharing rides access grants.**
 A photo is not a Document (no text pipeline, high volume, grid-and-lightbox browsing idiom, its own joins for albums and people), so `Photo` joins the primitive pool — `Visible` + `Sectionable`, multi-taggable, surfaced through a new cross-section **Photos view** (timeline grid), not a new section. **Albums are user-owned containers** (`albums` + `album_photos`), not sections — deliberate curation, not filters — and are themselves `Visible`. Sharing adds no new mechanism: the photo read path gains one clause mirroring the section-grant clause — a photo is visible to a holder of a grant on a containing album when the grant's grantor is the photo's owner — so `AccessGrant` stays the single sharing mechanism and `visible_to` the single read path (D9). "Share with the whole household" is a convenience button that bulk-creates ordinary per-member grants. Ingestion is deterministic and LLM-free (EXIF date/GPS, checksum dedupe, preprocessed variants); people-tagging is manual (the Q8 lesson). Full design in `PHOTOS_PLAN.md`. — *Built (all five waves).*
 
-**D32. Blob storage is a config seam: pick a service the way you pick a model.**
+**D-storage-seam. Blob storage is a config seam: pick a service the way you pick a model.**
 Model-agnosticism gets a storage twin: `config/storage.yml` grows an **`s3` service defined entirely from ENV** (`STORAGE_ENDPOINT`/`REGION`/`BUCKET`/keys/`FORCE_PATH_STYLE`) — one shape covering AWS S3, Cloudflare R2, Backblaze B2, and self-hosted MinIO, since S3-compatible is the protocol and Amazon just one vendor — selected by `ACTIVE_STORAGE_SERVICE` with **local disk remaining the zero-config default**. Uploads are Active Storage **direct uploads** (browser → bucket, documented CORS policy) so photo batches never funnel through the Rails process; delivery stays redirect-mode short-lived signed URLs behind `visible_to`-scoped pages; migration local→S3 is the documented mirror-then-flip path. Full design in `PHOTOS_PLAN.md` §2; setup docs in `docs/STORAGE.md`. — *Built.*
 
 ## Resolved questions
@@ -124,6 +146,10 @@ The lens model answers its own question — if an item fits two sections, tag it
 **Q6. Technical stack.** — *Resolved; see D14.*
 
 **Q11. Hobby representation.** — *Resolved; see D25.*
+
+**Q12. Jurisdiction signal for state-sensitive tools.** — *Resolved; see D34.*
+
+**Q13. Chat transcript retention.** — *Resolved; see D33.*
 
 ## Open questions
 
@@ -147,17 +173,11 @@ Tools that need the live web (real provider directories, current benefit rules) 
 **Q10. Agent notification channels.**
 Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. — *Direction decided: see D22 (webhook → Web Push → email-if-configured; Active sections only). Build at M4.3.*
 
-**Q12. Jurisdiction signal for state-sensitive tools.**
-Deposit demand and the benefits screener are state-sensitive (return deadlines, program variants). V1 handles it with `[BRACKETED PLACEHOLDERS]` and a per-run form field; a household-level "state/country" setting would serve every Rights/Money tool at once. Decide when a second tool needs it. — *Not started.*
-
-**Q13. Chat transcript retention.**
-Tutor transcripts accumulate under `tool_run_messages`; recap Notes are the durable owned artifact. Whether old transcripts should be pruned, and whether they join the M4 export, needs deciding. — *Not started.*
-
 **Q14. Photo location privacy dial.**
 v1 (PHOTOS_PLAN): shared viewers get EXIF-stripped variants and coordinates render owner-only. Is a per-album "share locations" toggle warranted, or is owner-only forever the right D9 answer? — *Not started.*
 
 **Q15. Collaborative albums.**
-Household members adding *their own* photos to someone else's shared album (the `grantor = photo owner` guard in the D30 visibility clause already anticipates it). Real family demand, real complexity; decide after photos wave 3 sees usage. — *Not started.*
+Household members adding *their own* photos to someone else's shared album (the `grantor = photo owner` guard in the D-photos-primitive visibility clause already anticipates it). Real family demand, real complexity; decide after photos wave 3 sees usage. — *Not started.*
 
 **Q16. Video in the photo library.**
-Needs ffmpeg in the image, preview generation, size limits, possibly range streaming. Separate plan once photos prove out; the D30 schema shouldn't need to change. — *Not started.*
+Needs ffmpeg in the image, preview generation, size limits, possibly range streaming. Separate plan once photos prove out; the photos schema shouldn't need to change. — *Not started.*

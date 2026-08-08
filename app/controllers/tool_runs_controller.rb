@@ -20,6 +20,18 @@ class ToolRunsController < ApplicationController
     @tool_run = Current.user.tool_runs.find(params[:id])
   end
 
+  # Runs are deletable — for chats that's the trust feature (D33: a
+  # check-in transcript is yours to destroy), for anything else it's tidy
+  # history. Created primitives (notes, tasks, events) are their own
+  # records and stay.
+  def destroy
+    run = Current.user.tool_runs.find(params[:id])
+    section = run.tool.section_slugs.first
+    notice = run.chat? ? "Conversation deleted." : "Run deleted."
+    run.destroy!
+    redirect_to section ? section_path(section) : root_path, notice: notice
+  end
+
   # "Save a recap" on a chat run (D29) — the explicit click that turns a
   # session into an owned Note (D20: nothing lands without the user asking).
   # recap_requested_at is the in-flight marker: it drives the button's

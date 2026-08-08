@@ -1,4 +1,4 @@
-# A manual "who's in this photo" link to the People primitive (D31) — no
+# A manual "who's in this photo" link to the People primitive (D-photos-primitive) — no
 # face recognition, the Q8 lesson: guessed identities cost trust. The tag
 # names, it never grants: viewers of a shared photo see only the tagged
 # people they could already see.

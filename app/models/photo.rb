@@ -1,4 +1,4 @@
-# The seventh primitive (D31): high-volume visual items with their own
+# The seventh primitive (D-photos-primitive): high-volume visual items with their own
 # capture date and browsing idiom. Originals are never modified — the grid
 # and lightbox run on derived WEBP variants with metadata stripped, so a
 # shared viewer never receives the original's EXIF.
@@ -18,7 +18,7 @@ class Photo < ApplicationRecord
   has_many :photo_people, dependent: :destroy
   has_many :people, through: :photo_people
 
-  # The album sharing path (D31): a grant on a containing album exposes the
+  # The album sharing path (D-photos-primitive): a grant on a containing album exposes the
   # photo — but only when the grant's grantor owns the photo, so a future
   # collaborative album (Q15) can never leak a contributor's photo through
   # someone else's grant.
@@ -55,7 +55,7 @@ class Photo < ApplicationRecord
     title.presence || taken_at.strftime("%B %-d, %Y")
   end
 
-  # Same bytes, same person, already in the library (D31 dedupe): matched by
+  # Same bytes, same person, already in the library (D-photos-primitive dedupe): matched by
   # the blob checksum Active Storage computed at upload. Only older rows
   # count — of two identical copies, the first stays and the second is the
   # duplicate.

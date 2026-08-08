@@ -21,7 +21,7 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Where uploads live is instance configuration, not code (D32): local disk
+  # Where uploads live is instance configuration, not code (D-storage-seam): local disk
   # by default, "s3" (any S3-compatible bucket) or "mirror" (the migration
   # path) via ENV. See config/storage.yml and docs/STORAGE.md.
   config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "local").to_sym

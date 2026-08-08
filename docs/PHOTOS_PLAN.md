@@ -5,7 +5,7 @@ sharing, with S3-compatible object storage as a first-class (but optional) backi
 store. **Status: built — all five waves landed** (see `STATUS.md`); this document
 remains the design record.
 
-Decisions here are logged as **D31–D32** in `DECISIONS.md`. Open questions are
+Decisions here are logged as **D-photos-primitive and D-storage-seam** in `DECISIONS.md`. Open questions are
 logged as **Q14–Q16**. Operator-facing storage setup lives in `docs/STORAGE.md`.
 
 ---
@@ -44,7 +44,7 @@ library to be the family's system of record.
 
 ## 2. The two decisions
 
-### D31. Photo is the seventh primitive; albums are containers; sharing rides access grants.
+### D-photos-primitive. Photo is the seventh primitive; albums are containers; sharing rides access grants.
 
 A photo is not a Document. Documents are files-with-understanding (extracted text, AI
 summary, one-at-a-time vault items); photos are high-volume visual items with their
@@ -71,7 +71,7 @@ everyone" on an album (or the Photos settings card) bulk-creates ordinary per-me
 grants. A member who joins the household later sees nothing until someone shares again
 — that's D9 working as designed, not a bug to engineer around.
 
-### D32. Blob storage is a config seam: pick a service the way you pick a model.
+### D-storage-seam. Blob storage is a config seam: pick a service the way you pick a model.
 
 The app is model-agnostic by mission; storage gets the same treatment. Active Storage
 already abstracts the service — we make the choice **an instance-level configuration**
@@ -151,7 +151,7 @@ add_index :photo_people, [ :photo_id, :person_id ], unique: true
   `has_many :people, through: :photo_people`.
 - **`Album`**: `Visible` (not `Sectionable` — albums are curation, not life-sections).
   Cover photo falls back to the newest photo in the album.
-- **Visibility**: the album clause from D31 lands as a small extension point in
+- **Visibility**: the album clause from D-photos-primitive lands as a small extension point in
   `Visible` (a class-level extra-clause hook that only `Photo` uses), so
   `Photo.visible_to(viewer)` remains the one read path. In v1 albums contain only the
   owner's photos, so the `grantor_id = photos.user_id` guard is naturally satisfied;
@@ -224,7 +224,7 @@ which is Wave 5's optional garnish).
   photo show pages — an album grant is the normal unit ("share Summer 2026 with
   Grandma's account").
 - **"Share with everyone in the household"** button on the album sharing card =
-  bulk per-member grants (D31). Revoking is per-grant, as everywhere.
+  bulk per-member grants (D-photos-primitive). Revoking is per-grant, as everywhere.
 - Shared viewers see `:thumb`/`:large` variants with **metadata stripped** (the
   variants already strip EXIF); location coordinates render only for the owner
   (Q14 tracks whether that needs to be a visible dial).
@@ -254,8 +254,8 @@ Each wave lands green (`bin/rails test`, `bin/rubocop`) and independently shippa
 
 | Wave | Contents |
 |---|---|
-| **W1 — storage seam (D32)** | ENV-driven `s3` service + `ACTIVE_STORAGE_SERVICE` selector, `aws-sdk-s3` gem, direct-upload JS plumbing, self-hosting docs (per-vendor setup + CORS JSON + mirror migration). No user-visible change. |
-| **W2 — the primitive (D31 core)** | `photos` table + model + `IngestPhotoJob` (EXIF, dedupe, variants), batch upload UI, Photos view (timeline + filters by section/year), lightbox, photo show/edit/delete, sidebar entry, export inclusion. |
+| **W1 — storage seam (D-storage-seam)** | ENV-driven `s3` service + `ACTIVE_STORAGE_SERVICE` selector, `aws-sdk-s3` gem, direct-upload JS plumbing, self-hosting docs (per-vendor setup + CORS JSON + mirror migration). No user-visible change. |
+| **W2 — the primitive (D-photos-primitive core)** | `photos` table + model + `IngestPhotoJob` (EXIF, dedupe, variants), batch upload UI, Photos view (timeline + filters by section/year), lightbox, photo show/edit/delete, sidebar entry, export inclusion. |
 | **W3 — albums + sharing** | `albums`/`album_photos`, the `Visible` album clause, album CRUD + covers, multi-select/add-to-album, sharing cards + household-wide button, shared-with-me album index. |
 | **W4 — people + polish** | `photo_people` + tagging UI (lightbox rail + show page), person-page photo strip, person filter, section-page Browse counts, `/admin` storage panel. |
 | **W5 — optional garnish** | Vision toggle + `CaptionPhotoJob`, "On this day" watcher. |

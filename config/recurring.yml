@@ -21,3 +21,7 @@ production:
   daily_agent_scan:
     command: "AgentScanJob.scan_all(cadence: :daily)"
     schedule: every day at 8:30am
+  # Chat transcripts are ephemeral; recaps are the record (D33/Q13).
+  prune_chat_transcripts:
+    command: "PruneChatTranscriptsJob.perform_later"
+    schedule: every sunday at 4am

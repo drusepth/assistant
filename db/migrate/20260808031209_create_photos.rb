@@ -5,7 +5,7 @@ class CreatePhotos < ActiveRecord::Migration[8.1]
       t.string :title
       t.text :caption
       # EXIF DateTimeOriginal, falling back to upload time — the timeline
-      # orders by when the photo was taken, not when it arrived (D31).
+      # orders by when the photo was taken, not when it arrived (D-photos-primitive).
       t.datetime :taken_at, null: false
       t.decimal :latitude, precision: 10, scale: 6
       t.decimal :longitude, precision: 10, scale: 6

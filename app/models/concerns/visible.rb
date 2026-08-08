@@ -4,7 +4,7 @@
 #   3. a user holding a Section-level AccessGrant from the item's owner
 #      for a section the item is tagged with,
 #   4. any OR-branch the including model adds via extra_visibility_clauses
-#      (D31: Photo adds album-grant visibility this way).
+#      (D-photos-primitive: Photo adds album-grant visibility this way).
 # visible_to is the single read path for authorization — controllers and
 # cross-user AI features must never query primitives any other way.
 module Visible

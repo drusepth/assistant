@@ -2,7 +2,7 @@
 
 Where your files live. Documents, photos, and export archives are stored through
 Active Storage; **which backend holds the bytes is instance configuration, not
-code** (D32). Two backends ship:
+code** (D-storage-seam). Two backends ship:
 
 - **`local`** (the default) — files on the app server's disk under `storage/`.
   Zero configuration. Right for a home server whose disk you already back up.

@@ -1,13 +1,14 @@
 module Watcher
   # Renewals go better with lead time: an upcoming event whose title smells
-  # like a renewal/expiry gets a heads-up while there's still room to act.
-  # One suggestion per event, ever — dismissing it settles the matter.
+  # like a renewal/expiry — or a medication refill (docs/HEALTH.md §7) —
+  # gets a heads-up while there's still room to act. One suggestion per
+  # event, ever — dismissing it settles the matter.
   class RenewalRadar < Base
-    self.section_slugs = %w[ money rights ]
+    self.section_slugs = %w[ money rights health ]
 
     WINDOW = 60.days
     LEAD_TIME = 14.days
-    KEYWORDS = %w[ renew expir lease ].freeze
+    KEYWORDS = %w[ renew expir lease refill ].freeze
 
     def scan
       matches.find_each do |event|

@@ -1,5 +1,5 @@
 module Watcher
-  # Memories, deterministically (D31/W5): photos taken around this date in
+  # Memories, deterministically (D-photos-primitive/W5): photos taken around this date in
   # a past year get one look-back nudge. Sectionless, so it runs on the
   # Quiet cadence; fingerprinted per (past year, current year) so a
   # dismissal quiets that anniversary until next year.

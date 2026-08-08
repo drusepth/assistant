@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_033338) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_050530) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -89,12 +89,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_033338) do
     t.index ["user_id"], name: "index_app_errors_on_user_id"
   end
 
+  create_table "care_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "interval_months"
+    t.string "kind_key", null: false
+    t.string "label"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "kind_key"], name: "index_care_settings_on_user_id_and_kind_key", unique: true
+    t.index ["user_id"], name: "index_care_settings_on_user_id"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.string "analysis_error"
     t.string "analysis_status"
     t.datetime "created_at", null: false
     t.text "description"
     t.text "extracted_text"
+    t.boolean "health_plan"
     t.json "suggested_sections", default: []
     t.text "summary"
     t.string "title", null: false
@@ -105,6 +118,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_033338) do
 
   create_table "events", force: :cascade do |t|
     t.boolean "all_day", default: false, null: false
+    t.string "care_kind"
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "ends_at"
@@ -134,6 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_033338) do
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.string "region"
     t.datetime "updated_at", null: false
   end
 
@@ -176,6 +191,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_033338) do
   create_table "notes", force: :cascade do |t|
     t.text "body", null: false
     t.datetime "created_at", null: false
+    t.string "kind"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -380,6 +396,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_033338) do
   add_foreign_key "albums", "photos", column: "cover_photo_id", on_delete: :nullify
   add_foreign_key "albums", "users"
   add_foreign_key "app_errors", "users"
+  add_foreign_key "care_settings", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"

@@ -3,6 +3,6 @@ import "@hotwired/turbo-rails"
 import * as ActiveStorage from "@rails/activestorage"
 import "controllers"
 
-// Direct uploads (D32): forms with direct_upload file fields send bytes
+// Direct uploads (D-storage-seam): forms with direct_upload file fields send bytes
 // browser → storage service, so photo batches never funnel through Rails.
 ActiveStorage.start()
