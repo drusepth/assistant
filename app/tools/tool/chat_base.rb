@@ -18,6 +18,10 @@ module Tool
   class ChatBase < Base
     self.kind = :chat
 
+    # One-tap turns the composer offers as chips — a chat tool declares the
+    # short prompts its audience reaches for ("Quiz me"); empty means none.
+    class_attribute :quick_replies, instance_accessor: false, default: []
+
     TRANSCRIPT_WINDOW = 30
 
     def call

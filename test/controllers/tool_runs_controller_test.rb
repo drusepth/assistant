@@ -171,6 +171,69 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_enqueued_with(job: ChatRecapJob) { post recap_tool_run_path(run) }
   end
 
+  test "recap marks itself in flight and a second click can't file a duplicate" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Hi!")
+
+    assert_enqueued_with(job: ChatRecapJob) { post recap_tool_run_path(run) }
+    assert run.reload.recap_pending?
+
+    assert_no_enqueued_jobs(only: ChatRecapJob) { post recap_tool_run_path(run) }
+
+    get tool_run_path(run)
+    assert_match "Saving recap…", response.body
+  end
+
+  test "the composer disables send and shows the typing indicator while awaiting a reply" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Where shall we start?")
+    run.tool_run_messages.create!(role: :user, content: "Fractions, please")
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select "input[type=submit][disabled][value='Thinking…']"
+    assert_select "span.animate-bounce", count: 3
+  end
+
+  test "a failed turn offers try again, which drops the notice and re-enqueues the reply" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Hi!")
+    run.tool_run_messages.create!(role: :user, content: "What is 1/2 + 1/4?")
+    run.tool_run_messages.create!(role: :notice, content: "The model returned an empty reply — try again.")
+
+    get tool_run_path(run)
+    assert_select "form[action=?]", retry_reply_tool_run_path(run)
+
+    assert_enqueued_with(job: ChatTurnJob) { post retry_reply_tool_run_path(run) }
+    assert run.reload.awaiting_reply?, "the thinking indicator comes back"
+    assert_not run.tool_run_messages.notice_role.exists?
+  end
+
+  test "try again does nothing when the last turn didn't fail" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "All answered.")
+
+    assert_no_enqueued_jobs { post retry_reply_tool_run_path(run) }
+    assert_redirected_to tool_run_path(run)
+  end
+
+  test "a chat page offers the tool's quick replies and links the previous session's recap" do
+    earlier = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    recap = users(:one).notes.create!(title: "Tutoring recap — fractions", body: "We covered halves.")
+    earlier.tool_run_items.create!(item: recap)
+
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Welcome back!")
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_match "Quiz me", response.body
+    assert_match "Picking up from last time", response.body
+    assert_select "a[href=?]", note_path(recap), text: "Tutoring recap — fractions"
+  end
+
   test "show renders a finished run's drafts and follow-ups" do
     run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", inputs: { "document_id" => @document.id.to_s })
     note = users(:one).notes.create!(title: "Dispute of account 12345", body: "To whom it may concern")

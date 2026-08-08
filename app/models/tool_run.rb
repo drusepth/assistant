@@ -45,6 +45,32 @@ class ToolRun < ApplicationRecord
     chat? && tool_run_messages.ordered.last&.user_role?
   end
 
+  # A turn just failed: the newest message is the app's failure notice and
+  # the user's turn beneath it sits unanswered — the state the "Try again"
+  # button serves. Retrying drops the notice, so awaiting_reply? turns true
+  # again and the thinking indicator comes back honestly.
+  def reply_failed?
+    chat? && tool_run_messages.ordered.last&.notice_role? &&
+      tool_run_messages.conversational.ordered.last&.user_role?
+  end
+
+  # A recap request is in flight — clicked but ChatRecapJob hasn't landed.
+  # The staleness window unsticks the button if the job is lost outright.
+  def recap_pending?
+    recap_requested_at.present? && recap_requested_at > 5.minutes.ago
+  end
+
+  # The most recent Note an *earlier* session of this same tool filed — the
+  # visible face of the memory the system prompt already carries, so the
+  # user can see what the tutor is picking up from.
+  def previous_recap
+    return unless chat?
+
+    earlier_runs = user.tool_runs.where(tool_slug: tool_slug).where(id: ...id).select(:id)
+    ToolRunItem.where(tool_run_id: earlier_runs, item_type: "Note")
+      .order(created_at: :desc, id: :desc).limit(5).filter_map(&:item).first
+  end
+
   private
     def required_inputs_present
       return unless (tool = Tool.find(tool_slug))

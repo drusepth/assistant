@@ -84,10 +84,12 @@ class TutorToolTest < ActiveJob::TestCase
     assert notice.notice_role?
     assert_match(/send another/i, notice.content)
     assert_not @run.awaiting_reply?, "the thinking indicator can't stick"
+    assert @run.reply_failed?, "the state the Try-again button serves"
   end
 
   test "saving a recap lands one Education-filed note on the run" do
     @run.tool_run_messages.create!(role: :assistant, content: "Nice work today.")
+    @run.update_column(:recap_requested_at, Time.current)
     stub_request(:post, ENDPOINT).to_return(
       status: 200,
       body: { choices: [ { message: { content: {
@@ -102,6 +104,7 @@ class TutorToolTest < ActiveJob::TestCase
     assert_match(/practice thirds/, note.body)
     assert_equal [ sections(:education) ], note.sections,
       "recaps are filed where the tool lives — future sessions read them back as context"
+    assert_nil @run.recap_requested_at, "the Saving-recap button state unsticks"
   end
 
   private
