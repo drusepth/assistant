@@ -1,0 +1,85 @@
+<%# The Money lead panel (docs/MONEY.md §3.3): month-at-a-glance hero over
+    the ledger, quick capture, then the subsection tiles the generic page
+    would have shown — now beneath real signal. %>
+<% summary = panel.summary %>
+
+<div class="mb-6 rounded-xl border border-edge bg-surface p-5">
+  <% if panel.ledger? %>
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="text-sm font-medium text-soft"><%= summary.month.strftime("%B") %> so far</h2>
+        <p class="mt-1 text-2xl font-semibold text-ink">
+          <%= money_out(summary.spent_cents) %>
+          <% if summary.target_cents %>
+            <span class="text-base font-normal text-soft">of <%= money_out(summary.target_cents) %> planned</span>
+          <% end %>
+        </p>
+        <p class="mt-0.5 text-sm text-soft">
+          <% if summary.days_left.positive? %><%= summary.days_left %> days left<% end %>
+          <% if summary.income_cents.positive? %>
+            · <%= money_out(summary.income_cents) %> in
+          <% end %>
+          <% if summary.unbudgeted_cents.positive? %>
+            · <%= money_out(summary.unbudgeted_cents) %> outside any envelope
+          <% end %>
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <%= link_to "Open the ledger", spending_path, class: "btn btn-secondary btn-sm" %>
+        <%= link_to "Import a statement", new_spending_import_path, class: "btn btn-secondary btn-sm" %>
+        <% if panel.uncategorized_count.positive? %>
+          <%= link_to "#{panel.uncategorized_count} to categorize", spending_path(category: "none"),
+                class: "chip bg-amber-100 text-amber-800" %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if summary.budgeted? %>
+      <div class="mt-4 grid gap-3 sm:grid-cols-3">
+        <% BudgetCategory::GROUPS.excluding("income").each do |group| %>
+          <% spent = summary.group_spent_cents(group); target = summary.group_target_cents(group) %>
+          <div>
+            <div class="flex items-baseline justify-between text-xs">
+              <span class="font-medium text-ink"><%= BudgetCategory::GROUP_LABELS[group] %></span>
+              <span class="text-soft"><%= money_out(spent) %><% if target %> / <%= money_out(target) %><% end %></span>
+            </div>
+            <div class="mt-1 h-2 overflow-hidden rounded-full bg-stone-100">
+              <% fraction = target&.positive? ? [ spent.to_f / target, 1 ].min : 0 %>
+              <div class="h-full rounded-full <%= spent > (target || Float::INFINITY) ? "bg-amber-400" : "bg-primary-400" %>"
+                   style="width: <%= (fraction * 100).round %>%"></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="mt-3 text-sm text-soft">
+        No envelopes yet — <%= link_to "build your budget", new_tool_run_path("build_my_budget"), class: "underline" %>
+        from what you've imported, or set targets by hand on the
+        <%= link_to "Budget page", section_path("budget"), class: "underline" %>.
+      </p>
+    <% end %>
+  <% else %>
+    <h2 class="text-base font-semibold text-ink">Where does the money go?</h2>
+    <p class="mt-1 max-w-2xl text-sm text-soft">
+      Start the ledger: import a statement from your bank (a CSV or OFX download — every bank has one),
+      or just log cash as you spend it. A budget built on real numbers follows in two minutes.
+    </p>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <%= link_to "Import a statement", new_spending_import_path, class: "btn btn-primary btn-sm" %>
+      <%= link_to "Build my budget", new_tool_run_path("build_my_budget"), class: "btn btn-secondary btn-sm" %>
+    </div>
+  <% end %>
+
+  <%= form_with url: spending_transactions_path, method: :post, class: "mt-4 flex items-center gap-2" do %>
+    <%= text_field_tag :entry, nil, class: "input flex-1",
+          placeholder: "Log spending: 14.50 lunch (or +500 paycheck)" %>
+    <%= submit_tag "Log", class: "btn btn-secondary" %>
+  <% end %>
+</div>
+
+<% if summaries.any? %>
+  <h2 class="mb-2 text-sm font-medium text-soft">Browse</h2>
+  <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    <%= render partial: "sections/subsection_tile", collection: summaries, as: :summary %>
+  </div>
+<% end %>

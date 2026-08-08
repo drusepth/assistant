@@ -1,0 +1,117 @@
+<%# The envelope board (docs/MONEY.md §3.3): per-category meters over the
+    current month with a pace tick, inline target editing, and the empty
+    states as front doors. Meters inform, they don't scold — color only
+    shifts when meaningfully over-pace. %>
+<% summary = panel.summary %>
+
+<% unless panel.ledger? && panel.categories? %>
+  <div class="mb-6 rounded-xl border border-edge bg-surface p-5">
+    <h2 class="text-base font-semibold text-ink">
+      <%= panel.categories? ? "Now give the envelopes something to measure" : "A budget you own, in two minutes" %>
+    </h2>
+    <p class="mt-1 max-w-2xl text-sm text-soft">
+      <% if panel.categories? %>
+        Your envelopes are set — import a statement or log spending and the meters come alive.
+      <% else %>
+        Envelopes with monthly targets — Needs, Wants, Savings &amp; debt. Import your spending first
+        and the assistant drafts targets from your real averages; or start from a short intake and
+        tune later. Nothing is decided without you: every proposed envelope is editable and deletable.
+      <% end %>
+    </p>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <% unless panel.categories? %>
+        <%= link_to "Build my budget", new_tool_run_path("build_my_budget"), class: "btn btn-primary btn-sm" %>
+      <% end %>
+      <%= link_to "Import a statement", new_spending_import_path, class: "btn btn-secondary btn-sm" %>
+      <%= link_to "Open the ledger", spending_path, class: "btn btn-secondary btn-sm" %>
+    </div>
+  </div>
+<% end %>
+
+<% if panel.categories? %>
+  <div class="mb-6 rounded-xl border border-edge bg-surface p-5">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="text-base font-semibold text-ink">
+        <%= summary.month.strftime("%B") %>
+        <% if summary.days_left.positive? %><span class="text-sm font-normal text-soft">· <%= summary.days_left %> days left</span><% end %>
+      </h2>
+      <div class="flex flex-wrap items-center gap-2">
+        <%= link_to "Tune my budget", new_tool_run_path("build_my_budget"), class: "btn btn-ghost btn-sm" %>
+        <% if panel.uncategorized_count.positive? %>
+          <%= link_to "#{panel.uncategorized_count} to categorize", spending_path(category: "none"),
+                class: "chip bg-amber-100 text-amber-800" %>
+        <% end %>
+      </div>
+    </div>
+
+    <% month_pct = (summary.month_fraction * 100).round %>
+    <% BudgetCategory::GROUPS.excluding("income").each do |group| %>
+      <% lines = summary.lines_for(group) %>
+      <% next if lines.empty? %>
+      <h3 class="mt-4 text-xs font-medium uppercase tracking-wide text-soft"><%= BudgetCategory::GROUP_LABELS[group] %></h3>
+      <div class="mt-2 space-y-3">
+        <% lines.each do |line| %>
+          <div>
+            <div class="flex items-baseline justify-between gap-2 text-sm">
+              <span class="min-w-0 truncate text-ink"><%= line.category.name %></span>
+              <span class="shrink-0 tabular-nums <%= line.over? ? "text-amber-700" : "text-soft" %>">
+                <%= money_out(line.spent_cents) %>
+                <% if line.target? %>
+                  of <%= money_out(line.target_cents) %>
+                <% end %>
+              </span>
+            </div>
+            <div class="relative mt-1 h-2 overflow-hidden rounded-full bg-stone-100">
+              <% if line.target? %>
+                <div class="h-full rounded-full <%= line.over? ? "bg-amber-400" : summary.over_pace?(line) ? "bg-amber-300" : "bg-primary-400" %>"
+                     style="width: <%= [ (line.fraction_spent * 100).round, 100 ].min %>%"></div>
+                <% if summary.current? %>
+                  <div class="absolute inset-y-0 w-px bg-stone-400/70" style="left: <%= month_pct %>%" title="Where the month is"></div>
+                <% end %>
+              <% end %>
+            </div>
+            <details class="mt-0.5">
+              <summary class="cursor-pointer list-none text-xs text-soft hover:text-ink">Edit</summary>
+              <%= form_with url: budget_category_path(line.category), method: :patch, class: "mt-1 flex flex-wrap items-center gap-2" do %>
+                <%= text_field_tag :name, line.category.name, class: "input w-40" %>
+                <%= number_field_tag :monthly_target, line.category.monthly_target_cents ? (line.category.monthly_target_cents / 100.0) : nil,
+                      step: "0.01", min: 0, class: "input w-28", placeholder: "Target" %>
+                <%= select_tag :group, options_for_select(BudgetCategory::GROUPS.map { |g| [ BudgetCategory::GROUP_LABELS[g], g ] }, line.category.group), class: "input" %>
+                <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
+              <% end %>
+              <%= button_to "Remove envelope", budget_category_path(line.category), method: :delete,
+                    data: { turbo_confirm: "Remove #{line.category.name}? Transactions filed there keep their history." },
+                    class: "btn btn-ghost btn-sm mt-1 text-xs text-red-700" %>
+            </details>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if summary.unbudgeted_cents.positive? %>
+      <p class="mt-4 text-xs text-soft">
+        Plus <%= money_out(summary.unbudgeted_cents) %> outside any envelope —
+        <%= link_to "categorize it", spending_path(category: "none"), class: "underline" %> and the meters get honest.
+      </p>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="mb-6 flex flex-wrap items-center gap-2">
+  <%= form_with url: spending_transactions_path, method: :post, class: "flex min-w-64 flex-1 items-center gap-2" do %>
+    <%= text_field_tag :entry, nil, class: "input flex-1", placeholder: "Log spending: 14.50 lunch" %>
+    <%= submit_tag "Log", class: "btn btn-secondary" %>
+  <% end %>
+
+  <details class="relative">
+    <summary class="btn btn-ghost btn-sm cursor-pointer list-none">Add an envelope</summary>
+    <div class="absolute left-0 z-10 mt-1 w-72 rounded-lg border border-edge bg-surface p-3 shadow-lg">
+      <%= form_with url: budget_categories_path, method: :post, class: "space-y-2" do %>
+        <%= text_field_tag :name, nil, class: "input w-full", placeholder: "Name (e.g. Groceries)" %>
+        <%= number_field_tag :monthly_target, nil, step: "0.01", min: 0, class: "input w-full", placeholder: "Monthly target (optional)" %>
+        <%= select_tag :group, options_for_select(BudgetCategory::GROUPS.map { |g| [ BudgetCategory::GROUP_LABELS[g], g ] }, "needs"), class: "input w-full" %>
+        <%= submit_tag "Add", class: "btn btn-primary btn-sm w-full" %>
+      <% end %>
+    </div>
+  </details>
+</div>

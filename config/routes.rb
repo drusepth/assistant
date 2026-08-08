@@ -54,6 +54,7 @@ Rails.application.routes.draw do
   resources :spending_transactions, only: %i[ create update destroy ]
   resources :spending_accounts, only: %i[ create destroy ]
   resources :spending_rules, only: %i[ destroy ]
+  resources :budget_categories, only: %i[ create update destroy ]
 
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]

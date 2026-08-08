@@ -9,6 +9,7 @@ module Tool
     find_care insurance_explainer compare_plans check_in start_a_practice
     negotiation_prep benefits_screener learn_something tutor task_chat
     cancel_subscription reconnect gift_ideas get_together what_do_i_say make_new_friends moving
+    build_my_budget
     caregiver bereavement
     email_follow_up ask_your_email
     start_a_hobby what_should_i_make_next find_your_people
