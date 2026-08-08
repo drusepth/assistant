@@ -7,8 +7,8 @@ class RefreshDatasetsJob < ApplicationJob
 
   def perform
     result = Datasets::Refresh.new.call
-    result.errors.each do |dataset, message|
-      AppError.record(StandardError.new(message), source: "dataset_refresh:#{dataset}")
+    result.errors.each do |dataset, error|
+      AppError.record(error, source: "dataset_refresh:#{dataset}")
     end
   end
 end

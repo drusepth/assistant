@@ -62,52 +62,33 @@
   <%= render Ui::CardComponent.new(title: "Connected accounts", subtitle: "Link your other services so the assistant can draw on them — you control what each one shares") do %>
     <div class="space-y-3">
       <% LinkedAccount::PROVIDERS.each do |provider, settings| %>
-        <% account = @linked_accounts[provider] %>
-        <div class="rounded-lg border px-4 py-3 <%= account ? "border-primary-300 bg-primary-50/50" : "border-edge" %>">
+        <% accounts = @linked_accounts.fetch(provider, []) %>
+        <div class="rounded-lg border px-4 py-3 <%= accounts.any? ? "border-primary-300 bg-primary-50/50" : "border-edge" %>">
           <div class="flex flex-wrap items-center gap-2">
-            <%= icon(:link, css_class: "size-4 #{account ? "text-primary-600" : "text-stone-300"}") %>
+            <%= icon(:link, css_class: "size-4 #{accounts.any? ? "text-primary-600" : "text-stone-300"}") %>
             <span class="text-sm font-medium text-ink"><%= settings[:label] %></span>
-            <% if account %>
-              <span class="chip bg-primary-50 text-primary-800"><%= account.full_access? ? "Full access" : "Limited access" %></span>
-              <%= button_to "Disconnect", linked_account_path(account), method: :delete, class: "btn btn-danger btn-sm ml-auto",
-                    data: { turbo_confirm: "Disconnect #{settings[:label]}? Its credentials will be deleted." } %>
-            <% end %>
           </div>
           <p class="mt-1 text-xs text-soft"><%= settings[:description] %></p>
 
-          <% if account %>
-            <%# Scope dials: everything a link can share is on by default; unchecking
-                narrows what the assistant may use. Same visible-config rule as D9. %>
-            <%= form_with url: linked_account_path(account), method: :patch, class: "mt-3 space-y-2" do |form| %>
-              <% settings[:scopes].each do |scope, scope_label| %>
-                <label class="flex items-center gap-2 text-sm text-ink">
-                  <%= check_box_tag "enabled_scopes[]", scope, account.allows?(scope),
-                        id: "#{provider}_scope_#{scope}", class: "size-4 rounded accent-primary-600" %>
-                  <%= scope_label %>
-                </label>
-              <% end %>
-              <%= form.submit "Save access", class: "btn-sm" %>
-            <% end %>
+          <%= render partial: "settings/linked_account", collection: accounts, as: :account %>
 
-            <% if account.syncable? %>
-              <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-edge pt-3">
-                <span class="text-xs <%= account.sync_error ? "text-red-600" : "text-soft" %>">
-                  <% if account.sync_error %>
-                    Last sync failed: <%= account.sync_error %>
-                  <% elsif account.synced_at %>
-                    Synced <%= time_ago_in_words(account.synced_at) %> ago
-                  <% else %>
-                    Not synced yet
-                  <% end %>
-                </span>
-                <%= button_to "Sync now", sync_linked_account_path(account), method: :post, class: "btn btn-secondary btn-sm ml-auto" %>
-              </div>
-            <% end %>
-          <% else %>
+          <%# Multi-link providers (email) can always add another mailbox;
+              single-link providers connect once. %>
+          <% if accounts.empty? || settings[:multi] %>
             <details class="mt-2">
-              <summary class="cursor-pointer text-sm font-medium text-primary-700">Connect</summary>
+              <summary class="cursor-pointer text-sm font-medium text-primary-700">
+                <%= accounts.any? ? "Connect another" : "Connect" %>
+              </summary>
               <%= form_with url: linked_accounts_path, class: "mt-3 space-y-3" do |form| %>
                 <%= hidden_field_tag :provider, provider, id: "provider_#{provider}" %>
+                <% if settings[:multi] %>
+                  <div class="space-y-1">
+                    <%= label_tag "#{provider}_label", "Label", class: "label" %>
+                    <%= text_field_tag :label, nil, id: "#{provider}_label", class: "input",
+                          placeholder: "Personal, Work…", required: true %>
+                    <p class="hint">You can link more than one <%= settings[:label].downcase %> account — the label tells them apart.</p>
+                  </div>
+                <% end %>
                 <% settings[:fields].each do |field| %>
                   <div class="space-y-1">
                     <%= label_tag "#{provider}_#{field[:key]}", field[:label], class: "label" %>
@@ -128,6 +109,41 @@
         </div>
       <% end %>
     </div>
+  <% end %>
+
+  <% if Current.user.linked_accounts.where(provider: "email").exists? %>
+    <%= render Ui::CardComponent.new(title: "Mail", subtitle: "The daily digest and what you've taught the assistant about senders") do %>
+      <%= form_with url: mail_settings_path, method: :patch, class: "flex flex-wrap items-end gap-3" do |form| %>
+        <div class="space-y-1">
+          <label class="label" for="mail_digest_hour">Digest time (household clock)</label>
+          <%= select_tag :mail_digest_hour,
+                options_for_select((0..23).map { |hour| [ Time.new(2000, 1, 1, hour).strftime("%-l %p"), hour ] }, Current.user.mail_digest_hour),
+                id: "mail_digest_hour", class: "input w-auto" %>
+        </div>
+        <label class="flex items-center gap-2 pb-2 text-sm">
+          <%= check_box_tag :mail_digest_notify, "1", Current.user.mail_digest_notify?, class: "size-4 rounded accent-primary-600" %>
+          Send a pointer to my notification channels (titles only)
+        </label>
+        <%= form.submit "Save", class: "btn-sm" %>
+      <% end %>
+      <p class="mt-2 text-xs text-soft">On a day with no important mail, no digest appears and nothing is sent.</p>
+
+      <% rules = Current.user.email_sender_rules.order(:email) %>
+      <% if rules.any? %>
+        <div class="mt-4 border-t border-edge pt-3">
+          <h3 class="mb-2 text-sm font-semibold text-ink">Sender rules you've taught it</h3>
+          <ul class="space-y-1.5">
+            <% rules.each do |rule| %>
+              <li class="flex items-center gap-2 text-sm">
+                <span class="chip <%= rule.rule == "vip" ? "bg-primary-50 text-primary-800" : "bg-stone-100 text-stone-600" %>"><%= rule.rule == "vip" ? "always important" : "muted" %></span>
+                <span class="min-w-0 truncate text-ink"><%= rule.email %></span>
+                <%= button_to "Remove", email_sender_rule_path(rule), method: :delete, class: "btn btn-ghost btn-sm ml-auto" %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
   <% end %>
 
   <% if Current.user.admin? %>
@@ -198,71 +214,16 @@
     <p class="mt-2 text-xs text-soft">Only what you own is included — items shared with you belong to their owners. Whole-instance backup = copy the storage/ volume.</p>
   <% end %>
 
+  <%# The household lives on its own page now (D-household-profile): shared
+      facts, members, and invites are about the house, not about you. %>
   <%= render Ui::CardComponent.new(title: "Household", subtitle: Current.user.household.name) do %>
-    <ul class="space-y-2">
-      <% Current.user.household.users.order(:name).each do |member| %>
-        <li class="flex flex-wrap items-center gap-3 rounded-lg border border-edge px-4 py-2.5 text-sm">
-          <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-800">
-            <%= member.name.split.map(&:first).join[0, 2].upcase %>
-          </span>
-          <span class="min-w-0 flex-1 truncate">
-            <span class="font-medium text-ink"><%= member.name %></span>
-            <span class="text-soft"><%= member.email_address %></span>
-          </span>
-          <% if member.admin? %><span class="chip bg-stone-100 text-stone-700">admin</span><% end %>
-          <% if member == Current.user %>
-            <span class="chip bg-primary-50 text-primary-800">you</span>
-          <% elsif Current.user.admin? %>
-            <%= button_to member.admin? ? "Remove admin" : "Make admin",
-                  household_member_path(member, admin: !member.admin?), method: :patch,
-                  class: "btn btn-ghost btn-sm" %>
-            <%= button_to "Remove", household_member_path(member), method: :delete, class: "btn btn-danger btn-sm",
-                  data: { turbo_confirm: "Remove #{member.name} from the household? Their account and ALL of their data will be permanently deleted." } %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
-
-    <% if Current.user.admin? %>
-      <div class="mt-5 border-t border-edge pt-4">
-        <h3 class="text-sm font-semibold text-ink">Where the household lives</h3>
-        <p class="mb-3 mt-0.5 text-xs text-soft">
-          State-sensitive tools (deposit deadlines, benefits, insurance, crisis lines) tailor to this — leave it blank and they'll ask or use placeholders.
-        </p>
-        <%= form_with url: household_path, method: :patch, class: "flex flex-wrap gap-2" do %>
-          <%= text_field_tag "household[region]", Current.user.household.region,
-                placeholder: "“Texas, USA”, “Ontario, Canada”…", class: "input max-w-xs flex-1" %>
-          <%= submit_tag "Save", class: "btn btn-secondary" %>
-        <% end %>
-      </div>
-
-      <div class="mt-5 border-t border-edge pt-4">
-        <h3 class="text-sm font-semibold text-ink">Invite someone</h3>
-        <p class="mb-3 mt-0.5 text-xs text-soft">
-          Creates a join link to copy and send however you like — no email setup needed. Links expire after 7 days.
-        </p>
-
-        <% @pending_invitations.each do |invitation| %>
-          <div class="mb-2 rounded-lg border border-edge px-4 py-3" data-controller="clipboard">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="text-sm font-medium text-ink">For <%= invitation.name %></span>
-              <span class="flex items-center gap-1.5">
-                <button type="button" class="btn btn-secondary btn-sm"
-                        data-clipboard-target="button" data-action="clipboard#copy">Copy link</button>
-                <%= button_to "Revoke", invitation_path(invitation), method: :delete, class: "btn btn-danger btn-sm" %>
-              </span>
-            </div>
-            <input type="text" readonly value="<%= join_url(invitation.join_token) %>"
-                   data-clipboard-target="source" data-action="click->clipboard#selectAll"
-                   class="input mt-2 text-xs text-soft">
-          </div>
-        <% end %>
-
-        <%= form_with url: invitations_path, class: "flex flex-wrap items-center gap-2" do |form| %>
-          <%= text_field_tag "invitation[name]", nil, class: "input min-w-40 flex-1", placeholder: "Their name", required: true %>
-          <%= form.submit "Create invite link" %>
-        <% end %>
-      </div>
-    <% end %>
+    <p class="text-sm text-soft">
+      Where you live, how to reach the house, who lives here, and invitations —
+      the facts every member's assistant draws on.
+    </p>
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <%= link_to "Household settings", household_path, class: "btn btn-secondary" %>
+      <span class="text-xs text-soft"><%= pluralize(@household_members.size + 1, "member") %></span>
+    </div>
   <% end %>
 </div>

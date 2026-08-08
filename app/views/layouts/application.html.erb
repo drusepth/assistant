@@ -6,6 +6,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Assistant">
     <meta name="mobile-web-app-capable" content="yes">
+    <%# Turbo page refreshes — a redirect back to the URL you're already on,
+        and every broadcast_refresh_to — morph the DOM in place and keep the
+        scroll where it was, instead of re-rendering the page and throwing
+        the reader back to the top. The chat surface is what makes this
+        visible (sending a message and receiving a reply are both refreshes),
+        but every redirect-to-self in the app gets the same smoothness, and
+        broadcast_refresh_to has assumed morphing since Turbo 8. %>
+    <meta name="turbo-refresh-method" content="morph">
+    <meta name="turbo-refresh-scroll" content="preserve">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -73,6 +82,9 @@
                 <%= nav_link_to "Photos", photos_path, :photo %>
                 <%= nav_link_to "Documents", documents_path, :document %>
                 <%= nav_link_to "Notes", notes_path, :note %>
+                <% if Current.user.linked_accounts.where(provider: "email").exists? %>
+                  <%= nav_link_to "Mail", mail_index_path, :envelope %>
+                <% end %>
                 <%= nav_link_to "Passwords", credentials_path, :key %>
               </div>
             </div>
@@ -82,6 +94,7 @@
             <% if Current.user.admin? %>
               <%= nav_link_to "Admin", admin_root_path, :warning %>
             <% end %>
+            <%= nav_link_to "Household", household_path, :home_modern %>
             <%= nav_link_to "Settings", settings_path, :cog %>
             <div class="flex items-center justify-between gap-2 px-3 py-1">
               <span class="min-w-0 truncate text-xs text-soft"><%= Current.user.name %></span>

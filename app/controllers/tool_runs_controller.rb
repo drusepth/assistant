@@ -38,13 +38,30 @@ class ToolRunsController < ApplicationController
   # "Saving recap…" state and keeps a double-click from filing two notes.
   def recap
     run = Current.user.tool_runs.find(params[:id])
-    if run.chat? && run.tool_run_messages.conversational.exists? && !run.recap_pending?
+    if run.recappable? && !run.recap_pending?
       run.update_column(:recap_requested_at, Time.current)
       ChatRecapJob.perform_later(run)
     end
     # Back to whichever chat surface the click came from — the run page or a
     # task page hosting the conversation (D30).
     redirect_back fallback_location: run
+  end
+
+  # Ask-your-email answers render on the run page without landing anything;
+  # this is the explicit door into the primitive pool (D-mirror-layer) — one click,
+  # one Note, auto-filed per D16.
+  def save_answer
+    run = Current.user.tool_runs.find(params[:id])
+    answer = run.output["answer"]
+    if answer.present? && run.items.grep(Note).empty?
+      body = [ answer["body"],
+               Array(answer["citations"]).map { |citation| "— #{citation["from"]}#{", #{citation["date"]}" if citation["date"].present?}" }.join("\n").presence
+             ].compact.join("\n\nSources:\n")
+      note = Current.user.notes.create!(title: "From your mail: #{answer["question"].to_s.first(80)}", body: body)
+      note.enqueue_auto_sort!
+      run.tool_run_items.create!(item: note)
+    end
+    redirect_to run
   end
 
   # "Try again" after a failed turn: drop the failure notice and re-enqueue
@@ -71,6 +88,10 @@ class ToolRunsController < ApplicationController
       # Hobby lenses (D25); with none yet the form falls back to free text,
       # so the Hobbies tools work before any lens exists.
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
+      # Mirrored mail is strictly the owner's (D-mirror-layer) — no visible_to path.
+      if @tool.inputs.any?(&:email_message?)
+        @email_choices = EmailMessage.where(user_id: Current.user.id).newest_first.limit(50)
+      end
     end
 
     # `new` accepts the same params so "Run again" and next-step links can

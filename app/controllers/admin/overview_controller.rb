@@ -17,8 +17,14 @@ module Admin
 
       @storage = StorageStatus.new(Current.user.household)
 
-      @cpi = Datasets::Cpi.current
-      @wages = Datasets::Wages.current
+      # Includes each dataset's last failed fetch/import: a background failure
+      # nobody would otherwise see belongs on the card it broke, not only in
+      # the error log at the bottom of the page.
+      @datasets = Datasets::Status.all
+
+      # Counts only, same rule as above: what a reset would take, never what
+      # any of it is.
+      @reset_preview = HouseholdReset.preview(Current.user.household)
     end
   end
 end

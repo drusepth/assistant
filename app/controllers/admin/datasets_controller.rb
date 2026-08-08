@@ -2,10 +2,15 @@ module Admin
   # The D-public-datasets dataset controls: fetch from BLS when the network allows, or
   # import the downloaded files by hand on an air-gapped install. Both paths
   # land in storage/datasets/ and win over the shipped seeds.
+  #
+  # Both paths also report their failures the same way: a flash for the person
+  # standing here, an AppError for the log. An import that dies on a malformed
+  # workbook used to leave nothing behind but a flash the next click erased.
   class DatasetsController < BaseController
     def refresh
       RefreshDatasetsJob.perform_later
-      redirect_to admin_root_path, notice: "Dataset refresh queued — check back in a minute (errors land in the log below)."
+      redirect_to admin_root_path,
+        notice: "Dataset refresh queued — reload in a minute; this page reports whether it worked."
     end
 
     def import
@@ -32,6 +37,8 @@ module Admin
 
         Datasets.write!(Vault::Health::DATASET, lines.join("\n") + "\n")
         redirect_to admin_root_path, notice: "Common-passwords list imported — #{lines.size} entries now checked."
+      rescue StandardError => e
+        report_failure(:common_passwords, e)
       end
 
       def import_cpi(file)
@@ -44,8 +51,8 @@ module Admin
         Datasets.write!("cpi_u.yml", { "series_id" => Datasets::Refresh::CPI_SERIES,
                                        "source" => "manual import", "refreshed_at" => Time.current.iso8601 }.to_yaml)
         redirect_to admin_root_path, notice: "CPI series imported — now through #{Datasets::Cpi.current.latest_year}."
-      rescue CSV::MalformedCSVError
-        redirect_to admin_root_path, alert: "That CSV couldn't be read."
+      rescue StandardError => e
+        report_failure(:cpi, e)
       end
 
       def import_wages(file)
@@ -56,14 +63,31 @@ module Admin
           rows, vintage = Datasets::OewsWorkbook.parse(Pathname(tempfile.path))
           detailed = rows.select { |row| row.group == "detailed" }
           if detailed.empty?
-            return redirect_to admin_root_path, alert: "No detailed occupation rows found — is this the OES national file?"
+            raise Datasets::Error, "No detailed occupation rows found — is this the OES national file?"
           end
 
           Datasets::Refresh.new.write_wages!(detailed, vintage || "unknown vintage", source: "manual import")
           redirect_to admin_root_path, notice: "Wage table imported — #{detailed.size} occupations (#{vintage})."
         end
-      rescue ArgumentError, Zip::Error => e
-        redirect_to admin_root_path, alert: "That file couldn't be read: #{e.message}"
+      rescue StandardError => e
+        report_failure(:wages, e)
+      end
+
+      # Anything the parser throws — a truncated zip, an .xlsx that is really
+      # a renamed .csv, an encoding the sheet reader chokes on — is a file
+      # problem the admin can act on, not a 500 to swallow.
+      def report_failure(dataset, error)
+        AppError.record(error, source: "dataset_import:#{dataset}", user: Current.user)
+        redirect_to admin_root_path,
+          alert: "That file couldn't be read: #{friendly_message(error)} Nothing was changed."
+      end
+
+      def friendly_message(error)
+        case error
+        when CSV::MalformedCSVError then "the CSV is malformed."
+        when Datasets::Error, ArgumentError, Zip::Error then error.message
+        else "#{error.class} — the full error is in the log below."
+        end
       end
   end
 end

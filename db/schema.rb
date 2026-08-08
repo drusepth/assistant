@@ -143,6 +143,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.index ["user_id"], name: "index_documents_on_user_id"
   end
 
+  create_table "email_sender_rules", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "rule", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "email"], name: "index_email_sender_rules_on_user_id_and_email", unique: true
+    t.index ["user_id"], name: "index_email_sender_rules_on_user_id"
+  end
+
   create_table "emergency_contacts", force: :cascade do |t|
     t.integer "contact_user_id", null: false
     t.datetime "created_at", null: false
@@ -187,9 +197,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   end
 
   create_table "households", force: :cascade do |t|
+    t.text "address"
     t.datetime "created_at", null: false
+    t.string "home_status"
+    t.date "moved_in_on"
     t.string "name", null: false
+    t.string "phone"
     t.string "region"
+    t.string "tagline"
+    t.string "time_zone"
     t.datetime "updated_at", null: false
   end
 
@@ -235,14 +251,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
 
   create_table "linked_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.json "credentials", default: {}, null: false
+    t.text "credentials", default: "{}", null: false
     t.json "disabled_scopes", default: [], null: false
+    t.string "label"
     t.string "provider", null: false
+    t.json "settings", default: {}, null: false
     t.string "sync_error"
     t.datetime "synced_at"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["user_id", "provider"], name: "index_linked_accounts_on_user_id_and_provider", unique: true
+    t.index ["user_id", "provider"], name: "index_linked_accounts_on_user_id_and_provider"
     t.index ["user_id"], name: "index_linked_accounts_on_user_id"
   end
 
@@ -451,6 +469,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.datetime "digest_generated_at"
     t.string "email_address", null: false
     t.integer "household_id", null: false
+    t.json "mail_digest"
+    t.date "mail_digest_generated_on"
+    t.integer "mail_digest_hour", default: 8, null: false
+    t.boolean "mail_digest_notify", default: false, null: false
     t.string "name", null: false
     t.datetime "onboarded_at"
     t.string "password_digest", null: false
@@ -488,6 +510,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   add_foreign_key "credential_keys", "users"
   add_foreign_key "credentials", "users"
   add_foreign_key "documents", "users"
+  add_foreign_key "email_sender_rules", "users"
   add_foreign_key "emergency_contacts", "users"
   add_foreign_key "emergency_contacts", "users", column: "contact_user_id"
   add_foreign_key "events", "goals"

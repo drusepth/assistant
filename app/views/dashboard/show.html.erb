@@ -1,20 +1,8 @@
 <div data-controller="quick-add" data-action="keydown.esc@window->quick-add#closeAll click@window->quick-add#clickOutside">
-  <%= render Ui::PageHeaderComponent.new(title: "Dashboard", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
-    <% header.with_actions do %>
-      <%= render Ui::QuickAddComponent.new(name: "task", label: "Task", title: "New task") do %>
-        <%= render "tasks/quick_form", task: @quick_task, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note") do %>
-        <%= render "notes/quick_form", note: @quick_note, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "event", label: "Event", title: "New event") do %>
-        <%= render "events/quick_form", event: @quick_event, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "goal", label: "Goal", title: "New goal", primary: true) do %>
-        <%= render "goals/quick_form", goal: @quick_goal, return_to: root_path, autofocus: false %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%# The hero absorbs the page header: the household's name is the title of
+      its own dashboard, and the quick-add row rides along inside it. %>
+  <%= render "hero", hero: @hero, quick_task: @quick_task, quick_note: @quick_note,
+        quick_event: @quick_event, quick_goal: @quick_goal %>
 </div>
 
 <% attention_count = @overdue_tasks.size + @due_today_tasks.size %>
@@ -43,6 +31,38 @@
     <%= render Ui::CardComponent.new(title: "From your assistant",
           subtitle: "Suggestions from a weekly look at your own data — accept, snooze, or dismiss", padded: false) do %>
       <div class="divide-y divide-edge"><%= render @suggestions %></div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# The daily mail digest (EMAIL_PLAN.md §7): deterministic selection,
+    optional phrased line, feedback buttons teaching sender rules.
+    Renders nothing on a quiet day — silence is a feature. %>
+<% digest = Current.user.mail_digest %>
+<% if digest.present? && Array(digest["items"]).any? && digest["date"] == Date.current.iso8601 %>
+  <div class="mb-6">
+    <%= render Ui::CardComponent.new(title: "Mail",
+          subtitle: "Today's mail worth a look — from your linked #{"mailbox".pluralize(Current.user.linked_accounts.where(provider: "email").count)}", padded: false) do %>
+      <% if digest["phrased"].present? %>
+        <p class="border-b border-edge px-5 py-3 text-sm text-primary-900/90"><%= digest["phrased"] %></p>
+      <% end %>
+      <div class="divide-y divide-edge">
+        <% Array(digest["items"]).each do |item| %>
+          <div class="flex flex-wrap items-center gap-2 px-5 py-2.5 text-sm">
+            <%= link_to mail_path(item["id"]), class: "min-w-0 flex-1" do %>
+              <span class="font-medium text-ink"><%= item["from"] %></span>
+              <span class="text-soft">— <%= item["subject"] %></span>
+              <% if item["deadline_on"] %><span class="chip bg-amber-100 text-amber-800">deadline <%= item["deadline_on"] %></span><% end %>
+            <% end %>
+            <span class="flex shrink-0 items-center gap-1">
+              <%= button_to "More like this", email_sender_rules_path(email: item["from_email"], rule: "vip"),
+                    method: :post, class: "btn btn-ghost btn-sm", title: "Always treat mail from this sender as important" %>
+              <%= button_to "Not important", email_sender_rules_path(email: item["from_email"], rule: "mute"),
+                    method: :post, class: "btn btn-ghost btn-sm", title: "Stop surfacing mail from this sender" %>
+            </span>
+          </div>
+        <% end %>
+      </div>
     <% end %>
   </div>
 <% end %>

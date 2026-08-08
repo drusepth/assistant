@@ -57,6 +57,40 @@ class Admin::DatasetsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "hunter2\nletmein\n", Datasets.read_path(Vault::Health::DATASET).read
   end
 
+  test "a file that isn't a workbook explains and lands in the error log" do
+    post admin_import_datasets_path, params: {
+      file: fixture_file_upload(csv_file("not a zip at all", extension: ".zip"), "application/zip")
+    }
+
+    assert_redirected_to admin_root_path
+    assert_match(/couldn't be read/, flash[:alert])
+    assert_match(/Nothing was changed/, flash[:alert])
+
+    error = AppError.find_by(source: "dataset_import:wages")
+    assert error.present?, "an import that dies on a bad file is recorded, not swallowed"
+    assert_equal users(:one), error.user
+  end
+
+  test "a malformed CPI csv explains and is recorded" do
+    post admin_import_datasets_path, params: {
+      file: fixture_file_upload(csv_file(%(year,value\n2025,"320), extension: ".csv"), "text/csv")
+    }
+
+    assert_match(/malformed/, flash[:alert])
+    assert AppError.exists?(source: "dataset_import:cpi")
+  end
+
+  test "the admin card names a failed fetch in place" do
+    AppError.record(Datasets::Error.new("bls.gov refused every request with HTTP 403"),
+      source: "dataset_refresh:wages")
+
+    get admin_root_path
+
+    assert_response :success
+    assert_match(/Last fetch failed/, response.body)
+    assert_match(/refused every request with HTTP 403/, response.body)
+  end
+
   private
     def csv_file(content, extension: ".csv")
       file = Tempfile.new([ "import", extension ])

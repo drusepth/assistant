@@ -7,69 +7,108 @@
       title        — optional card title %>
 <% openers = local_assigns.fetch(:openers, []) %>
 <% title = local_assigns[:title] %>
+<% thinking = run&.awaiting_reply? %>
+<%# A suggestion the user already took is noise, not an offer. %>
+<% suggestions = run ? run.unused_quick_replies : tool.quick_replies %>
 
 <%= render Ui::CardComponent.new(title: title, padded: false) do %>
-  <%# flex-col-reverse pins the scroll to the newest turn, so markup
-      order is bottom-up: indicator/retry first, oldest-context last. %>
-  <div class="flex max-h-[65vh] flex-col-reverse gap-3 overflow-y-auto p-4">
-    <% if run&.awaiting_reply? %>
-      <div class="flex justify-start">
-        <div class="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-3">
-          <span class="size-1.5 animate-bounce rounded-full bg-stone-400"></span>
-          <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:150ms]"></span>
-          <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:300ms]"></span>
-        </div>
-      </div>
-    <% elsif run&.reply_failed? %>
-      <div class="flex justify-center">
-        <%= button_to "Try again", retry_reply_tool_run_path(run), method: :post,
-              class: "btn btn-secondary btn-sm" %>
-      </div>
-    <% end %>
-    <% if run %>
-      <%= render partial: "tool_runs/message", collection: run.tool_run_messages.ordered.reverse %>
-      <% if (recap = run.previous_recap) %>
-        <p class="text-center text-xs text-soft">
-          Picking up from last time —
-          <%= link_to recap.title, recap, class: "underline decoration-stone-300 underline-offset-2 hover:text-ink" %>
-        </p>
+  <div class="relative" data-controller="chat-scroll">
+    <%# Natural reading order — oldest first — so the transcript copies,
+        reads aloud, and selects the way a conversation should; chat-scroll
+        keeps it pinned to the newest turn and offers a way back down when
+        the user has scrolled off to read history. A live transcript also
+        gets a height floor so the composer stops hopping as it grows; an
+        unstarted conversation is just its openers, and shouldn't open a
+        well of empty space under them. %>
+    <%# The id is what lets a morphing refresh match this element to itself
+        and mutate its children, rather than swapping the scroller out from
+        under its observer and scroll position. %>
+    <div id="chat-transcript" class="flex max-h-[calc(100dvh-20rem)] flex-col gap-4 overflow-y-auto p-4 sm:p-5 <%= "min-h-72" if run %>"
+         role="log" aria-live="polite" aria-relevant="additions" aria-busy="<%= thinking.present? %>"
+         data-chat-scroll-target="scroller" data-action="scroll->chat-scroll#track">
+      <% if run %>
+        <% if (recap = run.previous_recap) %>
+          <p class="text-center text-xs text-soft">
+            Picking up from last time —
+            <%= link_to recap.title, recap, class: "underline decoration-stone-300 underline-offset-2 hover:text-ink" %>
+          </p>
+        <% end %>
+        <%= render partial: "tool_runs/message", collection: run.tool_run_messages.ordered %>
+      <% else %>
+        <% openers.each do |opener| %>
+          <div class="flex justify-start">
+            <div class="bubble bubble-assistant whitespace-pre-wrap"><%= opener %></div>
+          </div>
+        <% end %>
       <% end %>
-    <% else %>
-      <% openers.reverse.each do |opener| %>
-        <div class="flex justify-start">
-          <div class="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-2 text-sm text-ink">
-            <%= opener %>
+
+      <% if thinking %>
+        <div class="flex justify-start" role="status">
+          <span class="sr-only">Writing a reply…</span>
+          <div class="bubble bubble-assistant flex items-center gap-1 py-3.5">
+            <span class="size-1.5 animate-bounce rounded-full bg-stone-400"></span>
+            <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:150ms]"></span>
+            <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:300ms]"></span>
           </div>
         </div>
+      <% elsif run&.reply_failed? %>
+        <div class="flex justify-center">
+          <%= button_to "Try again", retry_reply_tool_run_path(run), method: :post,
+                class: "btn btn-secondary btn-sm" %>
+        </div>
       <% end %>
-    <% end %>
+    </div>
+
+    <button type="button" class="absolute bottom-3 left-1/2 hidden -translate-x-1/2 rounded-full border border-edge bg-surface p-2 text-soft shadow-sm transition-colors hover:text-ink"
+            aria-label="Jump to the latest message"
+            data-chat-scroll-target="jump" data-action="chat-scroll#jump">
+      <%= icon(:arrow_down, css_class: "size-4") %>
+    </button>
   </div>
-  <div class="border-t border-edge p-3">
-    <%= form_with url: composer_url, class: "space-y-2",
-          data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do %>
-      <% if tool.quick_replies.any? && !run&.awaiting_reply? %>
+
+  <div class="border-t border-edge p-3 sm:p-4">
+    <%# A morphing refresh re-renders the send button from the server, which
+        knows about the in-flight lock but not about the empty draft in front
+        of the user — and connect() won't run again to re-apply it. %>
+    <%= form_with url: composer_url, class: "space-y-2.5",
+          data: { controller: "chat-input",
+                  action: "turbo:submit-end->chat-input#reset " \
+                          "turbo:morph@document->chat-input#refreshSend " \
+                          "turbo:render@document->chat-input#refreshSend" } do %>
+      <% if suggestions.any? && !thinking %>
         <div class="flex flex-wrap gap-1.5">
-          <% tool.quick_replies.each do |reply| %>
-            <button type="button" class="chip border border-edge bg-surface text-soft hover:border-primary-300 hover:text-ink"
+          <% suggestions.each do |reply| %>
+            <button type="button" class="chip cursor-pointer border border-edge bg-surface text-soft transition-colors hover:border-primary-300 hover:text-ink"
                     data-action="chat-input#quickReply" data-chat-input-text-param="<%= reply %>">
               <%= reply %>
             </button>
           <% end %>
         </div>
       <% end %>
-      <div class="flex items-end gap-2">
-        <%= text_area_tag :content, nil, rows: 3, id: "chat-composer", class: "input flex-1 resize-none",
-              autocomplete: "off", placeholder: "Ask, answer, or say where to go next… (Shift+Enter for a new line)",
+      <div class="composer">
+        <%= label_tag "chat-composer", "Your message", class: "sr-only" %>
+        <%= text_area_tag :content, nil, rows: 1, id: "chat-composer", class: "composer-input",
+              autocomplete: "off", placeholder: "Type a message…",
               data: { turbo_permanent: true, chat_input_target: "input",
                       action: "keydown->chat-input#keydown input->chat-input#grow" } %>
-        <%= submit_tag run&.awaiting_reply? ? "Thinking…" : "Send",
-              class: "btn btn-primary", disabled: run&.awaiting_reply? %>
+        <%# Two ways to be disabled, and only one of them is the composer's.
+            `data-locked` is the server saying a reply is in flight; the
+            empty-draft dimming is JS, applied on top and never over it — so
+            with JS off the button still sends. %>
+        <%= tag.button type: "submit", class: "composer-send", disabled: thinking,
+              aria: { label: thinking ? "Writing a reply…" : "Send" },
+              data: { chat_input_target: "send", locked: thinking.presence } do %>
+          <%= icon(:paper_airplane, css_class: "size-5") %>
+        <% end %>
       </div>
+      <p class="hidden px-1 text-right text-xs text-soft sm:block">
+        Enter to send · Shift+Enter for a new line
+      </p>
     <% end %>
   </div>
 <% end %>
 
-<% if run && run.tool_run_messages.user_role.exists? %>
+<% if run&.recappable? %>
   <div class="flex items-center justify-between gap-4">
     <p class="text-xs text-soft"><%= tool.recap_hint %></p>
     <div class="shrink-0"><%= render "tool_runs/recap_button", tool_run: run %></div>

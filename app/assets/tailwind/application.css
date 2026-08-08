@@ -72,4 +72,27 @@
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
+
+  /* Chat (D29): the transcript bubble and the composer shell. Retheming the
+     conversation surface happens here, not in the chat partials. */
+  .bubble {
+    @apply max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed;
+  }
+  .bubble-user {
+    @apply rounded-br-md bg-primary-600 text-white;
+  }
+  .bubble-assistant {
+    @apply rounded-bl-md bg-stone-100 text-ink;
+  }
+  /* One rounded field holding the growing textarea and its send button, with
+     the focus ring on the whole thing — the shape every chat box has. */
+  .composer {
+    @apply flex items-end gap-1.5 rounded-2xl border border-edge bg-surface p-1.5 transition-colors focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20;
+  }
+  .composer-input {
+    @apply max-h-60 min-w-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-2 text-sm leading-relaxed text-ink placeholder:text-stone-400 focus:outline-none focus:ring-0;
+  }
+  .composer-send {
+    @apply flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-primary-600 text-white transition-colors hover:bg-primary-700 disabled:cursor-default disabled:bg-stone-200 disabled:text-stone-400;
+  }
 }

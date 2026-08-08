@@ -31,6 +31,27 @@ class DepositDemandToolTest < ActiveJob::TestCase
     end
   end
 
+  test "the household's own address rides along as the letterhead (D-household-profile)" do
+    users(:one).household.update!(address: "123 Maple Street\nAustin, TX 78701", phone: "(512) 555-0142")
+    run = users(:one).tool_runs.create!(tool_slug: "deposit_demand", inputs: { "details" => "Moved out June 30" })
+    stub_llm(letter: { title: nil, body: "..." }, follow_ups: [], deadlines: [])
+
+    ToolRunJob.perform_now(run)
+
+    assert_requested(:post, ENDPOINT) do |request|
+      request.body.include?("123 Maple Street") && request.body.include?("(512) 555-0142")
+    end
+  end
+
+  test "a household that never filled in an address sends no letterhead block" do
+    run = users(:one).tool_runs.create!(tool_slug: "deposit_demand", inputs: { "details" => "Moved out June 30" })
+    stub_llm(letter: { title: nil, body: "..." }, follow_ups: [], deadlines: [])
+
+    ToolRunJob.perform_now(run)
+
+    assert_requested(:post, ENDPOINT) { |request| !request.body.include?("letterhead") }
+  end
+
   test "a chosen lease joins the prompt and the filing" do
     lease = users(:one).documents.create!(title: "Oak St lease", extracted_text: "Security deposit: $1,800...")
     lease.sections << sections(:money)

@@ -5,6 +5,7 @@ class DashboardController < ApplicationController
     @upcoming_events = Event.visible_to(Current.user)
       .overlapping(Time.current..7.days.from_now.end_of_day).includes(:sections).limit(8)
     @suggestions = Current.user.suggestions.actionable.order(created_at: :desc).includes(:sections).limit(5)
+    @hero = Households::Hero.new(Current.user)
 
     # Blank records for the header's inline quick-add forms.
     @quick_task = Current.user.tasks.new

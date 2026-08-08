@@ -213,8 +213,58 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     get tool_run_path(run)
 
     assert_response :success
-    assert_select "input[type=submit][disabled][value='Thinking…']"
+    assert_select "button[type=submit][disabled][data-locked]"
     assert_select "span.animate-bounce", count: 3
+  end
+
+  test "the composer ships enabled and unlocked when it's the user's turn" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Where shall we start?")
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select "button[type=submit][data-locked]", count: 0, message: "no lock when nothing is in flight"
+    assert_select "button[type=submit][disabled]", count: 0, message: "sends without JS"
+  end
+
+  test "the page declares morphing refreshes, so sending a message doesn't reset the scroll" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+
+    get tool_run_path(run)
+
+    # Both composers redirect back to the page they're on, and every chat job
+    # broadcasts a refresh — without these the reader is thrown to the top of
+    # the page twice per turn.
+    assert_select "meta[name=turbo-refresh-method][content=morph]"
+    assert_select "meta[name=turbo-refresh-scroll][content=preserve]"
+    assert_select "#chat-transcript", count: 1, message: "the scroller is id'd so a morph matches it"
+  end
+
+  test "a quick reply the user already sent is not offered again" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Where shall we start?")
+    run.tool_run_messages.create!(role: :user, content: "Quiz me")
+    run.tool_run_messages.create!(role: :assistant, content: "What is 1/2 + 1/4?")
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select "[data-chat-input-text-param=?]", "Quiz me", count: 0
+    assert_select "[data-chat-input-text-param]", minimum: 1, message: "the untaken suggestions stay"
+  end
+
+  test "an assistant turn's light markdown renders as markup, and a user's does not" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Two **halves**:\n- one\n- two")
+    run.tool_run_messages.create!(role: :user, content: "so 2 * 2 and **not bold**")
+
+    get tool_run_path(run)
+
+    assert_select ".bubble-assistant strong", text: "halves"
+    assert_select ".bubble-assistant li", count: 2
+    assert_select ".bubble-user strong", count: 0
+    assert_match "**not bold**", response.body
   end
 
   test "a failed turn offers try again, which drops the notice and re-enqueues the reply" do

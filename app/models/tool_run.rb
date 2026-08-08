@@ -57,6 +57,20 @@ class ToolRun < ApplicationRecord
       tool_run_messages.conversational.ordered.last&.user_role?
   end
 
+  # There's a session here worth wrapping up. One predicate so the recap
+  # button and the recap action can never disagree about whether the click
+  # would do anything — the button had a second home in the page header,
+  # under a looser condition, and the two drifted.
+  def recappable?
+    chat? && tool_run_messages.conversational.exists?
+  end
+
+  # The tool's quick-reply chips, minus the ones the user has already sent:
+  # a suggestion they've taken is clutter, not an offer.
+  def unused_quick_replies
+    tool.quick_replies - tool_run_messages.user_role.pluck(:content)
+  end
+
   # A recap request is in flight — clicked but ChatRecapJob hasn't landed.
   # The staleness window unsticks the button if the job is lost outright.
   def recap_pending?

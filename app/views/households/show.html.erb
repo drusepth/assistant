@@ -1,0 +1,149 @@
+<%# The household page (D-household-profile): shared facts, members, invites.
+    Admins edit; everyone else reads the same page without the forms. %>
+<%= render Ui::PageHeaderComponent.new(title: "Household",
+      subtitle: "Facts every member's assistant can draw on — and who lives here") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Your settings", settings_path, class: "btn btn-secondary" %>
+  <% end %>
+<% end %>
+
+<div class="max-w-2xl space-y-6">
+  <% if Current.user.admin? %>
+    <%= form_with model: @household, url: household_path, method: :patch, class: "space-y-6" do |form| %>
+      <%= render Ui::CardComponent.new(title: "Identity", subtitle: "What your dashboard greets you with every visit") do %>
+        <div class="space-y-4">
+          <%= form.field :name, label_text: "Household name" %>
+          <%= form.field :tagline, label_text: "Tagline",
+                placeholder: "“The loud house on Maple Street”",
+                hint: "Optional. Shown under the name on your dashboard." %>
+
+          <div class="space-y-1">
+            <%= form.label :banner, "Banner photo" %>
+            <% if @household.banner.attached? %>
+              <div class="mb-2 overflow-hidden rounded-lg border border-edge">
+                <%= image_tag url_for(@household.banner.variant(:cover)), alt: "Current banner", class: "h-28 w-full object-cover" %>
+              </div>
+            <% end %>
+            <%= form.file_field :banner, accept: "image/png, image/jpeg, image/webp" %>
+            <p class="hint">Optional. Sits across the top of the dashboard — a wide shot of the house or the people in it works best.</p>
+          </div>
+        </div>
+      <% end %>
+
+      <%= render Ui::CardComponent.new(title: "Where you live",
+            subtitle: "Letters, forms, and “near me” searches fill in from here instead of asking you every time") do %>
+        <div class="space-y-4">
+          <%= form.field :address, as: :text_area, label_text: "Mailing address", rows: 3,
+                placeholder: "123 Maple Street&#10;Apt 4B&#10;Austin, TX 78701",
+                hint: "Free-form, one line per line — it gets used as a block on letters." %>
+          <%= form.field :region, label_text: "Region for legal and benefits questions",
+                placeholder: "“Texas, USA”, “Ontario, Canada”…",
+                hint: "State-sensitive tools (deposit deadlines, benefits, insurance, crisis lines) tailor to this. Leave it blank and they'll ask or use placeholders." %>
+          <%= form.field :phone, as: :telephone_field, label_text: "Household phone",
+                placeholder: "(512) 555-0142",
+                hint: "The number to put on forms — a shared line, or whoever answers for the house." %>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <%= form.field :home_status, label_text: "Do you own or rent?",
+                  hint: "Decides which housing help is relevant to you." do %>
+              <%= form.select :home_status,
+                    options_for_select(Household::HOME_STATUSES.map { |status| [ status.capitalize, status ] }, @household.home_status),
+                    include_blank: "Prefer not to say" %>
+            <% end %>
+            <%= form.field :moved_in_on, as: :date_field, label_text: "Living here since",
+                  hint: "Powers your home anniversary and lease-clock math." %>
+          </div>
+          <%= form.field :time_zone, label_text: "Time zone",
+                hint: "Everything dated in the app — “due today”, all-day events, the weekly scan — is computed in this zone." do %>
+            <%= form.time_zone_select :time_zone, nil,
+                  { include_blank: "Use the server's zone (#{Time.zone.name})" }, class: "input" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <%= form.submit "Save household" %>
+        <% if @household.banner.attached? %>
+          <%= link_to "Remove banner", banner_household_path, data: { turbo_method: :delete }, class: "btn btn-ghost" %>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <%= render Ui::CardComponent.new(title: @household.name, subtitle: @household.tagline.presence) do %>
+      <% if @household.profile_complete? %>
+        <dl class="space-y-3 text-sm">
+          <% {
+               "Address" => @household.address_lines.join(", ").presence,
+               "Region" => @household.region.presence,
+               "Phone" => @household.phone.presence,
+               "Home" => @household.home_status_label,
+               "Living here since" => @household.moved_in_on&.strftime("%B %Y"),
+               "Time zone" => @household.time_zone.presence
+             }.compact.each do |term, value| %>
+            <div class="flex flex-wrap gap-x-3">
+              <dt class="w-40 shrink-0 text-soft"><%= term %></dt>
+              <dd class="min-w-0 text-ink"><%= value %></dd>
+            </div>
+          <% end %>
+        </dl>
+      <% else %>
+        <p class="text-sm text-soft">No household details recorded yet. A household admin can fill them in.</p>
+      <% end %>
+      <p class="mt-4 border-t border-edge pt-3 text-xs text-soft">Only household admins can change these.</p>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Members", subtitle: "Everyone with their own account on this instance") do %>
+    <ul class="space-y-2">
+      <% @members.each do |member| %>
+        <li class="flex flex-wrap items-center gap-3 rounded-lg border border-edge px-4 py-2.5 text-sm">
+          <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-800">
+            <%= member.name.split.map(&:first).join[0, 2].upcase %>
+          </span>
+          <span class="min-w-0 flex-1 truncate">
+            <span class="font-medium text-ink"><%= member.name %></span>
+            <span class="text-soft"><%= member.email_address %></span>
+          </span>
+          <% if member.admin? %><span class="chip bg-stone-100 text-stone-700">admin</span><% end %>
+          <% if member == Current.user %>
+            <span class="chip bg-primary-50 text-primary-800">you</span>
+          <% elsif Current.user.admin? %>
+            <%= button_to member.admin? ? "Remove admin" : "Make admin",
+                  household_member_path(member, admin: !member.admin?), method: :patch,
+                  class: "btn btn-ghost btn-sm" %>
+            <%= button_to "Remove", household_member_path(member), method: :delete, class: "btn btn-danger btn-sm",
+                  data: { turbo_confirm: "Remove #{member.name} from the household? Their account and ALL of their data will be permanently deleted." } %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="mt-4 text-xs text-soft">
+      Members share a household, not a diary: everything you create stays private to you until you share it (per item, or a whole section from your Settings).
+    </p>
+  <% end %>
+
+  <% if Current.user.admin? %>
+    <%= render Ui::CardComponent.new(title: "Invite someone",
+          subtitle: "Creates a join link to copy and send however you like — no email setup needed. Links expire after 7 days.") do %>
+      <% @pending_invitations.each do |invitation| %>
+        <div class="mb-2 rounded-lg border border-edge px-4 py-3" data-controller="clipboard">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-sm font-medium text-ink">For <%= invitation.name %></span>
+            <span class="flex items-center gap-1.5">
+              <button type="button" class="btn btn-secondary btn-sm"
+                      data-clipboard-target="button" data-action="clipboard#copy">Copy link</button>
+              <%= button_to "Revoke", invitation_path(invitation), method: :delete, class: "btn btn-danger btn-sm" %>
+            </span>
+          </div>
+          <input type="text" readonly value="<%= join_url(invitation.join_token) %>"
+                 data-clipboard-target="source" data-action="click->clipboard#selectAll"
+                 class="input mt-2 text-xs text-soft">
+        </div>
+      <% end %>
+
+      <%= form_with url: invitations_path, class: "flex flex-wrap items-center gap-2" do |form| %>
+        <%= text_field_tag "invitation[name]", nil, class: "input min-w-40 flex-1", placeholder: "Their name", required: true %>
+        <%= form.submit "Create invite link" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

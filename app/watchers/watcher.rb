@@ -13,6 +13,7 @@ module Watcher
     checkup_cadence stay_in_touch birthday_radar renewal_radar goal_stall neglected_hobby
     same_day_sync stale_task on_this_day
     stub_anomaly raise_cadence interview_ahead application_follow_up real_terms_drift job_scout
+    email_deadline email_reply_wanted email_no_reply email_unanswered
   ].freeze
 
   module_function

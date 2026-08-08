@@ -2,23 +2,31 @@ import { Controller } from "@hotwired/stimulus"
 
 // The chat composer, attached to the form. The draft box grows with its
 // content up to a cap; Enter sends and Shift+Enter breaks the line (touch
-// keyboards keep Enter as newline and send by button); quick-reply chips
-// send a canned turn without eating a typed draft. The textarea itself is
+// keyboards keep Enter as newline and send by button, so Cmd/Ctrl+Enter is
+// there for hardware keyboards on tablets); quick-reply chips send a canned
+// turn without eating a typed draft. The textarea itself is
 // [data-turbo-permanent] so a half-typed draft survives the page refresh
 // that delivers the tutor's reply — which is why a *successful* send has
 // to clear it here.
+//
+// The send button is dimmed on an empty draft, but only ever on top of the
+// server's own [data-locked] (a reply is in flight): the markup ships
+// enabled, so a composer with no JS still sends.
 export default class extends Controller {
-  static targets = ["input"]
+  static targets = ["input", "send"]
   static values = { maxHeight: { type: Number, default: 240 } }
 
   connect() {
     this.grow()
-    this.inputTarget.focus()
+    this.refreshSend()
+    if (!this.touch) this.inputTarget.focus()
   }
 
   keydown(event) {
     if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
-    if (window.matchMedia("(pointer: coarse)").matches) return
+
+    const shortcut = event.metaKey || event.ctrlKey
+    if (this.touch && !shortcut) return
 
     event.preventDefault()
     if (this.inputTarget.value.trim() && !this.sendBlocked) this.send()
@@ -38,20 +46,32 @@ export default class extends Controller {
     this.inputTarget.value = this.stashedDraft || ""
     this.stashedDraft = null
     this.grow()
-    this.inputTarget.focus()
+    this.refreshSend()
+    if (!this.touch) this.inputTarget.focus()
   }
 
   grow() {
     const input = this.inputTarget
     input.style.height = "auto"
     input.style.height = `${Math.min(input.scrollHeight, this.maxHeightValue)}px`
+    this.refreshSend()
   }
 
   send() {
     this.element.requestSubmit()
   }
 
+  refreshSend() {
+    if (!this.hasSendTarget || this.sendBlocked) return
+
+    this.sendTarget.disabled = this.inputTarget.value.trim() === ""
+  }
+
   get sendBlocked() {
-    return this.element.querySelector("[type=submit]")?.disabled
+    return this.hasSendTarget && this.sendTarget.hasAttribute("data-locked")
+  }
+
+  get touch() {
+    return window.matchMedia("(pointer: coarse)").matches
   }
 }

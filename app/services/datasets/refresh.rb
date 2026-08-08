@@ -11,11 +11,28 @@ module Datasets
     CPI_API = URI("https://api.bls.gov/publicAPI/v2/timeseries/data/").freeze
     CPI_SERIES = "CUUR0000SA0".freeze
     CPI_YEARS_BACK = 9 # the unregistered API caps a request at 10 years
-    OES_URL = "https://www.bls.gov/oes/special-requests/oesm%02dnat.zip".freeze
+
+    # bls.gov answers 403 to clients it doesn't recognize — a default
+    # `User-Agent: Ruby` is refused at the edge before the file is ever
+    # looked up, which is why every vintage failed identically. Identify the
+    # instance instead, the way BLS asks automated callers to.
+    USER_AGENT = "Mozilla/5.0 (compatible; assistant/1.0; +https://github.com/drusepth/assistant)".freeze
+
+    # BLS has published the national zip under both spellings of the
+    # directory and moves between them without notice; the file is small
+    # enough to just try both rather than pin a guess.
+    OES_URLS = [
+      "https://www.bls.gov/oes/special.requests/oesm%02dnat.zip",
+      "https://www.bls.gov/oes/special-requests/oesm%02dnat.zip"
+    ].freeze
+    OES_VINTAGES = 3
     MAX_DOWNLOAD_BYTES = 120.megabytes
+    MAX_REDIRECTS = 3
     OPEN_TIMEOUT = 10
     READ_TIMEOUT = 120
 
+    # `errors` holds the exceptions themselves, not their messages: the
+    # /admin log wants the class and backtrace too.
     Result = Struct.new(:cpi_years, :wage_rows, :errors, keyword_init: true)
 
     def call
@@ -23,13 +40,13 @@ module Datasets
       cpi_years = begin
         refresh_cpi!
       rescue StandardError => e
-        errors[:cpi] = e.message
+        errors[:cpi] = e
         nil
       end
       wage_rows = begin
         refresh_wages!
       rescue StandardError => e
-        errors[:wages] = e.message
+        errors[:wages] = e
         nil
       end
       Result.new(cpi_years: cpi_years, wage_rows: wage_rows, errors: errors)
@@ -40,7 +57,7 @@ module Datasets
     def refresh_cpi!
       merged = Cpi.current.then { |cpi| (2015..Date.current.year).filter_map { |y| v = cpi.value_for(y); [ y, v ] if v }.to_h }
       merged.merge!(fetched_cpi_values)
-      raise "BLS returned no annual averages" if merged.empty?
+      raise Datasets::Error, "BLS returned no annual averages" if merged.empty?
 
       csv = [ "year,value", *merged.sort.map { |year, value| "#{year},#{value}" } ].join("\n")
       Datasets.write!(Cpi::FILENAME, csv + "\n")
@@ -55,7 +72,7 @@ module Datasets
       year, archive = download_latest_oes
       rows, vintage = OewsWorkbook.parse(archive.path)
       detailed = rows.select { |row| row.group == "detailed" }
-      raise "The OES workbook had no detailed occupation rows" if detailed.empty?
+      raise Datasets::Error, "The OES workbook had no detailed occupation rows" if detailed.empty?
 
       write_wages!(detailed, vintage || "May #{year}", source: "bls.gov/oes")
       detailed.size
@@ -85,7 +102,9 @@ module Datasets
           annualaverage: true
         }.to_json
         response = post_json(CPI_API, body)
-        raise "BLS API: #{response["message"].presence || response["status"]}" unless response["status"] == "REQUEST_SUCCEEDED"
+        unless response["status"] == "REQUEST_SUCCEEDED"
+          raise Datasets::Error, "BLS API: #{Array(response["message"]).join("; ").presence || response["status"]}"
+        end
 
         entries = response.dig("Results", "series", 0, "data") || []
         entries.select { |entry| entry["period"] == "M13" }
@@ -93,55 +112,87 @@ module Datasets
       end
 
       def post_json(uri, body)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.open_timeout = OPEN_TIMEOUT
-        http.read_timeout = READ_TIMEOUT
-        request = Net::HTTP::Post.new(uri, "Content-Type" => "application/json")
+        request = Net::HTTP::Post.new(uri, "Content-Type" => "application/json", "User-Agent" => USER_AGENT)
         request.body = body
-        response = http.request(request)
-        raise "BLS API returned HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+        response = http_for(uri).request(request)
+        raise Datasets::Error, "BLS API returned HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 
         JSON.parse(response.body)
       end
 
-      # BLS publishes the national file yearly; try the most recent vintages.
+      # BLS publishes the national file for a May reference period the
+      # *following* spring, so the current year's file never exists yet;
+      # walk back from last year's until one answers.
       def download_latest_oes
         failures = []
-        [ Date.current.year, Date.current.year - 1, Date.current.year - 2 ].each do |year|
-          uri = URI(format(OES_URL, year % 100))
-          begin
-            return [ year, download(uri) ]
-          rescue StandardError => e
-            failures << "#{uri}: #{e.message}"
-          end
+        oes_candidates.each do |year, uri|
+          return [ year, download(uri) ]
+        rescue StandardError => e
+          failures << [ uri, e.message ]
         end
-        raise "No OES national file reachable (#{failures.join("; ")})"
+        raise Datasets::Error, oes_failure_message(failures)
       end
 
-      def download(uri)
+      def oes_candidates
+        years = (1..OES_VINTAGES).map { |back| Date.current.year - back }
+        years.flat_map { |year| OES_URLS.map { |template| [ year, URI(format(template, year % 100)) ] } }
+      end
+
+      # A uniform 403 across every vintage and both directory spellings is
+      # not a missing file: bls.gov's edge is refusing this instance
+      # outright, and no amount of retrying fixes it. Say that, and point at
+      # the import path that works from any machine that can reach BLS.
+      def oes_failure_message(failures)
+        if failures.any? && failures.all? { |_uri, message| message.include?("403") }
+          "bls.gov refused every request with HTTP 403 — its edge blocks some clients and networks outright, " \
+          "so this instance can't fetch the OES file. Download the OES national zip elsewhere and use " \
+          "Import file on /admin instead."
+        else
+          "No OES national file reachable (#{failures.map { |uri, message| "#{uri}: #{message}" }.join("; ")})"
+        end
+      end
+
+      def download(uri, redirects: MAX_REDIRECTS)
         tempfile = Tempfile.new([ "oes", ".zip" ])
         tempfile.binmode
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.open_timeout = OPEN_TIMEOUT
-        http.read_timeout = READ_TIMEOUT
-        http.request(Net::HTTP::Get.new(uri)) do |response|
-          raise "HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+        redirect = nil
+
+        http_for(uri).request(Net::HTTP::Get.new(uri, "User-Agent" => USER_AGENT)) do |response|
+          if response.is_a?(Net::HTTPRedirection) && response["location"].present?
+            redirect = URI.join(uri, response["location"])
+            next
+          end
+          raise Datasets::Error, "HTTP #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 
           bytes = 0
           response.read_body do |chunk|
             bytes += chunk.bytesize
-            raise "download exceeded #{MAX_DOWNLOAD_BYTES / 1.megabyte}MB" if bytes > MAX_DOWNLOAD_BYTES
+            raise Datasets::Error, "download exceeded #{MAX_DOWNLOAD_BYTES / 1.megabyte}MB" if bytes > MAX_DOWNLOAD_BYTES
 
             tempfile.write(chunk)
           end
         end
+
+        if redirect
+          raise Datasets::Error, "too many redirects" if redirects.zero?
+
+          tempfile.close!
+          return download(redirect, redirects: redirects - 1)
+        end
+
         tempfile.flush
         tempfile
       rescue StandardError
         tempfile&.close!
         raise
+      end
+
+      def http_for(uri)
+        Net::HTTP.new(uri.host, uri.port).tap do |http|
+          http.use_ssl = uri.scheme == "https"
+          http.open_timeout = OPEN_TIMEOUT
+          http.read_timeout = READ_TIMEOUT
+        end
       end
   end
 end

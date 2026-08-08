@@ -28,6 +28,7 @@ module Tool
       def hobby? = kind == :hobby
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
+      def email_message? = kind == :email_message
       def textarea? = kind == :textarea
       def date? = kind == :date
     end
@@ -190,6 +191,20 @@ module Tool
       def region_line
         region = user.household.region
         "Where the household lives (tailor jurisdiction-specific details to this): #{region}" if region.present?
+      end
+
+      # The household's own return address (D-household-profile), for tools
+      # that draft something addressed *from* the house. Deliberately opt-in
+      # per tool rather than folded into `region_line`: a street address is
+      # the most identifying thing the household stores, and it goes to the
+      # model only where a letterhead genuinely needs it.
+      def sender_address_block
+        household = user.household
+        lines = household.address_lines
+        return if lines.empty? && household.phone.blank?
+
+        [ "The sender's own contact details (use them verbatim on the letterhead — do not invent or bracket these):",
+          user.name, *lines, household.phone.presence ].compact.join("\n")
       end
 
       # The app-side web floor (D-career-web): fetch one user-supplied URL through

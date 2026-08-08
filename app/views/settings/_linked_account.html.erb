@@ -1,0 +1,81 @@
+<%# One linked account: scope dials + sync state. Multi-link providers
+    (email) render one of these per mailbox inside the provider box. %>
+<div class="mt-3 rounded-lg border border-primary-200 bg-white/60 px-3 py-2.5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="text-sm font-medium text-ink"><%= account.label.presence || account.provider_label %></span>
+    <span class="chip bg-primary-50 text-primary-800"><%= account.full_access? ? "Full access" : "Limited access" %></span>
+    <%= button_to "Disconnect", linked_account_path(account), method: :delete, class: "btn btn-danger btn-sm ml-auto",
+          data: { turbo_confirm: "Disconnect #{account.display_name}? Its credentials will be deleted." } %>
+  </div>
+
+  <%# Scope dials: everything a link can share is on by default; unchecking
+      narrows what the assistant may use. Same visible-config rule as D9. %>
+  <%= form_with url: linked_account_path(account), method: :patch, class: "mt-3 space-y-2" do |form| %>
+    <% account.scopes.each do |scope, scope_label| %>
+      <label class="flex items-center gap-2 text-sm text-ink">
+        <%= check_box_tag "enabled_scopes[]", scope, account.allows?(scope),
+              id: "account_#{account.id}_scope_#{scope}", class: "size-4 rounded accent-primary-600" %>
+        <%= scope_label %>
+      </label>
+    <% end %>
+    <%= form.submit "Save access", class: "btn-sm" %>
+  <% end %>
+
+  <% if account.syncable? %>
+    <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-edge pt-3">
+      <span class="text-xs <%= account.sync_error ? "text-red-600" : "text-soft" %>">
+        <% if account.sync_error %>
+          Last sync failed: <%= account.sync_error %>
+        <% elsif account.synced_at %>
+          Synced <%= time_ago_in_words(account.synced_at) %> ago
+        <% else %>
+          Not synced yet
+        <% end %>
+      </span>
+      <%= button_to "Sync now", sync_linked_account_path(account), method: :post, class: "btn btn-secondary btn-sm ml-auto" %>
+    </div>
+  <% end %>
+
+  <% if account.provider == "email" %>
+    <%# The source dials (D-email-monitoring): email isn't a section, so its agent reach
+        is configured here — visible, per-mailbox, user-controlled. %>
+    <details class="mt-3 border-t border-edge pt-3">
+      <summary class="cursor-pointer text-xs font-medium text-primary-700">Assistant settings for this mailbox</summary>
+      <%= form_with url: settings_linked_account_path(account), method: :patch, class: "mt-3 space-y-2 text-sm" do |form| %>
+        <label class="flex items-center gap-2">
+          <%= check_box_tag :digest, "1", account.setting(:digest) != false, id: "digest_#{account.id}", class: "size-4 rounded accent-primary-600" %>
+          Include in the daily mail digest
+        </label>
+        <label class="flex items-center gap-2">
+          <%= check_box_tag :alerts, "1", account.setting(:alerts) == true, id: "alerts_#{account.id}", class: "size-4 rounded accent-primary-600" %>
+          Urgent alerts — ping my notification channels for truly time-sensitive mail (max 3/day)
+        </label>
+        <label class="flex items-center gap-2">
+          <%= check_box_tag :ai_processing, "1", account.setting(:ai_processing) != false, id: "ai_#{account.id}", class: "size-4 rounded accent-primary-600" %>
+          AI processing — send message text to your configured model for labeling and summaries
+        </label>
+        <label class="flex items-center gap-2">
+          <%= check_box_tag :contact_recency, "1", account.setting(:contact_recency) == true, id: "recency_#{account.id}", class: "size-4 rounded accent-primary-600" %>
+          Update "last contacted" on People when I email them
+        </label>
+        <label class="flex items-center gap-2">
+          <%= check_box_tag :paused, "1", account.paused?, id: "paused_#{account.id}", class: "size-4 rounded accent-primary-600" %>
+          Pause syncing this mailbox
+        </label>
+        <div class="flex flex-wrap items-end gap-2">
+          <div class="space-y-1">
+            <label class="label" for="window_<%= account.id %>">Mirror window (days, 0 = keep everything)</label>
+            <%= number_field_tag :mirror_window_days, account.setting(:mirror_window_days) || Email::ImapSync::WINDOW_DAYS_DEFAULT,
+                  id: "window_#{account.id}", class: "input w-28", min: 0 %>
+          </div>
+          <div class="min-w-48 flex-1 space-y-1">
+            <label class="label" for="own_<%= account.id %>">My addresses (learned from sent mail — correct freely)</label>
+            <%= text_field_tag :own_addresses, Array(account.setting(:own_addresses)).join(", "),
+                  id: "own_#{account.id}", class: "input", placeholder: account.credentials["username"] %>
+          </div>
+        </div>
+        <%= form.submit "Save mailbox settings", class: "btn-sm" %>
+      <% end %>
+    </details>
+  <% end %>
+</div>
