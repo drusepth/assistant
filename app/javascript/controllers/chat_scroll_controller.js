@@ -15,15 +15,24 @@ export default class extends Controller {
     this.pinned = true
     requestAnimationFrame(() => this.scrollToBottom("auto"))
 
+    // A morphing page refresh (a sent message, an arriving reply) leaves this
+    // element in place, so connect() won't run again — the observer is what
+    // notices the new turn and follows it down.
     this.observer = new MutationObserver(() => this.follow())
     this.observer.observe(this.scrollerTarget, { childList: true, subtree: true, characterData: true })
   }
 
   disconnect() {
     this.observer?.disconnect()
+    clearTimeout(this.autoScrollTimer)
   }
 
   track() {
+    // A smooth scroll of our own fires scroll events the whole way down,
+    // every one of them "far from the bottom" — reading those as the user
+    // leaving would unpin the transcript mid-follow.
+    if (this.autoScrolling) return
+
     this.pinned = this.distanceFromBottom <= this.thresholdValue
     this.refreshJump()
   }
@@ -40,6 +49,10 @@ export default class extends Controller {
   }
 
   scrollToBottom(behavior) {
+    clearTimeout(this.autoScrollTimer)
+    this.autoScrolling = true
+    this.autoScrollTimer = setTimeout(() => { this.autoScrolling = false }, 500)
+
     this.scrollerTarget.scrollTo({ top: this.scrollerTarget.scrollHeight, behavior })
   }
 

@@ -228,6 +228,19 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[type=submit][disabled]", count: 0, message: "sends without JS"
   end
 
+  test "the page declares morphing refreshes, so sending a message doesn't reset the scroll" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
+
+    get tool_run_path(run)
+
+    # Both composers redirect back to the page they're on, and every chat job
+    # broadcasts a refresh — without these the reader is thrown to the top of
+    # the page twice per turn.
+    assert_select "meta[name=turbo-refresh-method][content=morph]"
+    assert_select "meta[name=turbo-refresh-scroll][content=preserve]"
+    assert_select "#chat-transcript", count: 1, message: "the scroller is id'd so a morph matches it"
+  end
+
   test "a quick reply the user already sent is not offered again" do
     run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { "topic" => "fractions" }, status: :done)
     run.tool_run_messages.create!(role: :assistant, content: "Where shall we start?")

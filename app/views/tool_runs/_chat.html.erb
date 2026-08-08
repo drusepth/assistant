@@ -20,7 +20,10 @@
         gets a height floor so the composer stops hopping as it grows; an
         unstarted conversation is just its openers, and shouldn't open a
         well of empty space under them. %>
-    <div class="flex max-h-[calc(100dvh-20rem)] flex-col gap-4 overflow-y-auto p-4 sm:p-5 <%= "min-h-72" if run %>"
+    <%# The id is what lets a morphing refresh match this element to itself
+        and mutate its children, rather than swapping the scroller out from
+        under its observer and scroll position. %>
+    <div id="chat-transcript" class="flex max-h-[calc(100dvh-20rem)] flex-col gap-4 overflow-y-auto p-4 sm:p-5 <%= "min-h-72" if run %>"
          role="log" aria-live="polite" aria-relevant="additions" aria-busy="<%= thinking.present? %>"
          data-chat-scroll-target="scroller" data-action="scroll->chat-scroll#track">
       <% if run %>
@@ -64,8 +67,14 @@
   </div>
 
   <div class="border-t border-edge p-3 sm:p-4">
+    <%# A morphing refresh re-renders the send button from the server, which
+        knows about the in-flight lock but not about the empty draft in front
+        of the user — and connect() won't run again to re-apply it. %>
     <%= form_with url: composer_url, class: "space-y-2.5",
-          data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do %>
+          data: { controller: "chat-input",
+                  action: "turbo:submit-end->chat-input#reset " \
+                          "turbo:morph@document->chat-input#refreshSend " \
+                          "turbo:render@document->chat-input#refreshSend" } do %>
       <% if suggestions.any? && !thinking %>
         <div class="flex flex-wrap gap-1.5">
           <% suggestions.each do |reply| %>
