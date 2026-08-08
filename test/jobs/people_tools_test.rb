@@ -96,6 +96,29 @@ class PeopleToolsTest < ActiveJob::TestCase
       "the deterministic part lands first and survives"
   end
 
+  test "make-new-friends plans around recurring venues and the user's hobby lenses" do
+    Hobbies::Lens.find_or_create!("Climbing")
+    stub_plan(steps: [ { title: "Find two recurring groups to try", sections: [ "people" ] } ])
+
+    run = users(:one).tool_runs.create!(
+      tool_slug: "make_new_friends",
+      inputs: { "interests" => "board games", "constraints" => "evenings only" }
+    )
+    ToolRunJob.perform_now(run)
+
+    assert run.reload.done?
+    goal = run.items.grep(Goal).sole
+    assert_equal "Make new friends", goal.title
+    assert_match(/board games/, goal.description)
+    assert_includes goal.sections, sections(:people)
+
+    assert_requested(:post, ENDPOINT) do |request|
+      request.body.include?("recurring") &&
+        request.body.include?("Climbing") &&
+        request.body.include?("evenings only")
+    end
+  end
+
   private
     def stub_draft(body:, title: nil, follow_ups: [])
       stub_request(:post, ENDPOINT).to_return(
