@@ -229,23 +229,23 @@
 
     <% if Current.user.admin? %>
       <div class="mt-5 border-t border-edge pt-4">
-        <h3 class="text-sm font-semibold text-ink">Household clock &amp; place</h3>
+        <h3 class="text-sm font-semibold text-ink">Where and when the household lives</h3>
         <p class="mb-3 mt-0.5 text-xs text-soft">
-          Anything the assistant schedules — digests, reminders — happens on this clock. Region is optional and only helps tools that depend on where you live.
+          State-sensitive tools (deposit deadlines, benefits, insurance, crisis lines) tailor to the region — leave it blank and they'll ask or use placeholders. Anything the assistant schedules — mail digests, reminders — happens on this clock.
         </p>
-        <%= form_with url: household_path, method: :patch, class: "flex flex-wrap items-end gap-2" do |form| %>
+        <%= form_with url: household_path, method: :patch, class: "flex flex-wrap items-end gap-2" do %>
+          <div class="min-w-48 flex-1 space-y-1">
+            <label class="label" for="household_region">Region</label>
+            <%= text_field_tag "household[region]", Current.user.household.region,
+                  id: "household_region", placeholder: "“Texas, USA”, “Ontario, Canada”…", class: "input" %>
+          </div>
           <div class="min-w-48 flex-1 space-y-1">
             <label class="label" for="household_time_zone">Time zone</label>
             <%= select_tag "household[time_zone]",
                   options_for_select(ActiveSupport::TimeZone.all.map { |tz| [ tz.to_s, tz.name ] }, Current.user.household.time_zone),
                   id: "household_time_zone", class: "input" %>
           </div>
-          <div class="min-w-40 flex-1 space-y-1">
-            <label class="label" for="household_region">Region (optional)</label>
-            <%= text_field_tag "household[region]", Current.user.household.region,
-                  id: "household_region", class: "input", placeholder: "California, US" %>
-          </div>
-          <%= form.submit "Save", class: "btn-sm" %>
+          <%= submit_tag "Save", class: "btn btn-secondary" %>
         <% end %>
       </div>
 

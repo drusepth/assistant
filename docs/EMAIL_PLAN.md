@@ -8,19 +8,20 @@ and the richest linked-account surface so far.
 
 It is also the **template for every high-volume source after it** — bank transactions,
 chat exports, browser history, whatever we pull in next. The architectural centerpiece
-(the *mirror layer*, D30, in its own database, D32) is designed once and reused; email
+(the *mirror layer*, D-mirror-layer, in its own database, D-mirror-database) is designed once and reused; email
 is the proving source.
 
 Third revision (2026-08), after two design-review passes. The second pass committed to
 multi-account, the sender-rule feedback loop, the hostile-input threat model, and the
 People linkage. This pass settles the **data lifecycle and first-run economics**: the
-mirror gets its own database (D32), backfilled history is never triaged or alerted on,
+mirror gets its own database (D-mirror-database), backfilled history is never triaged or alerted on,
 the user can delete from and pause the mirror, direction detection learns the user's
 aliases, and the first mega-wave is split into mergeable passes.
 
-Proposed decisions are logged as **D30–D32** in `DECISIONS.md` (provisional until the
-build passes prove them, the D18–D20 convention). Open questions raised: Q14–Q15;
-Q12's household-setting half is scheduled here (E0).
+Proposed decisions are logged in `DECISIONS.md` as **D-mirror-layer**,
+**D-email-monitoring**, and **D-mirror-database** (slug IDs per the post-D37
+convention — parallel branches can't share a counter). Open questions raised:
+Q18–Q19; Q12's household-setting half is scheduled here (E0).
 
 ---
 
@@ -46,7 +47,7 @@ watcher stays quiet rather than guessing.
 
 ---
 
-## 2. How email fits the architecture: the mirror layer (D30, D32)
+## 2. How email fits the architecture: the mirror layer (D-mirror-layer, D-mirror-database)
 
 ### The problem with treating email like contacts/calendar
 
@@ -87,7 +88,7 @@ What this buys us, in existing-architecture terms:
 - **Admin conventions carry over**: `/admin` sees sync status and counts, never
   contents (D23/D9).
 
-### The mirror lives in its own database (D32)
+### The mirror lives in its own database (D-mirror-database)
 
 The primary SQLite database is the mission artifact — *"the user's entire life is
 literally one file they own"*; backup is copying it. The mirror is the opposite kind
@@ -110,7 +111,7 @@ already installs this exact pattern (`database.yml` entry, `mirror_migrations` p
 - **Write contention is isolated.** SQLite is single-writer per file; sync bursts and
   FTS trigger cascades land on their own file instead of queueing behind (or ahead of)
   every user action.
-- **The retention answer falls out (Q14)**: the mirror is **excluded from the D14
+- **The retention answer falls out (Q18)**: the mirror is **excluded from the D14
   export by default** — it's derived data, and the documented recovery path is
   "re-link the mailbox." Backup guidance stays honest: copy the life file; the mirror
   rebuilds itself.
@@ -212,7 +213,7 @@ app to point the adapter at a model running in your own house.
 - **Scopes get real consumers**: `read_inbox` gates sync entirely (checked via
   `allows?` inside the service, fail-closed); `read_archive` gates both backfill beyond
   the default window *and* the live archive search fallback (§7); `send` gates nothing
-  yet — v1 **never sends mail** (§8 and Q15).
+  yet — v1 **never sends mail** (§8 and Q19).
 - **Prerequisite: encrypt `linked_accounts.credentials`.** The pending D26 follow-up
   stops being deferrable the moment mailbox passwords flow through at volume. The M4
   AR-encryption setup (per-instance keys in `storage/`) already exists; this is
@@ -235,14 +236,14 @@ All on the link's Settings card, all deterministic:
   assistant never triages, digests, cites, or drafts from what isn't in the mirror.
 - **Unlink** — removing a link purges its mirror rows, folders, and tombstones in one
   pass. **Promoted primitives survive** — they are the user's items, copied out at
-  promotion, never dependent on the cache (D32). The mailbox itself is of course
+  promotion, never dependent on the cache (D-mirror-database). The mailbox itself is of course
   untouched; the app was always read-only against it.
 
 ---
 
 ## 4. Schema
 
-All mirror tables live in the mirror database (D32) and are per-user with no
+All mirror tables live in the mirror database (D-mirror-database) and are per-user with no
 `Visible`/`Sectionable`; cross-database references are soft ids.
 
 **`email_folders`** — sync bookkeeping, one row per tracked IMAP folder per link:
@@ -306,8 +307,8 @@ archive of record) — but the window is **user-configurable from day one**: 90 
 default, wider, or "mirror everything" for self-hosters with the disk. A nightly prune
 deletes rows that fell out of the window *unless promoted, sender-ruled, reply-armed,
 or referenced by a live suggestion*. What the window can't answer, the live archive
-search fallback can (§7). The export question is settled by D32 (mirror excluded by
-default — re-syncable); the remaining knob is Q14.
+search fallback can (§7). The export question is settled by D-mirror-database (mirror excluded by
+default — re-syncable); the remaining knob is Q18.
 
 ---
 
@@ -497,7 +498,7 @@ can never ring a phone.
   e.g. "Time-sensitive: 'Hearing date changed' — Alameda Superior Court" — with model
   output never phrasing a notification (§8).
 
-**Dials live on the source, not on sections** (part of D31): email isn't a section, so
+**Dials live on the source, not on sections** (part of D-email-monitoring): email isn't a section, so
 `user_sections.agent_level` can't govern it. The link's Settings card carries its own
 visible dials — digest on/off + time, alerts off/on, AI processing, contact recency,
 mirror window, own addresses, pause — the same user-controlled-configuration posture
@@ -530,7 +531,7 @@ under People:
 Accepting any of them opens the one new tool this plan adds — **`email_follow_up`**
 (draft, People + Career): reads the thread from the mirror, drafts a short, polite
 nudge (or reply, for the inverse case) as a Note plus a "send it" Task. The user
-copies it into their mail client — the app **never sends** (§8, Q15).
+copies it into their mail client — the app **never sends** (§8, Q19).
 
 ### Ask your email — `ask_your_email` (E5)
 
@@ -598,7 +599,7 @@ and chat exports are attacker-adjacent text too.
 
 - **Sending mail.** The `send` scope stays dormant. Every output is a draft the user
   copies — the D19 line ("the app never sends anything on the user's behalf") holds
-  until sending gets its own consent design (**Q15**).
+  until sending gets its own consent design (**Q19**).
 - **Attachment byte storage.** Metadata only; bytes enter the app solely by promotion
   to a Document, where Active Storage already owns the problem.
 - **A full mail client.** No compose, no folders UI, no mark-as-read pushed back to the
@@ -626,7 +627,7 @@ existing DAV consumers immediately.
    `encrypts :credentials` + backfill migration; recurring background sync fan-out
    (`sync_every:`, all syncable providers); `households.time_zone` (+ optional region
    — the Q12 household setting) in Settings.
-2. **E1a — The mirror + sync engine (no UI).** The mirror database (D32:
+2. **E1a — The mirror + sync engine (no UI).** The mirror database (D-mirror-database:
    `database.yml`, migrations path, `MirrorRecord`); `email_folders` /
    `email_messages` (person matching, own-address direction, `reply_wanted_by`) /
    `email_tombstones` / `email_message_items` + FTS5; `Email::ImapClient` +
@@ -657,10 +658,10 @@ existing DAV consumers immediately.
    links; polling stays as universal fallback.
 
 Parked, with owners elsewhere: OAuth/XOAUTH2 + Outlook + one-click Gmail (D27 relay
-work, unchanged by this plan); sending (Q15); `person_email_addresses` normalization
+work, unchanged by this plan); sending (Q19); `person_email_addresses` normalization
 (if single-address matching disappoints); receipt/renewal signals feeding Money
 watchers (rides the linkage built here, own design pass); the next mirrored source
-(bank transactions is the likely candidate — it reuses D30/D32 wholesale: mirror
+(bank transactions is the likely candidate — it reuses D-mirror-layer/D-mirror-database wholesale: mirror
 table in the mirror database, promotion, triage labels, source dials, hostile-input
 rules).
 
@@ -681,14 +682,14 @@ for prompt changes and the injection regression suite.
 
 ## 11. Decisions proposed (for DECISIONS.md)
 
-- **D30. High-volume external streams are mirrored, not imported.** Per-source mirror
+- **D-mirror-layer. High-volume external streams are mirrored, not imported.** Per-source mirror
   tables (owner-private, no `Visible`/`Sectionable`, no grants, user-configurable
   windowed retention); primitives are created only by explicit promotion or accepted
   suggestions, with provenance recorded. Mirrors are not silos: they feed
   deterministic, read-only signals (People linkage, contact recency, watcher fuel)
   outward. Contacts/calendar keep importing (low-volume, identity-shaped). Email
   proves the pattern; future sources reuse it — including its hostile-input rules.
-- **D31. Email monitoring rides the existing agent rails, with dials on the source
+- **D-email-monitoring. Email monitoring rides the existing agent rails, with dials on the source
   and a deterministic feedback loop.** Triage writes labels on the mirror only, behind
   sender rules that pre-empt the model, on live-sync arrivals only, under a daily
   budget; the digest is deterministic selection + LLM phrasing landing in-app at a
@@ -699,7 +700,7 @@ for prompt changes and the injection regression suite.
   labeled reply expectations; nothing is ever sent on the user's behalf. Because email
   is a source rather than a section, its dials live on the linked-account Settings
   card, not on `user_sections`.
-- **D32. Mirrors live in their own database.** A fourth SQLite database alongside
+- **D-mirror-database. Mirrors live in their own database.** A fourth SQLite database alongside
   Solid Queue/Cache/Cable holds all mirror tables: the life file stays the small,
   copy-me backup artifact; sync/FTS/prune write churn is isolated from the primary's
   single writer; the mirror is excluded from the D14 export by default because it is
@@ -710,12 +711,12 @@ for prompt changes and the injection regression suite.
 
 Open questions raised:
 
-- **Q14 — mirror retention knobs.** The window is user-configurable (90 days default
+- **Q18 — mirror retention knobs.** The window is user-configurable (90 days default
   through "everything") with keep-exceptions for promoted/ruled/armed/referenced rows;
-  the live archive search covers what falls out, and D32 settles the export default
+  the live archive search covers what falls out, and D-mirror-database settles the export default
   (excluded — re-syncable). Remaining: does "mirror everything" need a size guardrail
   on small disks?
-- **Q15 — sending mail.** The `send` scope exists and boomerang makes it tempting
+- **Q19 — sending mail.** The `send` scope exists and boomerang makes it tempting
   ("just send the follow-up"). Sending is the first time the app would *act on the
   world* for the user — it needs its own consent design (per-message confirm? a
   sent-by-assistant audit trail?) and is explicitly out of scope until then.

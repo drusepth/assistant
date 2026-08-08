@@ -1,4 +1,4 @@
-# Promotion (D30): the one door from the mirror into the primitive pool,
+# Promotion (D-mirror-layer): the one door from the mirror into the primitive pool,
 # always behind a human click. Content is COPIED out — the primitive
 # never references the cache — and provenance lands in email_message_items
 # so the message page can show what it became. D16 capture rules apply:

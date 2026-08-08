@@ -1,4 +1,4 @@
-# Base class for the mirror database (D32): per-source caches of outside
+# Base class for the mirror database (D-mirror-database): per-source caches of outside
 # services — owner-private, derived, re-syncable. Mirror models never
 # include Visible or Sectionable (there is deliberately no path from a
 # grant to a mirror row), and references to primary-database records are

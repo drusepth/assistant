@@ -3,6 +3,13 @@
 <%= render Ui::PageHeaderComponent.new(title: @person.name, subtitle: @person.relationship) do |header| %>
   <% if own %>
     <% header.with_actions do %>
+      <% if @person.keep_in_touch? %>
+        <%= button_to "In your circle ✓", people_circle_path(person_id: @person.id), method: :delete, class: "btn btn-secondary",
+              title: "On your People page — click to stop tending this one" %>
+      <% else %>
+        <%= button_to "Keep in touch", people_circle_path(person_id: @person.id), method: :post, class: "btn btn-secondary",
+              title: "Adds them to your circle on the People page" %>
+      <% end %>
       <%= button_to "Log contact today", log_contact_person_path(@person), method: :patch, class: "btn btn-secondary",
             title: @person.last_contacted_on ? "Last logged: #{@person.last_contacted_on.strftime("%B %-d, %Y")}" : "No contact logged yet" %>
       <%= link_to "Edit", edit_person_path(@person), class: "btn btn-secondary" %>
@@ -57,6 +64,19 @@
           </div>
         <% end %>
       </dl>
+    <% end %>
+
+    <% if @photos.any? %>
+      <div class="mt-6" data-controller="lightbox">
+        <%= render Ui::CardComponent.new(title: "Photos", subtitle: "Tagged with #{@person.name}") do |card| %>
+          <% card.with_actions do %>
+            <%= link_to "All photos", photos_path(person: @person.id), class: "btn btn-ghost btn-sm" %>
+          <% end %>
+          <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
+            <%= render partial: "photos/photo_tile", collection: @photos, as: :photo %>
+          </div>
+        <% end %>
+      </div>
     <% end %>
   </div>
   <% if own %>

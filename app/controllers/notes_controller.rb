@@ -3,6 +3,8 @@ class NotesController < ApplicationController
 
   def index
     @notes = Note.visible_to(Current.user).order(updated_at: :desc).includes(:sections, :user)
+    # Blank record for the header's quick-add dropdown.
+    @quick_note = Current.user.notes.new
   end
 
   def show
@@ -10,7 +12,7 @@ class NotesController < ApplicationController
   end
 
   def new
-    @note = Current.user.notes.new(params.permit(section_ids: []))
+    @note = Current.user.notes.new(params.permit(:title, section_ids: []))
   end
 
   def create

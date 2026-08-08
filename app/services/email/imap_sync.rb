@@ -255,7 +255,7 @@ class Email::ImapSync
     end
 
     # Matched to the user's own People by exact address; the sender for
-    # inbound, the first recipient for outbound. Soft id (D32).
+    # inbound, the first recipient for outbound. Soft id (D-mirror-database).
     def match_person(direction, from_email, to_emails)
       counterparty = direction == "inbound" ? from_email : to_emails.first
       return nil if counterparty.blank?

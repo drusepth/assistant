@@ -9,7 +9,7 @@ default: &default
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
 
-# Two databases everywhere (D32): `primary` is the life file — the small,
+# Two databases everywhere (D-mirror-database): `primary` is the life file — the small,
 # copy-me backup artifact that IS the user's data — and `mirror` holds the
 # high-churn, re-syncable caches of outside sources (email first). Keeping
 # them apart isolates sync/FTS write bursts from the primary's single

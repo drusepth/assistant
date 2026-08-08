@@ -1,10 +1,12 @@
-<%= render Ui::PageHeaderComponent.new(title: "Notes", subtitle: "Everything the assistant should know") do |header| %>
-  <% header.with_actions do %>
-    <%= link_to new_note_path, class: "btn btn-primary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Note
+<div data-controller="quick-add" data-action="keydown.esc@window->quick-add#closeAll click@window->quick-add#clickOutside">
+  <%= render Ui::PageHeaderComponent.new(title: "Notes", subtitle: "Everything the assistant should know") do |header| %>
+    <% header.with_actions do %>
+      <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note", primary: true) do %>
+        <%= render "quick_form", note: @quick_note, return_to: notes_path, autofocus: false %>
+      <% end %>
     <% end %>
   <% end %>
-<% end %>
+</div>
 
 <% if @notes.any? %>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><%= render @notes %></div>

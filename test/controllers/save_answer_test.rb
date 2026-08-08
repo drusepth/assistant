@@ -1,7 +1,7 @@
 require "test_helper"
 
 # "Save as note" — the explicit door from an ask-your-email answer into
-# the primitive pool (D30).
+# the primitive pool (D-mirror-layer).
 class SaveAnswerTest < ActionDispatch::IntegrationTest
   setup do
     @run = users(:one).tool_runs.create!(

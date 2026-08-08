@@ -1,13 +1,14 @@
-# Household-level settings (email plan E0): the clock every scheduled
-# thing reads, and the optional Q12 region hint. Admins manage the
-# household (D15), so only they may set these.
+# Household-level facts, admin-edited like the model profile (D15's
+# admin split): `region` (D34, resolving Q12) — the one jurisdiction
+# signal every state-sensitive tool shares — and `time_zone`, the clock
+# everything scheduled reads (the mail digest's "8am" means 8am here).
 class HouseholdsController < ApplicationController
   def update
-    return redirect_to settings_path, alert: "Only household admins can change household settings." unless Current.user.admin?
+    return redirect_to settings_path, alert: "Only household admins can change this." unless Current.user.admin?
 
     household = Current.user.household
-    if household.update(params.expect(household: %i[ time_zone region ]))
-      redirect_to settings_path, notice: "Household settings updated."
+    if household.update(params.expect(household: %i[ region time_zone ]))
+      redirect_to settings_path, notice: "Household updated."
     else
       redirect_to settings_path, alert: household.errors.full_messages.to_sentence
     end

@@ -23,14 +23,13 @@ class PlatformPassForMultiLinkAccountsAndHouseholdClock < ActiveRecord::Migratio
     LinkedAccount.reset_column_information
     LinkedAccount.find_each(&:encrypt)
 
-    # The household clock (and the Q12 region, optional): the mail digest
-    # needs "8:00 in *your* timezone" to mean something.
+    # The household clock: the mail digest needs "8:00 in *your* timezone"
+    # to mean something. (Jurisdiction is `households.region`, added by
+    # D34's own migration.)
     add_column :households, :time_zone, :string, null: false, default: "UTC"
-    add_column :households, :region, :string
   end
 
   def down
-    remove_column :households, :region
     remove_column :households, :time_zone
     change_column :linked_accounts, :credentials, :json, null: false, default: {}
     remove_column :linked_accounts, :settings

@@ -1,4 +1,4 @@
-# The feedback loop's memory (EMAIL_PLAN.md §6, D31): user-taught,
+# The feedback loop's memory (EMAIL_PLAN.md §6, D-email-monitoring): user-taught,
 # deterministic, user-level (spans mailboxes), and consumed BEFORE the
 # model — mute means no LLM call ever, vip means an importance floor no
 # model verdict can lower. Written by one-click "Not important" / "More

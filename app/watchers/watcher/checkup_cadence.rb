@@ -1,36 +1,59 @@
 module Watcher
-  # The first watcher (M3.1): if a user has no Health-tagged event in the
-  # past year and none coming up, suggest booking a checkup. Scans only the
-  # user's own events — a spouse's shared appointment is not your checkup.
+  # The first watcher (M3.1), grown per-kind (docs/HEALTH.md): the care
+  # radar knows, per kind of routine care, when the last visit was and
+  # whether anything is booked — so the nudge can be "book a dental
+  # cleaning, your last was 8 months ago" instead of a generic prod.
+  # Signal discipline, stay-in-touch style: a per-kind nudge needs
+  # per-kind history (no logged dental visit → no dental nudge; the radar
+  # panel is the pull surface for unknowns). The original generic nudge
+  # survives for the zero-signal case — no Health event in a year and none
+  # upcoming. Scans only the user's own events — a spouse's shared
+  # appointment is not your checkup.
   class CheckupCadence < Base
     self.section_slugs = %w[ health ]
 
     LOOKBACK = 12.months
 
     def scan
-      return if health_section_ids.empty?
-      return if Event.where(user: user).in_section(health_section_ids)
-                     .where(starts_at: LOOKBACK.ago..).exists?
+      statuses = Health::CareRadar.new(user).statuses
+      return if statuses.empty?
 
-      propose(
-        fingerprint: period,
-        title: "Book a health checkup",
-        body: "Nothing health-related on your calendar in the last year, and nothing coming up. " \
-              "A routine visit is how small things stay small.",
-        action: { "task" => { "title" => "Book a checkup appointment" } }
-      )
+      statuses.select { |status| status.state == :due }.each { |status| propose_kind(status) }
+      propose_generic if statuses.all? { |status| status.state == :unknown } && calendar_silent?
+      proposals
     end
 
     private
-      def health_section_ids
-        @health_section_ids ||= begin
-          health = Section.find_by(slug: "health")
-          health ? [ health.id, *health.children.ids ] : []
-        end
+      # Accepting opens the find-care tool prefilled with the right kind of
+      # provider — the reconnect/stay-in-touch convention.
+      def propose_kind(status)
+        propose(
+          fingerprint: "#{status.kind.key}/#{period}",
+          title: status.kind.book_title,
+          body: "Your last #{status.kind.label.downcase} visit was #{status.last_visit_on.strftime("%B %Y")} — " \
+                "about every #{status.kind.interval_months} months is the usual rhythm, and nothing's booked yet.",
+          action: { "tool" => { "slug" => "find_care", "inputs" => { "specialty" => status.kind.provider } } }
+        )
       end
 
-      # Fingerprints include a half-year bucket: a dismissal quiets this
-      # nudge for the rest of the half, then it may fairly return.
+      def propose_generic
+        propose(
+          fingerprint: period,
+          title: "Book a health checkup",
+          body: "Nothing health-related on your calendar in the last year, and nothing coming up. " \
+                "A routine visit is how small things stay small.",
+          action: { "task" => { "title" => "Book a checkup appointment" } }
+        )
+      end
+
+      def calendar_silent?
+        health = Section.find_by(slug: "health")
+        ids = [ health.id, *health.children.ids ]
+        Event.where(user: user).in_section(ids).where(starts_at: LOOKBACK.ago..).none?
+      end
+
+      # Fingerprints include a half-year bucket: a dismissal quiets a nudge
+      # for the rest of the half, then it may fairly return.
       def period = "#{Date.current.year}h#{Date.current.month <= 6 ? 1 : 2}"
   end
 end

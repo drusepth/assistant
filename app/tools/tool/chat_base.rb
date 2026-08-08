@@ -24,6 +24,19 @@ module Tool
 
     TRANSCRIPT_WINDOW = 30
 
+    # The wrap-up affordance's copy. A chat whose recap lands somewhere
+    # other than a Note (D30: task chats save the task's answer) renames the
+    # button and the nudge under the composer.
+    def self.recap_button_label(run)
+      run.items.grep(Note).any? ? "Save another recap" : "Save a recap"
+    end
+
+    def self.recap_pending_label = "Saving recap…"
+
+    def self.recap_hint
+      "Wrapping up? A recap files this session to your notes — it's what the next session remembers."
+    end
+
     def call
       append_assistant(chat_text(opening_messages))
     end

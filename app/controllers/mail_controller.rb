@@ -1,7 +1,7 @@
 # The mail browser (EMAIL_PLAN.md §7): the assistant's owner-only view of
 # mirrored mailboxes — deliberately not a mail client. Unified across a
 # user's email links, searchable, and the promotion surface. Strictly
-# owner-scoped: there is no visible_to path to the mirror (D30), so every
+# owner-scoped: there is no visible_to path to the mirror (D-mirror-layer), so every
 # query here starts from Current.user's id.
 class MailController < ApplicationController
   THREAD_LIMIT = 100

@@ -29,6 +29,8 @@ module Tool
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
       def email_message? = kind == :email_message
+      def textarea? = kind == :textarea
+      def date? = kind == :date
     end
 
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil
@@ -147,6 +149,30 @@ module Tool
             raise(Llm::Error, "That document is gone or no longer shared with you.")
       end
 
+      # The person an input points at, through the visibility wall — same
+      # contract as chosen_document: blank input nil, vanished pick raises.
+      def chosen_person(input_name = :person_id)
+        return nil if inputs[input_name].blank?
+
+        (@chosen_people ||= {})[input_name.to_s] ||=
+          Person.visible_to(user).find_by(id: inputs[input_name]) ||
+            raise(Llm::Error, "That person is gone or no longer shared with you.")
+      end
+
+      # What's known about a person, assembled once for every People tool
+      # (docs/PEOPLE.md §4): profile fields, filing, the user's own notes.
+      # When Q17 person↔item links land, shared history joins here.
+      def person_context(person)
+        parts = [ "Name: #{person.name}" ]
+        parts << "Relationship: #{person.relationship}" if person.relationship.present?
+        parts << "Birthday: #{person.birthday.strftime("%B %-d")}" if person.birthday
+        parts << "Last logged contact: #{person.last_contacted_on.iso8601}" if person.last_contacted_on
+        filed = person.sections.map(&:qualified_name)
+        parts << "Filed under: #{filed.join(", ")}" if filed.any?
+        parts << "What the user has noted about them:\n#{person.notes.truncate(2_000)}" if person.notes.present?
+        parts.join("\n")
+      end
+
       def document_text(document)
         text = document.extracted_text.presence || document.summary.presence
         raise Llm::Error, "That document has no readable text yet — open it and run Analyze first." unless text
@@ -158,6 +184,38 @@ module Tool
       # through the visibility wall, as a budgeted prompt block.
       def section_context(slugs = self.class.section_slugs, budget: Context::DEFAULT_BUDGET)
         Context.new(user: user, section_slugs: slugs, budget: budget)
+      end
+
+      # The household's jurisdiction (D34) for state-sensitive tools — nil
+      # when unset, so prompts fall back to asking or to placeholders.
+      def region_line
+        region = user.household.region
+        "Where the household lives (tailor jurisdiction-specific details to this): #{region}" if region.present?
+      end
+
+      # The app-side web floor (D-career-web): fetch one user-supplied URL through
+      # Web::Fetch (deterministic code, SSRF-guarded, size-capped) and hand
+      # the model the text. A blank input is nil; a failed fetch fails the
+      # run with a message that names the paste-the-text fallback.
+      def fetched_page(input_name = :listing_url)
+        return nil if inputs[input_name].blank?
+
+        (@fetched_pages ||= {})[input_name.to_s] ||= begin
+          Web::Fetch.text(inputs[input_name])
+        rescue Web::Fetch::Error => e
+          raise Llm::Error, "Couldn't fetch that link — #{e.message}. Pasting the text works too."
+        end
+      end
+
+      # The model-side rung (D-career-web): when the admin has declared the
+      # provider web-capable, prompts may relax never-assert-current-facts
+      # into look-it-up-and-cite. Nil otherwise, so callers compact it away.
+      def web_capability_note
+        return nil unless profile.web_capable?
+
+        "The configured model has live web access: where these instructions say to never assert " \
+        "current facts, you may instead look them up and cite what you found — keeping fetched " \
+        "facts clearly separate from the user's own records."
       end
 
       # ── Landing primitives ─────────────────────────────────────────────

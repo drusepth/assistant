@@ -5,7 +5,7 @@ module Watcher
   # disposes (D20). Deterministic over the mirror's stored labels; runs on
   # the normal scans AND directly after each triage batch so a fresh
   # deadline doesn't wait a week. Sectionless: mail is a source, not a
-  # section (D31).
+  # section (D-email-monitoring).
   class EmailDeadline < Base
     self.section_slugs = []
 

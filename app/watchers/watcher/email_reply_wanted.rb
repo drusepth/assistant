@@ -2,7 +2,7 @@ module Watcher
   # The user-armed boomerang (EMAIL_PLAN.md §7): "remind me if no reply
   # by ___". Zero AI, zero false positives — the user declared the
   # expectation on the message page, this watcher only keeps the promise.
-  # Sectionless (mail is a source, not a section — D31); suggestions file
+  # Sectionless (mail is a source, not a section — D-email-monitoring); suggestions file
   # under People; the trust anchor for the two inferred boomerangs.
   class EmailReplyWanted < Base
     self.section_slugs = []

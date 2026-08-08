@@ -1,4 +1,4 @@
-# One mirrored message (D30, EMAIL_PLAN.md §4). Deliberately NOT a
+# One mirrored message (D-mirror-layer, EMAIL_PLAN.md §4). Deliberately NOT a
 # primitive: no Visible, no Sectionable, no grants — the only read path is
 # through the owning user, and content enters the primitive pool only by
 # promotion (EmailMessageItem). References to primary-database rows

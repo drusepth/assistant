@@ -36,3 +36,7 @@ production:
   dispatch_mail_digests:
     command: "Email::DigestJob.dispatch_due"
     schedule: every 15 minutes
+  # Chat transcripts are ephemeral; recaps are the record (D33/Q13).
+  prune_chat_transcripts:
+    command: "PruneChatTranscriptsJob.perform_later"
+    schedule: every sunday at 4am

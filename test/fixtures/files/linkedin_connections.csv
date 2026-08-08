@@ -1,0 +1,6 @@
+Notes:
+"When exporting your connection data, you may notice that some of the email addresses are missing. You will only see email addresses for connections who have allowed their connections to see or download their email address."
+
+First Name,Last Name,URL,Email Address,Company,Position,Connected On
+Dana,Nguyen,https://www.linkedin.com/in/dana-nguyen,dana@example.com,Acme Logistics,Operations Manager,12 Mar 2024
+Luis,Ortega,https://www.linkedin.com/in/luis-ortega,,Riverside Clinic,Nurse Practitioner,03 Jan 2022

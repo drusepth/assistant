@@ -6,7 +6,7 @@ module Tool
   # live-archive fallback when the window can't answer — and the model
   # answers over the hits WITH CITATIONS, instructed to abstain rather
   # than guess. The answer renders on the run page; "Save as note" is the
-  # explicit door into the primitive pool (D30).
+  # explicit door into the primitive pool (D-mirror-layer).
   class AskYourEmail < Base
     self.title = "Ask your email"
     self.description = "“When did the landlord say the inspection was?” — answered from your own mail, with receipts."

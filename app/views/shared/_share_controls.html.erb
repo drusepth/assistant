@@ -22,6 +22,11 @@
       <%= select_tag :grantee_id, options_from_collection_for_select(available, :id, :name), class: "input min-w-40 flex-1" %>
       <%= form.submit "Share" %>
     <% end %>
+    <% if available.many? %>
+      <%= button_to "Share with everyone in the household",
+            access_grants_path(subject_type: subject.class.name, subject_id: subject.id, everyone: 1),
+            method: :post, class: "btn btn-secondary btn-sm mt-3 w-full" %>
+    <% end %>
   <% elsif members.empty? %>
     <p class="text-sm text-soft">No other household members yet.</p>
   <% end %>

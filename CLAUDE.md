@@ -86,7 +86,8 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/DECISIONS.md` — decision log + open questions
 - `docs/ROADMAP.md` — Milestones 2 (Tools) & 3 (Agent) design: section page anatomy, tool pipeline, agent/suggestion architecture (D18–D20)
 - `docs/TOOLS_PLAN.md` — the high-impact tool wave: nine tools in five waves, per-tool specs, the three infra seams (shared draft plumbing, `next_tools` routing (D28), chat tools (D29))
-- `docs/EMAIL_PLAN.md` — email import & monitoring: the mirror layer (D30) in its own database (D32), multi-account IMAP sync, triage + sender-rule feedback loop, digest/urgent alerts, the boomerang family (D31), the hostile-input threat model
+- `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D-photos-primitive, D-storage-seam)
+- `docs/EMAIL_PLAN.md` — email import & monitoring: the mirror layer (D-mirror-layer) in its own database (D-mirror-database), multi-account IMAP sync, triage + sender-rule feedback loop, digest/urgent alerts, the boomerang family (D-email-monitoring), the hostile-input threat model
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions
 
@@ -102,14 +103,37 @@ repo. Add new milestones there, one entry per line.
 
 Several branches land concurrently, so two rules for the global sequences:
 
-- **Decision numbers and migration timestamps are claimed at merge time, not
-  branch time.** Just before merging/pushing a branch that adds either, fetch
-  origin/main, take the next free D-number (grep `**D` in `docs/DECISIONS.md`)
-  and renumber yours (grep your `D\d+` references in code comments too), and
-  generate migrations with `bin/rails g migration` so they carry real
-  second-resolution timestamps — never hand-rounded ones like `…180000`.
+- **New decisions get slug IDs, not sequence numbers.** Two in-flight branches
+  can't see each other's claims, so a shared counter guarantees collisions (the
+  D30 photos/task-chat clash cost a ~20-file renumber). New entries in
+  `docs/DECISIONS.md` are `**D-kebab-slug.**` (e.g. `**D-photos-primitive.**`) —
+  self-describing, greppable via the `D-` prefix, collision-proof. D1–D37 keep
+  their numbers; never renumber them. If something truly needs a sequential
+  claim, reserve it by pushing a one-line stub to main *first* (e.g.
+  `**D33. (reserved: topic — see PR #NN.)**`), before any branch references it.
+- **Migration timestamps are claimed at generation time**: always create
+  migrations with `bin/rails g migration` so they carry real second-resolution
+  timestamps — never hand-rounded ones like `…180000`.
 - **Registry hub files conflict by design; that's fine.** Lists everyone
   appends to (`ICON_PATHS`, `routes.rb`, `User` has_many, `Tool::SLUGS`,
   fixture files) merge with a trivial keep-both — resolve, don't redesign.
-  `db/schema.rb` is never hand-merged: take main's copy and re-run
-  `bin/rails db:migrate` to regenerate it.
+  (`docs/DECISIONS.md` stays on the default strategy on purpose: its
+  conflicts are what force the D-number re-check above.)
+  `db/schema.rb` is never hand-merged: run `bin/resolve-schema` during the
+  merge — it takes the incoming copy and re-runs `bin/rails db:migrate` so
+  the file regenerates with both branches' migrations.
+- **Section pages are extension points, not shared files (D37).** Building
+  out a section = adding `Sections::Panels::<Slug>` (panel data + hidden
+  tool cards) and `app/views/sections/panels/_<slug>.html.erb`, plus your
+  own `app/services/<slug>/`, tools, and watchers. Never edit
+  `SectionsController`, `sections/show.html.erb`, or `SectionsHelper` for
+  a section feature — those three were the merge hot spot when the
+  Hobbies, subsection-tile, and Health buildouts landed in parallel.
+  Merge `origin/main` into your branch early and often; small frequent
+  merges beat one big one. `docs/STATUS.md` no longer
+  conflicts at all: it merges with `merge=union` (see `.gitattributes`), so
+  colliding appends keep both lines automatically — the tradeoff is that you
+  must only append to it, never rewrite existing lines. Note GitHub's web UI
+  ignores merge attributes, so a PR may still *show* a STATUS.md conflict —
+  a local `git fetch origin main && git merge origin/main` resolves it
+  hands-free; push the merge and the PR clears.

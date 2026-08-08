@@ -39,6 +39,31 @@
   <% end %>
 
   <%= render Ui::CardComponent.new(
+        title: "Public datasets",
+        subtitle: "Local BLS data behind the Career tools (D31) — staleness is shown, never hidden") do %>
+    <div class="space-y-1 text-sm text-soft">
+      <p>
+        <span class="font-medium text-ink">CPI-U:</span>
+        <%= @cpi.present? ? "annual averages through #{@cpi.latest_year}" : "not loaded" %>
+      </p>
+      <p>
+        <span class="font-medium text-ink">Wage medians (OES national):</span>
+        <%= @wages.present? ? "loaded (#{@wages.as_of})" : "not loaded — fetch or import to light up market numbers" %>
+      </p>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <%= button_to "Fetch from BLS", admin_refresh_datasets_path, class: "btn btn-secondary btn-sm" %>
+      <%= form_with url: admin_import_datasets_path, class: "flex items-center gap-2" do %>
+        <%= file_field_tag :file, accept: ".zip,.xlsx,.csv", class: "text-sm" %>
+        <%= submit_tag "Import file", class: "btn btn-ghost btn-sm" %>
+      <% end %>
+    </div>
+    <p class="mt-2 text-xs text-soft">
+      Air-gapped? Download the OES national zip and (optionally) a year,value CPI csv elsewhere and import them here.
+    </p>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(
         title: "Background jobs",
         subtitle: "Adapter: #{@queue.adapter_name}") do |card| %>
     <% if @queue_failures.any? %>
@@ -101,6 +126,32 @@
         async adapter — and anything they swallow is in the error log below.
       </p>
     <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(
+        title: "Storage",
+        subtitle: "Active Storage service: #{@storage.service}") do %>
+    <p class="text-sm text-soft">
+      Where originals live is instance configuration — local disk by default,
+      any S3-compatible bucket via ENV (see <span class="font-mono text-xs">docs/STORAGE.md</span>).
+      Per-member numbers are counts and sizes only; the items themselves stay
+      private until shared.
+    </p>
+    <div class="mt-3 space-y-1.5 text-sm">
+      <% @storage.per_member.each do |row| %>
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <span class="text-ink"><%= row[:user].name %></span>
+          <span class="text-soft">
+            <%= pluralize(row[:photos], "photo") %> · <%= pluralize(row[:documents], "document") %> ·
+            <%= number_to_human_size(row[:bytes]) %>
+          </span>
+        </div>
+      <% end %>
+      <div class="flex items-baseline justify-between gap-2 border-t border-edge pt-1.5 font-medium">
+        <span class="text-ink">Total</span>
+        <span class="text-ink"><%= number_to_human_size(@storage.total_bytes) %></span>
+      </div>
+    </div>
   <% end %>
 
   <%= render Ui::CardComponent.new(title: "Recent errors", padded: false) do |card| %>

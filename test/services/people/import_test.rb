@@ -27,6 +27,23 @@ class People::ImportTest < ActiveSupport::TestCase
     assert_includes maria.notes, "Work email: m.rivera@stmarys.example.com"
   end
 
+  test "imports a LinkedIn connections export, preamble and all" do
+    result = assert_difference("@user.people.count", 2) { import("linkedin_connections.csv") }
+
+    assert_equal 2, result.imported
+    assert_nil result.error
+
+    dana = @user.people.find_by!(name: "Dana Nguyen")
+    assert_equal "dana@example.com", dana.email
+    assert_includes dana.notes, "Position: Operations Manager"
+    assert_includes dana.notes, "Connected on LinkedIn: 12 Mar 2024"
+    assert_includes dana.notes, "LinkedIn: https://www.linkedin.com/in/dana-nguyen"
+    assert_includes dana.notes, "Company: Acme Logistics"
+
+    luis = @user.people.find_by!(name: "Luis Ortega")
+    assert_nil luis.email, "LinkedIn hides most emails; absence must not invent one"
+  end
+
   test "handles vCard 2.1 quoted-printable and compact birthdays" do
     import("contacts.vcf")
 

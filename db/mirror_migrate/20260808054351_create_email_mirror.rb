@@ -1,4 +1,4 @@
-# The email mirror (D30/D32, EMAIL_PLAN.md §4): owner-private cache of
+# The email mirror (D-mirror-layer/D-mirror-database, EMAIL_PLAN.md §4): owner-private cache of
 # synced mailboxes, in the mirror database. References to primary-database
 # rows (users, linked_accounts, people, promoted items) are soft integer
 # ids — no cross-database foreign keys exist on purpose.

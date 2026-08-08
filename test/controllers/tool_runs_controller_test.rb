@@ -19,6 +19,27 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "deleting a chat run destroys the transcript but not the recap note (D33)" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Hi there")
+    recap = users(:one).notes.create!(title: "Check-in recap", body: "Kept.")
+    run.tool_run_items.create!(item: recap)
+
+    delete tool_run_path(run)
+    assert_redirected_to section_path("health")
+    assert_not ToolRun.exists?(run.id)
+    assert_empty ToolRunMessage.where(tool_run_id: run.id)
+    assert Note.exists?(recap.id)
+  end
+
+  test "you can't delete another user's run" do
+    run = users(:two).tool_runs.create!(tool_slug: "check_in", inputs: {})
+
+    delete tool_run_path(run)
+    assert_response :not_found
+    assert ToolRun.exists?(run.id)
+  end
+
   test "a hobby input is a free-text field until lenses exist, then a picker" do
     get new_tool_run_path("find_your_people")
     assert_response :success
@@ -247,6 +268,6 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "To whom it may concern", response.body
     assert_match "Mail the letter", response.body
-    assert_match "never sends anything on your behalf", response.body
+    assert_match "nothing ever goes out without your explicit click", response.body
   end
 end

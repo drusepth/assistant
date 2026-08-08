@@ -59,7 +59,7 @@
         </div>
       <% end %>
 
-      <%# The promotion row (D30): the one door into the primitive pool. %>
+      <%# The promotion row (D-mirror-layer): the one door into the primitive pool. %>
       <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-edge pt-3">
         <%= button_to "→ Task", promote_mail_path(message, kind: "task"), method: :post, class: "btn btn-secondary btn-sm" %>
         <%= form_with url: promote_mail_path(message, kind: "event"), method: :post, class: "flex items-center gap-1" do %>

@@ -8,10 +8,20 @@
     <% header.with_actions do %>
       <% if @tool_run.chat? && @tool_run.done? %>
         <%= render "tool_runs/recap_button", tool_run: @tool_run %>
-        <%= link_to "New session", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+        <% if @tool_run.subject %>
+          <%# A subject-bound conversation (D30) belongs to its item's page —
+              a fresh inputless session here would be about nothing. %>
+          <%= link_to "Open the task", @tool_run.subject, class: "btn btn-secondary" %>
+        <% else %>
+          <%= link_to "New session", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+        <% end %>
       <% else %>
         <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
       <% end %>
+      <%= button_to "Delete", @tool_run, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: @tool_run.chat? ?
+              "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." :
+              "Delete this run? Anything it created (notes, tasks, events) stays." } %>
     <% end %>
   <% end %>
 <% end %>
@@ -26,63 +36,8 @@
       <p class="text-sm text-red-600"><%= @tool_run.error %></p>
     <% end %>
   <% elsif @tool_run.chat? %>
-    <%= render Ui::CardComponent.new(padded: false) do %>
-      <%# flex-col-reverse pins the scroll to the newest turn, so markup
-          order is bottom-up: indicator/retry first, oldest-context last. %>
-      <div class="flex max-h-[65vh] flex-col-reverse gap-3 overflow-y-auto p-4">
-        <% if @tool_run.awaiting_reply? %>
-          <div class="flex justify-start">
-            <div class="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-3">
-              <span class="size-1.5 animate-bounce rounded-full bg-stone-400"></span>
-              <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:150ms]"></span>
-              <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:300ms]"></span>
-            </div>
-          </div>
-        <% elsif @tool_run.reply_failed? %>
-          <div class="flex justify-center">
-            <%= button_to "Try again", retry_reply_tool_run_path(@tool_run), method: :post,
-                  class: "btn btn-secondary btn-sm" %>
-          </div>
-        <% end %>
-        <%= render partial: "tool_runs/message", collection: @tool_run.tool_run_messages.ordered.reverse %>
-        <% if (recap = @tool_run.previous_recap) %>
-          <p class="text-center text-xs text-soft">
-            Picking up from last time —
-            <%= link_to recap.title, recap, class: "underline decoration-stone-300 underline-offset-2 hover:text-ink" %>
-          </p>
-        <% end %>
-      </div>
-      <div class="border-t border-edge p-3">
-        <%= form_with url: tool_run_messages_path(@tool_run), class: "space-y-2",
-              data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do %>
-          <% if @tool_run.tool.quick_replies.any? && !@tool_run.awaiting_reply? %>
-            <div class="flex flex-wrap gap-1.5">
-              <% @tool_run.tool.quick_replies.each do |reply| %>
-                <button type="button" class="chip border border-edge bg-surface text-soft hover:border-primary-300 hover:text-ink"
-                        data-action="chat-input#quickReply" data-chat-input-text-param="<%= reply %>">
-                  <%= reply %>
-                </button>
-              <% end %>
-            </div>
-          <% end %>
-          <div class="flex items-end gap-2">
-            <%= text_area_tag :content, nil, rows: 3, id: "chat-composer", class: "input flex-1 resize-none",
-                  autocomplete: "off", placeholder: "Ask, answer, or say where to go next… (Shift+Enter for a new line)",
-                  data: { turbo_permanent: true, chat_input_target: "input",
-                          action: "keydown->chat-input#keydown input->chat-input#grow" } %>
-            <%= submit_tag @tool_run.awaiting_reply? ? "Thinking…" : "Send",
-                  class: "btn btn-primary", disabled: @tool_run.awaiting_reply? %>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <% if @tool_run.tool_run_messages.user_role.exists? %>
-      <div class="flex items-center justify-between gap-4">
-        <p class="text-xs text-soft">Wrapping up? A recap files this session to your notes — it's what the next session remembers.</p>
-        <div class="shrink-0"><%= render "tool_runs/recap_button", tool_run: @tool_run %></div>
-      </div>
-    <% end %>
+    <%= render "tool_runs/chat", run: @tool_run, tool: @tool_run.tool,
+          composer_url: tool_run_messages_path(@tool_run) %>
 
     <% @tool_run.items.grep(Note).each do |note| %>
       <%= render Ui::CardComponent.new(title: note.title, subtitle: "Recap — saved to your notes") do |card| %>
@@ -94,7 +49,8 @@
     <% end %>
   <% else %>
     <%# Ask-your-email answers render here rather than landing anything —
-        "Save as note" is the explicit door into the primitive pool (D30). %>
+        "Save as note" is the explicit door into the primitive pool
+        (D-mirror-layer). %>
     <% if (answer = @tool_run.output["answer"]).present? %>
       <%= render Ui::CardComponent.new(title: answer["question"],
             subtitle: "Answered from #{answer["searched"]} — save it if it's worth keeping") do |card| %>
@@ -154,28 +110,35 @@
       <% end %>
     <% end %>
 
-    <% next_steps = @tool_run.next_steps %>
-    <% if next_steps.any? %>
-      <%= render Ui::CardComponent.new(title: "Suggested next steps", subtitle: "One click — the form comes prefilled") do %>
-        <div class="divide-y divide-edge">
-          <% next_steps.each do |step| %>
-            <div class="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-ink"><%= step.tool.title %></p>
-                <% if step.reason %>
-                  <p class="mt-0.5 text-xs text-soft"><%= step.reason %></p>
-                <% end %>
-              </div>
-              <%= link_to "Start →", new_tool_run_path(step.tool.slug, inputs: step.inputs),
-                    class: "btn btn-secondary btn-sm shrink-0" %>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
+    <%# Ask-then-send (D-career-web): the compose panel IS the review — the
+        user's own mailbox, their edits, one explicit click. %>
+    <% if @tool_run.tool_slug == "tailor_application" && @tool_run.done? %>
+      <%= render "tool_runs/email_application", tool_run: @tool_run %>
     <% end %>
 
     <p class="text-xs text-soft">
-      Drafts are yours to review, fill in, and send — the app never sends anything on your behalf.
+      Drafts are yours to review, fill in, and send — nothing ever goes out without your explicit click.
     </p>
+  <% end %>
+
+  <%# Next-step cards render for chat and draft runs alike — a check-in's
+      find-a-therapist card is the D28 seam doing trust work. %>
+  <% if @tool_run.done? && (next_steps = @tool_run.next_steps).any? %>
+    <%= render Ui::CardComponent.new(title: "Suggested next steps", subtitle: "One click — the form comes prefilled") do %>
+      <div class="divide-y divide-edge">
+        <% next_steps.each do |step| %>
+          <div class="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-ink"><%= step.tool.title %></p>
+              <% if step.reason %>
+                <p class="mt-0.5 text-xs text-soft"><%= step.reason %></p>
+              <% end %>
+            </div>
+            <%= link_to "Start →", new_tool_run_path(step.tool.slug, inputs: step.inputs),
+                  class: "btn btn-secondary btn-sm shrink-0" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   <% end %>
 </div>
