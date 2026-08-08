@@ -1,0 +1,77 @@
+<%# The chat surface (D29), shared by the run page and any page hosting a
+    subject-bound conversation (D30: task pages). Locals:
+      run          — the chat run, or nil when no turn has been sent yet
+      tool         — the chat tool class (quick replies, recap copy)
+      composer_url — where the composer posts
+      openers      — assistant-styled opening lines shown while run is nil
+      title        — optional card title %>
+<% openers = local_assigns.fetch(:openers, []) %>
+<% title = local_assigns[:title] %>
+
+<%= render Ui::CardComponent.new(title: title, padded: false) do %>
+  <%# flex-col-reverse pins the scroll to the newest turn, so markup
+      order is bottom-up: indicator/retry first, oldest-context last. %>
+  <div class="flex max-h-[65vh] flex-col-reverse gap-3 overflow-y-auto p-4">
+    <% if run&.awaiting_reply? %>
+      <div class="flex justify-start">
+        <div class="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-3">
+          <span class="size-1.5 animate-bounce rounded-full bg-stone-400"></span>
+          <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:150ms]"></span>
+          <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:300ms]"></span>
+        </div>
+      </div>
+    <% elsif run&.reply_failed? %>
+      <div class="flex justify-center">
+        <%= button_to "Try again", retry_reply_tool_run_path(run), method: :post,
+              class: "btn btn-secondary btn-sm" %>
+      </div>
+    <% end %>
+    <% if run %>
+      <%= render partial: "tool_runs/message", collection: run.tool_run_messages.ordered.reverse %>
+      <% if (recap = run.previous_recap) %>
+        <p class="text-center text-xs text-soft">
+          Picking up from last time —
+          <%= link_to recap.title, recap, class: "underline decoration-stone-300 underline-offset-2 hover:text-ink" %>
+        </p>
+      <% end %>
+    <% else %>
+      <% openers.reverse.each do |opener| %>
+        <div class="flex justify-start">
+          <div class="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-2 text-sm text-ink">
+            <%= opener %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="border-t border-edge p-3">
+    <%= form_with url: composer_url, class: "space-y-2",
+          data: { controller: "chat-input", action: "turbo:submit-end->chat-input#reset" } do %>
+      <% if tool.quick_replies.any? && !run&.awaiting_reply? %>
+        <div class="flex flex-wrap gap-1.5">
+          <% tool.quick_replies.each do |reply| %>
+            <button type="button" class="chip border border-edge bg-surface text-soft hover:border-primary-300 hover:text-ink"
+                    data-action="chat-input#quickReply" data-chat-input-text-param="<%= reply %>">
+              <%= reply %>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+      <div class="flex items-end gap-2">
+        <%= text_area_tag :content, nil, rows: 3, id: "chat-composer", class: "input flex-1 resize-none",
+              autocomplete: "off", placeholder: "Ask, answer, or say where to go next… (Shift+Enter for a new line)",
+              data: { turbo_permanent: true, chat_input_target: "input",
+                      action: "keydown->chat-input#keydown input->chat-input#grow" } %>
+        <%= submit_tag run&.awaiting_reply? ? "Thinking…" : "Send",
+              class: "btn btn-primary", disabled: run&.awaiting_reply? %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if run && run.tool_run_messages.user_role.exists? %>
+  <div class="flex items-center justify-between gap-4">
+    <p class="text-xs text-soft"><%= tool.recap_hint %></p>
+    <div class="shrink-0"><%= render "tool_runs/recap_button", tool_run: run %></div>
+  </div>
+<% end %>
