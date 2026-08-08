@@ -6,9 +6,10 @@ module Notifications
   class Deliver
     TIMEOUT = 5
 
-    def initialize(user, titles:)
+    def initialize(user, titles:, summary: nil)
       @user = user
       @titles = titles
+      @summary = summary
     end
 
     def call
@@ -23,6 +24,8 @@ module Notifications
 
     private
       def summary
+        return @summary if @summary.present?
+
         count = @titles.size
         "#{count} #{"suggestion".pluralize(count)} from your assistant: #{@titles.first(3).join("; ")}#{"…" if count > 3}"
       end

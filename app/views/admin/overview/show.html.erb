@@ -171,4 +171,35 @@
       </p>
     <% end %>
   <% end %>
+
+  <%= render Ui::CardComponent.new(
+        title: "Reset this household",
+        subtitle: "Delete everything and start again from the signup form") do %>
+    <p class="text-sm text-soft">
+      Trying the app out fills it with data you never meant to keep. This
+      empties the household completely —
+      <span class="font-medium text-ink"><%= pluralize(@reset_preview[:items], "item") %></span>
+      across
+      <span class="font-medium text-ink"><%= pluralize(@reset_preview[:members], "account") %></span>,
+      plus every uploaded file, tool run, sharing grant and setting — and hands
+      the instance back to the first-run signup form, exactly as it arrived.
+    </p>
+    <p class="mt-2 text-sm text-soft">
+      It takes your own account too, so you will be signed out. There is no
+      undo: if any of this is real, take a copy from
+      <%= link_to "Settings → Export", settings_path, class: "underline" %> first.
+    </p>
+
+    <%= form_with url: admin_reset_path, class: "mt-4 flex flex-wrap items-end gap-2" do |form| %>
+      <div class="space-y-1">
+        <%= label_tag :confirmation, "Type #{Admin::HouseholdReset::CONFIRMATION} to confirm", class: "label" %>
+        <%= text_field_tag :confirmation, nil, class: "input w-40", autocomplete: "off",
+              placeholder: Admin::HouseholdReset::CONFIRMATION %>
+      </div>
+      <button type="submit" class="btn btn-danger"
+              data-turbo-confirm="Delete every item and account in this household? This cannot be undone.">
+        Clear all data
+      </button>
+    <% end %>
+  <% end %>
 </div>

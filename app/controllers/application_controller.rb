@@ -9,8 +9,18 @@ class ApplicationController < ActionController::Base
   default_form_builder ApplicationFormBuilder
 
   before_action :require_onboarding
+  around_action :use_household_time_zone
 
   private
+    # One instance serves one household, so its zone is the app's zone
+    # (D-household-profile). Without this everything dated runs in UTC and
+    # "due today" flips over in the middle of the evening for most of the
+    # planet. Blank keeps the instance default.
+    def use_household_time_zone(&block)
+      zone = Current.user&.household&.zone || Time.zone
+      Time.use_zone(zone, &block)
+    end
+
     # First-run flow (Q5): a signed-in user who hasn't onboarded lands in
     # /welcome. Controllers reachable before/without onboarding skip this.
     def require_onboarding

@@ -82,6 +82,9 @@
                 <%= nav_link_to "Photos", photos_path, :photo %>
                 <%= nav_link_to "Documents", documents_path, :document %>
                 <%= nav_link_to "Notes", notes_path, :note %>
+                <% if Current.user.linked_accounts.where(provider: "email").exists? %>
+                  <%= nav_link_to "Mail", mail_index_path, :envelope %>
+                <% end %>
               </div>
             </div>
           </nav>
@@ -90,6 +93,7 @@
             <% if Current.user.admin? %>
               <%= nav_link_to "Admin", admin_root_path, :warning %>
             <% end %>
+            <%= nav_link_to "Household", household_path, :home_modern %>
             <%= nav_link_to "Settings", settings_path, :cog %>
             <div class="flex items-center justify-between gap-2 px-3 py-1">
               <span class="min-w-0 truncate text-xs text-soft"><%= Current.user.name %></span>
