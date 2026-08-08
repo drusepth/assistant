@@ -10,6 +10,25 @@
       <%= form.label :password_confirmation, "Repeat new password" %>
       <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", maxlength: 72 %>
     </div>
+
+    <% if @user.keyring&.recovery_wrapped_key.present? %>
+    <div class="space-y-2 rounded-lg border border-edge bg-stone-50 p-3">
+      <p class="text-sm font-medium text-ink">Password vault</p>
+      <p class="text-xs text-soft">
+        Your saved passwords are sealed with your old password. Enter your recovery code to keep them —
+        without it, they can't be recovered.
+      </p>
+      <div class="space-y-1">
+        <%= form.label :recovery_code, "Recovery code", class: "text-xs" %>
+        <%= form.text_field :recovery_code, autocomplete: "off", placeholder: "XXXXXX-XXXXXX-XXXXXX-XXXXXX" %>
+      </div>
+      <label class="flex items-start gap-2 text-xs text-soft">
+        <%= check_box_tag :forfeit_vault, "1", false, class: "mt-0.5 size-4 rounded accent-primary-600" %>
+        <span>I don't have my recovery code — I understand the passwords saved in my vault will be lost.</span>
+      </label>
+    </div>
+    <% end %>
+
     <%= form.submit "Save", class: "w-full" %>
   <% end %>
 </div>

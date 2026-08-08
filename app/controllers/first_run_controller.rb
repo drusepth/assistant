@@ -16,6 +16,7 @@ class FirstRunController < ApplicationController
 
     if household.save
       start_new_session_for(@user)
+      unlock_vault_for(@user, user_params[:password])
       redirect_to root_path, notice: "Welcome home, #{@user.name.split.first}."
     else
       render :new, status: :unprocessable_entity

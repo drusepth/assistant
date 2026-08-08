@@ -20,13 +20,27 @@ module Admin
       case File.extname(file.original_filename).downcase
       when ".csv" then import_cpi(file)
       when ".zip", ".xlsx" then import_wages(file)
+      when ".txt" then import_common_passwords(file)
       else
         redirect_to admin_root_path,
-          alert: "Use the BLS files: the OES national .zip/.xlsx, or a year,value .csv for CPI."
+          alert: "Use the BLS files (the OES national .zip/.xlsx, or a year,value .csv for CPI), or a one-per-line .txt of common passwords."
       end
     end
 
     private
+      # The vault health check's list (PASSWORDS_PLAN W4): one password per
+      # line — e.g. a slice of SecLists' top-N — replacing the small seed.
+      # Local file, zero egress; the health page shows the list's size.
+      def import_common_passwords(file)
+        lines = file.read.force_encoding(Encoding::UTF_8).scrub.split("\n").map(&:strip).reject(&:empty?)
+        return redirect_to admin_root_path, alert: "That file was empty." if lines.empty?
+
+        Datasets.write!(Vault::Health::DATASET, lines.join("\n") + "\n")
+        redirect_to admin_root_path, notice: "Common-passwords list imported — #{lines.size} entries now checked."
+      rescue StandardError => e
+        report_failure(:common_passwords, e)
+      end
+
       def import_cpi(file)
         rows = CSV.parse(file.read, headers: true)
         unless rows.headers.map(&:to_s).map(&:strip) == %w[ year value ]

@@ -22,6 +22,14 @@ class User < ApplicationRecord
   has_many :notification_channels, dependent: :destroy
   has_many :care_settings, dependent: :destroy
 
+  has_one :keyring, dependent: :destroy
+  has_many :credentials, dependent: :destroy
+  has_many :credential_keys, dependent: :destroy
+  has_many :emergency_contacts, dependent: :destroy
+  has_many :emergency_contact_roles, class_name: "EmergencyContact", foreign_key: :contact_user_id,
+    inverse_of: :contact_user, dependent: :destroy
+  has_many :vault_events, dependent: :destroy
+
   # The takeable copy of your life (M4.2): regenerated on demand, only the
   # newest kept.
   has_one_attached :export_archive

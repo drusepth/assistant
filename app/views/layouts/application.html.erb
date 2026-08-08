@@ -85,6 +85,7 @@
                 <% if Current.user.linked_accounts.where(provider: "email").exists? %>
                   <%= nav_link_to "Mail", mail_index_path, :envelope %>
                 <% end %>
+                <%= nav_link_to "Passwords", credentials_path, :key %>
               </div>
             </div>
           </nav>

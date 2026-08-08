@@ -13,4 +13,10 @@ export default class extends Controller {
     this.buttonTarget.textContent = "Copied!"
     setTimeout(() => { this.buttonTarget.textContent = original }, 1500)
   }
+
+  // Click-to-select for readonly link fields. A Stimulus action rather than
+  // an inline onclick, which the app-wide CSP now blocks.
+  selectAll(event) {
+    event.currentTarget.select()
+  }
 }

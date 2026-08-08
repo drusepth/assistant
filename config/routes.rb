@@ -96,6 +96,39 @@ Rails.application.routes.draw do
   end
   resources :notes
 
+  # The password vault (D-passwords-vault). Everything lives under
+  # /credentials — the keyring cookie is path-scoped to exactly this prefix,
+  # so the unlocked vault key never transits on any other request. (The
+  # /passwords namespace is Rails auth's reset flow, hence the model name.)
+  resources :credentials do
+    member do
+      post :reveal
+      post :share
+      delete :unshare
+    end
+    collection do
+      post :unlock
+      post :lock
+      post :export
+      post :recovery
+      post :recovery_confirm
+      get :health
+      get :import, action: :new_import
+      post :import, action: :create_import
+    end
+  end
+  scope path: "/credentials" do
+    resources :emergency_contacts, only: %i[ create destroy ] do
+      member do
+        post :request_access
+        post :deny
+        get :access
+        post :emergency_reveal
+      end
+    end
+  end
+  resource :user_password, only: :update
+
   resources :photos, except: :new do
     member do
       post :ingest

@@ -135,7 +135,7 @@
             </span>
           </div>
           <input type="text" readonly value="<%= join_url(invitation.join_token) %>"
-                 data-clipboard-target="source" onclick="this.select()"
+                 data-clipboard-target="source" data-action="click->clipboard#selectAll"
                  class="input mt-2 text-xs text-soft">
         </div>
       <% end %>
