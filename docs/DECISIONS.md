@@ -2,6 +2,12 @@
 
 Decision log from design sessions. Format: decision, reasoning, status.
 
+**ID convention:** decisions D1–D37 are numbered historically and keep those
+numbers forever. New decisions use kebab slugs — `**D-photos-primitive.**` —
+because parallel branches sharing a counter collide (D30 was claimed twice in
+one day, then the renumbered D31 collided again the same day); slugs can't.
+See CLAUDE.md § conflict hygiene.
+
 ## Decided
 
 **D1. Model-agnostic; no model development or specific integrations.**
