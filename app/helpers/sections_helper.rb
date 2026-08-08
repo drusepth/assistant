@@ -33,6 +33,21 @@ module SectionsHelper
     (section.parent || section).slug
   end
 
+  # One line of engagement signal for a subsection tile: the next planned
+  # event beats counts beats an honest "Nothing yet".
+  def section_summary_signal(summary)
+    if summary.next_event
+      "#{summary.next_event.title} · #{summary.next_event.starts_at.strftime("%b %-d")}"
+    elsif !summary.quiet?
+      in_flight = []
+      in_flight << pluralize(summary.open_tasks_count, "open task") if summary.open_tasks_count.positive?
+      in_flight << pluralize(summary.active_goals_count, "project") if summary.active_goals_count.positive?
+      in_flight.join(" · ")
+    else
+      "Nothing yet"
+    end
+  end
+
   # Chip suggestions for the hobby capture card — a broad, cheap-to-start
   # spread, minus the lenses the household already has.
   HOBBY_SUGGESTIONS = [

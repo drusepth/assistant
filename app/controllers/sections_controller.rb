@@ -4,6 +4,7 @@ class SectionsController < ApplicationController
     section_ids = [ @section.id, *@section.children.ids ]
 
     @tools = Tool.for_section(@section)
+    @subsection_summaries = Sections::Summary.for(Current.user, @section.children)
     @suggestions = Current.user.suggestions.actionable.in_section(section_ids)
       .order(created_at: :desc).includes(:sections)
 

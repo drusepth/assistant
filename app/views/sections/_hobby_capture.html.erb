@@ -1,8 +1,10 @@
 <%# The Hobbies identity capture (docs/HOBBIES.md §1): each answer becomes a
     hobby lens (D25) — a child section whose page, filters, and sharing come
-    from the existing lens machinery. %>
+    from the existing lens machinery. This full card leads the page only
+    until the first lens exists; after that, capture shrinks to the add
+    tile at the end of the hobby grid. %>
 <%= render Ui::CardComponent.new(
-      title: hobbies.children.any? ? "Add another hobby" : "What do you do for fun?",
+      title: "What do you do for fun?",
       subtitle: "Each hobby becomes its own lens — projects, sessions, gear, and people in one place."
     ) do %>
   <div class="space-y-3">
