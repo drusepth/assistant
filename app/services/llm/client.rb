@@ -40,8 +40,9 @@ module Llm
       body[:model] = @model if @model
       body[:response_format] = { type: "json_object" } if json
 
-      content = extract_content(post("/chat/completions", body))
-      json ? parse_json(content) : content
+      payload = post("/chat/completions", body)
+      content = extract_content(payload)
+      json ? parse_json(content, payload.dig("choices", 0, "finish_reason")) : content
     end
 
     private
@@ -76,10 +77,45 @@ module Llm
 
       # Flaky, not structural: the endpoint spoke the right protocol and the
       # model simply sampled badly. Another draw often parses.
-      def parse_json(content)
+      def parse_json(content, finish_reason)
         JSON.parse(content)
       rescue JSON::ParserError
-        raise TransientError, "The model returned invalid JSON."
+        embedded_json(content) or
+          raise(TransientError, "The model returned invalid JSON (#{reply_shape(content, finish_reason)}). " \
+            "Reply began: #{reply_preview(content)}")
+      end
+
+      # Providers that ignore response_format — local models especially — often
+      # wrap perfectly valid JSON in a markdown fence or a sentence of prose,
+      # and retrying yields the same wrapping every time. The object is still
+      # in there: take the outermost {...} or [...] and try again.
+      def embedded_json(content)
+        embedded = content[/\{.*\}|\[.*\]/m]
+        JSON.parse(embedded) if embedded
+      rescue JSON::ParserError
+        nil
+      end
+
+      # This message lands in the /admin error log, so it quotes only a short
+      # preview, not the full reply — a reply echoes the private item it was
+      # about, and the first lines are where formatting bugs (a fence, a
+      # preamble sentence) show themselves anyway. The shape facts cover the
+      # rest; finish_reason "length" is the tell for a reply truncated by the
+      # provider's token limit, the one invalid-JSON cause that no amount of
+      # retrying or salvaging fixes.
+      def reply_shape(content, finish_reason)
+        shape = [ "#{content.length} chars" ]
+        shape << "cut off by the token limit (finish_reason: length)" if finish_reason == "length"
+        shape << "opens with a markdown fence" if content.lstrip.start_with?("```")
+        shape << (content.include?("{") || content.include?("[") ?
+          "contains an unparseable {...} block" : "contains no JSON at all")
+        shape.join(", ")
+      end
+
+      # inspect, so a leading fence or stray whitespace is visible verbatim
+      # ("```json\n{\"steps\"…") instead of dissolving into the log's layout.
+      def reply_preview(content)
+        content.lines.first(3).join.truncate(200).inspect
       end
 
       def error_message(body)

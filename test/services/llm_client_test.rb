@@ -76,11 +76,68 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_match "unexpected response shape", error.message
   end
 
+  test "salvages JSON the model wrapped in a markdown fence" do
+    fenced = "```json\n{\"answer\": 42}\n```"
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: fenced } } ] }.to_json)
+
+    assert_equal({ "answer" => 42 }, @client.chat([ { role: "user", content: "Hi" } ], json: true))
+  end
+
+  test "salvages JSON the model wrapped in prose" do
+    chatty = "Here is the plan you asked for:\n\n{\"steps\": [{\"title\": \"Call the clinic\"}]}\n\nGood luck!"
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: chatty } } ] }.to_json)
+
+    assert_equal({ "steps" => [ { "title" => "Call the clinic" } ] },
+      @client.chat([ { role: "user", content: "Hi" } ], json: true))
+  end
+
+  test "braces alone are not enough — unsalvageable content is still transient" do
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: "set {a: b} then done" } } ] }.to_json)
+
+    assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+  end
+
   test "invalid JSON is transient, because another sample often parses" do
     stub_request(:post, @endpoint)
       .to_return(status: 200, body: { choices: [ { message: { content: "not json" } } ] }.to_json)
 
     assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+  end
+
+  test "invalid JSON errors describe the reply's shape and preview its first lines" do
+    reply = "Sure! Here is the plan you asked for.\nStep one: update the resume."
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: reply }, finish_reason: "stop" } ] }.to_json)
+
+    error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+    assert_match "#{reply.length} chars", error.message
+    assert_match "no JSON at all", error.message
+    assert_match "Sure! Here is the plan", error.message
+  end
+
+  test "invalid JSON errors call out a reply truncated by the token limit" do
+    truncated = '{"steps": [{"title": "Update the resume"}, {"title": "Dra'
+    stub_request(:post, @endpoint)
+      .to_return(status: 200,
+        body: { choices: [ { message: { content: truncated }, finish_reason: "length" } ] }.to_json)
+
+    error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+    assert_match "cut off by the token limit", error.message
+    assert_match "unparseable", error.message
+  end
+
+  test "the preview quotes only the first lines of the reply, truncated" do
+    reply = "line one\nline two\nline three\ndeep in the reply: a private detail\n" + ("x" * 500)
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: reply }, finish_reason: "stop" } ] }.to_json)
+
+    error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+    assert_match "line three", error.message
+    assert_no_match(/private detail/, error.message)
+    assert_operator error.message.length, :<, 400
   end
 
   test "raises on invalid JSON content and unreachable hosts" do
