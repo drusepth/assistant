@@ -19,6 +19,7 @@ module Tool
     # catalog only; store_next_tools re-validates against it.
     ROUTABLE_SLUGS = %w[
       insurance_appeal debt_collector_response deposit_demand results_explainer dispute_letter
+      decode_offer wage_claim
     ].freeze
 
     MAX_SECTIONS = 3
