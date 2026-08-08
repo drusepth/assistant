@@ -1,0 +1,29 @@
+<%# Bulk actions for the photo-select controller. Locals: albums (addable
+    targets, may be empty), remove_album (the album being viewed, or nil). %>
+<div class="fixed inset-x-0 bottom-0 z-40 hidden border-t border-edge bg-surface p-3 shadow-lg"
+     data-photo-select-target="bar">
+  <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-3">
+    <span class="text-sm font-medium text-ink" data-photo-select-target="count"></span>
+    <span class="flex-1"></span>
+
+    <% if albums.any? %>
+      <%= form_with url: photos_path, method: :post, class: "flex items-center gap-2",
+            data: { action: "submit->photo-select#prepare" } do %>
+        <div data-photo-select-target="ids"></div>
+        <select class="input" data-photo-select-target="albumSelect" aria-label="Album">
+          <% albums.each do |album| %>
+            <option data-url="<%= add_photos_album_path(album) %>"><%= album.title %></option>
+          <% end %>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Add to album</button>
+      <% end %>
+    <% end %>
+
+    <% if remove_album %>
+      <%= form_with url: remove_photos_album_path(remove_album), method: :delete, class: "flex" do %>
+        <div data-photo-select-target="ids"></div>
+        <button type="submit" class="btn btn-danger btn-sm">Remove from album</button>
+      <% end %>
+    <% end %>
+  </div>
+</div>

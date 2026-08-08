@@ -76,6 +76,21 @@ Rails.application.routes.draw do
   end
   resources :notes
 
+  resources :photos, except: :new do
+    member do
+      post :ingest
+      post :caption
+      patch :apply_suggestion
+    end
+  end
+  resources :albums do
+    member do
+      post :add_photos
+      delete :remove_photos
+    end
+  end
+  resources :photo_people, only: %i[ create destroy ]
+
   resources :suggestions, only: [] do
     member do
       patch :accept

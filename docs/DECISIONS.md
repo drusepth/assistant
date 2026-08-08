@@ -129,6 +129,12 @@ No new primitive: the Medications card files a Note (`notes.kind = "medication"`
 **D37. Section pages compose per-section panels by convention.**
 Born from a merge: the Hobbies, subsection-tile, and Health buildouts all edited `SectionsController`, `sections/show.html.erb`, and `SectionsHelper`, and collided. Now a section's lead panel is discovered, not wired: `Sections::Panel.for(section, viewer)` resolves `Sections::Panels::<Slug>` (nil for sections without one — they get the generic subsection browse grid), the panel object carries all section-specific page data as memoized methods plus `hidden_tool_slugs` for Act-zone curation, and the view renders `sections/panels/_<slug>.html.erb` with the panel as a local. Building out a section therefore adds files (a panel class, a panel partial, services, tools, watchers) and edits only registries — two section buildouts in parallel touch disjoint files. The shared page files change only when the *anatomy* (D18) changes. — *Built.*
 
+**D-photos-primitive. Photo is the seventh primitive; albums are containers; sharing rides access grants.**
+A photo is not a Document (no text pipeline, high volume, grid-and-lightbox browsing idiom, its own joins for albums and people), so `Photo` joins the primitive pool — `Visible` + `Sectionable`, multi-taggable, surfaced through a new cross-section **Photos view** (timeline grid), not a new section. **Albums are user-owned containers** (`albums` + `album_photos`), not sections — deliberate curation, not filters — and are themselves `Visible`. Sharing adds no new mechanism: the photo read path gains one clause mirroring the section-grant clause — a photo is visible to a holder of a grant on a containing album when the grant's grantor is the photo's owner — so `AccessGrant` stays the single sharing mechanism and `visible_to` the single read path (D9). "Share with the whole household" is a convenience button that bulk-creates ordinary per-member grants. Ingestion is deterministic and LLM-free (EXIF date/GPS, checksum dedupe, preprocessed variants); people-tagging is manual (the Q8 lesson). Full design in `PHOTOS_PLAN.md`. — *Built (all five waves).*
+
+**D-storage-seam. Blob storage is a config seam: pick a service the way you pick a model.**
+Model-agnosticism gets a storage twin: `config/storage.yml` grows an **`s3` service defined entirely from ENV** (`STORAGE_ENDPOINT`/`REGION`/`BUCKET`/keys/`FORCE_PATH_STYLE`) — one shape covering AWS S3, Cloudflare R2, Backblaze B2, and self-hosted MinIO, since S3-compatible is the protocol and Amazon just one vendor — selected by `ACTIVE_STORAGE_SERVICE` with **local disk remaining the zero-config default**. Uploads are Active Storage **direct uploads** (browser → bucket, documented CORS policy) so photo batches never funnel through the Rails process; delivery stays redirect-mode short-lived signed URLs behind `visible_to`-scoped pages; migration local→S3 is the documented mirror-then-flip path. Full design in `PHOTOS_PLAN.md` §2; setup docs in `docs/STORAGE.md`. — *Built.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -167,3 +173,11 @@ Tools that need the live web (real provider directories, current benefit rules) 
 **Q10. Agent notification channels.**
 Self-hosted instances rarely have SMTP (the D15 argument), so the agent is in-app-only (Dashboard/section/Today) through M3. — *Direction decided: see D22 (webhook → Web Push → email-if-configured; Active sections only). Build at M4.3.*
 
+**Q14. Photo location privacy dial.**
+v1 (PHOTOS_PLAN): shared viewers get EXIF-stripped variants and coordinates render owner-only. Is a per-album "share locations" toggle warranted, or is owner-only forever the right D9 answer? — *Not started.*
+
+**Q15. Collaborative albums.**
+Household members adding *their own* photos to someone else's shared album (the `grantor = photo owner` guard in the D-photos-primitive visibility clause already anticipates it). Real family demand, real complexity; decide after photos wave 3 sees usage. — *Not started.*
+
+**Q16. Video in the photo library.**
+Needs ffmpeg in the image, preview generation, size limits, possibly range streaming. Separate plan once photos prove out; the photos schema shouldn't need to change. — *Not started.*

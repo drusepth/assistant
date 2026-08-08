@@ -12,6 +12,8 @@ class User < ApplicationRecord
   has_many :people, dependent: :destroy
   has_many :goals, dependent: :destroy
   has_many :notes, dependent: :destroy
+  has_many :photos, dependent: :destroy
+  has_many :albums, dependent: :destroy
   has_many :tool_runs, dependent: :destroy
   has_many :suggestions, dependent: :destroy
   has_many :linked_accounts, dependent: :destroy

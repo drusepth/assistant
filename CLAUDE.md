@@ -86,6 +86,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/DECISIONS.md` — decision log + open questions
 - `docs/ROADMAP.md` — Milestones 2 (Tools) & 3 (Agent) design: section page anatomy, tool pipeline, agent/suggestion architecture (D18–D20)
 - `docs/TOOLS_PLAN.md` — the high-impact tool wave: nine tools in five waves, per-tool specs, the three infra seams (shared draft plumbing, `next_tools` routing (D28), chat tools (D29))
+- `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D-photos-primitive, D-storage-seam)
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions
 
