@@ -111,6 +111,41 @@
     </div>
   <% end %>
 
+  <% if Current.user.linked_accounts.where(provider: "email").exists? %>
+    <%= render Ui::CardComponent.new(title: "Mail", subtitle: "The daily digest and what you've taught the assistant about senders") do %>
+      <%= form_with url: mail_settings_path, method: :patch, class: "flex flex-wrap items-end gap-3" do |form| %>
+        <div class="space-y-1">
+          <label class="label" for="mail_digest_hour">Digest time (household clock)</label>
+          <%= select_tag :mail_digest_hour,
+                options_for_select((0..23).map { |hour| [ Time.new(2000, 1, 1, hour).strftime("%-l %p"), hour ] }, Current.user.mail_digest_hour),
+                id: "mail_digest_hour", class: "input w-auto" %>
+        </div>
+        <label class="flex items-center gap-2 pb-2 text-sm">
+          <%= check_box_tag :mail_digest_notify, "1", Current.user.mail_digest_notify?, class: "size-4 rounded accent-primary-600" %>
+          Send a pointer to my notification channels (titles only)
+        </label>
+        <%= form.submit "Save", class: "btn-sm" %>
+      <% end %>
+      <p class="mt-2 text-xs text-soft">On a day with no important mail, no digest appears and nothing is sent.</p>
+
+      <% rules = Current.user.email_sender_rules.order(:email) %>
+      <% if rules.any? %>
+        <div class="mt-4 border-t border-edge pt-3">
+          <h3 class="mb-2 text-sm font-semibold text-ink">Sender rules you've taught it</h3>
+          <ul class="space-y-1.5">
+            <% rules.each do |rule| %>
+              <li class="flex items-center gap-2 text-sm">
+                <span class="chip <%= rule.rule == "vip" ? "bg-primary-50 text-primary-800" : "bg-stone-100 text-stone-600" %>"><%= rule.rule == "vip" ? "always important" : "muted" %></span>
+                <span class="min-w-0 truncate text-ink"><%= rule.email %></span>
+                <%= button_to "Remove", email_sender_rule_path(rule), method: :delete, class: "btn btn-ghost btn-sm ml-auto" %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <% if Current.user.admin? %>
     <% profile = Current.user.household.model_profile %>
     <%= render Ui::CardComponent.new(title: "AI model", subtitle: profile&.configured? ? "Configured — #{profile.display_name}" : "Not configured — document understanding is off") do %>

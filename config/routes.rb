@@ -38,8 +38,11 @@ Rails.application.routes.draw do
   resources :linked_accounts, only: %i[ create update destroy ] do
     member do
       post :sync
+      patch :settings, action: :update_settings
     end
   end
+  resources :email_sender_rules, only: %i[ create destroy ]
+  resource :mail_settings, only: %i[ update ]
 
   namespace :events do
     resource :import, only: %i[ new create ]

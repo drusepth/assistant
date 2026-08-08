@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_053709) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_060249) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -79,6 +79,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_053709) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_documents_on_user_id"
+  end
+
+  create_table "email_sender_rules", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "rule", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "email"], name: "index_email_sender_rules_on_user_id_and_email", unique: true
+    t.index ["user_id"], name: "index_email_sender_rules_on_user_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -311,6 +321,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_053709) do
     t.datetime "digest_generated_at"
     t.string "email_address", null: false
     t.integer "household_id", null: false
+    t.json "mail_digest"
+    t.date "mail_digest_generated_on"
+    t.integer "mail_digest_hour", default: 8, null: false
+    t.boolean "mail_digest_notify", default: false, null: false
     t.string "name", null: false
     t.datetime "onboarded_at"
     t.string "password_digest", null: false
@@ -325,6 +339,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_053709) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "app_errors", "users"
   add_foreign_key "documents", "users"
+  add_foreign_key "email_sender_rules", "users"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
   add_foreign_key "goals", "users"

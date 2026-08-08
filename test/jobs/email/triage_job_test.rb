@@ -112,6 +112,33 @@ class Email::TriageJobTest < ActiveJob::TestCase
       "the shortfall is visible to the operator, never silent"
   end
 
+  test "muted senders are labeled noise by code; vip senders get the importance floor" do
+    users(:one).email_sender_rules.create!(email: "noisy@example.org", rule: "mute")
+    users(:one).email_sender_rules.create!(email: "landlord@example.org", rule: "vip")
+    muted = mirror_message(from_email: "noisy@example.org", message_id: "mu@x", thread_key: "mu@x")
+    vip = mirror_message(from_email: "landlord@example.org", message_id: "v@x", thread_key: "v@x")
+    stub_labels([ { index: 1, category: "fyi", importance: 0, why: "looks minor" } ])
+
+    Email::TriageJob.perform_now(@account, [ muted.id, vip.id ])
+
+    assert_equal "noise", muted.reload.triage["category"]
+    assert_equal "code", muted.triage["by"]
+    vip.reload
+    assert_equal EmailSenderRule::VIP_IMPORTANCE_FLOOR, vip.importance,
+      "a taught vip rule outranks the model's verdict"
+    assert vip.triage["vip_floor"]
+  end
+
+  test "with the alerts dial on, triage hands candidates to the alert job" do
+    @account.update!(settings: { "alerts" => true })
+    message = mirror_message
+    stub_labels([ { index: 1, category: "time_sensitive", importance: 3, why: "urgent" } ])
+
+    Email::TriageJob.perform_now(@account, [ message.id ])
+
+    assert_enqueued_with(job: Email::UrgentAlertJob)
+  end
+
   test "a permanent model failure records once and leaves mail browsable" do
     message = mirror_message
     stub_request(:post, ENDPOINT).to_return(status: 401, body: { error: { message: "bad key" } }.to_json)

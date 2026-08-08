@@ -19,23 +19,50 @@ class Email::TriageJob < ApplicationJob
       .order(:id).to_a
     return if messages.empty?
 
-    precomputed, remaining = messages.partition { |message| code_label(message) }
-    precomputed.each { |message| apply_code_label(message) }
+    rules = EmailSenderRule.for(account.user) if account.user
+    rules ||= {}
+
+    precomputed, remaining = messages.partition { |message| code_label(message, rules) }
+    precomputed.each { |message| apply_code_label(message, rules) }
 
     model_pass(account, remaining) if remaining.any?
+    apply_vip_floor(remaining, rules)
 
     surface_deadlines(account)
+
+    # The immediate path (E3): only when the dial is on; the alert job
+    # re-checks everything — this is just the handoff.
+    if account.setting(:alerts) == true && remaining.any?
+      Email::UrgentAlertJob.perform_later(account, remaining.map(&:id))
+    end
   end
 
   private
-    def code_label(message)
-      "noise" if message.bulk?
+    # Deterministic pre-emption (EMAIL_PLAN.md §6): bulk mail and muted
+    # senders are labeled by code and never spend a token.
+    def code_label(message, rules)
+      return "noise" if message.bulk?
+      "noise" if rules[message.from_email.to_s] == "mute"
     end
 
-    def apply_code_label(message)
+    def apply_code_label(message, rules)
       message.update!(
-        triage: { "category" => code_label(message), "importance" => 0, "by" => "code" },
+        triage: { "category" => code_label(message, rules), "importance" => 0, "by" => "code" },
         importance: 0, triaged_at: Time.current)
+    end
+
+    # A vip verdict the user taught outranks the model's: importance never
+    # lands below the floor for senders marked "More like this".
+    def apply_vip_floor(messages, rules)
+      messages.each do |message|
+        next unless rules[message.from_email.to_s] == "vip"
+        message.reload
+        next if message.triaged_at.nil? || message.importance.to_i >= EmailSenderRule::VIP_IMPORTANCE_FLOOR
+
+        message.update!(
+          importance: EmailSenderRule::VIP_IMPORTANCE_FLOOR,
+          triage: (message.triage || {}).merge("vip_floor" => true))
+      end
     end
 
     def model_pass(account, messages)

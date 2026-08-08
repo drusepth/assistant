@@ -44,6 +44,29 @@ class LinkedAccountsController < ApplicationController
     redirect_to settings_path, notice: "#{account.display_name} disconnected and its credentials deleted."
   end
 
+  # Per-link dials (EMAIL_PLAN.md §3/§7): digest inclusion, urgent alerts,
+  # AI processing, contact recency, mirror window, own addresses, pause —
+  # sparse-stored so defaults can evolve (E0's settings convention).
+  SETTING_SWITCHES = %w[ paused alerts contact_recency ].freeze # default off
+  SETTING_HOLDS = %w[ digest ai_processing ].freeze             # default on
+
+  def update_settings
+    account = Current.user.linked_accounts.find(params[:id])
+    settings = account.settings.dup
+
+    SETTING_SWITCHES.each { |key| settings[key] = params[key] == "1" }
+    SETTING_HOLDS.each { |key| settings[key] = params[key] == "1" }
+    if params.key?(:mirror_window_days)
+      settings["mirror_window_days"] = params[:mirror_window_days].to_i.clamp(0, 3650)
+    end
+    if params.key?(:own_addresses)
+      settings["own_addresses"] = params[:own_addresses].to_s.split(/[\s,;]+/).map(&:downcase).uniq.reject(&:blank?)
+    end
+
+    account.update!(settings: settings)
+    redirect_to settings_path, notice: "#{account.display_name} settings saved."
+  end
+
   private
     # Only the fields the provider declares — nothing else lands in the blob.
     def credential_params(settings)

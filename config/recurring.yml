@@ -26,8 +26,13 @@ production:
   # email polls at minutes while DAV stays hourly.
   sync_linked_accounts:
     command: "SyncLinkedAccountJob.sync_stale"
-    schedule: every 5 minutes
+    schedule: every 2 minutes
   # The mirror is a window, not an archive (EMAIL_PLAN.md §4).
   prune_email_mirror:
     command: "Email::PruneMirrorJob.prune_all"
     schedule: every day at 3:30am
+  # Per-user digest times can't be one cron entry (EMAIL_PLAN.md §7):
+  # the dispatcher fires each user's digest when their local hour arrives.
+  dispatch_mail_digests:
+    command: "Email::DigestJob.dispatch_due"
+    schedule: every 15 minutes

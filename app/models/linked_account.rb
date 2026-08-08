@@ -144,8 +144,14 @@ class LinkedAccount < ApplicationRecord
   def paused? = setting(:paused) == true
 
   # Background sync (E0): a link is due when its registry cadence has
-  # elapsed. The recurring fan-out asks this every few minutes.
-  def sync_every = provider_settings[:sync_every]
+  # elapsed. The recurring fan-out asks this every few minutes. An email
+  # link with urgent alerts on polls tighter (E3) — a "court date moved"
+  # alert that arrives 14 minutes late has lost most of its point.
+  def sync_every
+    base = provider_settings[:sync_every]
+    return 3.minutes if base && provider == "email" && setting(:alerts) == true
+    base
+  end
   def sync_due?
     syncable? && !paused? && sync_every.present? &&
       (synced_at.nil? || synced_at < sync_every.ago)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_054351) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_060250) do
   create_table "email_folders", force: :cascade do |t|
     t.datetime "backfilled_at"
     t.datetime "created_at", null: false
@@ -35,6 +35,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_054351) do
   end
 
   create_table "email_messages", force: :cascade do |t|
+    t.datetime "alerted_at"
     t.boolean "answered", default: false, null: false
     t.json "attachments", default: [], null: false
     t.boolean "backfilled", default: false, null: false
