@@ -29,6 +29,11 @@ class JobFeedTest < ActiveSupport::TestCase
     assert_not JobFeed.new(user: users(:one), url: "acme jobs").valid?
   end
 
+  test "a link with anything smuggled past the scheme is rejected" do
+    assert_not JobFeed.new(user: users(:one), url: "https://ok.example.com\njavascript:alert(1)").valid?
+    assert_not JobFeed.new(user: users(:one), url: "https://").valid?
+  end
+
   private
     def feed(url, api_key: nil)
       users(:one).job_feeds.create!(url: url, api_key: api_key)
