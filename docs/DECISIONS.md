@@ -99,6 +99,9 @@ A tool's run `output` may carry a sanitized `next_tools` payload — `{slug, inp
 **D29. Chat is a tool kind, not a separate feature.**
 Third tool kind `:chat` (after draft/plan): one new table, `tool_run_messages` (role user/assistant/notice — a notice is the app speaking after a failed turn, shown in the transcript but never sent to the model), under the existing `tool_runs`. The run page doubles as the chat surface; `ToolRunJob` generates the opening assistant message from owned context and `done` means *live* (composer stays open; turns run through `ChatTurnJob`, deliberately un-retried — mid-conversation, a visible notice the user retries by typing beats silent background retries). Context stays lean (system prompt + last 30 conversational turns) for the model-agnostic constraint. Primitives land only via an explicit "Save a recap" (`ChatRecapJob` → one filed Note recorded on the run) — no auto-writes, per D20. The tutor (Education) is the proving tool, and recap Notes are what give future sessions continuity — the owned-memory moat working as designed. Full design in `TOOLS_PLAN.md` §2/S3. — *Built (TOOLS_PLAN wave 5).*
 
+**D30. The People page is a relationship dashboard; the Address Book is the roster.**
+The People section page stops listing Person rows (the grid duplicated the Address Book, and a synced address book drowned it in acquaintances) — a one-line Address Book link replaces it, and the three surfaces divide cleanly: Address Book = everyone + import/sync + CRUD, person page = the per-person CRM (profile, notes, log contact, Reconnect), section page = the social dashboard. The dashboard's subject is the **circle, not the rolodex**: `people.keep_in_touch` (explicit, manual, set from the person page or the section's "Who do you want to stay close to?" capture card — the Q8 no-inference rule extended, since an import must not turn 300 contacts into 300 obligations) selects who appears; `last_contacted_on` stays the only recency signal, and flagged-but-never-logged people show on the page but never trigger the watcher (no signal, no nudge). Browse becomes Coming up (birthdays off `people.birthday` + People-tagged events) / Your circle (stalest first, one-tap Log contact + Reconnect) / the other-primitive lens lists. Full design in `docs/PEOPLE.md`. — *Proposed.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -138,3 +141,6 @@ Deposit demand and the benefits screener are state-sensitive (return deadlines, 
 
 **Q13. Chat transcript retention.**
 Tutor transcripts accumulate under `tool_run_messages`; recap Notes are the durable owned artifact. Whether old transcripts should be pruned, and whether they join the M4 export, needs deciding. — *Not started.*
+
+**Q14. Person↔item links (attendees).**
+Section tags answer "which lenses"; nothing answers "which people." A polymorphic `person_links` join (person ↔ Event/Task/Note/Goal) would buy per-person history, gathering attendees, an event-afterglow watcher (offer to log contact when a linked event passes), and richer Reconnect context — at the cost of the first typed cross-primitive join beyond tagging plus link UI on every form (D16 friction risk). Q8's rule extends: name-matching may suggest a link, never assume one. Decide when a second consumer demands it. See `docs/PEOPLE.md` §8. — *Not started.*

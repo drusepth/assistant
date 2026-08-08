@@ -51,3 +51,4 @@ Ready to build without one:
 
 5. More linked-account consumers (D26): email next (IMAP, richest surface); recurring background sync; `linked_accounts.credentials` encryption riding the M4 setup
 6. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)
+7. People section rebuild per `docs/PEOPLE.md` (D30/Q14, designed): roster/dashboard split + circle capture first, then birthday radar, then the tool slate (gift ideas, get-together planner, what-do-I-say chat, make-new-friends)

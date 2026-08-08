@@ -45,6 +45,7 @@ Friends, family, communities, church, clubs, meetups.
 - Staying in touch; remembering what matters to each person
 - Event planning; caregiving coordination; co-parenting logistics
 - Community layer: mutual aid, neighborhood organizing, co-op tooling — an assistant that only optimizes individuals recreates atomization; collective capacity is part of the thesis.
+- Full section deep-dive in `docs/PEOPLE.md`: the roster/dashboard split (D30 — Address Book = CRM, section page = social dashboard over the kept-in-touch circle), a tool slate (what-do-I-say chat, get-together planner, gift ideas, make-new-friends), birthday radar, and groups as sub-lenses.
 
 ### 6. Money
 Subsections: **Budget, Debt, Taxes, Assets, Bills, Subscriptions, Benefits**
