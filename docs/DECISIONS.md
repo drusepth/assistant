@@ -210,7 +210,7 @@ Needs ffmpeg in the image, preview generation, size limits, possibly range strea
 
 **Q-vault-audit.** Is `last_used_at` enough, or do reveals/copies/shares deserve an owner-visible event log? Leaning yes once agents can touch credentials. — *Not started.*
 
-**Q-vault-breach.** HIBP k-anonymity checks leak only a hash prefix but are still egress from a local-first box. Admin opt-in at most, never default-on. — *Not started.*
+**Q-vault-breach.** The default posture is an **offline** pwned-passwords bloom filter on the D-public-datasets layer (zero egress, vintage visible). Is the live HIBP k-anonymity lookup (leaks a 5-char hash prefix per check) worth offering even as an admin opt-in, or is offline-only the right local-first answer? — *Not started.*
 
 **Q-vault-autofill.** Browser autofill / passkey-provider role — the vault's real daily-driver gap, a separate surface with its own threat model, and where client-side (zero-knowledge) crypto would land. Own design conversation when the vault proves out. — *Not started.*
 
