@@ -40,8 +40,9 @@ module Llm
       body[:model] = @model if @model
       body[:response_format] = { type: "json_object" } if json
 
-      content = extract_content(post("/chat/completions", body))
-      json ? parse_json(content) : content
+      payload = post("/chat/completions", body)
+      content = extract_content(payload)
+      json ? parse_json(content, payload.dig("choices", 0, "finish_reason")) : content
     end
 
     private
@@ -76,10 +77,11 @@ module Llm
 
       # Flaky, not structural: the endpoint spoke the right protocol and the
       # model simply sampled badly. Another draw often parses.
-      def parse_json(content)
+      def parse_json(content, finish_reason)
         JSON.parse(content)
       rescue JSON::ParserError
-        embedded_json(content) or raise TransientError, "The model returned invalid JSON."
+        embedded_json(content) or
+          raise(TransientError, "The model returned invalid JSON (#{reply_shape(content, finish_reason)}).")
       end
 
       # Providers that ignore response_format — local models especially — often
@@ -91,6 +93,21 @@ module Llm
         JSON.parse(embedded) if embedded
       rescue JSON::ParserError
         nil
+      end
+
+      # Diagnosis without disclosure: this message lands in the /admin error
+      # log, and a raw reply can echo a private item back (a goal breakdown
+      # quotes the goal), so describe the reply's shape rather than quoting
+      # it — see AppError. finish_reason "length" is the tell for a reply
+      # truncated by the provider's token limit, the one invalid-JSON cause
+      # that no amount of retrying or salvaging fixes.
+      def reply_shape(content, finish_reason)
+        shape = [ "#{content.length} chars" ]
+        shape << "cut off by the token limit (finish_reason: length)" if finish_reason == "length"
+        shape << "opens with a markdown fence" if content.lstrip.start_with?("```")
+        shape << (content.include?("{") || content.include?("[") ?
+          "contains an unparseable {...} block" : "contains no JSON at all")
+        shape.join(", ")
       end
 
       def error_message(body)

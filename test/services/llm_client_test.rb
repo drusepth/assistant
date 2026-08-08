@@ -107,6 +107,29 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
   end
 
+  test "invalid JSON errors describe the reply's shape without quoting it" do
+    reply = "My secret plan: quit the job at Initech"
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: reply }, finish_reason: "stop" } ] }.to_json)
+
+    error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+    assert_match "#{reply.length} chars", error.message
+    assert_match "no JSON at all", error.message
+    assert_no_match(/Initech/, error.message)
+  end
+
+  test "invalid JSON errors call out a reply truncated by the token limit" do
+    truncated = '{"steps": [{"title": "Update the resume"}, {"title": "Dra'
+    stub_request(:post, @endpoint)
+      .to_return(status: 200,
+        body: { choices: [ { message: { content: truncated }, finish_reason: "length" } ] }.to_json)
+
+    error = assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+    assert_match "cut off by the token limit", error.message
+    assert_match "unparseable", error.message
+    assert_no_match(/resume/, error.message)
+  end
+
   test "raises on invalid JSON content and unreachable hosts" do
     stub_request(:post, @endpoint)
       .to_return(status: 200, body: { choices: [ { message: { content: "not json" } } ] }.to_json)
