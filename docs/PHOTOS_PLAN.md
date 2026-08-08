@@ -2,11 +2,11 @@
 
 Build plan for **household photos**: family-wide photo storage, tagging, albums, and
 sharing, with S3-compatible object storage as a first-class (but optional) backing
-store. This is the plan the photos branches build from; nothing here is built yet.
+store. **Status: built — all five waves landed** (see `STATUS.md`); this document
+remains the design record.
 
-Proposed decisions here are logged as **D30–D31** in `DECISIONS.md` (provisional until
-their build passes prove them, same convention as D18–D20 and D28–D29). New open
-questions are logged as **Q14–Q16**.
+Decisions here are logged as **D30–D31** in `DECISIONS.md`. Open questions are
+logged as **Q14–Q16**. Operator-facing storage setup lives in `docs/STORAGE.md`.
 
 ---
 
