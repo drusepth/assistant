@@ -76,7 +76,7 @@ documents) as their context, so the profile accrues from normal use.
    design later. Once lenses exist the page leads with them instead: a
    "Your hobbies" card grid (each card a doorway with engagement signal —
    next planned event, open tasks/projects, or a dive-back-in invitation
-   when quiet; `Hobbies::LensSummary`), with capture shrunk to an add-tile
+   when quiet; `Sections::Summary`), with capture shrunk to an add-tile
    at the end of the grid. Lenses deliberately do *not* render as header
    chips — the list is unbounded and a chip cloud has no pull.
 2. **The data confesses.** `Categorize*Jobs` already tag `hobbies`. When

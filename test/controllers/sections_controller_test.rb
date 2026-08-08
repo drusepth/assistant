@@ -15,6 +15,32 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Bob money thing", response.body
   end
 
+  test "seeded subsections browse as compact tiles with signal, not header chips" do
+    task = users(:one).tasks.create!(title: "Review budget")
+    task.sections << sections(:budget)
+
+    get section_path("money")
+    assert_response :success
+    assert_match "Browse", response.body
+    assert_match section_path("budget"), response.body, "the tile links to the subsection page"
+    assert_match "1 open task", response.body
+    assert_match "Nothing yet", response.body, "empty subsections say so honestly"
+
+    get section_path("rights")
+    assert_response :success
+    assert_match "Browse", response.body
+    assert_match section_path("disputes"), response.body
+  end
+
+  test "a subsection tile leads with the next upcoming event" do
+    event = users(:one).events.create!(title: "Lease renewal", starts_at: 5.days.from_now)
+    event.sections << sections(:renting)
+
+    get section_path("rights")
+    assert_response :success
+    assert_match "Lease renewal", response.body
+  end
+
   test "404s on an unknown section" do
     get section_path("nonsense")
     assert_response :not_found

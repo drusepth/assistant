@@ -1,15 +1,16 @@
 require "test_helper"
 
-# Per-lens engagement signal for the Hobbies grid: next planned event and
-# in-flight counts, batched, and always through visible_to (D9).
-class Hobbies::LensSummaryTest < ActiveSupport::TestCase
+# Per-section engagement signal for the browse grids (hobby cards, seeded
+# subsection tiles): next planned event and in-flight counts, batched, and
+# always through visible_to (D9).
+class Sections::SummaryTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
     @guitar = Hobbies::Lens.find_or_create!("Guitar")
     @chess = Hobbies::Lens.find_or_create!("Chess")
   end
 
-  test "returns the soonest upcoming event and open counts per lens" do
+  test "returns the soonest upcoming event and open counts per section" do
     later = @user.events.create!(title: "Recital", starts_at: 2.weeks.from_now)
     later.sections << @guitar
     sooner = @user.events.create!(title: "Lesson", starts_at: 2.days.from_now)
@@ -24,7 +25,7 @@ class Hobbies::LensSummaryTest < ActiveSupport::TestCase
     goal = @user.goals.create!(title: "Learn the solo")
     goal.sections << @guitar
 
-    guitar, chess = Hobbies::LensSummary.for(@user, [ @guitar, @chess ])
+    guitar, chess = Sections::Summary.for(@user, [ @guitar, @chess ])
 
     assert_equal "Lesson", guitar.next_event.title
     assert_equal 1, guitar.open_tasks_count
@@ -37,20 +38,30 @@ class Hobbies::LensSummaryTest < ActiveSupport::TestCase
     assert chess.quiet?
   end
 
+  test "works over seeded subsections, not just hobby lenses" do
+    task = @user.tasks.create!(title: "Review budget")
+    task.sections << sections(:budget)
+
+    budget, = Sections::Summary.for(@user, [ sections(:budget) ])
+
+    assert_equal 1, budget.open_tasks_count
+    assert_not budget.quiet?
+  end
+
   test "only counts items visible to the viewer" do
     other_task = users(:two).tasks.create!(title: "Bob's practice")
     other_task.sections << @guitar
     other_event = users(:two).events.create!(title: "Bob's gig", starts_at: 1.day.from_now)
     other_event.sections << @guitar
 
-    guitar, = Hobbies::LensSummary.for(@user, [ @guitar ])
+    guitar, = Sections::Summary.for(@user, [ @guitar ])
 
     assert_nil guitar.next_event
     assert_equal 0, guitar.open_tasks_count
     assert guitar.quiet?
   end
 
-  test "returns nothing for no lenses" do
-    assert_equal [], Hobbies::LensSummary.for(@user, [])
+  test "returns nothing for no sections" do
+    assert_equal [], Sections::Summary.for(@user, [])
   end
 end

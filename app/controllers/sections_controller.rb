@@ -4,7 +4,7 @@ class SectionsController < ApplicationController
     section_ids = [ @section.id, *@section.children.ids ]
 
     @tools = Tool.for_section(@section)
-    @hobby_summaries = Hobbies::LensSummary.for(Current.user, @section.children) if @section.slug == "hobbies"
+    @subsection_summaries = Sections::Summary.for(Current.user, @section.children)
     @suggestions = Current.user.suggestions.actionable.in_section(section_ids)
       .order(created_at: :desc).includes(:sections)
 
