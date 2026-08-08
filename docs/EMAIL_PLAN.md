@@ -8,17 +8,19 @@ and the richest linked-account surface so far.
 
 It is also the **template for every high-volume source after it** — bank transactions,
 chat exports, browser history, whatever we pull in next. The architectural centerpiece
-(the *mirror layer*, D30) is designed once and reused; email is the proving source.
+(the *mirror layer*, D30, in its own database, D32) is designed once and reused; email
+is the proving source.
 
-Second revision (2026-08), after a design review pass. Beyond the plumbing, this
-version commits to four things the first draft under-invested in: **multiple accounts
-per user**, **a feedback loop so triage gets better instead of staying a stateless
-guess**, **treating mail as hostile input** (prompt injection is in the threat model,
-not a footnote), and **connecting mail to the rest of the owned data** — People first —
-instead of building a feature silo.
+Third revision (2026-08), after two design-review passes. The second pass committed to
+multi-account, the sender-rule feedback loop, the hostile-input threat model, and the
+People linkage. This pass settles the **data lifecycle and first-run economics**: the
+mirror gets its own database (D32), backfilled history is never triaged or alerted on,
+the user can delete from and pause the mirror, direction detection learns the user's
+aliases, and the first mega-wave is split into mergeable passes.
 
-Proposed decisions are logged as **D30–D31** in `DECISIONS.md` (provisional until the
-build passes prove them, the D18–D20 convention). Open questions raised: Q14–Q15.
+Proposed decisions are logged as **D30–D32** in `DECISIONS.md` (provisional until the
+build passes prove them, the D18–D20 convention). Open questions raised: Q14–Q15;
+Q12's household-setting half is scheduled here (E0).
 
 ---
 
@@ -44,7 +46,7 @@ watcher stays quiet rather than guessing.
 
 ---
 
-## 2. How email fits the architecture: the mirror layer (D30)
+## 2. How email fits the architecture: the mirror layer (D30, D32)
 
 ### The problem with treating email like contacts/calendar
 
@@ -82,9 +84,43 @@ What this buys us, in existing-architecture terms:
 - **Per-source tables, deliberately boring.** No generic polymorphic `synced_items`
   table — email gets real columns for real queries (the same lesson as the six
   primitives). The *pattern* is reused for the next source; the table is not.
-- **Export/admin conventions carry over**: mirror rows join the D14 per-user export
-  (they're the user's own data); `/admin` sees sync status and counts, never contents
-  (D23/D9).
+- **Admin conventions carry over**: `/admin` sees sync status and counts, never
+  contents (D23/D9).
+
+### The mirror lives in its own database (D32)
+
+The primary SQLite database is the mission artifact — *"the user's entire life is
+literally one file they own"*; backup is copying it. The mirror is the opposite kind
+of data on every axis:
+
+| | Life file (primary) | Mirror |
+|---|---|---|
+| Authority | source of truth | cache; the mailbox is the truth |
+| Loss | catastrophic | shrug — re-sync rebuilds it |
+| Write pattern | human-paced | thousands of rows per sync, FTS churn, nightly prunes |
+| Size | small forever | large, elastic |
+
+So the mirror gets a **fourth database** alongside Solid Queue/Cache/Cable — the stack
+already installs this exact pattern (`database.yml` entry, `mirror_migrations` path, a
+`MirrorRecord` base class). What it buys:
+
+- **The life file stays small and calm.** Exports, backups, and the copy-a-file story
+  never drag gigabytes of re-syncable cache along; prune/vacuum churn can't fragment
+  the primary.
+- **Write contention is isolated.** SQLite is single-writer per file; sync bursts and
+  FTS trigger cascades land on their own file instead of queueing behind (or ahead of)
+  every user action.
+- **The retention answer falls out (Q14)**: the mirror is **excluded from the D14
+  export by default** — it's derived data, and the documented recovery path is
+  "re-link the mailbox." Backup guidance stays honest: copy the life file; the mirror
+  rebuilds itself.
+
+The accepted costs, stated plainly: references between the two databases are **soft**
+(no cross-database foreign keys, no SQL joins — `person_id` on a message and item ids
+in the promotion table are looked-up ids, resolved in Ruby, tolerant of the far side
+having been deleted). Primitives never depend on mirror rows — promotion *copies*
+content out; it never links back into the cache as a dependency. This is decided now
+because it is nearly free now and a miserable data migration after the first release.
 
 ### Mirrored, but not siloed
 
@@ -106,11 +142,11 @@ and suggestions; nothing ever writes primitives from mail without a human click.
 
 ---
 
-## 3. Connection layer: rides D26/D27, two changes
+## 3. Connection layer: rides D26/D27
 
 The `email` provider already exists in `LinkedAccount::PROVIDERS` (host / username /
-password, scopes `read_inbox` / `read_archive` / `send`). Two real changes, then
-additive wiring:
+password, scopes `read_inbox` / `read_archive` / `send`). Two structural changes, one
+correctness column, then additive wiring:
 
 ### Multiple accounts per user (the blocker fix)
 
@@ -125,6 +161,22 @@ Settings card stacks one entry per link with its own sync state, scopes, and dia
 unified inbox (filterable by account), the digest is one digest, boomerang scans all
 Sent mirrors, sender rules are user-level. Retrofitting multi-account into per-account
 surfaces later would be painful; designing it in now is nearly free.
+
+### "My addresses" — aliases make direction detection load-bearing
+
+Everything downstream keys on `direction` — boomerang, contact recency,
+`expects_reply` semantics — and "outbound = sender matches the login address" breaks
+on plus-addressing, custom-domain send-as, and old addresses. Each link carries a
+user-editable **own-addresses list**: seeded with the login address, grown
+automatically by observing `From` headers on messages in the Sent folder (shown, not
+silent — the Settings card lists what it learned), correctable by hand. A message is
+`outbound` iff its `From` is in the list.
+
+Known limitation, written down rather than implied away: person matching uses
+`people.email`, which is single-valued (extra addresses from contact import overflow
+into notes), so matching will miss secondary addresses. Acceptable for v1; a
+`person_email_addresses` normalization is a candidate follow-up if correspondence
+matching disappoints in practice.
 
 ### Consent is a sentence, not a checkbox pattern (the AI-processing toggle)
 
@@ -164,33 +216,56 @@ app to point the adapter at a model running in your own house.
 - **Prerequisite: encrypt `linked_accounts.credentials`.** The pending D26 follow-up
   stops being deferrable the moment mailbox passwords flow through at volume. The M4
   AR-encryption setup (per-instance keys in `storage/`) already exists; this is
-  `encrypts :credentials` + a backfill migration, done first, in wave E1.
+  `encrypts :credentials` + a backfill migration, done in E0.
+- **Prerequisite: a household clock.** The digest promises "8:00 in your timezone" and
+  no timezone exists anywhere in the schema. E0 adds `households.time_zone` (+ an
+  optional region/state field — the household setting **Q12** has been waiting for on
+  behalf of the Rights/Benefits tools) as ordinary Settings fields. One tiny
+  migration, three features served.
+
+### Mirror lifecycle controls (the user's side of the cache)
+
+All on the link's Settings card, all deterministic:
+
+- **Pause sync** — a switch; a paused link keeps its mirror readable but fetches
+  nothing and triages nothing until resumed.
+- **Remove a message from the mirror** — on every `/mail` message page: deletes the
+  row (and its FTS entry) and writes a **tombstone** (`message_id` per link) so the
+  next sync cannot resurrect it. Without tombstones the delete would be a lie. The
+  assistant never triages, digests, cites, or drafts from what isn't in the mirror.
+- **Unlink** — removing a link purges its mirror rows, folders, and tombstones in one
+  pass. **Promoted primitives survive** — they are the user's items, copied out at
+  promotion, never dependent on the cache (D32). The mailbox itself is of course
+  untouched; the app was always read-only against it.
 
 ---
 
 ## 4. Schema
 
-Three tables plus a promotion join (all per-user, no `Visible`/`Sectionable`):
+All mirror tables live in the mirror database (D32) and are per-user with no
+`Visible`/`Sectionable`; cross-database references are soft ids.
 
 **`email_folders`** — sync bookkeeping, one row per tracked IMAP folder per link:
-`linked_account` FK, `user` FK, `name` (server-side name), `role`
-(`inbox`/`sent`/`other`), `uidvalidity`, `last_seen_uid`, timestamps. Incremental sync
-state lives here; a UIDVALIDITY change resets `last_seen_uid` and re-mirrors the
+`linked_account_id`, `user_id`, `name` (server-side name), `role`
+(`inbox`/`sent`/`other`), `uidvalidity`, `last_seen_uid`, `backfilled_at` (nil while
+the initial window is still loading — the flag that separates backfill from live sync,
+§5/§6), timestamps. A UIDVALIDITY change resets `last_seen_uid` and re-mirrors the
 window. v1 tracks Inbox + Sent (Sent is what makes boomerang possible), discovered via
 RFC 6154 SPECIAL-USE attributes with common-name fallbacks.
 
 **`email_messages`** — the mirror:
-- Identity: `user` FK, `linked_account` FK, `email_folder` FK, `uid`, `message_id`
+- Identity: `user_id`, `linked_account_id`, `email_folder_id`, `uid`, `message_id`
   (RFC 5322, unique per link — the dedupe key), `thread_key` (root of the
-  References/In-Reply-To chain, falling back to normalized-subject + participants;
-  indexed — threads are a derived grouping, not a table).
-- Envelope: `direction` (`inbound`/`outbound`, derived from sender vs. the link's own
-  address), `from_email`, `from_name`, `to_emails` (JSON), `cc_emails` (JSON),
-  `subject`, `sent_at`.
-- **People linkage**: `person_id` (nullable FK — the sender for inbound, the first
+  References/In-Reply-To chain; a normalized-subject + exact-participant-set fallback
+  applies **only when threading headers are entirely absent** — "Re: Invoice" from
+  different senders must never merge; some providers simply thread badly and we accept
+  that).
+- Envelope: `direction` (`inbound`/`outbound` — `From` ∈ the link's own-addresses
+  list), `from_email`, `from_name`, `to_emails` (JSON), `cc_emails` (JSON), `subject`,
+  `sent_at`.
+- **People linkage**: `person_id` (soft id — the sender for inbound, the first
   recipient for outbound, matched by email address at ingest against the user's own
-  People; re-matched when a Person gains an address). This one column is what connects
-  mail to person pages, Reconnect, contact recency, and human-named boomerangs.
+  People; re-matched when a Person gains an address; resolved tolerantly in Ruby).
 - Content: `snippet` (first ~200 chars, for lists), `body_text` (plain text — HTML
   stripped on ingest, truncated ~20k chars), `attachments` (JSON metadata:
   filename/mime/size — **bytes are not stored**; fetched from the server on promotion
@@ -201,10 +276,19 @@ RFC 6154 SPECIAL-USE attributes with common-name fallbacks.
   from triage — set on both directions; §6), `triaged_at`, and `reply_wanted_by`
   (nullable date — the **user-armed boomerang**, set by a button, no AI involved).
 - Full-text search: an **FTS5 virtual table** over subject + body_text, maintained by
-  triggers, built in E1 (search is core zero-AI value; `LIKE` over months of 20k-char
-  bodies would crawl). Plain-SQL fallback where the SQLite build lacks FTS5.
+  triggers, built with the schema (search is core zero-AI value; `LIKE` over months of
+  20k-char bodies would crawl). Plain-SQL fallback where the SQLite build lacks FTS5.
 
-**`email_sender_rules`** — the feedback loop's memory (user-level, spanning accounts):
+**`email_tombstones`** — deletion that stays deleted: `linked_account_id`,
+`message_id`, unique together. Sync skips tombstoned ids; purged with the link.
+
+**`email_message_items`** — promotion provenance, mirroring `tool_run_items`:
+`email_message_id` + soft polymorphic item reference (`item_type`, `item_id`). Lives
+in the mirror database and dies with it — the message page shows what a message
+became; the primitive never knows or cares. Rows also serve as prune keep-exceptions.
+
+**`email_sender_rules`** — the feedback loop's memory (user-level, spanning accounts,
+and in the **primary** database — it's the user's taught configuration, not cache):
 `user` FK, `email` (sender address, unique per user), `rule` (`vip`/`mute`),
 timestamps. Written by one-click feedback on digest items and alerts ("More like this"
 / "Not important"), editable as a plain list in Settings (D9: visible configuration,
@@ -213,20 +297,17 @@ call ever; vip ⇒ importance floor of 2 (always digest-eligible) regardless of 
 verdict. Deterministic rules beat repeated inference — free, instant, private, and
 identical on every model including none.
 
-**`email_message_items`** — promotion provenance, mirroring `tool_run_items`:
-`email_message` FK + polymorphic `item`. The message page shows what a message became;
-deleting the message never touches the primitive.
-
-**Per-link settings** (JSON on `linked_accounts`): digest on/off, alerts on/off, AI
-processing on/off, contact-recency opt-in, mirror window. All rendered as visible
-dials on the link's Settings card.
+**Per-link settings** (JSON on `linked_accounts`, primary DB): digest on/off, alerts
+on/off, AI processing on/off, contact-recency opt-in, mirror window, own-addresses
+list, paused. All rendered as visible dials on the link's Settings card.
 
 Retention: the mirror is a window, not an archive (the mailbox itself remains the
 archive of record) — but the window is **user-configurable from day one**: 90 days
 default, wider, or "mirror everything" for self-hosters with the disk. A nightly prune
 deletes rows that fell out of the window *unless promoted, sender-ruled, reply-armed,
 or referenced by a live suggestion*. What the window can't answer, the live archive
-search fallback can (§7). Remaining knobs are Q14.
+search fallback can (§7). The export question is settled by D32 (mirror excluded by
+default — re-syncable); the remaining knob is Q14.
 
 ---
 
@@ -242,16 +323,23 @@ gem:
 - **Parsing** uses the `mail` gem Rails already ships (ActionMailer dependency):
   headers, MIME tree walk for the best text part, HTML→text fallback, attachment
   metadata.
-- **Incremental algorithm**, per folder: first run backfills the window in batches
-  oldest-newest with progress recorded on the link (the Settings card and `/mail`
-  empty state show "syncing — 1,200 messages so far" instead of a blank screen; a big
-  Gmail backfill takes real time); every run after fetches UIDs > `last_seen_uid`,
-  refreshes flags on recent known messages (cheap `UID FETCH ... (FLAGS)` sweep so
-  `seen`/`answered` stay truthful), advances the cursor. Dedupe by `message_id` per
-  link, so re-linking or UIDVALIDITY resets never duplicate. Person matching (§4)
-  happens here, at ingest.
+- **Two phases, and the distinction matters** (`email_folders.backfilled_at`):
+  - **Backfill** (first run): loads the window oldest-newest in batches with progress
+    recorded on the link (the Settings card and `/mail` empty state show "syncing —
+    1,200 messages so far" instead of a blank screen; a big Gmail backfill takes real
+    time). Backfilled mail is **browse/search/promote-only**: it is never triaged and
+    can never fire an alert (§6) — history is not news, and burning an hour of LLM
+    calls (or three stale alarms) on day one is how the feature dies.
+  - **Live sync** (every run after): fetches UIDs > `last_seen_uid`, refreshes flags
+    on recent known messages (cheap `UID FETCH ... (FLAGS)` sweep so
+    `seen`/`answered` stay truthful), advances the cursor. Only live-sync arrivals
+    enter the triage/alert pipeline.
+  - Dedupe by `message_id` per link (skipping tombstones), so re-linking or
+    UIDVALIDITY resets never duplicate or resurrect. Person matching and
+    own-address-based direction (§3) happen here, at ingest. Paused links are skipped
+    entirely.
 - **Scope gate inside the service** (`allows?("read_inbox")` or bail), the D26 rule.
-- **Recurring background sync** — the generic piece D26 left pending, built here for
+- **Recurring background sync** — the generic piece D26 left pending, built in E0 for
   all syncable providers at once: registry entries gain `sync_every:`, and one Solid
   Queue recurring task fans out `SyncLinkedAccountJob` for links whose `synced_at` is
   stale. Manual "Sync now" stays.
@@ -265,8 +353,8 @@ gem:
   listener is down. Provider-specific push (Gmail Pub/Sub etc.) stays rejected —
   IDLE is in the IMAP standard and works against every server, which is the
   self-host-friendly, landlord-free version of "instant."
-- After each sync with new mail: enqueue `Email::TriageJob` (§6) and the urgent-alert
-  check (§7). Sync itself stays model-free.
+- After each **live** sync with new mail: enqueue `Email::TriageJob` (§6) and the
+  urgent-alert check (§7). Sync itself stays model-free.
 
 ---
 
@@ -275,6 +363,13 @@ gem:
 `Email::TriageJob` (rides `RetriesModelCalls`) classifies new messages in batches of
 ~20 per LLM call — skipped entirely when no model is configured or the link's AI
 toggle is off, silent-on-failure with `AppError` recording (D23/D24).
+
+**What gets triaged — the economics rule**: only **live-sync arrivals** (§5). Backfill
+is never triaged; history earns labels only when a user action touches it (opening a
+thread offers "triage this thread" as a lazy one-off). On top of that, a **per-link
+daily triage budget** (a generous constant — think mailbox-flood protection, not
+rationing) caps LLM spend on pathological days: over budget, the remainder stays
+untriaged until tomorrow and the shortfall is noted to `/admin`, never silently.
 
 **Deterministic pre-emption runs first, and spends no tokens**: `bulk: true` messages
 are labeled noise by code; `email_sender_rules` apply next (mute ⇒ noise, no call;
@@ -329,7 +424,8 @@ message list grouped by thread (newest first), triage filter chips (Needs action
 Time-sensitive / Everything), FTS-backed search over sender/subject/body, and a
 message page showing the text body, attachment list, a "Remind me if no reply by ___"
 button on outbound messages (the user-armed boomerang — sets `reply_wanted_by`, no AI
-involved), and the **promotion row**:
+involved), "Remove from mirror" (§3 — tombstoned, gone for good), and the
+**promotion row**:
 
 > **→ Task** · **→ Event** · **→ Note** · **attachment → Document** · **Decode this**
 
@@ -364,10 +460,11 @@ you actually email; the manual button remains for everyone else.
 Deterministic selection, LLM phrasing, in-app body — the `Users::WeeklyDigest` recipe,
 merged across accounts:
 
-- A daily job collects new messages since the last digest with `importance >= 2`
-  (sender rules already applied), plus counts by category, across every digest-enabled
-  link. **Delivery time is a user setting** (default 8:00 in the household's
-  timezone) — a digest's whole personality is *when* it shows up.
+- A dispatcher job runs every 15 minutes and fires each user's digest when *their*
+  chosen delivery time arrives (default 8:00, `households.time_zone` from E0 — a
+  per-user clock can't be one fixed cron entry). It collects new messages since the
+  last digest with `importance >= 2` (sender rules already applied), plus counts by
+  category, across every digest-enabled link.
 - **An empty selection sends nothing and renders nothing.** Silence is a feature; "no
   important mail today" is a notification with negative value.
 - One LLM call phrases 2–4 warm sentences (facts in, prose out, silent failure — the
@@ -380,9 +477,13 @@ merged across accounts:
 
 ### Urgent alerts — "text me if it's serious"
 
-The immediate path, checked right after triage (never waiting for the digest):
+The immediate path, checked right after triage (never waiting for the digest), and
+**structurally impossible for backfill**: only live-sync arrivals are triaged at all
+(§6), and the alert candidate check additionally requires a recent `sent_at` — history
+can never ring a phone.
 
-- Candidate: `importance == 3 && category == time_sensitive`, sender not muted.
+- Candidate: `importance == 3 && category == time_sensitive`, sender not muted,
+  arrived via live sync, sent within the last ~48h.
 - **A second, independent confirming LLM call** re-judges the single message with a
   skeptical prompt ("most mail is not urgent — is this truly
   interrupt-someone's-day urgent?"). Two yeses ping a phone; one no stays in the
@@ -399,8 +500,8 @@ The immediate path, checked right after triage (never waiting for the digest):
 **Dials live on the source, not on sections** (part of D31): email isn't a section, so
 `user_sections.agent_level` can't govern it. The link's Settings card carries its own
 visible dials — digest on/off + time, alerts off/on, AI processing, contact recency,
-mirror window — the same user-controlled-configuration posture as the D26 scope
-toggles.
+mirror window, own addresses, pause — the same user-controlled-configuration posture
+as the D26 scope toggles.
 
 ### The boomerang family
 
@@ -440,8 +541,9 @@ A Tier-A-honest question tool (draft kind) until the adapter grows real tool-cal
 2. Code runs the search against the mirror's FTS index. **If the mirror misses — or
    the date range predates the window — and the link allows `read_archive`, the same
    search runs live against the server** (IMAP `UID SEARCH` over the full mailbox,
-   results fetched transiently, not mirrored). The 90-day window stops being a silent
-   lie in the query story; "What did the landlord say in March?" works in October.
+   results fetched transiently, not mirrored, tombstones respected). The 90-day
+   window stops being a silent lie in the query story; "What did the landlord say in
+   March?" works in October.
 3. Second call answers over the top-N hits **with citations** (sender + date per
    claim), instructed to say "nothing in your mail matches" rather than guess, and to
    state which store was searched (mirror vs. live archive) when it matters.
@@ -476,6 +578,12 @@ constraint here, not a hardening pass later. The defenses are structural:
 - **Answers cite or abstain.** `ask_your_email` responses attribute claims to specific
   messages (sender + date), so injected instructions masquerading as answers are
   visibly *quotes from an email*, not the assistant's voice.
+- **Drafts are reviewed by a human, and we still say so.** `email_follow_up` feeds
+  thread bodies — hostile input — into a drafting prompt; an injected thread could
+  shape the draft's content. The mitigation is the existing contract (draft output is
+  reviewed, copied, and sent by the user, never auto-sent) plus the tool's system
+  prompt treating quoted thread text as data. Named here so the discipline is
+  complete, not because the risk is high.
 - **Tested like a feature.** The E2 eval corpus (§6) includes injection-shaped
   fixtures — "ignore previous instructions" bodies, urgency-inflation attempts,
   notification-text escapes — asserted structurally (validation drops them, payloads
@@ -508,40 +616,53 @@ and chat exports are attacker-adjacent text too.
 
 ## 10. Build sequence
 
-Each wave ends green (`bin/rails test`, `bin/rubocop`) with `docs/STATUS.md` updated.
+Split along merge seams — each pass is one focused, independently green branch
+(`bin/rails test`, `bin/rubocop`) with `docs/STATUS.md` updated. E0 is
+platform work with no email-specific risk; it can land this week and benefits the
+existing DAV consumers immediately.
 
-1. **E1 — Mirror + sync + browse (the foundation).** Multi-link providers
-   (`multi: true`, labels, uniqueness change); `encrypts :credentials` + backfill;
-   `email_folders` / `email_messages` (incl. `person_id` matching, `reply_wanted_by`)
-   / `email_message_items` migrations + FTS5; `Email::ImapClient` + `Email::ImapSync`
-   (Inbox+Sent, incremental, dedupe, windowed backfill with progress); registry
-   wiring, preset chips, consent line + per-link settings (AI toggle, window);
-   recurring background sync fan-out (`sync_every:`, all syncable providers);
-   `/mail` unified inbox + message page + promotion row + remind-me button.
-   *Fully useful with no model: browse, search, promote, user-armed boomerang.*
-2. **E2 — Triage + the eval harness.** `Email::TriageJob` (deterministic pre-emption,
-   context block, `expects_reply`, strict validation, D24 retries); triage filters on
-   `/mail`; deadline suggestions through the suggestions table; person-page
-   correspondence card; the labeled eval corpus + scorecard task (injection fixtures
-   included).
-3. **E3 — Reach + the feedback loop.** Daily digest (merged, scheduled time, silent
-   when empty, Dashboard Mail card + D22 pointer notification); urgent alerts
-   (second-call confirmation, header-built payloads, caps, off by default);
-   `email_sender_rules` + feedback actions on digest rows and alerts + the Settings
-   rules list; alert-enabled links tighten to 2–3 minute polling.
-4. **E4 — The boomerang family.** `Watcher::EmailNoReply` (expects_reply-gated) +
+1. **E0 — Linked-account platform pass (no email code).** Multi-link providers
+   (`multi: true`, labels, uniqueness change, stacked Settings cards);
+   `encrypts :credentials` + backfill migration; recurring background sync fan-out
+   (`sync_every:`, all syncable providers); `households.time_zone` (+ optional region
+   — the Q12 household setting) in Settings.
+2. **E1a — The mirror + sync engine (no UI).** The mirror database (D32:
+   `database.yml`, migrations path, `MirrorRecord`); `email_folders` /
+   `email_messages` (person matching, own-address direction, `reply_wanted_by`) /
+   `email_tombstones` / `email_message_items` + FTS5; `Email::ImapClient` +
+   `Email::ImapSync` (Inbox+Sent, backfill-vs-live phases with progress, dedupe,
+   tombstone skip, pause); registry wiring, preset chips, consent line + per-link
+   settings. Tested end-to-end against the fake IMAP client.
+3. **E1b — `/mail`.** Unified inbox, thread view, FTS search, message page with
+   promotion row + remind-me + remove-from-mirror; person-page correspondence card;
+   unlink purge semantics. *E0+E1a+E1b are fully useful with no model: browse,
+   search, promote, user-armed boomerang.*
+4. **E2 — Triage + the eval harness.** `Email::TriageJob` (live-sync-only, budget
+   cap, deterministic pre-emption, context block, `expects_reply`, strict validation,
+   D24 retries); lazy "triage this thread" for history; triage filters on `/mail`;
+   deadline suggestions through the suggestions table; the labeled eval corpus +
+   scorecard task (injection fixtures included).
+5. **E3 — Reach + the feedback loop.** Daily digest (merged, per-user scheduled time
+   via the 15-minute dispatcher, silent when empty, Dashboard Mail card + D22 pointer
+   notification); urgent alerts (live-sync + recency gate, second-call confirmation,
+   header-built payloads, caps, off by default); `email_sender_rules` + feedback
+   actions on digest rows and alerts + the Settings rules list; alert-enabled links
+   tighten to 2–3 minute polling.
+6. **E4 — The boomerang family.** `Watcher::EmailNoReply` (expects_reply-gated) +
    `Watcher::EmailUnanswered` + the user-armed watcher over `reply_wanted_by`; the
    `email_follow_up` draft tool; the default-off contact-recency toggle (Q8 revisit).
-5. **E5 — Ask your email.** The two-call tool over FTS, with the `read_archive` live
+7. **E5 — Ask your email.** The two-call tool over FTS, with the `read_archive` live
    server-search fallback.
-6. **E6 — Real time.** The supervised IMAP IDLE listener process for alert-enabled
+8. **E6 — Real time.** The supervised IMAP IDLE listener process for alert-enabled
    links; polling stays as universal fallback.
 
 Parked, with owners elsewhere: OAuth/XOAUTH2 + Outlook + one-click Gmail (D27 relay
-work, unchanged by this plan); sending (Q15); receipt/renewal signals feeding Money
+work, unchanged by this plan); sending (Q15); `person_email_addresses` normalization
+(if single-address matching disappoints); receipt/renewal signals feeding Money
 watchers (rides the linkage built here, own design pass); the next mirrored source
-(bank transactions is the likely candidate — it reuses D30 wholesale: mirror table,
-promotion, triage labels, source dials, hostile-input rules).
+(bank transactions is the likely candidate — it reuses D30/D32 wholesale: mirror
+table in the mirror database, promotion, triage labels, source dials, hostile-input
+rules).
 
 ### Testing conventions
 
@@ -549,10 +670,12 @@ The established patterns apply: a fake IMAP client (fixture RFC822 messages) und
 sync tests, the WebMock-stubbed endpoint under triage/digest/tool tests
 (`tool_run_job_test.rb` pattern), watcher tests as pure fixture SQL (`stale_task`
 pattern: thresholds, caps, fingerprints, bulk/expects_reply gating). Structural guards
-asserted directly: no `Visible`/`Sectionable` on mirror models, promotion-only writes,
-header-built notification payloads, triage-output validation dropping malformed and
-injection-shaped output, the 3/day alert cap, mute-means-no-model-call. The eval
-corpus (E2) is the quality gate for prompt changes and the injection regression suite.
+asserted directly: no `Visible`/`Sectionable` on mirror models, mirror models inherit
+`MirrorRecord` (never `ApplicationRecord`), promotion-only writes, backfill never
+triages or alerts, tombstoned ids never resurrect, header-built notification
+payloads, triage-output validation dropping malformed and injection-shaped output, the
+3/day alert cap, mute-means-no-model-call. The eval corpus (E2) is the quality gate
+for prompt changes and the injection regression suite.
 
 ---
 
@@ -567,22 +690,31 @@ corpus (E2) is the quality gate for prompt changes and the injection regression 
   proves the pattern; future sources reuse it — including its hostile-input rules.
 - **D31. Email monitoring rides the existing agent rails, with dials on the source
   and a deterministic feedback loop.** Triage writes labels on the mirror only, behind
-  sender rules that pre-empt the model; the digest is deterministic selection + LLM
-  phrasing landing in-app at a user-chosen time, silent when empty, with D22 pointer
-  notifications; urgent alerts are the one immediate path (double-confirmed, capped,
-  header-built payloads, off by default); boomerang is a family of deterministic
-  watchers (user-armed / no-reply / unanswered) gated on declared or labeled reply
-  expectations; nothing is ever sent on the user's behalf. Because email is a source
-  rather than a section, its dials live on the linked-account Settings card, not on
-  `user_sections`.
+  sender rules that pre-empt the model, on live-sync arrivals only, under a daily
+  budget; the digest is deterministic selection + LLM phrasing landing in-app at a
+  user-chosen time, silent when empty, with D22 pointer notifications; urgent alerts
+  are the one immediate path (double-confirmed, capped, header-built payloads, off by
+  default, structurally impossible for backfilled history); boomerang is a family of
+  deterministic watchers (user-armed / no-reply / unanswered) gated on declared or
+  labeled reply expectations; nothing is ever sent on the user's behalf. Because email
+  is a source rather than a section, its dials live on the linked-account Settings
+  card, not on `user_sections`.
+- **D32. Mirrors live in their own database.** A fourth SQLite database alongside
+  Solid Queue/Cache/Cable holds all mirror tables: the life file stays the small,
+  copy-me backup artifact; sync/FTS/prune write churn is isolated from the primary's
+  single writer; the mirror is excluded from the D14 export by default because it is
+  derived, re-syncable cache. Cross-database references are soft ids resolved in Ruby
+  (no FKs, no joins); primitives never depend on mirror rows — promotion copies
+  content out. Decided before the first mirror ships because it is nearly free now
+  and a miserable migration later.
 
 Open questions raised:
 
 - **Q14 — mirror retention knobs.** The window is user-configurable (90 days default
-  through "everything") with keep-exceptions for promoted/ruled/armed/referenced rows,
-  and the live archive search covers what falls out — remaining questions: does the
-  mirror join the D14 export as-is, and does "everything" need a size guardrail on
-  small disks?
+  through "everything") with keep-exceptions for promoted/ruled/armed/referenced rows;
+  the live archive search covers what falls out, and D32 settles the export default
+  (excluded — re-syncable). Remaining: does "mirror everything" need a size guardrail
+  on small disks?
 - **Q15 — sending mail.** The `send` scope exists and boomerang makes it tempting
   ("just send the follow-up"). Sending is the first time the app would *act on the
   world* for the user — it needs its own consent design (per-message confirm? a
