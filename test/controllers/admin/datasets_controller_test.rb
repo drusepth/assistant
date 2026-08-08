@@ -40,10 +40,21 @@ class Admin::DatasetsControllerTest < ActionDispatch::IntegrationTest
 
   test "an unrecognized extension explains" do
     post admin_import_datasets_path, params: {
-      file: fixture_file_upload(csv_file("hello", extension: ".txt"), "text/plain")
+      file: fixture_file_upload(csv_file("hello", extension: ".pdf"), "application/pdf")
     }
 
     assert_match(/BLS files/, flash[:alert])
+  end
+
+  # The vault health check's list (PASSWORDS_PLAN W4) rides the same
+  # air-gapped import path — one password per line, zero egress.
+  test "a txt file imports the common-passwords list" do
+    post admin_import_datasets_path, params: {
+      file: fixture_file_upload(csv_file("hunter2\nletmein\n\n", extension: ".txt"), "text/plain")
+    }
+
+    assert_match(/2 entries/, flash[:notice])
+    assert_equal "hunter2\nletmein\n", Datasets.read_path(Vault::Health::DATASET).read
   end
 
   test "a file that isn't a workbook explains and lands in the error log" do

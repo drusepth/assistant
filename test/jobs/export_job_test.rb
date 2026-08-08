@@ -33,6 +33,28 @@ class ExportJobTest < ActiveJob::TestCase
     assert_equal "PDF BYTES", entries["files/#{document.id}-lease.pdf"]
   end
 
+  # D-vault-crypto: key material must never ride the job queue, so the
+  # archive carries credential *metadata* and the Passwords page owns the
+  # in-request secrets export.
+  test "credentials export as metadata only — never ciphertext" do
+    Keyring.initialize_for(users(:one), "password")
+    credential = users(:one).credentials.create!(name: "Bank", kind: "login", username: "drew")
+    credential.write_secrets!({ "password" => "distinctive-plaintext" })
+
+    ExportJob.perform_now(users(:one))
+
+    entries = {}
+    Zip::File.open_buffer(StringIO.new(users(:one).export_archive.download)) do |zip|
+      zip.each { |entry| entries[entry.name] = entry.get_input_stream.read }
+    end
+
+    row = JSON.parse(entries["credentials.jsonl"].lines.first)
+    assert_equal "Bank", row["name"]
+    assert_not row.key?("secrets_ciphertext")
+    assert_no_match(/distinctive-plaintext/, entries["credentials.jsonl"])
+    assert_match(/metadata only/, JSON.parse(entries["manifest.json"])["credentials"])
+  end
+
   test "the settings button enqueues and the page offers the download" do
     integration = ActionDispatch::Integration::Session.new(Rails.application)
     integration.post "/session", params: { email_address: users(:one).email_address, password: "password" }

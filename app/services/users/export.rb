@@ -21,7 +21,8 @@ module Users
       "suggestions" => ->(user) { user.suggestions },
       "spending_accounts" => ->(user) { user.spending_accounts },
       "budget_categories" => ->(user) { user.budget_categories },
-      "spending_rules" => ->(user) { user.spending_rules }
+      "spending_rules" => ->(user) { user.spending_rules },
+      "credentials" => ->(user) { user.credentials }
     }.freeze
 
     OMITTED_COLUMNS = %w[ user_id ].freeze
@@ -76,12 +77,16 @@ module Users
           exported_at: Time.current.iso8601,
           user: { name: @user.name, email_address: @user.email_address },
           household: @user.household.name,
-          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/" ]
+          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/" ],
+          credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked"
         }
       end
 
       def row_for(record)
         row = record.attributes.except(*OMITTED_COLUMNS)
+        # The vault's rule (D-passwords-vault): ciphertext never leaves in a
+        # background job — metadata only here.
+        row = row.except("secrets_ciphertext") if record.is_a?(Credential)
         row["sections"] = record.sections.map(&:slug) if record.respond_to?(:sections)
         row["file"] = file_entry_name(record) if record.is_a?(Document) && record.file.attached?
         row["file"] = photo_entry_name(record) if record.is_a?(Photo) && record.image.attached?
