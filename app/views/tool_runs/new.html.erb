@@ -64,6 +64,21 @@
                 <%= link_to "link a mailbox first", settings_path, class: "text-primary-700 hover:underline" %>.
               </p>
             <% end %>
+          <% elsif input.ledger_month? %>
+            <%= select_tag "inputs[#{input.name}]",
+                  options_for_select(@ledger_month_choices, @tool_run.inputs[input.name]),
+                  class: "input", id: "inputs_#{input.name}" %>
+          <% elsif input.budget_category? %>
+            <% if @budget_category_choices.any? %>
+              <%= select_tag "inputs[#{input.name}]",
+                    options_from_collection_for_select(@budget_category_choices, :id, :name, @tool_run.inputs[input.name]),
+                    include_blank: "The whole budget", class: "input", id: "inputs_#{input.name}" %>
+            <% else %>
+              <p class="hint">
+                No envelopes yet —
+                <%= link_to "build your budget first", new_tool_run_path("build_my_budget"), class: "text-primary-700 hover:underline" %>.
+              </p>
+            <% end %>
           <% elsif input.date? %>
             <%= date_field_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", id: "inputs_#{input.name}" %>
           <% elsif input.hobby? && @hobby_choices.any? %>

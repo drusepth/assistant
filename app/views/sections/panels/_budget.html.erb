@@ -36,6 +36,10 @@
         <% if summary.days_left.positive? %><span class="text-sm font-normal text-soft">· <%= summary.days_left %> days left</span><% end %>
       </h2>
       <div class="flex flex-wrap items-center gap-2">
+        <%= link_to "Talk it through", new_tool_run_path("money_coach"), class: "btn btn-secondary btn-sm" %>
+        <% if panel.ledger? %>
+          <%= link_to "Where's my money going?", new_tool_run_path("spending_review"), class: "btn btn-ghost btn-sm" %>
+        <% end %>
         <%= link_to "Tune my budget", new_tool_run_path("build_my_budget"), class: "btn btn-ghost btn-sm" %>
         <% if panel.uncategorized_count.positive? %>
           <%= link_to "#{panel.uncategorized_count} to categorize", spending_path(category: "none"),

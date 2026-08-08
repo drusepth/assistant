@@ -25,6 +25,7 @@
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
+        <%= link_to "Talk it through", new_tool_run_path("money_coach"), class: "btn btn-primary btn-sm" %>
         <%= link_to "Open the ledger", spending_path, class: "btn btn-secondary btn-sm" %>
         <%= link_to "Import a statement", new_spending_import_path, class: "btn btn-secondary btn-sm" %>
         <% if panel.uncategorized_count.positive? %>

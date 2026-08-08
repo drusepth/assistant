@@ -88,6 +88,10 @@ class ToolRunsController < ApplicationController
       # Hobby lenses (D25); with none yet the form falls back to free text,
       # so the Hobbies tools work before any lens exists.
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
+      # Envelopes are personal, not shared (D-budget-envelopes): own only,
+      # no visible_to path exists.
+      @budget_category_choices = Current.user.budget_categories.active.ordered if @tool.inputs.any?(&:budget_category?)
+      @ledger_month_choices = Tool::SpendingReview.month_options(Current.user) if @tool.inputs.any?(&:ledger_month?)
       # Mirrored mail is strictly the owner's (D-mirror-layer) — no visible_to path.
       if @tool.inputs.any?(&:email_message?)
         @email_choices = EmailMessage.where(user_id: Current.user.id).newest_first.limit(50)
