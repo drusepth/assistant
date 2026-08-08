@@ -1,0 +1,68 @@
+<% own = @photo.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @photo.display_title,
+      subtitle: "Taken #{@photo.taken_at.strftime("%B %-d, %Y at %-l:%M %p")}") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Download", rails_blob_path(@photo.image, disposition: "attachment"), class: "btn btn-secondary" %>
+    <% if own %>
+      <%= link_to "Edit", edit_photo_path(@photo), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @photo, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this photo?" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-5xl gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <div class="overflow-hidden rounded-xl bg-stone-950">
+      <%= image_tag url_for(@photo.image.variant(:large)), alt: @photo.display_title,
+            class: "mx-auto max-h-[75vh] w-auto" %>
+    </div>
+
+    <% if @photo.ingest_failed? && own %>
+      <div class="card flex items-center justify-between gap-3 p-4">
+        <p class="text-sm text-red-600"><%= @photo.ingest_error %></p>
+        <%= button_to "Retry", ingest_photo_path(@photo), method: :post, class: "btn btn-secondary btn-sm" %>
+      </div>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Taken</dt>
+          <dd><%= @photo.taken_at.strftime("%B %-d, %Y at %-l:%M %p") %></dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">File</dt>
+          <dd class="min-w-0 wrap-anywhere"><%= @photo.image.filename %> (<%= number_to_human_size(@photo.image.byte_size) %>)</dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Sections</dt>
+          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @photo %></dd>
+        </div>
+        <% if own && @photo.coordinates? %>
+          <%# Location is owner-only (Q14): shared viewers get stripped variants
+              and never this row. %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Location</dt>
+            <dd>
+              <%= link_to "#{@photo.latitude}, #{@photo.longitude}",
+                    "https://www.openstreetmap.org/?mlat=#{@photo.latitude}&mlon=#{@photo.longitude}#map=15/#{@photo.latitude}/#{@photo.longitude}",
+                    target: "_blank", rel: "noopener", class: "text-primary-700 hover:underline" %>
+              <span class="text-xs text-soft">(only you see this)</span>
+            </dd>
+          </div>
+        <% end %>
+        <% if @photo.caption.present? %>
+          <div>
+            <dt class="mb-1 text-soft">Caption</dt>
+            <dd class="whitespace-pre-wrap text-ink"><%= @photo.caption %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+  </div>
+  <% if own %>
+    <div><%= render "shared/share_controls", subject: @photo %></div>
+  <% end %>
+</div>

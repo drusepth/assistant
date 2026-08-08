@@ -67,6 +67,12 @@ Rails.application.routes.draw do
   end
   resources :notes
 
+  resources :photos, except: :new do
+    member do
+      post :ingest
+    end
+  end
+
   resources :suggestions, only: [] do
     member do
       patch :accept
