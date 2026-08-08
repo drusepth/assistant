@@ -85,6 +85,43 @@
         <% end %>
       </dl>
     <% end %>
+
+    <%# The optional AI garnish (W5): present only when the household's
+        model is declared image-capable — otherwise the feature isn't there. %>
+    <% if own && (@photo.captionable_profile || @photo.caption_status.present?) %>
+      <%= render Ui::CardComponent.new(title: "Understanding", subtitle: "AI description and suggested sections") do |card| %>
+        <% if @photo.captionable_profile && !@photo.caption_queued? && !@photo.caption_processing? %>
+          <% card.with_actions do %>
+            <%= button_to @photo.caption_captioned? || @photo.caption_failed? ? "Re-describe" : "Describe",
+                  caption_photo_path(@photo), method: :post, class: "btn btn-secondary btn-sm" %>
+          <% end %>
+        <% end %>
+
+        <% if @photo.caption_queued? || @photo.caption_processing? %>
+          <p class="text-sm text-soft">Describing — refresh in a moment.</p>
+        <% elsif @photo.caption_failed? %>
+          <p class="text-sm text-red-600"><%= @photo.caption_error %></p>
+        <% elsif @photo.caption_captioned? %>
+          <p class="text-sm text-soft">The caption above was written by the household's model.</p>
+          <% suggestions = @photo.suggested_section_records %>
+          <% if suggestions.any? %>
+            <div class="mt-4 border-t border-edge pt-3">
+              <p class="mb-2 text-xs font-medium text-soft">Suggested sections — apply the ones that fit:</p>
+              <div class="flex flex-wrap gap-1.5">
+                <% suggestions.each do |section| %>
+                  <%= button_to apply_suggestion_photo_path(@photo, slug: section.slug), method: :patch,
+                        class: "chip cursor-pointer #{section_chip_classes(section)} hover:opacity-80" do %>
+                    + <%= section.qualified_name %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-soft">Not described yet — the model writes a caption and suggests sections.</p>
+        <% end %>
+      <% end %>
+    <% end %>
   </div>
   <% if own %>
     <div><%= render "shared/share_controls", subject: @photo %></div>

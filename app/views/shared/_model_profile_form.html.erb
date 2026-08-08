@@ -23,6 +23,13 @@
     <%= form.password_field :api_key, placeholder: profile&.configured? ? "•••••••• (leave blank to keep)" : "sk-… or cg-…" %>
     <p class="hint">Chroma Golem uses one key for everything — you pick the model on chromagolem.com.</p>
   </div>
+  <label class="flex items-start gap-2 text-sm text-ink">
+    <%= form.check_box :vision, { checked: profile&.vision? }, "1", "0" %>
+    <span>
+      This model accepts images
+      <span class="block text-xs text-soft">Turns on photo descriptions. Only the household's own photos are ever sent, and only when someone clicks Describe.</span>
+    </span>
+  </label>
   <p class="text-xs text-soft">
     Text from analyzed documents is sent to this provider. Point a custom endpoint at a local model and nothing ever leaves your machine.
   </p>

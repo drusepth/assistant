@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_032626) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_033048) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -169,6 +169,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_032626) do
     t.string "model", default: "gpt-4o-mini"
     t.string "provider", default: "openai", null: false
     t.datetime "updated_at", null: false
+    t.boolean "vision", default: false, null: false
     t.index ["household_id"], name: "index_model_profiles_on_household_id", unique: true
   end
 
@@ -221,11 +222,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_032626) do
 
   create_table "photos", force: :cascade do |t|
     t.text "caption"
+    t.string "caption_error"
+    t.string "caption_status"
     t.datetime "created_at", null: false
     t.string "ingest_error"
     t.string "ingest_status", default: "queued", null: false
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
+    t.json "suggested_sections", default: []
     t.datetime "taken_at", null: false
     t.string "title"
     t.datetime "updated_at", null: false

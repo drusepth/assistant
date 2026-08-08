@@ -40,6 +40,11 @@ class Photo < ApplicationRecord
     queued: "queued", processing: "processing", ready: "ready", failed: "failed"
   }, prefix: :ingest
 
+  # nil caption_status = never described (or no vision model configured).
+  enum :caption_status, {
+    queued: "queued", processing: "processing", captioned: "captioned", failed: "failed"
+  }, prefix: :caption
+
   validate :image_must_be_attached_and_an_image, on: :create
 
   # The timeline needs an order the moment the row exists; ingestion
@@ -68,6 +73,22 @@ class Photo < ApplicationRecord
   end
 
   def coordinates? = latitude.present? && longitude.present?
+
+  # Captioning needs a model the admin has *declared* image-capable — we
+  # can't probe for it, and absent that the feature simply isn't there.
+  def captionable_profile
+    profile = user.household.model_profile
+    profile if profile&.configured? && profile.vision?
+  end
+
+  def enqueue_caption!
+    update!(caption_status: :queued, caption_error: nil)
+    CaptionPhotoJob.perform_later(self)
+  end
+
+  def suggested_section_records
+    Section.where(slug: suggested_sections).order(:parent_id, :position) - sections
+  end
 
   private
     def image_must_be_attached_and_an_image

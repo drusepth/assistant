@@ -1,7 +1,7 @@
 class PhotosController < ApplicationController
   PER_PAGE = 120
 
-  before_action :set_own_photo, only: %i[ edit update destroy ingest ]
+  before_action :set_own_photo, only: %i[ edit update destroy ingest caption apply_suggestion ]
 
   def index
     base = Photo.visible_to(Current.user)
@@ -90,6 +90,22 @@ class PhotosController < ApplicationController
   def ingest
     @photo.enqueue_ingest!
     redirect_to @photo, notice: "Processing — check back in a moment."
+  end
+
+  def caption
+    if @photo.captionable_profile
+      @photo.enqueue_caption!
+      redirect_to @photo, notice: "Describing — check back in a moment."
+    else
+      redirect_to @photo, alert: "Photo descriptions need a model marked as accepting images in Settings."
+    end
+  end
+
+  def apply_suggestion
+    section = Section.find_by!(slug: params.expect(:slug))
+    @photo.sections << section unless @photo.sections.include?(section)
+    @photo.update!(suggested_sections: @photo.suggested_sections - [ section.slug ])
+    redirect_to @photo, notice: "Tagged with #{section.qualified_name}."
   end
 
   private

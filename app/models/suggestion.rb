@@ -43,10 +43,18 @@ class Suggestion < ApplicationRecord
 
   def tool_action = action["tool"]
 
+  # An in-app destination ("look at these photos") — internal paths only,
+  # so a payload can never send the user off the instance.
+  def path_action
+    path = action["path"]
+    path if path.is_a?(String) && path.start_with?("/")
+  end
+
   def accept_label
     return "Add task" if action["task"]
     return "Add event" if action["event"]
     return "Open tool" if tool_action
+    return "View" if path_action
 
     "Accept"
   end

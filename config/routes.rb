@@ -70,6 +70,8 @@ Rails.application.routes.draw do
   resources :photos, except: :new do
     member do
       post :ingest
+      post :caption
+      patch :apply_suggestion
     end
   end
   resources :albums do
