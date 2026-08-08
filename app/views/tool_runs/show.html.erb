@@ -2,12 +2,13 @@
 
 <%= render Ui::PageHeaderComponent.new(
       title: @tool_run.tool.title,
-      subtitle: "Run on #{@tool_run.created_at.strftime("%B %-d, %Y")}"
+      subtitle: "#{@tool_run.chat? ? "Started" : "Run on"} #{@tool_run.created_at.strftime("%B %-d, %Y")}"
     ) do |header| %>
   <% if @tool_run.finished? %>
     <% header.with_actions do %>
+      <%# The recap button lives under the composer, where the conversation
+          it wraps up is — one home, not two. %>
       <% if @tool_run.chat? && @tool_run.done? %>
-        <%= render "tool_runs/recap_button", tool_run: @tool_run %>
         <% if @tool_run.subject %>
           <%# A subject-bound conversation (D30) belongs to its item's page —
               a fresh inputless session here would be about nothing. %>

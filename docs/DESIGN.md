@@ -10,7 +10,8 @@ The design language and where to change it. The stack is **Tailwind CSS v4**
    `edge`, `ink`, `soft`). Changing these retunes the whole app.
 2. **Atoms** — same file, `@layer components`: `.btn` (+ `-primary`,
    `-secondary`, `-danger`, `-ghost`, `-sm`), `.input`, `.label`, `.hint`,
-   `.field-error`, `.card`, `.chip`.
+   `.field-error`, `.card`, `.chip`, and the chat set — `.bubble`
+   (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`).
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
    `Ui::SectionChip`, `Ui::QuickAdd` (header + button whose capture form
@@ -38,4 +39,8 @@ Education violet · Career sky · People emerald · Money lime · Rights orange.
 - New shared visual patterns: promote to an atom (pure styling) or a
   `Ui::` component (structure/slots), then use it everywhere.
 - Icons: `icon(:name)` helper (`IconsHelper`), inline Heroicons-style SVG.
+- Chat: one surface, `tool_runs/_chat` (+ `_message`), rendered by both the
+  run page and any page hosting a conversation. Assistant turns go through
+  `chat_body` (`ChatHelper`) — a deliberately tiny markdown subset over
+  escaped text; user turns are printed verbatim.
 - Rebuild CSS with `bin/rails tailwindcss:build` (or `bin/dev` watches).
