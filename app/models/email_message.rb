@@ -48,6 +48,12 @@ class EmailMessage < MirrorRecord
   # Everyone this message involves besides the mailbox owner's own address.
   def counterparty_email = inbound? ? from_email : Array(to_emails).first
 
+  # How a message reads in a picker: "→ dana@… — Deposit return (Aug 3)".
+  def choice_label
+    arrow = outbound? ? "→ #{Array(to_emails).first}" : "← #{from_name.presence || from_email}"
+    "#{arrow} — #{subject.presence || "(no subject)"}#{" (#{sent_at.strftime("%b %-d")})" if sent_at}"
+  end
+
   def promoted_items
     email_message_items.filter_map(&:item)
   end

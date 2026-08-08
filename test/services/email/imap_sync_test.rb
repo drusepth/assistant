@@ -221,6 +221,22 @@ class Email::ImapSyncTest < ActiveSupport::TestCase
     assert EmailMessage.exists?(message_id: "m1@example.org"), "in-window rows are untouched"
   end
 
+  test "contact recency advances from sent mail only with the toggle on, forward-only" do
+    person = @user.people.create!(name: "Dana", email: "dana@example.org")
+    sync!(FakeImapClient.new(basic_mailbox))
+    assert_nil person.reload.last_contacted_on, "the toggle defaults off (Q8 caution)"
+
+    Email::Mirror.purge(@account)
+    @account.update!(settings: { "contact_recency" => true })
+    sync!(FakeImapClient.new(basic_mailbox))
+    assert_equal 2.days.ago.to_date, person.reload.last_contacted_on
+
+    person.update!(last_contacted_on: Date.current)
+    Email::Mirror.purge(@account)
+    sync!(FakeImapClient.new(basic_mailbox))
+    assert_equal Date.current, person.reload.last_contacted_on, "never moves backwards"
+  end
+
   test "search finds mirrored mail and respects removal" do
     sync!(FakeImapClient.new(basic_mailbox))
     message = EmailMessage.find_by!(message_id: "m1@example.org")

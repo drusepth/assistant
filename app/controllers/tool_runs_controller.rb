@@ -55,6 +55,10 @@ class ToolRunsController < ApplicationController
       # Hobby lenses (D25); with none yet the form falls back to free text,
       # so the Hobbies tools work before any lens exists.
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
+      # Mirrored mail is strictly the owner's (D30) — no visible_to path.
+      if @tool.inputs.any?(&:email_message?)
+        @email_choices = EmailMessage.where(user_id: Current.user.id).newest_first.limit(50)
+      end
     end
 
     # `new` accepts the same params so "Run again" and next-step links can

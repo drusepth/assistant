@@ -163,9 +163,26 @@ class Email::ImapSync
         answered: false,
         backfilled: backfilled
       )
+      advance_contact_recency(message)
       message.id
     rescue ActiveRecord::RecordNotUnique
       nil
+    end
+
+    # The Q8 revisit (EMAIL_PLAN.md §7): outbound mail is OBSERVED contact,
+    # not inference — with the per-link toggle on (default off), sending
+    # someone mail advances their last_contacted_on, forward-only, matched
+    # people only. The manual "Log contact" button remains for everyone else.
+    def advance_contact_recency(message)
+      return unless @account.setting(:contact_recency) == true
+      return unless message.outbound? && message.person_id.present? && message.sent_at.present?
+
+      date = message.sent_at.to_date
+      return if date > Date.current
+
+      Person.where(id: message.person_id, user_id: @user_id)
+        .where("last_contacted_on IS NULL OR last_contacted_on < ?", date)
+        .update_all(last_contacted_on: date)
     end
 
     def parse(raw)
