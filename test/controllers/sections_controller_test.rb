@@ -82,6 +82,25 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Compare plans →", response.body, "comparison needs two plan documents"
   end
 
+  test "the Mind card offers check-in, practice, and find-a-therapist with the honesty line" do
+    get section_path("health")
+    assert_response :success
+    assert_match "Mind", response.body
+    assert_match new_tool_run_path("check_in"), response.body
+    assert_match new_tool_run_path("start_a_practice"), response.body
+    assert_match "not therapy", response.body
+    assert_no_match "pick it back up", response.body, "no continuity line before a first check-in"
+  end
+
+  test "a finished check-in gets a pick-it-back-up link" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "pick it back up", response.body
+    assert_match tool_run_path(run), response.body
+  end
+
   test "other section pages get no care radar" do
     get section_path("money")
     assert_response :success

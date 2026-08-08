@@ -36,6 +36,36 @@
   <% end %>
 <% end %>
 
+<%# Mind (docs/HEALTH.md §6, D31): mental health as a first-class half of
+    the section — a check-in that listens, a practice that steadies, and
+    the honest road to a real therapist. Support, not therapy, said out
+    loud right here. %>
+<%= render Ui::CardComponent.new(
+      title: "Mind",
+      subtitle: "The other half of health — a place to talk, breathe, and build steady habits."
+    ) do %>
+  <div class="space-y-3">
+    <div class="flex flex-wrap gap-2">
+      <%= link_to "Check in", new_tool_run_path("check_in"), class: "btn btn-primary btn-sm" %>
+      <%= link_to "Start a calm practice", new_tool_run_path("start_a_practice"), class: "btn btn-secondary btn-sm" %>
+      <%= link_to "Find a therapist",
+            new_tool_run_path("find_care", inputs: { specialty: "therapist or counselor" }),
+            class: "btn btn-secondary btn-sm" %>
+    </div>
+    <% if last_check_in %>
+      <p class="text-sm text-soft">
+        Your last check-in stays open —
+        <%= link_to "pick it back up", tool_run_path(last_check_in), class: "text-primary-700 hover:underline" %>,
+        or start fresh and it remembers what mattered.
+      </p>
+    <% end %>
+    <p class="hint">
+      Check-ins are supportive self-reflection, not therapy. In a crisis, call or text 988 (US)
+      or your local emergency line.
+    </p>
+  </div>
+<% end %>
+
 <%= render Ui::CardComponent.new(title: "Insurance & coverage", padded: false) do %>
   <% if coverage_documents.any? %>
     <div class="divide-y divide-edge"><%= render coverage_documents %></div>

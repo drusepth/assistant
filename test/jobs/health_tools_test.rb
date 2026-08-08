@@ -92,6 +92,32 @@ class HealthToolsTest < ActiveJob::TestCase
     assert_match(/same document/, same.error)
   end
 
+  test "start-a-practice plans a gentle goal through the shared pipeline" do
+    stub_request(:post, ENDPOINT).to_return(status: 200, body: { choices: [ { message: { content: {
+      sections: [ "health" ], target_on: nil,
+      steps: [
+        { title: "Sit for five minutes after breakfast", due_on: Date.tomorrow.iso8601, sections: [ "health" ] },
+        { title: "Try a free guided session from the library", sections: [ "health" ] }
+      ]
+    }.to_json } } ] }.to_json)
+
+    run = users(:one).tool_runs.create!(
+      tool_slug: "start_a_practice",
+      inputs: { "practice" => "meditation", "shape" => "10 minutes before work" }
+    )
+    ToolRunJob.perform_now(run)
+
+    assert run.reload.done?
+    goal = run.items.grep(Goal).sole
+    assert_equal "Build a meditation practice", goal.title
+    assert_equal "10 minutes before work", goal.description
+    assert_not_nil goal.broken_down_at
+    assert_includes goal.sections, sections(:health)
+    assert_equal 2, run.items.grep(Task).size
+
+    assert_requested(:post, ENDPOINT) { |request| request.body.include?("calming mind-body practice") }
+  end
+
   private
     def stub_draft(body:, title: nil, follow_ups: [])
       stub_request(:post, ENDPOINT).to_return(

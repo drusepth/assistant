@@ -113,7 +113,59 @@ per-kind history means no per-kind nudge — the radar panel is the pull
 surface for unknowns, and guessed nudges cost trust (the Q8 lesson). The
 zero-signal case keeps the original generic nudge, fingerprints and all.
 
-## 6. Later rungs (in rough order of earn)
+## 6. Mind: mental health, scoped honestly (D31)
+
+Mental health is the half of Health the target user is least likely to
+have professional help with — therapy is expensive, waitlisted, and
+stigmatized — which makes it exactly mission-shaped and exactly where
+capability honesty matters most. The line, drawn once and enforced in
+code where possible: **support, not therapy.** An LLM chat is not a
+therapist, and branding it as one is the same capability lie the Tier-A
+rule exists to prevent — with far higher stakes than an invented
+cardiologist. What ships instead covers what people actually reach for:
+
+- **Check in** (`check_in`, chat kind) — a private place to talk through
+  what's on your mind, guided or unguided. Guided modes ride the
+  quick-reply chips: unpack a stressor, a breathing/grounding exercise
+  walked one step per turn, gratitude/wind-down, and *prep for a real
+  therapy session* (the doctor-visit-prep move, applied to therapy).
+  "Just listen" is a first-class mode: no fixing, no advice until asked.
+  The boundaries live in the system prompt (never diagnose or name
+  suspected conditions, no medication advice, encourage a human
+  therapist when things sound heavy or persistent) — and the one
+  guardrail that must not depend on model behavior doesn't: a
+  code-appended crisis notice (988 / local crisis line) opens every
+  session, rendered in the transcript, never sent to the model. Recap
+  Notes (explicit save, D20) file under Health and feed the next
+  session's prompt — continuity without surveillance, the owned-memory
+  moat again.
+- **Start a calm practice** (`start_a_practice`, plan kind) — meditation,
+  yoga, walks, journaling as a paced Goal through the shared breakdown
+  pipeline. The brief is the start-a-hobby discipline tuned for
+  practices: tiny and repeatable over ambitious, frequency over
+  duration, first session within days, nothing to buy, pain is a stop
+  sign. Sessions land as scheduled steps — which means the calendar, the
+  Today page, and (if it ever earns one) a practice-cadence watcher all
+  see them for free.
+- **Find a therapist** — no new tool: find-care already does this
+  honestly (specialty prefilled from the Mind card), including reading
+  the vault's insurance documents for how the plan handles mental-health
+  coverage. The check-in's "this sounds like more than a check-in" road
+  points here.
+
+The Mind card on the Health page carries all three, the
+pick-your-last-check-in-back-up continuity link, and the
+support-not-therapy line in plain sight — the trust ladder applied to
+the most trust-sensitive feature in the app.
+
+**Deliberately not built:** mood tracking without an opt-in signal
+(guessed mood nudges are the wrong-"call your mom" problem at 10× the
+cost — Q8's lesson), any agent nudge *about* mental state (the watcher
+may one day notice a practice lapsing, an event; never "you seem
+down"), and anything that stores clinical-sounding labels the user
+didn't write themselves.
+
+## 7. Later rungs (in rough order of earn)
 
 - **Per-user cadence settings** — track/ignore per kind, custom
   intervals, per-member kinds (kids' well-visits). First thing to build
@@ -128,6 +180,6 @@ zero-signal case keeps the original generic nudge, fingerprints and all.
   lands workouts/appointments as Events. The first honest metrics rung.
 - **Wearable providers (Fitbit/Garmin/…)** — D26 providers behind D27
   OAuth, once a metrics consumer exists.
-- **Mental health check-ins** — PRODUCT.md's list; likely a gentle
-  chat-kind tool plus an opt-in cadence. Needs the most careful scoping
-  of all (comprehension-not-diagnosis applies doubly).
+- **Practice cadence watcher** — the neglected-hobby move for calm
+  practices: sessions were happening, then stopped, nothing upcoming →
+  one gentle nudge. Deterministic, event-based, never about mood (§6).

@@ -10,6 +10,8 @@ class SectionsController < ApplicationController
     if @section.slug == "health"
       @care_statuses = Health::CareRadar.new(Current.user).statuses
       @coverage_documents = Health::Coverage.documents(Current.user)
+      @last_check_in = Current.user.tool_runs.where(tool_slug: "check_in", status: :done)
+        .order(created_at: :desc).first
     end
 
     @suggestions = Current.user.suggestions.actionable.in_section(section_ids)
