@@ -18,7 +18,10 @@ module Users
       "notes" => ->(user) { user.notes },
       "photos" => ->(user) { user.photos },
       "albums" => ->(user) { user.albums },
-      "suggestions" => ->(user) { user.suggestions }
+      "suggestions" => ->(user) { user.suggestions },
+      "spending_accounts" => ->(user) { user.spending_accounts },
+      "budget_categories" => ->(user) { user.budget_categories },
+      "spending_rules" => ->(user) { user.spending_rules }
     }.freeze
 
     OMITTED_COLUMNS = %w[ user_id ].freeze
@@ -35,10 +38,18 @@ module Users
 
         MODELS.each do |name, scope|
           zip.put_next_entry("#{name}.jsonl")
-          scope.call(@user).includes(:sections).find_each do |record|
+          records = scope.call(@user)
+          records = records.includes(:sections) if records.klass.reflect_on_association(:sections)
+          records.find_each do |record|
             zip.write(row_for(record).to_json << "\n")
           end
         end
+
+        # The ledger's carve-out (D-spending-mirror): unlike the email
+        # mirror, spending history often has no other durable copy — bank
+        # portals age statements out — so it leaves with the user as plain CSV.
+        zip.put_next_entry("spending.csv")
+        zip.write(spending_csv)
 
         @user.documents.includes(file_attachment: :blob).find_each do |document|
           next unless document.file.attached?
@@ -65,7 +76,7 @@ module Users
           exported_at: Time.current.iso8601,
           user: { name: @user.name, email_address: @user.email_address },
           household: @user.household.name,
-          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "files/", "photo_files/" ]
+          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/" ]
         }
       end
 
@@ -84,6 +95,22 @@ module Users
 
       def photo_entry_name(photo)
         "photo_files/#{photo.id}-#{photo.image.filename}"
+      end
+
+      def spending_csv
+        accounts = @user.spending_accounts.index_by(&:id)
+        categories = @user.budget_categories.index_by(&:id)
+
+        CSV.generate do |csv|
+          csv << %w[ date amount_cents currency account category merchant descriptor source transfer ]
+          SpendingTransaction.where(user_id: @user.id).order(:occurred_on, :id).each do |row|
+            csv << [
+              row.occurred_on.iso8601, row.amount_cents, @user.household.currency,
+              accounts[row.spending_account_id]&.name, categories[row.budget_category_id]&.name,
+              row.merchant, row.descriptor, row.source, row.transfer
+            ]
+          end
+        end
       end
   end
 end

@@ -1,0 +1,33 @@
+<%= render Ui::PageHeaderComponent.new(title: "Import a statement",
+      subtitle: "A CSV or OFX/QFX download from your bank — the file lands in your vault, the transactions land in the ledger") %>
+
+<div class="mx-auto max-w-xl rounded-xl border border-edge bg-surface p-6">
+  <%= form_with url: spending_imports_path, method: :post, multipart: true, class: "space-y-4" do %>
+    <div>
+      <label class="mb-1 block text-sm font-medium text-ink">Which account is this from?</label>
+      <% if @accounts.any? %>
+        <%= select_tag :spending_account_id,
+              options_for_select([ [ "New account…", "" ] ] + @accounts.map { |a| [ a.display_name, a.id ] }),
+              class: "input w-full" %>
+      <% end %>
+      <div class="mt-2 grid grid-cols-2 gap-2">
+        <%= text_field_tag :new_account_name, nil, class: "input",
+              placeholder: @accounts.any? ? "…or name a new one" : "Account name (e.g. Chase checking)" %>
+        <%= select_tag :new_account_kind,
+              options_for_select(SpendingAccount::KINDS.map { |k| [ k.humanize, k ] }), class: "input" %>
+      </div>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-sm font-medium text-ink">Statement file</label>
+      <%= file_field_tag :file, accept: ".csv,.ofx,.qfx,text/csv", class: "input w-full" %>
+      <p class="mt-1 text-xs text-soft">
+        Every bank offers this download — look for “export transactions” and pick OFX/QFX if offered
+        (it imports with zero setup), otherwise CSV. Re-importing an overlapping statement is fine;
+        already-known transactions are skipped.
+      </p>
+    </div>
+
+    <%= submit_tag "Import", class: "btn btn-primary w-full" %>
+  <% end %>
+</div>

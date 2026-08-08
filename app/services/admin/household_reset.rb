@@ -50,6 +50,7 @@ module Admin
       # (D-mirror-database), so mail that belonged to the accounts just
       # deleted is swept explicitly rather than trusted to cascade.
       Email::Mirror.purge_orphans
+      Spending::Mirror.purge_orphans
 
       summary
     end

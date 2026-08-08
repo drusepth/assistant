@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_060250) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_081209) do
   create_table "email_folders", force: :cascade do |t|
     t.datetime "backfilled_at"
     t.datetime "created_at", null: false
@@ -78,5 +78,37 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_060250) do
     t.string "message_id", null: false
     t.datetime "updated_at", null: false
     t.index ["linked_account_id", "message_id"], name: "index_email_tombstones_on_linked_account_id_and_message_id", unique: true
+  end
+
+  create_table "spending_tombstones", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "fingerprint", null: false
+    t.integer "spending_account_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["spending_account_id", "fingerprint"], name: "idx_on_spending_account_id_fingerprint_722346f124", unique: true
+  end
+
+  create_table "spending_transactions", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.integer "budget_category_id"
+    t.string "categorized_by"
+    t.datetime "created_at", null: false
+    t.string "descriptor"
+    t.integer "document_id"
+    t.string "external_id"
+    t.string "fingerprint", null: false
+    t.string "merchant"
+    t.date "occurred_on", null: false
+    t.string "source", default: "statement", null: false
+    t.integer "spending_account_id", null: false
+    t.boolean "transfer", default: false, null: false
+    t.string "transfer_set_by"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["spending_account_id", "external_id"], name: "idx_on_spending_account_id_external_id_383ab3ba83"
+    t.index ["spending_account_id", "fingerprint"], name: "idx_on_spending_account_id_fingerprint_fdfe06a3c2", unique: true
+    t.index ["user_id", "budget_category_id"], name: "index_spending_transactions_on_user_id_and_budget_category_id"
+    t.index ["user_id", "merchant"], name: "index_spending_transactions_on_user_id_and_merchant"
+    t.index ["user_id", "occurred_on"], name: "index_spending_transactions_on_user_id_and_occurred_on"
   end
 end

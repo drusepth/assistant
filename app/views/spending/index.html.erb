@@ -1,0 +1,136 @@
+<%= render Ui::PageHeaderComponent.new(title: "Spending",
+      subtitle: "Your ledger — imported statements and quick-logged cash, categorized into your budget") %>
+
+<div class="mb-4 flex flex-wrap items-center gap-2">
+  <%= form_with url: spending_transactions_path, method: :post, class: "flex min-w-64 flex-1 items-center gap-2" do %>
+    <%= text_field_tag :entry, nil, class: "input flex-1", placeholder: "Log spending: 14.50 lunch (or +500 paycheck)" %>
+    <%= submit_tag "Log", class: "btn btn-secondary" %>
+  <% end %>
+  <%= link_to "Import a statement", new_spending_import_path, class: "btn btn-primary" %>
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-2">
+  <%= form_with url: spending_path, method: :get, class: "flex items-center gap-2" do %>
+    <%= text_field_tag :q, @query, class: "input w-48", placeholder: "Search merchants…" %>
+    <% if params[:account].present? %><%= hidden_field_tag :account, params[:account] %><% end %>
+    <% if params[:month].present? %><%= hidden_field_tag :month, params[:month] %><% end %>
+    <%= submit_tag "Search", class: "btn btn-secondary" %>
+  <% end %>
+
+  <% if @accounts.size > 1 %>
+    <div class="flex items-center gap-1.5">
+      <%= link_to "All accounts", spending_path(month: params[:month].presence, q: @query.presence),
+            class: "chip #{params[:account].blank? ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
+      <% @accounts.each do |account| %>
+        <%= link_to account.display_name, spending_path(account: account.id, month: params[:month].presence, q: @query.presence),
+              class: "chip #{params[:account].to_i == account.id ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @months.any? %>
+    <%= form_with url: spending_path, method: :get, class: "flex items-center" do %>
+      <% if params[:account].present? %><%= hidden_field_tag :account, params[:account] %><% end %>
+      <%= select_tag :month,
+            options_for_select([ [ "All months", "" ] ] + @months.map { |m| [ m.strftime("%B %Y"), m.strftime("%Y-%m") ] }, params[:month]),
+            class: "input", onchange: "this.form.requestSubmit()" %>
+    <% end %>
+  <% end %>
+
+  <% if @uncategorized_count.positive? %>
+    <%= link_to "#{@uncategorized_count} uncategorized",
+          spending_path(category: "none", account: params[:account].presence, month: params[:month].presence),
+          class: "chip #{params[:category] == "none" ? "bg-primary-100 text-primary-800" : "bg-amber-100 text-amber-800"}" %>
+  <% end %>
+</div>
+
+<% if @transactions.empty? %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: @total_count.zero? ? "No spending tracked yet" : "Nothing matches those filters",
+        description: @total_count.zero? ?
+          "Import a statement from your bank (CSV or OFX download), or log cash as you spend it — “14.50 lunch” above is all it takes." :
+          "Try clearing the account, month, or search filters.") %>
+<% else %>
+  <div class="divide-y divide-edge overflow-hidden rounded-xl border border-edge bg-surface">
+    <% @transactions.each do |row| %>
+      <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
+        <span class="w-20 shrink-0 text-soft"><%= row.occurred_on.strftime("%b %-d") %></span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-ink" title="<%= row.descriptor %>"><%= row.display_merchant %></span>
+          <% if @accounts.size > 1 && row.spending_account %>
+            <span class="text-xs text-soft"><%= row.spending_account.name %></span>
+          <% end %>
+        </span>
+
+        <% if row.transfer? %>
+          <span class="chip bg-stone-100 text-stone-500">transfer</span>
+        <% elsif row.budget_category %>
+          <span class="chip bg-primary-100 text-primary-800"><%= row.budget_category.name %></span>
+        <% end %>
+
+        <span class="w-24 shrink-0 text-right tabular-nums <%= row.money_in? ? "text-green-700" : "text-ink" %>">
+          <%= money_amount(row.amount_cents, signed: true) %>
+        </span>
+
+        <details class="relative shrink-0">
+          <summary class="btn btn-ghost cursor-pointer list-none px-2 py-1 text-xs text-soft">Edit</summary>
+          <div class="absolute right-0 z-10 mt-1 w-64 rounded-lg border border-edge bg-surface p-3 shadow-lg">
+            <%= form_with url: spending_transaction_path(row), method: :patch, class: "space-y-2" do %>
+              <%= select_tag :budget_category_id,
+                    options_for_select([ [ "No category", "" ] ] + @categories.map { |c| [ c.name, c.id ] }, row.budget_category_id),
+                    class: "input w-full" %>
+              <% if row.merchant.present? %>
+                <label class="flex items-center gap-2 text-xs text-soft">
+                  <%= check_box_tag :make_rule, "1" %>
+                  Always file “<%= row.merchant.truncate(28) %>” here
+                </label>
+              <% end %>
+              <%= submit_tag "Save", class: "btn btn-primary btn-sm w-full" %>
+            <% end %>
+            <div class="mt-2 flex items-center justify-between gap-2 border-t border-edge pt-2">
+              <%= button_to row.transfer? ? "Not a transfer" : "Mark as transfer",
+                    spending_transaction_path(row, transfer: row.transfer? ? "0" : "1"),
+                    method: :patch, class: "btn btn-ghost btn-sm text-xs" %>
+              <%= button_to "Delete", spending_transaction_path(row), method: :delete,
+                    data: { turbo_confirm: "Remove this transaction for good? Re-importing won't bring it back." },
+                    class: "btn btn-ghost btn-sm text-xs text-red-700" %>
+            </div>
+          </div>
+        </details>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="mt-6 grid gap-4 md:grid-cols-2">
+  <% if @accounts.any? %>
+    <details class="rounded-xl border border-edge bg-surface p-4">
+      <summary class="cursor-pointer text-sm font-medium text-ink">Accounts (<%= @accounts.size %>)</summary>
+      <ul class="mt-3 space-y-2">
+        <% @accounts.each do |account| %>
+          <li class="flex items-center justify-between gap-2 text-sm">
+            <span><%= account.display_name %> <span class="text-xs text-soft">· <%= account.kind_label %></span></span>
+            <%= button_to "Remove", spending_account_path(account), method: :delete,
+                  data: { turbo_confirm: "Remove #{account.name} and all its transactions from the ledger? Statements in your vault are untouched." },
+                  class: "btn btn-ghost btn-sm text-xs text-red-700" %>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+
+  <% if @rules.any? %>
+    <details class="rounded-xl border border-edge bg-surface p-4">
+      <summary class="cursor-pointer text-sm font-medium text-ink">Your filing rules (<%= @rules.size %>)</summary>
+      <p class="mt-2 text-xs text-soft">Taught by “always file here” — rules decide before any keyword or AI guess.</p>
+      <ul class="mt-3 space-y-2">
+        <% @rules.each do |rule| %>
+          <li class="flex items-center justify-between gap-2 text-sm">
+            <span>“<%= rule.matcher %>” → <%= rule.budget_category.name %></span>
+            <%= button_to "Remove", spending_rule_path(rule), method: :delete, class: "btn btn-ghost btn-sm text-xs text-red-700" %>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+</div>

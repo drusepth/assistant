@@ -57,6 +57,9 @@
             <%= form.time_zone_select :time_zone, nil,
                   { include_blank: "Use the server's zone (#{Time.zone.name})" }, class: "input" %>
           <% end %>
+          <%= form.field :currency, label_text: "Currency",
+                placeholder: "USD",
+                hint: "The three-letter code money displays in — budgets, spending, everything with a number on it." %>
         </div>
       <% end %>
 

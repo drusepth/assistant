@@ -33,7 +33,7 @@ class HouseholdsController < ApplicationController
   private
     def household_params
       params.expect(household: [ :name, :tagline, :region, :address, :phone, :time_zone,
-        :home_status, :moved_in_on, :banner ])
+        :currency, :home_status, :moved_in_on, :banner ])
     end
 
     # Same guard as require_admin, but bounced back to the household page —
