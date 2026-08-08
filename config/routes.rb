@@ -132,6 +132,7 @@ Rails.application.routes.draw do
       end
       collection { delete :discard_all }
     end
+    resource :reset, only: :create
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
