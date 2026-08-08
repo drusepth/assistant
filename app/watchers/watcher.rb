@@ -7,7 +7,7 @@
 module Watcher
   SLUGS = %w[
     checkup_cadence stay_in_touch renewal_radar goal_stall neglected_hobby same_day_sync stale_task
-    stub_anomaly raise_cadence interview_ahead application_follow_up
+    stub_anomaly raise_cadence interview_ahead application_follow_up real_terms_drift
   ].freeze
 
   module_function

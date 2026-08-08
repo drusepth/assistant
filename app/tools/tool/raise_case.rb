@@ -12,6 +12,9 @@ module Tool
     self.section_slugs = %w[ career ]
     self.kind = :draft
 
+    input :role,
+      label: "Your job title",
+      hint: "Optional — lets the memo cite the closest national wage medians when the dataset is loaded."
     input :extras, kind: :textarea,
       label: "Anything not tracked here?",
       hint: "Optional — wins you never logged, duties you've taken on, your target number."
@@ -41,7 +44,11 @@ module Tool
         the target number goes, and one sentence of collaborative framing.
       Never invent market rates, percentages, or comparable salaries — where
       a market number would strengthen the case, leave a [BRACKETED
-      PLACEHOLDER] naming exactly what to look up.
+      PLACEHOLDER] naming exactly what to look up. The one exception: when
+      the user prompt includes "public data on file" (CPI buying-power drift,
+      national wage medians), those ARE sourced numbers — weave them into the
+      memo with their vintage stated, phrased as reference points to verify,
+      not as this user's personal market rate.
       research: at most #{MAX_RESEARCH} specific numbers to fetch before the ask, each
       naming where — the BLS occupational wage table for this kind of role,
       state or city wage data, current postings for the same title nearby.
@@ -59,6 +66,7 @@ module Tool
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << tenure_line
+        parts.concat(public_data_lines)
         parts << "Untracked context from the user: #{inputs[:extras]}" if inputs[:extras].present?
         context = section_context
         unless context.empty?
@@ -76,6 +84,34 @@ module Tool
           "No pay change is recorded. The memo's timing section should carry a " \
           "[BRACKETED PLACEHOLDER] for when pay was last adjusted."
         end
+      end
+
+      # The D31 datasets, when loaded: code fetches the numbers, the model
+      # only phrases them — always with their vintage attached.
+      def public_data_lines
+        lines = []
+        if (last = Career::CompChange.latest_on(user))
+          cpi = Datasets::Cpi.current
+          if (drift = cpi.drift_since(last))
+            lines << "Public data on file — buying power: CPI-U rose ~#{drift.round(1)}% between " \
+                     "#{last.year} and #{cpi.latest_year} (annual averages). Flat pay since " \
+                     "#{last.strftime("%B %Y")} is a real-terms cut of about that size."
+          end
+        end
+        if inputs[:role].present? && (wages = Datasets::Wages.current).present?
+          matches = wages.search(inputs[:role])
+          if matches.any?
+            rows = matches.map do |occupation|
+              median = [ occupation.hourly_median && "$#{occupation.hourly_median}/hr median",
+                         occupation.annual_median && "$#{occupation.annual_median.round}/yr median" ].compact.join(", ")
+              "- #{occupation.title}: #{median.presence || "median not published"}"
+            end
+            lines << "Public data on file — national wage medians (BLS OEWS, #{wages.as_of}), closest " \
+                     "title matches to “#{inputs[:role]}”; offer as national reference points, local " \
+                     "rates still worth fetching:\n#{rows.join("\n")}"
+          end
+        end
+        lines
       end
 
       def handle(response)

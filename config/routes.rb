@@ -89,6 +89,8 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root "overview#show"
+    post "datasets/refresh" => "datasets#refresh", as: :refresh_datasets
+    post "datasets/import" => "datasets#import", as: :import_datasets
     resources :errors, only: :index do
       collection { delete :destroy_all }
     end

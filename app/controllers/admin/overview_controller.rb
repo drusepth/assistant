@@ -14,6 +14,9 @@ module Admin
       # shared — the admin flag is not a master key).
       @failed_tool_runs = ToolRun.failed.count
       @failed_documents = Document.where(analysis_status: :failed).count
+
+      @cpi = Datasets::Cpi.current
+      @wages = Datasets::Wages.current
     end
   end
 end
