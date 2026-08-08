@@ -58,6 +58,7 @@ Subsections: **Budget, Debt, Taxes, Assets, Bills, Subscriptions, Benefits**
 - Bills: recurring obligations, renewal dates, price-hike detection
 - Subscriptions: audit, "cancel this for me" drafting
 - Benefits: eligibility discovery (billions go unclaimed because people don't know they qualify), application navigation — SNAP, Medicaid, unemployment, disability. *(Open question: could move to Rights.)*
+- Full section deep-dive in `docs/MONEY.md`: the spending substrate (statement-import ledger in the mirror database over a manual floor — D-spending-mirror), envelope budgets with derived month math (D-budget-envelopes), the build-my-budget tool, faithfulness watchers (pace, new-recurring-charge, price-hike, month-close), and the money coach — buy-decision chat + spending review, support-not-advice (D-money-coach).
 
 ### 7. Rights
 Subsections: **Immigration, Renting, Voting, Disputes**
