@@ -242,6 +242,18 @@ class CredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_not @user.reload.keyring.recovery_pending?
   end
 
+  # Both actions answer a POST with a body rather than a redirect, which Turbo
+  # discards — so the forms that reach them have to opt out of Turbo, or the
+  # buttons silently do nothing in a browser.
+  test "the responses-are-not-redirects forms opt out of Turbo" do
+    get credentials_url
+    assert_response :success
+
+    forms = css_select("form[action='#{recovery_credentials_path}'], form[action='#{export_credentials_path}']")
+    assert_equal 3, forms.size, "expected both recovery buttons and the export form on the index"
+    forms.each { |form| assert_equal "false", form["data-turbo"], "#{form["action"]} form must set data-turbo=false" }
+  end
+
   test "kind registry: a wifi entry seals its password and a card its numbers" do
     post credentials_url, params: { credential: { kind: "wifi", name: "Home wifi", username: "HomeNet" },
                                     secrets: { password: "wifi-pass-9" } }
