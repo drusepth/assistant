@@ -3,6 +3,13 @@
 <%= render Ui::PageHeaderComponent.new(title: @person.name, subtitle: @person.relationship) do |header| %>
   <% if own %>
     <% header.with_actions do %>
+      <% if @person.keep_in_touch? %>
+        <%= button_to "In your circle ✓", people_circle_path(person_id: @person.id), method: :delete, class: "btn btn-secondary",
+              title: "On your People page — click to stop tending this one" %>
+      <% else %>
+        <%= button_to "Keep in touch", people_circle_path(person_id: @person.id), method: :post, class: "btn btn-secondary",
+              title: "Adds them to your circle on the People page" %>
+      <% end %>
       <%= button_to "Log contact today", log_contact_person_path(@person), method: :patch, class: "btn btn-secondary",
             title: @person.last_contacted_on ? "Last logged: #{@person.last_contacted_on.strftime("%B %-d, %Y")}" : "No contact logged yet" %>
       <%= link_to "Edit", edit_person_path(@person), class: "btn btn-secondary" %>

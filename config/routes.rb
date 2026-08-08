@@ -21,6 +21,7 @@ Rails.application.routes.draw do
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
   get "sections/:slug" => "sections#show", as: :section
   resources :hobbies, only: %i[ create destroy ]
+  resources :groups, only: %i[ create destroy ]
 
   get "health/care-settings" => "care_settings#show", as: :care_settings
   patch "health/care-settings" => "care_settings#update"
@@ -61,6 +62,7 @@ Rails.application.routes.draw do
   end
   namespace :people do
     resource :import, only: %i[ new create ]
+    resource :circle, only: %i[ create destroy ]
   end
   resources :people do
     member do

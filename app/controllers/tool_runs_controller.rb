@@ -65,7 +65,9 @@ class ToolRunsController < ApplicationController
 
     def load_input_choices
       @document_choices = Document.visible_to(Current.user).order(created_at: :desc) if @tool.inputs.any?(&:document?)
-      @person_choices = Person.visible_to(Current.user).order(:name) if @tool.inputs.any?(&:person?)
+      # Circle first (D30) — the people you're tending are almost always the
+      # ones a People tool is about.
+      @person_choices = Person.visible_to(Current.user).order(keep_in_touch: :desc, name: :asc) if @tool.inputs.any?(&:person?)
       # Hobby lenses (D25); with none yet the form falls back to free text,
       # so the Hobbies tools work before any lens exists.
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)

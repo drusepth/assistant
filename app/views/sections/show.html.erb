@@ -4,7 +4,9 @@
 <%= render Ui::PageHeaderComponent.new(title: @section.qualified_name) do |header| %>
   <% if @section.custom? %>
     <% header.with_actions do %>
-      <%= button_to "Remove this hobby", hobby_path(@section), method: :delete, class: "btn btn-ghost",
+      <% group = @section.parent&.slug == "people" %>
+      <%= button_to group ? "Remove this group" : "Remove this hobby",
+            group ? group_path(@section) : hobby_path(@section), method: :delete, class: "btn btn-ghost",
             data: { turbo_confirm: "Remove #{@section.name}? Your items stay — they just lose this tag." } %>
     <% end %>
   <% end %>
@@ -72,7 +74,7 @@
         <% end %>
       <% end %>
 
-      <% if @events.any? %>
+      <% if @events.any? && !@panel&.hidden_browse&.include?(:events) %>
         <%= render Ui::CardComponent.new(title: "Upcoming events", padded: false) do %>
           <div class="divide-y divide-edge"><%= render @events %></div>
         <% end %>
@@ -90,7 +92,7 @@
         <% end %>
       <% end %>
 
-      <% if @people.any? %>
+      <% if @people.any? && !@panel&.hidden_browse&.include?(:people) %>
         <%= render Ui::CardComponent.new(title: "People", padded: false) do %>
           <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @people %></div>
         <% end %>
