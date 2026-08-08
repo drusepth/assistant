@@ -5,9 +5,9 @@ across all three modes (D6). Everything here rides existing infrastructure
 (D17 breakdown, D19 tools, D20 watchers, D26 linked accounts, D28 routing,
 D29 chat) except where explicitly flagged. The one new decision it needs —
 how career signal gets into the app — is **D30** in `DECISIONS.md`; the
-external-data questions it raises are **Q14–Q15**. The whole Tier-A slate
-(§7 steps 1–7: the D30 foundation, eight tools, four watchers) is built,
-marked ✅ in §7; only the Q14/Q15-gated external-data work remains.
+external-data questions it raised — Q14–Q15 — are resolved as **D31**
+(local public datasets) and **D32** (the web on three leashes + ask-then-
+send). Everything in this document is built, ✅-marked in §7.
 
 ## Why this section matters (mission tie)
 
@@ -340,45 +340,44 @@ every nudge below is arithmetic over sourced facts, never inference.
   this one must never nag.
 - **Job scout / market-rate radar** *(Tier B, deferred — see §5 and Q15)*.
 
-## 5. The external-data horizon (honest Tier answers)
+## 5. The external-data layer (built — D31/D32)
 
 The three headline asks — watch job boards for me, tell me what my role
-pays elsewhere, apply on my behalf — are the section's endgame and all
-three need data beyond the user's grant. The Q9 discipline (no capability
-lies) forces the split; it doesn't force deferral of everything:
+pays elsewhere, apply on my behalf — resolved into two decisions and are
+built:
 
-- **Market-rate data has a middle tier (Q14).** Between owned data and the
-  live web sits **published public data**: BLS OES wage tables (occupation
-  × metro, public domain, flat files), state equivalents, and the CPI
-  series (what real-terms drift reads). An instance fetches the datasets
-  periodically and serves every raise case, offer decode, and
-  career-explorer chat from *local* data — no scraping, no ToS exposure,
-  and frankly a stronger artifact for the boss conversation than a
-  job-board screenshot ("BLS says the metro median for my title is $X"
-  survives scrutiny). Non-US coverage and staleness honesty are the open
-  questions; until Q14 resolves, the tools name the sources and the user
-  fetches the number (the negotiation-prep placeholder pattern, already
-  shipped).
-- **The job scout waits on Q9 but its shape is decided now (Q15).** When
-  live-web capability lands: a scheduled scan reads the profile + Hobbies +
-  Education context, searches configured boards, and writes **suggestions
-  only** — "this posting fits the PC-building hobby and the A+ cert plan,
-  want the application kit?" — accept opens Tailor-my-application prefilled.
-  The D20 write-surface discipline (suggestions table, propose-don't-
-  dispose) survives contact with the web even though SQL-only purity
-  doesn't; that's the line Q15 is about. Its narrowest first slice is also
-  the interview-prep URL paste: fetching *one user-supplied URL at run
-  time* is a far smaller capability than agentic search, and probably
-  Q9's cheapest proving ground.
-- **Auto-apply stays capped at prepare-everything, send-nothing.** The
-  ceiling is deliberate, not timid: "all output is draft output" is a
-  load-bearing trust rule (D20), an application sent in your name is an
-  outward-facing act with real reputational cost, and the robo-apply arms
-  race is *hurting* applicants (ATS filters now discard what looks
-  automated). The owned-context edge is making each application visibly
-  better and one click from sent — scout finds it, kit tailors it, task
-  schedules it, the user hits send. If that ceiling ever moves, it moves by
-  explicit user-visible configuration (D9), not by inches.
+- **Market-rate data is local public data (D31).** A two-layer dataset
+  store (`storage/datasets/` from `RefreshDatasetsJob` or `/admin`'s
+  air-gapped file import, over `db/datasets/` seeds) serves BLS numbers
+  with the vintage always displayed. The CPI-U annual series ships seeded;
+  the OES/OEWS national wage table arrives by fetch or import (never
+  bundled unverifiable). The raise case cites the on-file CPI drift and
+  closest-median rows as sourced reference points; the **real-terms-drift
+  watcher** turns a flat comp timeline × risen CPI into "your pay lost ~6%
+  of its buying power" — arithmetic, no LLM, no web at nudge time. Absent
+  data degrades to the placeholder behavior, never to a guess.
+- **The web arrives on three leashes (D32).** `Web::Fetch` is the
+  app-side floor — deterministic, SSRF-guarded, size-capped fetch of one
+  user-supplied URL — behind the paste-a-listing-link inputs on interview
+  prep and the application tailor, identical on frontier APIs and local
+  models. `model_profiles.web_capable` is the declared model-side rung:
+  an admin checkbox for genuinely-browsing providers that relaxes
+  never-assert-current-facts into look-it-up-and-cite. The **job scout**
+  rides both: per-user `job_feeds` (RSS/Atom, Greenhouse/Lever boards,
+  USAJobs — feeds and open APIs only, nothing ToS-fraught) are scanned on
+  the agent cadence, one model call ranks fresh postings against the
+  Career + Hobbies + Education record, and survivors land as suggestions
+  only — one per posting ever, accept opens Tailor-my-application
+  prefilled. First sanctioned exception to SQL-only watchers; zero
+  exception to the D20 write surface.
+- **Auto-apply is ask-then-send, email only (D32).** The compose panel on
+  a Tailor-my-application run is the review: the user's own linked
+  mailbox, their edits to every word, one explicit click — and the sent
+  application lands on the record as an Applied Event plus a follow-up
+  task. No ATS form automation (the robo-apply arms race is *hurting*
+  applicants), and nothing the app initiates ever sends. If that ceiling
+  moves again it moves by explicit user-visible configuration (D9), not
+  by inches.
 
 ## 6. Cross-section dividends
 
@@ -424,7 +423,8 @@ lies) forces the split; it doesn't force deferral of everything:
    interview-ahead watchers riding their conventions.
 7. ✅ **Find-my-next-move chat** + accommodation request + decode-letter
    routing (employer mail now routes to decode_offer and wage_claim).
-8. **Q14 dataset tier** (BLS + CPI → real-terms drift watcher, raise-case
-   math upgrade), then **Q15 scout/URL-fetch** when Q9 resolves — the
-   external-data unlocks, upgrading tools in place. *(Blocked on Q14/Q15 —
-   everything Tier-A above is built.)*
+8. ✅ **The external-data layer (D31/D32)** — the dataset tier (CPI seed,
+   OES fetch/import, admin card, real-terms-drift watcher, raise-case
+   integration), the web floor (`Web::Fetch` + listing-URL inputs +
+   `web_capable` flag), the job scout (`job_feeds` + parsers + the ranking
+   watcher), and ask-then-send email applications.
