@@ -46,7 +46,7 @@ module Tool
 
     private
       def prompt_parts
-        [ "The facts from the user: #{inputs[:details]}", region_line ]
+        [ "The facts from the user: #{inputs[:details]}", region_line, sender_address_block ]
       end
   end
 end

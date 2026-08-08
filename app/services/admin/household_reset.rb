@@ -38,7 +38,7 @@ module Admin
       users = household.users.to_a
       summary = summarize(users)
 
-      purge_attachments(users)
+      purge_attachments(household, users)
       # The error log keeps a foreign key to users but is not cascaded from
       # them — a failure outlives the account that hit it on purpose — so
       # these rows go first or the destroy below trips the constraint.
@@ -61,7 +61,9 @@ module Admin
     # until a job runs — fine for one deleted document, wrong for a reset,
     # where the next screen claims a clean instance. Purge them here so the
     # storage panel reads zero the moment the redirect lands.
-    def purge_attachments(users)
+    def purge_attachments(household, users)
+      household.banner.purge
+
       users.each do |user|
         user.documents.find_each { |document| document.file.purge }
         user.photos.find_each { |photo| photo.image.purge }

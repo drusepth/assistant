@@ -87,12 +87,15 @@ class Admin::HouseholdResetTest < ActiveSupport::TestCase
   test "purges attached files rather than leaving them for a job" do
     document = @alice.documents.create!(title: "Lease")
     document.file.attach(io: StringIO.new("dummy"), filename: "lease.txt", content_type: "text/plain")
-    blob = document.file.blob
+    @household.banner.attach(io: StringIO.new("dummy"), filename: "home.jpg", content_type: "image/jpeg")
+    blobs = [ document.file.blob, @household.banner.blob ]
 
     Admin::HouseholdReset.call(@household)
 
-    assert_not ActiveStorage::Blob.exists?(blob.id)
-    assert_not blob.service.exist?(blob.key)
+    blobs.each do |blob|
+      assert_not ActiveStorage::Blob.exists?(blob.id)
+      assert_not blob.service.exist?(blob.key)
+    end
   end
 
   # The reset is the one place that destroys a household whole, so it walks

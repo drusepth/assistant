@@ -10,7 +10,9 @@ Rails.application.routes.draw do
   post "join/:token" => "invitations#accept"
 
   resources :household_members, only: %i[ update destroy ]
-  resource :household, only: %i[ update ]
+  resource :household, only: %i[ show update ] do
+    delete :banner, to: "households#destroy_banner", as: :banner
+  end
 
   get "welcome(/:step)" => "onboarding#show", as: :onboarding, constraints: { step: /[1-4]/ }
   patch "welcome/:step" => "onboarding#update", constraints: { step: /[1-4]/ }
