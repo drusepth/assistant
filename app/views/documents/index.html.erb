@@ -20,7 +20,7 @@
 <% else %>
   <%= render Ui::EmptyStateComponent.new(
         title: @section ? "No documents in #{@section.name}" : "The vault is empty",
-        description: "Leases, test results, tax forms — store them here, tagged by section. AI summaries arrive in a later step of this milestone."
+        description: "Leases, test results, tax forms — store them here, tagged by section. Each upload gets a plain-language AI summary and suggested tags."
       ) do |empty| %>
     <% empty.with_action { link_to "Add a document", new_document_path, class: "btn btn-primary" } %>
   <% end %>
