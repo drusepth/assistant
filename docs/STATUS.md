@@ -2,12 +2,14 @@
 
 Where we left off — what is built, oldest first, then what's next.
 
-**One entry per line.** This file is touched on nearly every branch, and git
-merges line by line: entries on their own lines mean two branches that add
-different milestones merge automatically, and a genuine collision shows up as a
-readable one-line diff. Please don't rewrap these into paragraphs or join them
-up — that is exactly what made this log the most conflict-prone thing in the
-repo when it lived inside `CLAUDE.md`.
+**One entry per line, append-only.** This file is touched on nearly every
+branch, so `.gitattributes` gives it `merge=union`: two branches appending
+different milestone lines merge automatically with both entries kept, no
+conflict. The flip side is that this file never shows conflict markers at all,
+so only ever *append* here — never rewrite or rewrap existing lines on a
+branch, or two branches' edits to the same line will silently both survive.
+That rewrap hazard is exactly what made this log the most conflict-prone thing
+in the repo when it lived inside `CLAUDE.md`.
 
 ## Built
 
