@@ -28,6 +28,7 @@ Rails.application.routes.draw do
     member do
       post :promote
       post :remind
+      post :triage
     end
   end
   resource :export, only: %i[ create ]

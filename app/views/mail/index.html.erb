@@ -16,14 +16,21 @@
 
   <% if @accounts.size > 1 %>
     <div class="flex items-center gap-1.5">
-      <%= link_to "All", mail_index_path(q: @query.presence),
+      <%= link_to "All", mail_index_path(q: @query.presence, filter: @filter),
             class: "chip #{params[:account].blank? ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
       <% @accounts.each do |account| %>
-        <%= link_to account.label, mail_index_path(account: account.id, q: @query.presence),
+        <%= link_to account.label, mail_index_path(account: account.id, q: @query.presence, filter: @filter),
               class: "chip #{params[:account].to_i == account.id ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
       <% end %>
     </div>
   <% end %>
+
+  <div class="flex items-center gap-1.5">
+    <% { nil => "Everything", "action" => "Needs action", "time" => "Time-sensitive" }.each do |key, filter_label| %>
+      <%= link_to filter_label, mail_index_path(q: @query.presence, account: params[:account].presence, filter: key),
+            class: "chip #{@filter == key ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
+    <% end %>
+  </div>
 </div>
 
 <% if @threads.empty? %>
@@ -44,6 +51,11 @@
             <% if thread.size > 1 %><span class="chip bg-stone-100 text-stone-600"><%= thread.size %></span><% end %>
             <% if newest.bulk? %><span class="chip bg-stone-100 text-stone-500">bulk</span><% end %>
             <% if newest.reply_wanted_by %><span class="chip bg-amber-100 text-amber-800">awaiting reply</span><% end %>
+            <% if newest.triage&.dig("category") == "action_needed" %>
+              <span class="chip bg-red-50 text-red-700">needs action</span>
+            <% elsif newest.triage&.dig("category") == "time_sensitive" %>
+              <span class="chip bg-amber-100 text-amber-800">time-sensitive</span>
+            <% end %>
           </span>
           <span class="block truncate text-sm <%= newest.seen? ? "text-soft" : "text-ink" %>"><%= newest.subject.presence || "(no subject)" %></span>
           <span class="block truncate text-xs text-soft"><%= newest.snippet %></span>

@@ -22,6 +22,11 @@ class SyncLinkedAccountJob < ApplicationJob
     # A large backfill works in bounded batches (Email::ImapSync): when a
     # run reports there's more, chain the next batch immediately.
     self.class.perform_later(linked_account) if result.respond_to?(:more?) && result.more?
+    # Live email arrivals head straight to triage (E2) — backfill never
+    # does (the economics rule: history is browse-only, never alerted on).
+    if result.respond_to?(:new_live_ids) && result.new_live_ids.present?
+      Email::TriageJob.perform_later(linked_account, result.new_live_ids)
+    end
   rescue Dav::Client::Error, Email::ImapClient::Error => e
     linked_account.update!(sync_error: e.message)
   rescue StandardError

@@ -5,7 +5,7 @@
 # code. Like tools, watchers are first-party only and this explicit slug
 # list is the whole registry.
 module Watcher
-  SLUGS = %w[ checkup_cadence stay_in_touch renewal_radar goal_stall neglected_hobby same_day_sync stale_task ].freeze
+  SLUGS = %w[ checkup_cadence stay_in_touch renewal_radar goal_stall neglected_hobby same_day_sync stale_task email_deadline ].freeze
 
   module_function
 

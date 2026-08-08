@@ -19,6 +19,13 @@ class MailController < ApplicationController
     @query = params[:q].to_s.strip
     scope = search(scope, @query) if @query.present?
 
+    # Triage filters (E2): labels power the chips; Everything is the default.
+    @filter = params[:filter].presence_in(%w[ action time ])
+    case @filter
+    when "action" then scope = scope.where("json_extract(triage, '$.category') = 'action_needed'")
+    when "time" then scope = scope.where("json_extract(triage, '$.category') = 'time_sensitive'")
+    end
+
     messages = scope.newest_first.limit(THREAD_LIMIT * 6).to_a
     @threads = messages.group_by(&:thread_key).values.first(THREAD_LIMIT)
     @backfilling = EmailFolder.where(linked_account_id: @accounts.map(&:id), backfilled_at: nil).exists?
@@ -66,6 +73,18 @@ class MailController < ApplicationController
     @message.remove_from_mirror!
     redirect_to mail_index_path,
       notice: "Removed from the assistant's mirror for good — your actual mailbox is untouched."
+  end
+
+  # Lazy triage for history (EMAIL_PLAN.md §6): backfilled mail is never
+  # labeled on its own, but a user opening a thread may ask.
+  def triage
+    ids = @message.thread_messages.where(triaged_at: nil).pluck(:id)
+    if ids.any?
+      Email::TriageJob.perform_later(@message.linked_account, ids)
+      redirect_to mail_path(@message), notice: "Labeling this thread — refresh in a moment."
+    else
+      redirect_to mail_path(@message), notice: "This thread is already labeled."
+    end
   end
 
   private

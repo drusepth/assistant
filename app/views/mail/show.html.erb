@@ -20,6 +20,29 @@
         <span class="ml-auto text-xs text-soft"><%= message.sent_at&.strftime("%b %-d, %Y at %-l:%M %p") %></span>
       </div>
 
+      <% if message.triage.present? %>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+          <% category = message.triage["category"] %>
+          <% if category == "action_needed" %>
+            <span class="chip bg-red-50 text-red-700">needs action</span>
+          <% elsif category == "time_sensitive" %>
+            <span class="chip bg-amber-100 text-amber-800">time-sensitive</span>
+          <% elsif category == "noise" %>
+            <span class="chip bg-stone-100 text-stone-500">noise</span>
+          <% else %>
+            <span class="chip bg-stone-100 text-stone-600"><%= category %></span>
+          <% end %>
+          <% if message.triage["deadline_on"] %>
+            <span class="chip bg-amber-100 text-amber-800">deadline <%= message.triage["deadline_on"] %></span>
+          <% end %>
+          <% if message.triage["why"] %><span class="text-soft"><%= message.triage["why"] %></span><% end %>
+        </div>
+      <% elsif message.backfilled? && message.id == @message.id %>
+        <div class="mt-2">
+          <%= button_to "Label this thread", triage_mail_path(message), method: :post, class: "btn btn-ghost btn-sm" %>
+        </div>
+      <% end %>
+
       <div class="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink"><%= message.body_text.presence || "(no text content)" %></div>
 
       <% if Array(message.attachments).any? %>
