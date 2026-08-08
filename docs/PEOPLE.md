@@ -71,6 +71,17 @@ mom" costs trust the app never earns back.
   shows "no contact logged yet" but the watcher stays silent (no signal, no
   nudge — the Q8 rule, unchanged). Unflagged → invisible to the dashboard
   regardless of logs; the Address Book still has them.
+- **The watcher gets circle-scoped, with a backfill.** `Watcher::StayInTouch`
+  today scans *everyone* with a `last_contacted_on`; under D30 it adds the
+  flag to its `where`. That silently changes behavior for existing users
+  unless the migration backfills `keep_in_touch = true` wherever
+  `last_contacted_on` is set — logging contact *was* the opt-in until now, so
+  the flag inherits it. No one's nudges change on upgrade day.
+- **The circle is personal, not shared.** Modules read
+  `Current.user.people`, not `visible_to` — the flag is the owner's intent,
+  and you don't tend your spouse's circle. (Shared people still appear
+  where they always did: the Address Book and other sections' filtered
+  lists.)
 - **Capture card** (the section's mini-FTUE, mirroring "What do you do for
   fun?"): the section page leads with **"Who do you want to stay close to?"**
   — picks from the Address Book plus quick-add by name — each answer sets the
@@ -85,14 +96,28 @@ and stay-in-touch will feed Attend). Browse rebuilds as modules:
 1. **Coming up** — birthdays in the next ~30 days (straight off
    `people.birthday`, which imports already populate — no Events required)
    plus upcoming People-tagged Events. The "dates that matter" strip.
+   Circle-scoped, same as everything here — a synced address book must not
+   spray acquaintances' birthdays. Next-occurrence math (year wrap for
+   December birthdays, Feb 29, month/day comparison in SQLite) lives in one
+   `Person.birthday_within(days)` scope that the birthday-radar watcher
+   reuses — solve once, use twice.
 2. **Your circle** — kept-in-touch people, stalest first: name, relationship,
    "last contact 5 weeks ago" / "no contact logged yet", one-tap **Log
    contact** and **Reconnect**. This is the pull-side twin of the
    stay-in-touch watcher — same math, always visible, no nudge required.
 3. **The lens lists** — People-tagged Tasks, Events, Goals, Notes as today,
-   *minus* the Person grid (D30), plus the Address Book link line.
+   *minus* the Person grid (D30), plus the Address Book link line. The grid
+   removal is the *People page only*: other sections' small filtered person
+   lists (your cardiologist on Health, the landlord on Rights) are genuinely
+   useful and stay.
 4. **Capture card** when the circle is empty (§2), replacing the generic
-   empty state.
+   empty state — and offering the importer when the Address Book itself is
+   empty, so the page is never a dead end.
+
+**Picker scaling, everywhere people are chosen**: the tool form's `:person`
+select and the capture card both enumerate all people, which degrades at
+synced-address-book size. Cheap v1 that doubles as the flag's first payoff:
+circle first, then the rest alphabetically. Typeahead is later polish.
 
 ## 4. Tools (each one declarative class on D19 infra; all Tier A)
 
@@ -107,11 +132,16 @@ Built already: **Reconnect** (the section's core promise) and **Plan a move**
    conversation opens knowing the context. The chat shape matters: hard
    conversations need back-and-forth ("she replied this — now what?"), which
    is exactly what D29 built for the tutor. "Save a recap" files the plan.
-2. **"Plan a get-together"** *(plan)* — occasion + who + roughly-when → Goal
-   + prep Tasks + the Event on the calendar. The brief steers hard toward
-   small, cheap, and scheduled — the taco night that actually happens beats
-   the dinner party that never does. Covers PRODUCT.md's "event planning"
-   line with zero new machinery.
+2. **"Plan a get-together"** *(plan)* — occasion + who + an optional date →
+   Goal + prep Tasks + the Event on the calendar. One mechanical honesty
+   note for the builder: `plan_goal!` → `Goals::BreakDown` produces Goal +
+   Tasks *only*, so the Event does not fall out of the plan pipeline — the
+   tool creates it **by code** via the existing `Base#create_event` when a
+   date is given (and the brief plans backwards from it, the
+   prep-for-the-big-day pattern); with no date, the first task is "pick a
+   date." The brief steers hard toward small, cheap, and scheduled — the
+   taco night that actually happens beats the dinner party that never does.
+   Covers PRODUCT.md's "event planning" line with zero new machinery.
 3. **"Gift ideas"** *(draft)* — reads the person's notes and section overlaps
    (a hobby-buddy tag is half the answer) → 5–8 ideas sized to a budget line,
    placeholders naming what it doesn't know. Chained from birthday radar via
@@ -126,6 +156,15 @@ Built already: **Reconnect** (the section's core promise) and **Plan a move**
    the coordination-heavy life events PRODUCT.md names (caregiving,
    co-parenting logistics) are plan tools with rich briefs once demand shows,
    exactly like "moving" was.
+
+**The one infra seam this slate needs: `Base#person_context`.** Reconnect
+hand-rolls its person block (name, relationship, birthday, last contact, the
+`people.notes` column) inside its own `user_prompt`. Gift ideas and
+What-do-I-say need the identical block, so extract it into a shared helper on
+`Tool::Base` first — the `section_context` pattern at person granularity,
+`visible_to` the only read path — and refit Reconnect onto it. Three
+consumers, one assembly, and when Q14 links land the helper is the single
+place shared-history context gets added.
 
 ## 5. Agent (D20 watchers — SQL-first)
 
@@ -192,13 +231,17 @@ queued consumers.
 
 ## 9. Build order
 
-1. **The D30 split** — `keep_in_touch` flag + person-page toggle, the
-   "Who do you want to stay close to?" capture, section page rebuilt (Coming
-   up / Your circle / lens lists sans Person grid / Address Book link).
-2. **Birthday radar** watcher (circle-scoped, D28-routes to Reconnect now,
+1. **The D30 split** — `keep_in_touch` flag (+ backfill from
+   `last_contacted_on`, §2) + person-page toggle, the "Who do you want to
+   stay close to?" capture, `StayInTouch` circle-scoping, section page
+   rebuilt (Coming up / Your circle / lens lists sans Person grid / Address
+   Book link), circle-first person pickers.
+2. **Birthday radar** watcher (circle-scoped, sharing
+   `Person.birthday_within` with Coming up; D28-routes to Reconnect now,
    Gift ideas when it ships).
 3. **"Gift ideas" + "Plan a get-together"** — one draft, one plan, both thin
-   classes on existing contracts.
+   classes on existing contracts, preceded by the `person_context`
+   extraction (§4).
 4. **"What do I say?"** chat tool (second consumer of D29 after the tutor).
 5. **"Make new friends"** plan tool.
 6. **Groups** — generalize D25 lens creation to People; community tools get
