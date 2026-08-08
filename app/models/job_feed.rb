@@ -6,7 +6,10 @@ class JobFeed < ApplicationRecord
 
   KINDS = %w[ rss greenhouse lever usajobs ].freeze
 
-  validates :url, presence: true, format: { with: %r{\Ahttps?://}i, message: "must be an http(s) link" }
+  # Anchored at both ends on purpose: \A alone leaves the tail unconstrained,
+  # and Ruby regexes are multiline, so "https://ok.com\njavascript:..." would
+  # pass a start-only check and reach whatever later fetches or renders the URL.
+  validates :url, presence: true, format: { with: %r{\Ahttps?://\S+\z}i, message: "must be an http(s) link" }
   validates :kind, inclusion: { in: KINDS }
 
   before_validation :detect_kind, if: -> { url_changed? }

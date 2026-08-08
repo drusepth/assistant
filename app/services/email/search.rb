@@ -26,7 +26,7 @@ class Email::Search
 
     def remove_ids(ids)
       return if ids.empty? || !ensure_index!
-      connection.execute("DELETE FROM #{TABLE} WHERE rowid IN (#{ids.map(&:to_i).join(',')})")
+      connection.execute(sanitize("DELETE FROM #{TABLE} WHERE rowid IN (?)", ids.map(&:to_i)))
     end
 
     # Message ids matching the query, unscoped — callers MUST re-filter by
