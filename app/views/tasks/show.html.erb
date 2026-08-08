@@ -13,8 +13,10 @@
   <% end %>
 <% end %>
 
+<%= turbo_stream_from @conversation if @conversation %>
+
 <div class="grid max-w-4xl gap-6 lg:grid-cols-3">
-  <div class="lg:col-span-2">
+  <div class="space-y-6 lg:col-span-2">
     <%= render Ui::CardComponent.new(title: "Details") do %>
       <dl class="space-y-3 text-sm">
         <div class="flex gap-2">
@@ -46,6 +48,40 @@
           </div>
         <% end %>
       </dl>
+    <% end %>
+
+    <%# The answer (D30): where a mental task's outcome — the decision, the
+        list, the draft — is kept once it exists. %>
+    <% if own %>
+      <%= render Ui::CardComponent.new(title: "Your answer",
+            subtitle: "The decision, list, or draft this task ends with — keep it here") do %>
+        <%= form_with model: @task, class: "space-y-3" do |form| %>
+          <%= form.text_area :resolution, rows: 4,
+                placeholder: "Write your answer, or work it out in the conversation below and save it from there." %>
+          <div class="flex items-center gap-2">
+            <%= form.submit "Save answer" %>
+            <% unless @task.completed? %>
+              <%= submit_tag "Save & complete", name: "save_and_complete", class: "btn btn-secondary" %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    <% elsif @task.resolution.present? %>
+      <%= render Ui::CardComponent.new(title: "Answer") do %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= @task.resolution %></p>
+      <% end %>
+    <% end %>
+
+    <%# The embedded conversation (D30): the D29 chat surface, opening with
+        the task's capture-time questions at zero model cost — the first
+        LLM call is the reply to the user's first message. Owner-only, and
+        hidden on completed tasks that never had one. %>
+    <% if own && (!@task.completed? || @conversation) %>
+      <div class="space-y-6">
+        <%= render "tool_runs/chat", run: @conversation, tool: Tool::TaskChat,
+              composer_url: task_conversation_path(@task),
+              openers: @task.conversation_openers, title: "Talk it through" %>
+      </div>
     <% end %>
   </div>
   <% if own %>

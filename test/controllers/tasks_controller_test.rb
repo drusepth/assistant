@@ -117,6 +117,44 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "show opens the conversation with the stored questions and no model call" do
+    @task.update!(guiding_questions: [ "What skills do you enjoy using most?" ])
+
+    get task_path(@task)
+    assert_response :success
+    assert_match "What skills do you enjoy using most?", response.body
+    assert_match "Talk it through", response.body
+    assert_no_enqueued_jobs
+  end
+
+  test "a shared task shows its answer but never the owner's conversation" do
+    shared = users(:two).tasks.create!(title: "Shared", resolution: "The saved answer")
+    AccessGrant.create!(grantor: users(:two), grantee: users(:one), subject: shared)
+
+    get task_path(shared)
+    assert_response :success
+    assert_match "The saved answer", response.body
+    assert_no_match "Talk it through", response.body
+  end
+
+  test "saves an answer on the task" do
+    patch task_path(@task), params: { task: { resolution: "Tutoring for adult learners" } }
+
+    assert_redirected_to @task
+    assert_equal "Tutoring for adult learners", @task.reload.resolution
+    assert_not @task.completed?
+  end
+
+  test "save & complete writes the answer and finishes the task in one click" do
+    patch task_path(@task), params: {
+      task: { resolution: "Tutoring for adult learners" }, save_and_complete: "1"
+    }
+
+    @task.reload
+    assert_equal "Tutoring for adult learners", @task.resolution
+    assert @task.completed?
+  end
+
   test "completes and reopens own task" do
     patch complete_task_path(@task)
     assert @task.reload.completed?

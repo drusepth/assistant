@@ -30,7 +30,9 @@ class ToolRunsController < ApplicationController
       run.update_column(:recap_requested_at, Time.current)
       ChatRecapJob.perform_later(run)
     end
-    redirect_to run
+    # Back to whichever chat surface the click came from — the run page or a
+    # task page hosting the conversation (D30).
+    redirect_back fallback_location: run
   end
 
   # "Try again" after a failed turn: drop the failure notice and re-enqueue
@@ -41,7 +43,7 @@ class ToolRunsController < ApplicationController
       run.tool_run_messages.ordered.last.destroy!
       ChatTurnJob.perform_later(run)
     end
-    redirect_to run
+    redirect_back fallback_location: run
   end
 
   private

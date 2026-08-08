@@ -25,6 +25,15 @@ class TaskTest < ActiveSupport::TestCase
     assert @goal.reload.done?
   end
 
+  test "conversation openers are the stored questions, or the stock fallback" do
+    blank = @user.tasks.create!(title: "Buy stamps")
+    assert_equal [ Task::FALLBACK_OPENER ], blank.conversation_openers
+
+    thinky = @user.tasks.create!(title: "Brainstorm ideas",
+      guiding_questions: [ " What skills do you enjoy? ", "", "Who would you help?" ])
+    assert_equal [ "What skills do you enjoy?", "Who would you help?" ], thinky.conversation_openers
+  end
+
   test "reopening a task reactivates a finished goal" do
     task = @user.tasks.create!(title: "Update resume", goal: @goal)
     task.complete!

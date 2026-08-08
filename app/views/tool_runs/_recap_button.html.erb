@@ -1,9 +1,10 @@
 <%# One recap button, two homes (page header + under the composer), one
-    state: idle → "Saving recap…" while ChatRecapJob is in flight
-    (recap_pending?) → idle again, relabeled, once the note lands. %>
+    state: idle → pending while ChatRecapJob is in flight → idle again,
+    relabeled, once the result lands. Copy comes from the tool: a Note-filing
+    chat says "Save a recap"; a task chat says "Save as the answer" (D30). %>
 <% if tool_run.recap_pending? %>
-  <span class="btn btn-secondary opacity-60">Saving recap…</span>
+  <span class="btn btn-secondary opacity-60"><%= tool_run.tool.recap_pending_label %></span>
 <% else %>
-  <%= button_to tool_run.items.grep(Note).any? ? "Save another recap" : "Save a recap",
+  <%= button_to tool_run.tool.recap_button_label(tool_run),
         recap_tool_run_path(tool_run), method: :post, class: "btn btn-secondary" %>
 <% end %>
