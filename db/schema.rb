@@ -258,7 +258,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_050530) do
     t.datetime "created_at", null: false
     t.date "due_on"
     t.integer "goal_id"
+    t.json "guiding_questions", default: [], null: false
     t.text "notes"
+    t.text "resolution"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -296,9 +298,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_050530) do
     t.json "output", default: {}, null: false
     t.datetime "recap_requested_at"
     t.string "status", default: "queued", null: false
+    t.integer "subject_id"
+    t.string "subject_type"
     t.string "tool_slug", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["subject_type", "subject_id"], name: "index_tool_runs_on_subject"
     t.index ["user_id", "created_at"], name: "index_tool_runs_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_tool_runs_on_user_id"
   end

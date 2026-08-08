@@ -4,6 +4,7 @@ class SectionsController < ApplicationController
     section_ids = [ @section.id, *@section.children.ids ]
 
     @tools = Tool.for_section(@section)
+    @subsection_summaries = Sections::Summary.for(Current.user, @section.children)
 
     # Health leads with its care radar and coverage card (docs/HEALTH.md) —
     # the section-specific panel pattern the Hobbies capture card set. The

@@ -71,9 +71,14 @@ documents) as their context, so the profile accrues from normal use.
 ### How hobbies get known
 
 1. **The section page asks.** The Hobbies page leads with one question —
-   "What do you do for fun?" — chips for common hobbies + free text
-   (shrinking to "Add another hobby" once lenses exist). Each answer creates
-   a sub-lens. This is the section's mini-FTUE and feeds Q5's design later.
+   "What do you do for fun?" — chips for common hobbies + free text. Each
+   answer creates a sub-lens. This is the section's mini-FTUE and feeds Q5's
+   design later. Once lenses exist the page leads with them instead: a
+   "Your hobbies" card grid (each card a doorway with engagement signal —
+   next planned event, open tasks/projects, or a dive-back-in invitation
+   when quiet; `Sections::Summary`), with capture shrunk to an add-tile
+   at the end of the grid. Lenses deliberately do *not* render as header
+   chips — the list is unbounded and a chip cloud has no pull.
 2. **The data confesses.** `Categorize*Jobs` already tag `hobbies`. When
    hobby-tagged items keep mentioning the same activity ("climbing" in four
    events and two notes), a watcher suggests: "Looks like climbing is a thing

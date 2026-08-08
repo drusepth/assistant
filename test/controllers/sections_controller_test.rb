@@ -15,6 +15,32 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Bob money thing", response.body
   end
 
+  test "seeded subsections browse as compact tiles with signal, not header chips" do
+    task = users(:one).tasks.create!(title: "Review budget")
+    task.sections << sections(:budget)
+
+    get section_path("money")
+    assert_response :success
+    assert_match "Browse", response.body
+    assert_match section_path("budget"), response.body, "the tile links to the subsection page"
+    assert_match "1 open task", response.body
+    assert_match "Nothing yet", response.body, "empty subsections say so honestly"
+
+    get section_path("rights")
+    assert_response :success
+    assert_match "Browse", response.body
+    assert_match section_path("disputes"), response.body
+  end
+
+  test "a subsection tile leads with the next upcoming event" do
+    event = users(:one).events.create!(title: "Lease renewal", starts_at: 5.days.from_now)
+    event.sections << sections(:renting)
+
+    get section_path("rights")
+    assert_response :success
+    assert_match "Lease renewal", response.body
+  end
+
   test "404s on an unknown section" do
     get section_path("nonsense")
     assert_response :not_found
@@ -163,14 +189,38 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Start a hobby", response.body
   end
 
-  test "with lenses the capture card shrinks and taken suggestions disappear" do
-    Hobbies::Lens.find_or_create!("Woodworking")
+  test "with lenses the page shows a hobby card grid and capture shrinks to the add tile" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
 
     get section_path("hobbies")
     assert_response :success
+    assert_match "Your hobbies", response.body
+    assert_match section_path(lens.slug), response.body, "the lens card links to the lens page"
+    assert_no_match "Hobbies · Woodworking", response.body, "cards drop the parent prefix"
+    assert_no_match "What do you do for fun?", response.body
     assert_match "Add another hobby", response.body
-    assert_match "Hobbies · Woodworking", response.body, "the lens shows as a header chip"
     assert_no_match "hobbies?name=Woodworking", response.body
+  end
+
+  test "hobby cards carry engagement signal: next event and in-flight counts" do
+    lens = Hobbies::Lens.find_or_create!("Guitar")
+    event = users(:one).events.create!(title: "Open mic night", starts_at: 3.days.from_now)
+    event.sections << lens
+    task = users(:one).tasks.create!(title: "Restring the acoustic")
+    task.sections << lens
+
+    get section_path("hobbies")
+    assert_response :success
+    assert_match "Open mic night", response.body
+    assert_match "1 open task", response.body
+  end
+
+  test "a quiet hobby card invites diving back in" do
+    Hobbies::Lens.find_or_create!("Sandboarding")
+
+    get section_path("hobbies")
+    assert_response :success
+    assert_match "Nothing planned yet", response.body
   end
 
   test "a hobby lens page gets the parent's tools and a remove affordance" do

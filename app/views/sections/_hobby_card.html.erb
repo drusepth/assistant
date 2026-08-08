@@ -1,0 +1,30 @@
+<%# One hobby lens in the Hobbies grid: a doorway to the lens page with
+    just enough signal to pull the user back in — what's planned, what's
+    in flight, or an honest invitation when it's quiet. %>
+<%= link_to section_path(summary.section.slug), class: "card block p-5 transition hover:border-primary-300 hover:shadow-sm" do %>
+  <p class="flex items-center gap-2 text-sm font-semibold text-ink">
+    <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(summary.section) %>" aria-hidden="true"></span>
+    <%= summary.section.name %>
+  </p>
+  <% if summary.quiet? %>
+    <p class="mt-2 text-sm text-soft">Nothing planned yet — dive back in.</p>
+  <% else %>
+    <div class="mt-2 space-y-1 text-sm text-soft">
+      <% if summary.next_event %>
+        <p class="flex items-center gap-1.5">
+          <%= icon(:calendar, css_class: "size-4 shrink-0") %>
+          <span class="truncate"><%= summary.next_event.title %> · <%= summary.next_event.starts_at.strftime("%b %-d") %></span>
+        </p>
+      <% end %>
+      <% in_flight = [] %>
+      <% in_flight << pluralize(summary.open_tasks_count, "open task") if summary.open_tasks_count.positive? %>
+      <% in_flight << pluralize(summary.active_goals_count, "project") if summary.active_goals_count.positive? %>
+      <% if in_flight.any? %>
+        <p class="flex items-center gap-1.5">
+          <%= icon(:check_circle, css_class: "size-4 shrink-0") %>
+          <span><%= in_flight.join(" · ") %></span>
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
