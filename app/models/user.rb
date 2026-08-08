@@ -27,6 +27,7 @@ class User < ApplicationRecord
   has_many :emergency_contacts, dependent: :destroy
   has_many :emergency_contact_roles, class_name: "EmergencyContact", foreign_key: :contact_user_id,
     inverse_of: :contact_user, dependent: :destroy
+  has_many :vault_events, dependent: :destroy
 
   # The takeable copy of your life (M4.2): regenerated on demand, only the
   # newest kept.

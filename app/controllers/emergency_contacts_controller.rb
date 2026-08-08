@@ -19,6 +19,7 @@ class EmergencyContactsController < ApplicationController
 
     record = EmergencyContact.escrow!(owner: Current.user, contact: contact,
       vault_key: vault_key, wait_days: params.fetch(:wait_days, 7).to_i.clamp(1, 90))
+    VaultEvent.record("emergency_added", user: Current.user, actor: Current.user, subject_user: contact)
     redirect_to credentials_path,
       notice: "#{record.contact_user.name} can now request emergency access — you'll have #{record.wait_days} days to deny."
   rescue ActiveRecord::RecordInvalid => error
@@ -27,6 +28,8 @@ class EmergencyContactsController < ApplicationController
 
   def destroy
     @contact.destroy!
+    VaultEvent.record("emergency_revoked", user: Current.user, actor: Current.user,
+      subject_user: @contact.contact_user)
     redirect_to credentials_path, notice: "Emergency access revoked."
   end
 
@@ -35,6 +38,7 @@ class EmergencyContactsController < ApplicationController
     return redirect_to credentials_path, alert: "Already requested." if @role.requested?
 
     @role.update!(requested_at: Time.current)
+    VaultEvent.record("emergency_requested", user: @role.user, actor: Current.user, subject_user: Current.user)
     notify(@role.user,
       "#{Current.user.name} requested emergency access to your password vault — deny within #{@role.wait_days} days if this is wrong")
     redirect_to credentials_path,
@@ -44,6 +48,8 @@ class EmergencyContactsController < ApplicationController
   # Owner side: one click, request gone.
   def deny
     @contact.update!(requested_at: nil, released_at: nil)
+    VaultEvent.record("emergency_denied", user: Current.user, actor: Current.user,
+      subject_user: @contact.contact_user)
     notify(@contact.contact_user, "#{Current.user.name} denied your emergency vault access request")
     redirect_to credentials_path, notice: "Denied — the request is cleared."
   end
@@ -55,6 +61,7 @@ class EmergencyContactsController < ApplicationController
 
     if @role.released_at.nil?
       @role.update!(released_at: Time.current)
+      VaultEvent.record("emergency_opened", user: @role.user, actor: Current.user, subject_user: Current.user)
       notify(@role.user, "#{Current.user.name} opened emergency access to your password vault")
     end
 

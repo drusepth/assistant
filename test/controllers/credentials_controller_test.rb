@@ -171,6 +171,25 @@ class CredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_not AccessGrant.exists?(grantee: users(:two), subject: credential)
   end
 
+  test "the audit log records shares but never routine reveals" do
+    sign_out
+    sign_in_with_password(users(:two))
+    sign_out
+    sign_in_with_password(@user)
+    credential = create_credential
+
+    post reveal_credential_url(credential), params: { field: "password" }
+    assert_empty @user.vault_events, "reveals stay out of the log — last_used_at answers that question"
+
+    post share_credential_url(credential), params: { grantee_id: users(:two).id }
+    get credential_url(credential)
+    assert_match "Sharing history", response.body
+    assert_match "Shared with #{users(:two).name}", response.body
+
+    get credentials_url
+    assert_match "Vault activity", response.body
+  end
+
   test "export needs the password and carries the secrets" do
     create_credential
 

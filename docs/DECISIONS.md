@@ -169,6 +169,18 @@ The lens model answers its own question — if an item fits two sections, tag it
 
 **Q13. Chat transcript retention.** — *Resolved; see D33.*
 
+**Q-vault-autolock. Unlock rides sign-in; the 12-hour window and the manual Lock button stay.**
+Decided 2026-08 on the product call: a family desktop is not a corporate laptop, and the failure mode of an over-eager lock is that people go back to a browser vault. The expiry surface is already gentle — metadata stays listed and the unlock banner takes a password inline, so nobody is ever bounced to a sign-in page. A per-user idle-timeout dial was considered and deferred rather than rejected; it's the obvious v2 if a household with a shared machine asks. Note the *session* cookie is permanent, so this window — not sign-in — is the gate members actually feel. — *Resolved: keep as built.*
+
+**Q-vault-collections. Credential sharing stays item-level; no household folder.**
+Decided 2026-08, on the Q15 pattern: wait for real demand rather than build the org-vault key model speculatively. Item-level sharing is the honest unit for a secret — every share is a deliberate act, and a folder quietly widens blast radius as it fills. The cost is real (each new common login is shared by hand) and bounded; if it bites, a bulk multi-select share fixes most of the tedium without any new crypto, and a keyed collection remains available after that. — *Resolved for now; revisit on demand.*
+
+**Q-vault-audit. The log records shares and emergency access — never routine reveals.**
+Decided 2026-08 and built: `vault_events` (owner-visible, names and verbs only, never a secret) records shared/unshared and the full emergency-access lifecycle (added, revoked, requested, denied, opened), surfaced as a "Sharing history" card on the entry and a "Vault activity" strip on the Passwords page, emergency lines highlighted. Reveals are deliberately excluded: they are the owner's own clicks, `last_used_at` already answers "when did I last use this", and a log that fills with self-generated noise buries the two events a household member actually needs to see. Entry-scoped events die with their credential; vault-wide events survive. When agents can touch credentials (W6), agent use is the next thing that belongs here. — *Resolved; built.*
+
+**Q-vault-breach. The breach check stays offline; no live HIBP, not even as an opt-in.**
+Decided 2026-08: a box whose whole pitch is that it doesn't phone home shouldn't ship a feature whose selling point is phoning home, even under k-anonymity — the honest version of "local-first" is that the default *and* the options stay local. The common-passwords list rides the D-public-datasets layer with a small seed, an admin `.txt` import for a bigger one, and its size displayed so coverage is never overstated. Accepted limit, stated plainly: this catches weak and widely-known passwords, not "your specific password appeared in a named breach." — *Resolved: offline only.*
+
 **Career's external-data questions** (public wage/CPI data; the job scout and
 whether a watcher may leave SQL-only) were raised and answered inside the
 Career buildout — *Resolved; see D-public-datasets and D-career-web.*
@@ -203,14 +215,6 @@ Household members adding *their own* photos to someone else's shared album (the 
 
 **Q16. Video in the photo library.**
 Needs ffmpeg in the image, preview generation, size limits, possibly range streaming. Separate plan once photos prove out; the photos schema shouldn't need to change. — *Not started.*
-
-**Q-vault-autolock.** Is unlock-rides-sign-in + a 12-hour window + a manual Lock right for a family desktop, or does reveal need a per-user re-prompt dial? Decide from real household use. See `PASSWORDS_PLAN.md` §9. — *Not started.*
-
-**Q-vault-collections.** Credential sharing is item-level by design; a shared "household folder" (collection with its own key, the org-vault pattern) would spare re-sharing each new common login. Demand check after the sharing wave. — *Not started.*
-
-**Q-vault-audit.** Is `last_used_at` enough, or do reveals/copies/shares deserve an owner-visible event log? Leaning yes once agents can touch credentials. — *Not started.*
-
-**Q-vault-breach.** The default posture is an **offline** pwned-passwords bloom filter on the D-public-datasets layer (zero egress, vintage visible). Is the live HIBP k-anonymity lookup (leaks a 5-char hash prefix per check) worth offering even as an admin opt-in, or is offline-only the right local-first answer? — *Not started.*
 
 **Q-vault-autofill.** Browser autofill / passkey-provider role — the vault's real daily-driver gap, a separate surface with its own threat model, and where client-side (zero-knowledge) crypto would land. Own design conversation when the vault proves out. — *Not started.*
 

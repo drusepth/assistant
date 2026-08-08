@@ -69,6 +69,19 @@ class EmergencyContactsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "every step of an emergency request lands in the owner's log" do
+    post session_url, params: { email_address: @contact.email_address, password: "password" }
+    post request_access_emergency_contact_url(@escrow)
+    travel 4.days do
+      post unlock_credentials_url, params: { password: "password" }
+      get access_emergency_contact_url(@escrow)
+    end
+
+    actions = @owner.vault_events.newest_first.map(&:action)
+    assert_equal %w[ emergency_opened emergency_requested emergency_added ], actions
+    assert_match "opened emergency access to your vault", @owner.vault_events.newest_first.first.describe
+  end
+
   test "revoke removes the escrow" do
     post session_url, params: { email_address: @owner.email_address, password: "password" }
     assert_difference "EmergencyContact.count", -1 do

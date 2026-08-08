@@ -31,11 +31,15 @@ class CredentialsController < ApplicationController
 
     @emergency_contacts = Current.user.emergency_contacts.includes(:contact_user)
     @emergency_roles = EmergencyContact.for_contact(Current.user).includes(user: :keyring)
+    @recent_events = Current.user.vault_events.includes(:actor, :subject_user, :credential).newest_first.limit(8)
   end
 
   def show
     @credential = Credential.visible_to(Current.user).find(params[:id])
     @secret_lost = vault_unlocked? && @credential.secret_lost_for?(Current.user)
+    # Owner-visible only: the sharing history of an entry is the owner's
+    # business, not a grantee's.
+    @events = @credential.vault_events.includes(:actor, :subject_user).newest_first.limit(10) if @credential.user_id == Current.user.id
   end
 
   def new

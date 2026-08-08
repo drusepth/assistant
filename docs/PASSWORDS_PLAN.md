@@ -480,7 +480,7 @@ Each wave lands green (`bin/rails test`, `bin/rubocop`) and independently shippa
 | **W1 — the vault** | `Vault::Crypto` (KDF, AAD-bound GCM, RSA wrap, TOTP math) + the three tables; lazy keyring init + recovery kit; unlock-at-sign-in, lock, re-unlock banner, session-bound path-scoped cookie, 12h window; **Settings change-password form** (new — the app has none) with rewrap; reset-flow recovery step; `Credential` CRUD (`login` kind), search-first index, generator + passphrase mode, reveal/copy endpoints + clipboard controller; **app-wide nonce-based CSP**; sidebar entry, `filter_parameters`, rate limits. |
 | **W2 — daily driver** | TOTP (enrollment, live codes, countdown, clock-drift warning); kinds `wifi`/`card`/`note`; `Vault::Import` (Bitwarden/LastPass/1Password/Chrome/Firefox CSV); "Download my passwords" + metadata-only line in the M4.2 archive. |
 | **W3 — sharing** | `Vault::Share`/unshare on credential-scoped routes, share card with eligibility + read-only framing, grant↔key-row lockstep, **item-key rotation on revoke**, household-wide button, lost-vault re-share suggestions. |
-| **W4 — stewardship** | Health panel (weak/reused/aging, in-request only); offline common-passwords list on the D-public-datasets layer. *Built as a plain line-per-password list, not a bloom filter — at the scale a household imports (tens of thousands of lines) a Set costs a megabyte and stays greppable/auditable; the bloom filter is what a 600M-row list would need, and nothing local-first ships that.* The live HIBP check and the reveal/copy audit trail were **deliberately not built** — both are open questions (Q-vault-breach, Q-vault-audit), and building them would answer questions the plan says are still open. |
+| **W4 — stewardship** | Health panel (weak/reused/aging, in-request only); offline common-passwords list on the D-public-datasets layer. *Built as a plain line-per-password list, not a bloom filter — at the scale a household imports (tens of thousands of lines) a Set costs a megabyte and stays greppable/auditable; the bloom filter is what a 600M-row list would need, and nothing local-first ships that.* The live HIBP check and the audit trail were left out of the first pass as questions the plan hadn't answered yet; both were settled on the 2026-08 product call — live HIBP is **out for good** (offline is the whole posture, not just the default), and the audit log **shipped**: shares and emergency access only, never routine reveals (§4.9). |
 | **W5 — emergency access** | §7: contact designation, wrapped-key escrow, request/deny/wait flow on D22 notification channels, prominent audit. |
 | **W6 — agent bridge** | §8, gated on the agent-actuator milestone; design fixed here so waves 1–5 need no rework. **Not built.** |
 
@@ -513,23 +513,47 @@ Four things the plan didn't anticipate, decided during the build:
 
 ---
 
-## 10. Open questions
+## 10. Questions, answered and open
 
-- **Q-vault-autolock.** Is a 12-hour unlock window with a manual Lock the right
-  default for a family desktop? Note the *session* cookie is permanent, so this
-  window is the gate users actually feel — a per-user dial ("ask for my password
-  again after N minutes") is the likely v2. Decide from real household use.
-- **Q-vault-collections.** Item-level sharing only, by design — but "the household
-  folder" (a shared collection with its own key, the org-vault pattern) would spare
-  re-sharing each new common credential. Real demand check after W3, like Q15.
-- **Q-vault-audit.** Is `last_used_at` enough, or do reveals/copies/shares deserve
-  an event log (owner-visible per item)? Leaning yes once agents can touch
-  credentials; noise risk before then.
-- **Q-vault-breach.** The offline bloom-filter check (W4) is the default posture.
-  Is the live HIBP k-anonymity lookup (leaks a 5-char hash prefix per check) worth
-  offering even as an admin opt-in, or is offline-only the right local-first
-  answer?
+Four of the five were settled on the 2026-08 product call, after the build:
+
+- **Q-vault-autolock — resolved: keep 12h + manual Lock.** A family desktop isn't a
+  corporate laptop, and an over-eager lock sends people back to a browser vault.
+  Expiry is already gentle (metadata stays listed; the banner takes a password
+  inline). A per-user idle dial is deferred, not rejected — the obvious v2 if a
+  household with a shared machine asks.
+- **Q-vault-collections — resolved for now: item-level only.** The Q15 pattern:
+  don't build the org-vault key model speculatively. Item-level is the honest unit
+  for a secret, and a folder quietly widens blast radius as it fills. If the tedium
+  bites, a bulk multi-select share fixes most of it with no new crypto; a keyed
+  collection stays available after that.
+- **Q-vault-audit — resolved and built: shares and emergency access, never
+  reveals.** See §4.9.
+- **Q-vault-breach — resolved: offline only, no live HIBP even as an opt-in.** A box
+  whose pitch is that it doesn't phone home shouldn't ship a feature whose selling
+  point is phoning home, k-anonymity or not. Stated limit: this catches weak and
+  widely-known passwords, not "your password appeared in a named breach."
+
+Still open:
+
 - **Q-vault-autofill.** The real daily-driver gap. A browser extension (or passkey
   provider role) is a separate product surface with its own threat model — and the
   natural place client-side crypto (true zero-knowledge, moving the §3 running-box
   line) would land. Design conversation of its own when the vault proves out.
+
+### 4.9 The audit log (Q-vault-audit as built)
+
+`vault_events` is owner-visible and carries names and verbs only — never a
+secret. It records `shared` / `unshared` and the emergency lifecycle
+(`emergency_added`, `_revoked`, `_requested`, `_denied`, `_opened`), surfaced as
+a **Sharing history** card on the entry and a **Vault activity** strip on the
+Passwords page with emergency lines highlighted. Recording follows the D23
+posture: a failure to log is logged to `app_errors`, never raised at the user.
+
+Reveals are deliberately excluded. They're the owner's own clicks, `last_used_at`
+already answers "when did I last use this", and a log that fills with
+self-generated noise buries the two events a household member actually needs to
+see. Entry-scoped events die with their credential; vault-wide events survive it.
+When agents can touch credentials (§8), agent use is the next thing that belongs
+in this table — which is the case that made a log worth building now rather than
+retrofitting later.

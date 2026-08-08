@@ -39,6 +39,7 @@ class Credential < ApplicationRecord
   encrypts :name, :username, :url
 
   has_many :credential_keys, dependent: :destroy
+  has_many :vault_events, dependent: :destroy
 
   validates :name, presence: true
   validates :kind, inclusion: { in: KINDS.keys }

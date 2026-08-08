@@ -28,6 +28,7 @@ module Vault
           @credential.credential_keys.create!(user: grantee,
             wrapped_item_key: Vault::Crypto.rsa_wrap(grantee.keyring.public_key, item_key))
         end
+        VaultEvent.record("shared", user: @owner, actor: @owner, credential: @credential, subject_user: grantee)
         names << grantee.name
       end
 
@@ -44,6 +45,7 @@ module Vault
         remaining = [ @owner ] + @credential.shared_with.reject { |user| user.id == grantee.id }
         @credential.rotate_secrets!(payload, holders: remaining)
       end
+      VaultEvent.record("unshared", user: @owner, actor: @owner, credential: @credential, subject_user: grantee)
       true
     end
   end
