@@ -5,8 +5,9 @@
 module Tool
   SLUGS = %w[
     decode_letter dispute_letter insurance_appeal debt_collector_response
-    deposit_demand results_explainer doctor_visit_prep negotiation_prep
-    benefits_screener learn_something tutor
+    deposit_demand results_explainer doctor_visit_prep
+    find_care insurance_explainer compare_plans check_in start_a_practice
+    negotiation_prep benefits_screener learn_something tutor task_chat
     cancel_subscription reconnect gift_ideas get_together what_do_i_say make_new_friends moving
     start_a_hobby what_should_i_make_next find_your_people
   ].freeze

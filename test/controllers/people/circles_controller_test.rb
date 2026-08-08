@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The circle flag (D30): explicit, manual, and personal — the People page's
+# The circle flag (D38): explicit, manual, and personal — the People page's
 # subject is chosen by the user, never inferred from an import.
 class People::CirclesControllerTest < ActionDispatch::IntegrationTest
   setup { sign_in_as users(:one) }

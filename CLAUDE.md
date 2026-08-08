@@ -110,5 +110,23 @@ Several branches land concurrently, so two rules for the global sequences:
 - **Registry hub files conflict by design; that's fine.** Lists everyone
   appends to (`ICON_PATHS`, `routes.rb`, `User` has_many, `Tool::SLUGS`,
   fixture files) merge with a trivial keep-both — resolve, don't redesign.
-  `db/schema.rb` is never hand-merged: take main's copy and re-run
-  `bin/rails db:migrate` to regenerate it.
+  (`docs/DECISIONS.md` stays on the default strategy on purpose: its
+  conflicts are what force the D-number re-check above.)
+  `db/schema.rb` is never hand-merged: run `bin/resolve-schema` during the
+  merge — it takes the incoming copy and re-runs `bin/rails db:migrate` so
+  the file regenerates with both branches' migrations.
+- **Section pages are extension points, not shared files (D37).** Building
+  out a section = adding `Sections::Panels::<Slug>` (panel data + hidden
+  tool cards) and `app/views/sections/panels/_<slug>.html.erb`, plus your
+  own `app/services/<slug>/`, tools, and watchers. Never edit
+  `SectionsController`, `sections/show.html.erb`, or `SectionsHelper` for
+  a section feature — those three were the merge hot spot when the
+  Hobbies, subsection-tile, and Health buildouts landed in parallel.
+  Merge `origin/main` into your branch early and often; small frequent
+  merges beat one big one. `docs/STATUS.md` no longer
+  conflicts at all: it merges with `merge=union` (see `.gitattributes`), so
+  colliding appends keep both lines automatically — the tradeoff is that you
+  must only append to it, never rewrite existing lines. Note GitHub's web UI
+  ignores merge attributes, so a PR may still *show* a STATUS.md conflict —
+  a local `git fetch origin main && git merge origin/main` resolves it
+  hands-free; push the merge and the PR clears.

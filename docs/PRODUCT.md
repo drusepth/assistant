@@ -22,6 +22,7 @@ Build order and trust ladder: Organize → Tools → Agent. Agent aggressiveness
 - Checkup/screening cadence tracking → Calendar
 - Mental health check-ins
 - Note: medical *billing disputes* live in Rights → Disputes; care itself lives here.
+- Full section deep-dive in `docs/HEALTH.md`: the care radar (per-kind checkup tracking), the insurance stack (find-care, explainer, plan comparison), Mind (check-in chat, calm practices, find-a-therapist — support, not therapy), the data-source survey, and the later rungs (medications, symptom journal, wearables).
 
 ### 2. Hobbies
 - Project tracking for creative work, side builds, collections
@@ -45,7 +46,7 @@ Friends, family, communities, church, clubs, meetups.
 - Staying in touch; remembering what matters to each person
 - Event planning; caregiving coordination; co-parenting logistics
 - Community layer: mutual aid, neighborhood organizing, co-op tooling — an assistant that only optimizes individuals recreates atomization; collective capacity is part of the thesis.
-- Full section deep-dive in `docs/PEOPLE.md`: the roster/dashboard split (D30 — Address Book = CRM, section page = social dashboard over the kept-in-touch circle), a tool slate (what-do-I-say chat, get-together planner, gift ideas, make-new-friends), birthday radar, and groups as sub-lenses.
+- Full section deep-dive in `docs/PEOPLE.md`: the roster/dashboard split (D38 — Address Book = CRM, section page = social dashboard over the kept-in-touch circle), a tool slate (what-do-I-say chat, get-together planner, gift ideas, make-new-friends), birthday radar, and groups as sub-lenses.
 
 ### 6. Money
 Subsections: **Budget, Debt, Taxes, Assets, Bills, Subscriptions, Benefits**

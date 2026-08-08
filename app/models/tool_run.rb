@@ -5,6 +5,9 @@
 # creates follow the normal sharing rules on their own pages.
 class ToolRun < ApplicationRecord
   belongs_to :user
+  # What the run is about (D30): a chat run bound to a primitive (today: a
+  # Task) lives on that item's page instead of standing alone.
+  belongs_to :subject, polymorphic: true, optional: true
   has_many :tool_run_items, dependent: :destroy
   has_many :tool_run_messages, dependent: :destroy
 

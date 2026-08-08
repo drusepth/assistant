@@ -1,4 +1,4 @@
-# The circle (D30): the People page is about relationships the user is
+# The circle (D38): the People page is about relationships the user is
 # tending, marked explicitly — from the section page's capture card or the
 # person page. Flagging is intent, never obligation; unflagging just takes
 # someone off the dashboard, the Address Book keeps them.

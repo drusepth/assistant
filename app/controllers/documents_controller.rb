@@ -69,6 +69,6 @@ class DocumentsController < ApplicationController
     end
 
     def document_params
-      params.expect(document: [ :title, :description, :file, section_ids: [] ])
+      params.expect(document: [ :title, :description, :file, :health_plan, section_ids: [] ])
     end
 end

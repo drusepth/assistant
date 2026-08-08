@@ -67,12 +67,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
     t.index ["user_id"], name: "index_app_errors_on_user_id"
   end
 
+  create_table "care_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "interval_months"
+    t.string "kind_key", null: false
+    t.string "label"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "kind_key"], name: "index_care_settings_on_user_id_and_kind_key", unique: true
+    t.index ["user_id"], name: "index_care_settings_on_user_id"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.string "analysis_error"
     t.string "analysis_status"
     t.datetime "created_at", null: false
     t.text "description"
     t.text "extracted_text"
+    t.boolean "health_plan"
     t.json "suggested_sections", default: []
     t.text "summary"
     t.string "title", null: false
@@ -83,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
 
   create_table "events", force: :cascade do |t|
     t.boolean "all_day", default: false, null: false
+    t.string "care_kind"
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "ends_at"
@@ -112,6 +126,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.string "region"
     t.datetime "updated_at", null: false
   end
 
@@ -153,6 +168,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
   create_table "notes", force: :cascade do |t|
     t.text "body", null: false
     t.datetime "created_at", null: false
+    t.string "kind"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -243,7 +259,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
     t.datetime "created_at", null: false
     t.date "due_on"
     t.integer "goal_id"
+    t.json "guiding_questions", default: [], null: false
     t.text "notes"
+    t.text "resolution"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -281,9 +299,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
     t.json "output", default: {}, null: false
     t.datetime "recap_requested_at"
     t.string "status", default: "queued", null: false
+    t.integer "subject_id"
+    t.string "subject_type"
     t.string "tool_slug", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["subject_type", "subject_id"], name: "index_tool_runs_on_subject"
     t.index ["user_id", "created_at"], name: "index_tool_runs_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_tool_runs_on_user_id"
   end
@@ -321,6 +342,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "app_errors", "users"
+  add_foreign_key "care_settings", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"

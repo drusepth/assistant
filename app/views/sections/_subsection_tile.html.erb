@@ -1,0 +1,10 @@
+<%# A seeded subsection in its parent's Browse grid: a compact doorway —
+    name plus the single most useful line of signal, so seven mostly-empty
+    lenses read as a scannable index, not a wall of cards. %>
+<%= link_to section_path(summary.section.slug), class: "card block p-4 transition hover:border-primary-300 hover:shadow-sm" do %>
+  <p class="flex items-center gap-2 text-sm font-semibold text-ink">
+    <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(summary.section) %>" aria-hidden="true"></span>
+    <%= summary.section.name %>
+  </p>
+  <p class="mt-1 truncate text-xs text-soft"><%= section_summary_signal(summary) %></p>
+<% end %>

@@ -1,8 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Inline quick-add forms: each + button in the page header reveals its
-// capture form in place instead of navigating to the new-item page. One
-// panel open at a time; Escape or Cancel closes.
+// Header quick-add dropdowns (Ui::QuickAddComponent): each + button in the
+// page header opens its capture form in a panel anchored beneath it instead
+// of navigating to the new-item page. One panel open at a time; Escape,
+// Cancel, or clicking outside closes.
 export default class extends Controller {
   static targets = ["panel", "button"]
 
@@ -25,5 +26,10 @@ export default class extends Controller {
   closeAll() {
     this.panelTargets.forEach(p => p.classList.add("hidden"))
     this.buttonTargets.forEach(b => b.setAttribute("aria-expanded", "false"))
+  }
+
+  clickOutside(event) {
+    const inside = [...this.panelTargets, ...this.buttonTargets].some(el => el.contains(event.target))
+    if (!inside) this.closeAll()
   }
 }

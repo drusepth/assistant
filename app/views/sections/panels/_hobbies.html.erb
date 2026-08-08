@@ -1,0 +1,14 @@
+<%# Hobby identity (D25): before any lenses exist the page leads with the
+    capture question; after, each hobby is a card with engagement signal
+    and capture shrinks to a tile at the end of the grid. %>
+<% if summaries.any? %>
+  <div>
+    <h2 class="mb-3 text-sm font-medium text-soft">Your hobbies</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <%= render partial: "sections/hobby_card", collection: summaries, as: :summary %>
+      <%= render "sections/hobby_add_tile", hobbies: section %>
+    </div>
+  </div>
+<% else %>
+  <%= render "sections/hobby_capture", hobbies: section %>
+<% end %>

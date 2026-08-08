@@ -11,7 +11,7 @@ class Person < ApplicationRecord
 
   validates :name, presence: true
 
-  # The circle (D30): relationships the user is tending, marked explicitly —
+  # The circle (D38): relationships the user is tending, marked explicitly —
   # an import must not turn 300 contacts into 300 obligations. The flag is
   # intent; last_contacted_on (Q8) stays the only recency signal.
   scope :circle, -> { where(keep_in_touch: true) }

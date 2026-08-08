@@ -1,30 +1,33 @@
+<%# Subsections never render as header chips — the list scales (hobby
+    lenses are unbounded, Money seeds seven) and a chip cloud has no pull.
+    They get the browse grids below instead. %>
 <%= render Ui::PageHeaderComponent.new(title: @section.qualified_name) do |header| %>
-  <% if @section.children.any? || @section.custom? %>
+  <% if @section.custom? %>
     <% header.with_actions do %>
-      <% @section.children.each do |child| %>
-        <%= render Ui::SectionChipComponent.new(section: child) %>
-      <% end %>
-      <% if @section.custom? %>
-        <% group = @section.parent&.slug == "people" %>
-        <%= button_to group ? "Remove this group" : "Remove this hobby",
-              group ? group_path(@section) : hobby_path(@section), method: :delete, class: "btn btn-ghost",
-              data: { turbo_confirm: "Remove #{@section.name}? Your items stay — they just lose this tag." } %>
-      <% end %>
+      <% group = @section.parent&.slug == "people" %>
+      <%= button_to group ? "Remove this group" : "Remove this hobby",
+            group ? group_path(@section) : hobby_path(@section), method: :delete, class: "btn btn-ghost",
+            data: { turbo_confirm: "Remove #{@section.name}? Your items stay — they just lose this tag." } %>
     <% end %>
   <% end %>
 <% end %>
 
 <div class="space-y-8">
-  <%# Hobby identity capture (D25) — the section needs to know what the
-      hobbies are before its tools and lenses can do anything. %>
-  <% if @section.slug == "hobbies" %>
-    <%= render "sections/hobby_capture", hobbies: @section %>
-  <% end %>
-
-  <%# People identity capture (D30) — the dashboard needs to know which
-      relationships are being tended before its modules can say anything. %>
-  <% if @section.slug == "people" %>
-    <%= render "sections/people_capture", circle: @circle, candidates: @circle_candidates %>
+  <%# Per-section lead panels (D37): a built-out section registers
+      Sections::Panels::<Slug> and its partial under sections/panels/ —
+      this file and the controller never change per section. Sections
+      without a panel get the generic browse grid: seeded subsections
+      (Money, Rights) are a fixed handful that's often empty, so they
+      browse as compact tiles — name + one line of signal. %>
+  <% if @panel %>
+    <%= render @panel.partial, panel: @panel, section: @section, summaries: @subsection_summaries %>
+  <% elsif @subsection_summaries.any? %>
+    <div>
+      <h2 class="mb-3 text-sm font-medium text-soft">Browse</h2>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <%= render partial: "sections/subsection_tile", collection: @subsection_summaries, as: :summary %>
+      </div>
+    </div>
   <% end %>
 
   <%# Act zone (D18): what the app can do here — present even, especially,
@@ -48,17 +51,9 @@
     <% end %>
   <% end %>
 
-  <%# People's Browse zone leads with the social dashboard (D30): dates
-      that matter and the circle. Person rows and the events card render
-      inside it, so the generic versions below are skipped on this page. %>
-  <% if @section.slug == "people" %>
-    <%= render "sections/people_hub", circle: @circle, birthdays: @upcoming_birthdays, events: @events,
-          address_book_size: @address_book_size, groups: @section.children %>
-  <% end %>
-
   <%# Browse zone: the lens itself. The empty state is quick capture
       pre-tagged with this section — never a dead end. %>
-  <% if @section.slug != "people" && [ @events, @tasks, @documents, @people, @goals, @notes ].all?(&:empty?) %>
+  <% if [ @events, @tasks, @documents, @people, @goals, @notes ].all?(&:empty?) %>
     <%= render Ui::EmptyStateComponent.new(
           title: "Nothing in #{@section.name} yet",
           description: "Anything you add here starts tagged #{@section.name} — and one item can live in several sections at once."
@@ -79,7 +74,7 @@
         <% end %>
       <% end %>
 
-      <% if @events.any? && @section.slug != "people" %>
+      <% if @events.any? && !@panel&.hidden_browse&.include?(:events) %>
         <%= render Ui::CardComponent.new(title: "Upcoming events", padded: false) do %>
           <div class="divide-y divide-edge"><%= render @events %></div>
         <% end %>
@@ -97,9 +92,7 @@
         <% end %>
       <% end %>
 
-      <%# On the People page itself the roster lives in the Address Book
-          (D30); other sections' small filtered person lists stay. %>
-      <% if @people.any? && @section.slug != "people" %>
+      <% if @people.any? && !@panel&.hidden_browse&.include?(:people) %>
         <%= render Ui::CardComponent.new(title: "People", padded: false) do %>
           <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @people %></div>
         <% end %>

@@ -40,6 +40,25 @@ class CategorizeTaskJobTest < ActiveJob::TestCase
     assert_equal [ sections(:money) ], @task.sections.to_a
   end
 
+  test "stores the model's guiding questions for the task-page conversation" do
+    stub_llm(sections: [], due_on: nil,
+      questions: [ " What would success look like? ", "", 123, "Who could you ask?" ])
+
+    CategorizeTaskJob.perform_now(@task)
+
+    assert_equal [ "What would success look like?", "Who could you ask?" ],
+      @task.reload.guiding_questions
+  end
+
+  test "an errand's empty questions leave the stock opener in place" do
+    stub_llm(sections: [], due_on: nil, questions: [])
+
+    CategorizeTaskJob.perform_now(@task)
+
+    assert_equal [], @task.reload.guiding_questions
+    assert_equal [ Task::FALLBACK_OPENER ], @task.conversation_openers
+  end
+
   test "skips tasks the user already tagged, without calling the provider" do
     @task.sections << sections(:health)
 
@@ -122,10 +141,10 @@ class CategorizeTaskJobTest < ActiveJob::TestCase
   end
 
   private
-    def stub_llm(sections:, due_on:)
+    def stub_llm(sections:, due_on:, questions: [])
       stub_request(:post, ENDPOINT).to_return(
         status: 200,
-        body: { choices: [ { message: { content: { sections: sections, due_on: due_on }.to_json } } ] }.to_json
+        body: { choices: [ { message: { content: { sections: sections, due_on: due_on, questions: questions }.to_json } } ] }.to_json
       )
     end
 end
