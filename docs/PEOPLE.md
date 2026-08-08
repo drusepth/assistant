@@ -91,6 +91,13 @@ mom" costs trust the app never earns back.
 
 ## 3. Page anatomy (D18 zones, People-shaped Browse)
 
+*As built, this ships as the People lead panel under the D37 convention —
+`Sections::Panels::People` + `sections/panels/_people.html.erb`; the shared
+page files carry no People-specific code. The panel base gained
+`hidden_browse` (the browse-zone counterpart of `hidden_tool_slugs`) so the
+panel hides the roster grid and the events card it re-renders inside Coming
+up.*
+
 Act and Attend are unchanged — tool cards, then suggestions (birthday radar
 and stay-in-touch will feed Attend). Browse rebuilds as modules:
 
