@@ -55,6 +55,7 @@ class Suggestion < ApplicationRecord
     return "Add task" if action["task"]
     return "Add event" if action["event"]
     return "Do it today" if action["schedule_task"]
+    return "Log it" if action["spending"]
     return "Open tool" if tool_action
     return "View" if path_action
 
@@ -63,6 +64,7 @@ class Suggestion < ApplicationRecord
 
   def accept_notice(created)
     return "Done." if created.nil?
+    return "Logged #{created.display_merchant} to your spending." if created.is_a?(SpendingTransaction)
 
     action["schedule_task"] ? "“#{created.title}” is now due today." : "Added “#{created.title}”."
   end
@@ -89,6 +91,20 @@ class Suggestion < ApplicationRecord
         )
         event.sections = sections.to_a
         created << event
+      end
+
+      if (attrs = action["spending"])
+        # The one path from a mirror to the ledger (docs/MONEY.md §2.1):
+        # a receipt becomes a transaction only when the user says so, and
+        # it lands on their Cash account like any hand-logged row.
+        account = Spending::QuickLog.cash_account(user)
+        occurred_on = (Date.iso8601(attrs["occurred_on"].to_s) rescue Date.current)
+        created << SpendingTransaction.create!(
+          user_id: user_id, spending_account_id: account.id,
+          occurred_on: occurred_on, amount_cents: attrs["amount_cents"].to_i,
+          descriptor: attrs["descriptor"], merchant: attrs["merchant"],
+          fingerprint: "receipt-#{SecureRandom.hex(10)}", source: "email_receipt")
+        Spending::Categorize.new(user: user).apply_deterministic
       end
 
       if (attrs = action["schedule_task"])

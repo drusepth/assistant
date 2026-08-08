@@ -425,6 +425,29 @@ The what-to-cut tool, and the month-close ritual.
 
 ## 7. Build passes
 
+**All five passes are built** (2026-08). What the build changed from the
+design above, in one place — the design text stays as written so the
+deltas stay visible:
+
+- **B4 was built before B3.** Two of the four watchers accept into coach
+  tools; building the watchers first would have shipped suggestions whose
+  accept button 404s. Order in the doc is by topic, not by dependency.
+- **`Spending::Recurring` was extracted.** The design described
+  new-recurring-charge and price-hike separately; they share one
+  cadence-and-amount detector (≥3 charges, 24–38-day gaps, amounts steady
+  within 5% allowing at most one price step), which is what lets a hiked
+  charge report as a hike instead of also posing as a new subscription.
+- **Refunds net inside their envelope** (Q-splits-and-refunds' first
+  half, answered in code): a positive row filed to an expense category
+  offsets that category's spending and floors at zero, rather than
+  counting as income. Splits stay unbuilt.
+- **Two DSL kinds joined `Tool::Base`**: `:budget_category` and
+  `:ledger_month`, both own-data-only pickers.
+- **`Suggestion` grew a `spending` action** — the one path from a mirror
+  to the ledger, and still a click.
+
+Original pass plan, for the record:
+
 Each pass ends green (`bin/rails test`, `bin/rubocop`), registries updated
 (`Tool::SLUGS`, watcher registry, routes, fixtures — the keep-both merge
 files), and a `STATUS.md` line appended. Passes are ordered by dependency;
