@@ -38,7 +38,7 @@ class ToolRunsController < ApplicationController
   # "Saving recap…" state and keeps a double-click from filing two notes.
   def recap
     run = Current.user.tool_runs.find(params[:id])
-    if run.chat? && run.tool_run_messages.conversational.exists? && !run.recap_pending?
+    if run.recappable? && !run.recap_pending?
       run.update_column(:recap_requested_at, Time.current)
       ChatRecapJob.perform_later(run)
     end

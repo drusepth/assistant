@@ -1,15 +1,27 @@
-<% if message.user_role? %>
-  <div class="flex justify-end">
-    <div class="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-primary-600 px-4 py-2 text-sm text-white">
+<%# One turn in the transcript. User text is printed verbatim — people
+    don't write markdown at a chat box, and eating their asterisks would be
+    wrong. Assistant text goes through chat_body (light markdown). A notice
+    is the app speaking, so it reads as a system line, not as either side. %>
+<% if message.notice_role? %>
+  <div class="flex justify-center">
+    <p class="max-w-prose rounded-lg bg-stone-50 px-3 py-2 text-center text-xs leading-relaxed text-soft">
       <%= message.content %>
-    </div>
-  </div>
-<% elsif message.assistant_role? %>
-  <div class="flex justify-start">
-    <div class="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-2 text-sm text-ink">
-      <%= message.content %>
-    </div>
+    </p>
   </div>
 <% else %>
-  <p class="px-2 text-center text-xs italic text-soft"><%= message.content %></p>
+  <% user = message.user_role? %>
+  <div class="group flex flex-col <%= user ? "items-end" : "items-start" %>">
+    <div class="bubble <%= user ? "bubble-user" : "bubble-assistant" %>">
+      <% if user %>
+        <p class="whitespace-pre-wrap"><%= message.content %></p>
+      <% else %>
+        <div class="space-y-2"><%= chat_body(message.content) %></div>
+      <% end %>
+    </div>
+    <time datetime="<%= message.created_at.iso8601 %>"
+          title="<%= l(message.created_at, format: :long) %>"
+          class="mt-1 px-1 text-[0.6875rem] text-soft opacity-0 transition-opacity group-hover:opacity-100">
+      <%= message.created_at.strftime("%-l:%M %p") %>
+    </time>
+  </div>
 <% end %>
