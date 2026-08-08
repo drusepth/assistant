@@ -28,6 +28,7 @@ module Tool
       def hobby? = kind == :hobby
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
+      def textarea? = kind == :textarea
     end
 
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil
