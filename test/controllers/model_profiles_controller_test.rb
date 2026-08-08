@@ -40,6 +40,20 @@ class ModelProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "gpt-4o", profile.model
   end
 
+  test "the web-capable flag saves and clears" do
+    sign_in_as users(:one)
+
+    patch model_profile_path, params: {
+      model_profile: { provider: "openai", model: "gpt-4o-mini", api_key: "k", web_capable: "1" }
+    }
+    assert households(:smith).reload.model_profile.web_capable?
+
+    patch model_profile_path, params: {
+      model_profile: { provider: "openai", model: "gpt-4o-mini", api_key: "", web_capable: "0" }
+    }
+    assert_not households(:smith).reload.model_profile.web_capable?
+  end
+
   test "non-admins cannot change model settings" do
     sign_in_as users(:two)
 

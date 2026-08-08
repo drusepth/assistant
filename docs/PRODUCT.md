@@ -40,6 +40,7 @@ Build order and trust ladder: Organize → Tools → Agent. Agent aggressiveness
 - Job search + matching; resume and interview prep
 - Workplace rights awareness (wage theft, misclassification, unsafe conditions — overlaps Rights)
 - **Small-business-in-a-box** for the self-employed: invoicing, bookkeeping categorization, marketing copy, customer replies, basic legal templates. Lets a plumber or a co-op capture the AI productivity windfall themselves.
+- Full section deep-dive in `docs/CAREER.md`: the career-signal ladder (granted data — pay-stub extraction, LinkedIn export, email — over a manual floor, D-career-signal), the tool slate (interview prep/mock, application tailor, pay-stub check, raise case, offer decode, lost-my-job Situation, next-move counselor), the watcher slate (raise cadence + real-terms drift + stub anomaly), and and the external-data layer — public wage/CPI datasets, the job scout, ask-then-send applications (D-public-datasets, D-career-web).
 
 ### 5. People
 Friends, family, communities, church, clubs, meetups.

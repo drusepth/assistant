@@ -24,12 +24,14 @@ class LinkedAccount < ApplicationRecord
         { key: "host", label: "IMAP server", placeholder: "imap.gmail.com" },
         { key: "username", label: "Email address", placeholder: "you@example.com" },
         { key: "password", label: "Password", secret: true,
-          hint: "Most providers want an app-specific password here, not your login password." }
+          hint: "Most providers want an app-specific password here, not your login password." },
+        { key: "smtp_host", label: "SMTP server", placeholder: "smtp.gmail.com", optional: true,
+          hint: "For sending job applications you approve. Blank = guessed from the IMAP server; same password." }
       ],
       scopes: {
         "read_inbox" => "Read incoming mail",
         "read_archive" => "Search older mail",
-        "send" => "Send mail on your behalf"
+        "send" => "Send mail you explicitly approve"
       }
     },
     "contacts" => {
@@ -120,6 +122,8 @@ class LinkedAccount < ApplicationRecord
   private
     def required_credentials_present
       provider_settings[:fields].each do |field|
+        next if field[:optional]
+
         if credentials[field[:key]].blank?
           errors.add(:base, "#{field[:label]} can't be blank")
         end

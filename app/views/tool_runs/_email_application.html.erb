@@ -1,0 +1,47 @@
+<%# Ask-then-send, email only (D-career-web): the compose form is the review — the
+    user sees and edits exactly what goes out before the one explicit click.
+    Locals: tool_run. %>
+<% account = Current.user.linked_accounts.find_by(provider: "email") %>
+<%= render Ui::CardComponent.new(
+      title: "Email this application",
+      subtitle: account&.allows?("send") ?
+        "Sends from #{account.credentials["username"]} — review and edit every word first." :
+        "Sends from your own address once your email is linked."
+    ) do %>
+  <% if account&.allows?("send") %>
+    <% cover = tool_run.items.grep(Note).find { |note| note.title.to_s.start_with?("Cover letter") } %>
+    <%= form_with url: tool_run_application_email_path(tool_run), class: "space-y-3" do %>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="space-y-1">
+          <%= label_tag :to, "To", class: "label" %>
+          <%= email_field_tag :to, nil, class: "input", placeholder: "jobs@acme.com" %>
+        </div>
+        <div class="space-y-1">
+          <%= label_tag :subject, "Subject", class: "label" %>
+          <%= text_field_tag :subject, "Application — #{tool_run.inputs["role"]}", class: "input" %>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <%= label_tag :body, "Message", class: "label" %>
+        <%= text_area_tag :body, cover&.body.to_s.split("\n\nCheck every line").first, rows: 10, class: "input" %>
+        <p class="hint">Prefilled from the cover-letter draft — replace every [BRACKETED PLACEHOLDER] before sending.</p>
+      </div>
+      <div class="space-y-1">
+        <%= label_tag :resume_document_id, "Attach your resume", class: "label" %>
+        <%= select_tag :resume_document_id,
+              options_from_collection_for_select(Document.visible_to(Current.user).order(:title), :id, :title,
+                tool_run.inputs["resume_document_id"]),
+              include_blank: "No attachment", class: "input" %>
+      </div>
+      <%= submit_tag "Send from my address", class: "btn btn-primary",
+            data: { turbo_confirm: "Send this application now, from your own email address? This is the send button." } %>
+    <% end %>
+  <% else %>
+    <p class="text-sm text-soft">
+      To send applications from here, link your email in
+      <%= link_to "Settings → Connected accounts", settings_path, class: "underline" %>
+      (with the “Send mail you explicitly approve” switch on). Until then, copy the drafts
+      above into your own mail app — same words, same result.
+    </p>
+  <% end %>
+<% end %>
