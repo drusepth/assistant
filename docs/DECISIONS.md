@@ -99,6 +99,12 @@ A tool's run `output` may carry a sanitized `next_tools` payload — `{slug, inp
 **D29. Chat is a tool kind, not a separate feature.**
 Third tool kind `:chat` (after draft/plan): one new table, `tool_run_messages` (role user/assistant/notice — a notice is the app speaking after a failed turn, shown in the transcript but never sent to the model), under the existing `tool_runs`. The run page doubles as the chat surface; `ToolRunJob` generates the opening assistant message from owned context and `done` means *live* (composer stays open; turns run through `ChatTurnJob`, deliberately un-retried — mid-conversation, a visible notice the user retries by typing beats silent background retries). Context stays lean (system prompt + last 30 conversational turns) for the model-agnostic constraint. Primitives land only via an explicit "Save a recap" (`ChatRecapJob` → one filed Note recorded on the run) — no auto-writes, per D20. The tutor (Education) is the proving tool, and recap Notes are what give future sessions continuity — the owned-memory moat working as designed. Full design in `TOOLS_PLAN.md` §2/S3. — *Built (TOOLS_PLAN wave 5).*
 
+**D30. High-volume external streams are mirrored, not imported.**
+Email (and future firehose sources: transactions, chat exports) lands in a per-source **mirror** — owner-private cache tables with real columns, outside the primitive pool, outside `Visible`/`Sectionable`, unreachable by grants, windowed retention. Mirror rows become primitives only by **promotion**: an explicit user click or an accepted suggestion, with provenance recorded (`email_message_items`). Low-volume identity-shaped data (contacts, calendar) keeps importing directly into primitives as today. This keeps the lens model clean (D5), makes mail privacy structural rather than policied (D9 — no `visible_to` path exists to leak), and gives promoted attachments the whole existing pipeline (analysis, decode-letter routing) for free. Full design in `EMAIL_PLAN.md`. — *Provisional until the E1 build pass.*
+
+**D31. Email monitoring rides the existing agent rails, with dials on the source.**
+Triage is LLM labels **on the mirror only** — it never writes primitives (D20 discipline; stated deadlines become pending suggestions, not Events). The daily digest is deterministic selection + LLM phrasing (the `Users::WeeklyDigest` recipe), body in-app, notification a D22 pointer (counts/titles, never bodies). Urgent alerts are the one immediate path — triage-flagged time-sensitive mail → `NotifyJob` now — capped per day, one per thread, off by default; a user webhook (ntfy/Twilio) is how "text me" stays self-hosted. Boomerang is a deterministic watcher (`Watcher::EmailNoReply`, pure SQL over the Sent mirror) whose accept opens a draft-only follow-up tool. Nothing is ever sent on the user's behalf (Q15). Email is a **source, not a section**, so its agent dials (digest on/off, alerts on/off) live on the linked-account Settings card, not on `user_sections`. Full design in `EMAIL_PLAN.md`. — *Provisional until the E2–E4 build passes.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**
@@ -138,3 +144,9 @@ Deposit demand and the benefits screener are state-sensitive (return deadlines, 
 
 **Q13. Chat transcript retention.**
 Tutor transcripts accumulate under `tool_run_messages`; recap Notes are the durable owned artifact. Whether old transcripts should be pruned, and whether they join the M4 export, needs deciding. — *Not started.*
+
+**Q14. Email mirror retention.**
+The mirror windows at 90 days with a nightly prune (promoted or suggestion-referenced rows kept); whether users can widen it ("mirror everything") and how mirror rows join the D14 export needs deciding. See `EMAIL_PLAN.md` §4. — *Not started.*
+
+**Q15. Sending mail.**
+The email link's `send` scope exists but nothing uses it — every output is a copy-paste draft (the D19 line). Sending is the first time the app would act on the world for the user; it needs its own consent design (per-message confirmation, an audit trail) before boomerang's tempting "just send it" is allowed. — *Not started; deliberately out of scope for the email waves.*
