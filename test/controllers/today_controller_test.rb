@@ -94,6 +94,15 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "View all 7 unscheduled tasks", response.body
   end
 
+  test "unscheduled tasks list oldest first, so old ones can't hide" do
+    fresh = users(:one).tasks.create!(title: "Fresh idea")
+    forgotten = users(:one).tasks.create!(title: "Forgotten chore")
+    forgotten.update_columns(created_at: 6.months.ago)
+
+    get today_path
+    assert_operator response.body.index("Forgotten chore"), :<, response.body.index("Fresh idea")
+  end
+
   test "does not show other users' private items" do
     users(:two).tasks.create!(title: "Bob's secret errand", due_on: Date.current)
 

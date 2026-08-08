@@ -46,9 +46,16 @@ class Suggestion < ApplicationRecord
   def accept_label
     return "Add task" if action["task"]
     return "Add event" if action["event"]
+    return "Do it today" if action["schedule_task"]
     return "Open tool" if tool_action
 
     "Accept"
+  end
+
+  def accept_notice(created)
+    return "Done." if created.nil?
+
+    action["schedule_task"] ? "“#{created.title}” is now due today." : "Added “#{created.title}”."
   end
 
   private
@@ -66,6 +73,14 @@ class Suggestion < ApplicationRecord
         )
         event.sections = sections.to_a
         event
+      elsif (attrs = action["schedule_task"])
+        # Pulls an existing task into Today instead of creating anything. The
+        # date is stamped at accept time, not scan time, so a nudge accepted
+        # days later still means "today". A task completed or deleted in the
+        # meantime is simply nothing left to do.
+        task = user.tasks.open.find_by(id: attrs["id"])
+        task&.update!(due_on: Date.current, bucket: :today)
+        task
       end
     end
 end

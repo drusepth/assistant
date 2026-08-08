@@ -85,7 +85,7 @@
   <% end %>
 
   <% if @unscheduled_tasks.any? %>
-    <%= render Ui::CardComponent.new(title: "Unscheduled", subtitle: "Open tasks with no date", padded: false) do %>
+    <%= render Ui::CardComponent.new(title: "Unscheduled", subtitle: "Open tasks with no date, oldest first", padded: false) do %>
       <div class="divide-y divide-edge"><%= render @unscheduled_tasks %></div>
       <% if @unscheduled_count > @unscheduled_tasks.length %>
         <div class="border-t border-edge px-4 py-2.5">
