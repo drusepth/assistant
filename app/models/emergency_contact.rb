@@ -4,8 +4,6 @@
 # starts the clock; the owner can deny with one click (clears the request);
 # an undenied request past its wait releases read access, prominently logged.
 class EmergencyContact < ApplicationRecord
-  WRAP_AAD = "emergency:v1:vault-key".freeze
-
   belongs_to :user
   belongs_to :contact_user, class_name: "User"
 

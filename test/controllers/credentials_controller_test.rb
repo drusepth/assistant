@@ -68,6 +68,19 @@ class CredentialsControllerTest < ActionDispatch::IntegrationTest
     assert_nil response.parsed_body["value"]
   end
 
+  test "reveal refuses unknown fields and never hands back the raw totp seed" do
+    credential = create_credential(secrets: { password: SECRET, totp: "JBSWY3DPEHPK3PXP" })
+
+    post reveal_credential_url(credential), params: { field: "password_digest" }
+    assert_response :bad_request
+    post reveal_credential_url(credential), params: { field: "totp_secret" }
+    assert_response :bad_request
+
+    # The seed leaves only through the password-confirmed CSV export.
+    post reveal_credential_url(credential), params: { field: "totp" }
+    assert_no_match "JBSWY3DPEHPK3PXP", response.body
+  end
+
   test "locking seals reveals; unlocking with the account password reopens" do
     credential = create_credential
 

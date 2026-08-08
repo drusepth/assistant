@@ -233,8 +233,6 @@ class CredentialsController < ApplicationController
         return nil if seed.blank?
 
         { code: Vault::Crypto.totp_code(seed), seconds_remaining: Vault::Crypto.totp_seconds_remaining }
-      when "totp_secret"
-        secrets["totp"].presence && { value: secrets["totp"] }
       when *credential.secret_field_names
         secrets[field].presence && { value: secrets[field] }
       else

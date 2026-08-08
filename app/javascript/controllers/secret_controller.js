@@ -8,7 +8,19 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static values = { url: String }
 
-  disconnect() { this.#restoreSlots() }
+  connect() {
+    // Turbo snapshots the body for the back-button preview BEFORE elements
+    // disconnect, so a revealed secret would otherwise be cached in the
+    // page. Re-mask on the snapshot event, not just on teardown.
+    this.beforeCache = () => this.#restoreSlots()
+    document.addEventListener("turbo:before-cache", this.beforeCache)
+  }
+
+  disconnect() {
+    document.removeEventListener("turbo:before-cache", this.beforeCache)
+    this.#restoreSlots()
+    clearTimeout(this.totpTimer)
+  }
 
   async copy(event) {
     const button = event.currentTarget
@@ -48,6 +60,7 @@ export default class extends Controller {
     if (!data?.code) return
 
     this.#toClipboard(data.code, null)
+    if (!button.dataset.label) button.dataset.label = button.textContent
     button.textContent = data.code
     clearTimeout(this.totpTimer)
     // Refresh once when the window rolls over, then let it go stale visibly.
@@ -95,7 +108,13 @@ export default class extends Controller {
     delete slot.dataset.revealed
   }
 
+  // Everything a secret was written into goes back to its placeholder:
+  // revealed slots, and TOTP buttons wearing a live code as their label.
   #restoreSlots() {
     this.element.querySelectorAll('[data-secret-slot][data-revealed="1"]').forEach(slot => this.#mask(slot))
+    this.element.querySelectorAll("[data-label]").forEach(button => {
+      button.textContent = button.dataset.label
+      delete button.dataset.label
+    })
   }
 }
