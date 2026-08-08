@@ -1,6 +1,6 @@
 # HEALTH.md
 
-The Health section deep-dive (the Hobbies-doc pattern, D25 → D30): what
+The Health section deep-dive (the Hobbies-doc pattern, D25 → D31): what
 "an assistant that takes care of your health" means for the 99%, what data
 can actually feed it, and the build that follows.
 
@@ -35,7 +35,7 @@ What could feed a Health section, surveyed so we stop re-litigating it:
 | **The vault + document understanding** | **Already built.** Insurance cards, SBCs, EOBs, lab results — uploaded, extracted, summarized, auto-tagged. | Live today — the insurance tools read it. |
 | **Manual capture** | D16 zero-friction forms, radar-prefilled. | Live today. |
 
-The conclusion is D30: **the durable assets are appointments and
+The conclusion is D31: **the durable assets are appointments and
 paperwork, and the sources that carry them are already connected.**
 Metric streams (steps, sleep, heart rate) are deferred — not because
 they're worthless but because every honest path to them is either dead
@@ -113,7 +113,7 @@ per-kind history means no per-kind nudge — the radar panel is the pull
 surface for unknowns, and guessed nudges cost trust (the Q8 lesson). The
 zero-signal case keeps the original generic nudge, fingerprints and all.
 
-## 6. Mind: mental health, scoped honestly (D31)
+## 6. Mind: mental health, scoped honestly (D32)
 
 Mental health is the half of Health the target user is least likely to
 have professional help with — therapy is expensive, waitlisted, and

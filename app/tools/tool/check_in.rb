@@ -2,7 +2,7 @@ module Tool
   # The mental-health check-in (docs/HEALTH.md §6): a private place to talk
   # through what's on your mind — guided (unpack a stressor, a breathing
   # exercise, prep for real therapy) or just listened to. Scoped hard as
-  # support, not therapy (D31): the model never diagnoses, never plays
+  # support, not therapy (D32): the model never diagnoses, never plays
   # clinician, encourages a human therapist when things sound heavy, and
   # the crisis-resources notice is appended by code at session start — the
   # guardrail never depends on model behavior. Past recap Notes are the

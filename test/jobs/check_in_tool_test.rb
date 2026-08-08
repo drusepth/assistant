@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The mental-health check-in (D31): support, not therapy. The crisis
+# The mental-health check-in (D32): support, not therapy. The crisis
 # notice is code-appended at session start and never reaches the model;
 # the boundaries live in the system prompt; past recaps are the
 # continuity, tutor-style.
