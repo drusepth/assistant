@@ -1,0 +1,76 @@
+<%= render Ui::PageHeaderComponent.new(
+      title: "Tune the care radar",
+      subtitle: "Track what fits your life — mute a kind, change its rhythm, add your own."
+    ) do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Back to Health", section_path("health"), class: "btn btn-ghost" %>
+  <% end %>
+<% end %>
+
+<div class="max-w-2xl space-y-6">
+  <%= render Ui::CardComponent.new do %>
+    <%= form_with url: care_settings_path, method: :patch, class: "space-y-5" do %>
+      <div class="space-y-3">
+        <% Health::CareRadar::KINDS.each do |kind| %>
+          <% setting = @settings[kind.key] %>
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="flex min-w-40 items-center gap-2 text-sm font-medium text-ink">
+              <%= hidden_field_tag "kinds[#{kind.key}][enabled]", "0", id: nil %>
+              <%= check_box_tag "kinds[#{kind.key}][enabled]", "1", setting.nil? || setting.enabled? %>
+              <%= kind.label %>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-soft">
+              every
+              <%= number_field_tag "kinds[#{kind.key}][interval_months]", setting&.interval_months,
+                    placeholder: kind.interval_months, min: 1, max: 120, class: "input w-20 py-1" %>
+              months
+            </label>
+          </div>
+        <% end %>
+
+        <% @custom_settings.each do |setting| %>
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="flex min-w-40 items-center gap-2 text-sm font-medium text-ink">
+              <%= hidden_field_tag "kinds[#{setting.kind_key}][enabled]", "0", id: nil %>
+              <%= check_box_tag "kinds[#{setting.kind_key}][enabled]", "1", setting.enabled? %>
+              <%= setting.label %>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-soft">
+              every
+              <%= number_field_tag "kinds[#{setting.kind_key}][interval_months]", setting.interval_months,
+                    placeholder: 12, min: 1, max: 120, class: "input w-20 py-1" %>
+              months
+            </label>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="border-t border-edge pt-4">
+        <p class="label mb-2">Add a kind of care</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= text_field_tag "new_kind[label]", nil, placeholder: "“Dermatology”, “Therapy”…", class: "input w-56" %>
+          <label class="flex items-center gap-2 text-sm text-soft">
+            every
+            <%= number_field_tag "new_kind[interval_months]", nil, placeholder: 12, min: 1, max: 120, class: "input w-20 py-1" %>
+            months
+          </label>
+        </div>
+        <p class="hint mt-1">Events whose titles mention it start counting — “Dermatology follow-up” finds a “Dermatology” kind.</p>
+      </div>
+
+      <%= submit_tag "Save", class: "btn btn-primary" %>
+    <% end %>
+
+    <% if @custom_settings.any? %>
+      <div class="mt-4 space-y-2 border-t border-edge pt-4">
+        <% @custom_settings.each do |setting| %>
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-sm text-soft"><%= setting.label %></span>
+            <%= button_to "Remove", care_setting_path(setting.kind_key), method: :delete, class: "btn btn-ghost btn-sm",
+                  data: { turbo_confirm: "Stop tracking #{setting.label}? Its events stay on the calendar." } %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

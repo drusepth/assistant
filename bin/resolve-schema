@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Resolve a db/schema.rb merge conflict the only correct way (CLAUDE.md,
+# "Parallel branches"): schema.rb is generated, so it is never hand-merged.
+# Take the incoming side verbatim, then re-run migrations so the file
+# regenerates with BOTH branches' migrations applied.
+set -euo pipefail
+
+if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+  git checkout MERGE_HEAD -- db/schema.rb
+else
+  # During a rebase/cherry-pick there is no MERGE_HEAD; --theirs is the
+  # incoming side there too.
+  git checkout --theirs -- db/schema.rb
+fi
+
+bin/rails db:migrate
+git add db/schema.rb
+
+echo "db/schema.rb regenerated from the incoming side + local migrations."
+echo "Finish resolving any other files, then commit the merge."

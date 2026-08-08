@@ -74,6 +74,113 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match new_task_path(section_ids: [ sections(:health).id ]), response.body
   end
 
+  test "the Health page leads with the care radar, all kinds untracked for a fresh user" do
+    get section_path("health")
+    assert_response :success
+    assert_match "Routine care", response.body
+    assert_match "Not tracked", response.body
+    assert_match "Insurance &amp; coverage", response.body
+    assert_match "Upload a plan document", response.body
+    assert_match new_tool_run_path("find_care", inputs: { specialty: "dentist" }), response.body
+  end
+
+  test "the care radar shows booked and due states from the user's own events" do
+    booked = users(:one).events.create!(title: "Dentist", starts_at: 3.weeks.from_now, all_day: true)
+    booked.sections << sections(:health)
+    old_eyes = users(:one).events.create!(title: "Eye exam", starts_at: 30.months.ago, all_day: true)
+    old_eyes.sections << sections(:health)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Booked", response.body
+    assert_match event_path(booked), response.body
+    assert_match "Due", response.body
+    assert_match "Log a past visit", response.body, "the untracked checkup kind offers past-visit capture"
+  end
+
+  test "the coverage card lists plan-shaped documents and offers the insurance tools prefilled" do
+    document = users(:one).documents.create!(title: "Acme PPO Summary of Benefits")
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Acme PPO Summary of Benefits", response.body
+    assert_match new_tool_run_path("insurance_explainer", inputs: { document_id: document.id }), response.body
+    assert_no_match "Compare plans →", response.body, "comparison needs two plan documents"
+  end
+
+  test "the Mind card offers check-in, practice, and find-a-therapist with the honesty line" do
+    get section_path("health")
+    assert_response :success
+    assert_match "Mind", response.body
+    assert_match new_tool_run_path("check_in"), response.body
+    assert_match new_tool_run_path("start_a_practice"), response.body
+    assert_match "not therapy", response.body
+    assert_no_match "pick it back up", response.body, "no continuity line before a first check-in"
+  end
+
+  test "a finished check-in gets a pick-it-back-up link" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "pick it back up", response.body
+    assert_match tool_run_path(run), response.body
+  end
+
+  test "other section pages get no care radar" do
+    get section_path("money")
+    assert_response :success
+    assert_no_match "Routine care", response.body
+  end
+
+  test "the Act zone hides tools the lead panels already carry" do
+    get section_path("health")
+    assert_response :success
+    assert_no_match "A plan for finding the right in-network provider", response.body,
+      "find-care's card is gone — the radar's prefilled links carry it"
+    assert_match "Prep for a doctor visit", response.body, "un-paneled tools keep their cards"
+  end
+
+  test "household care shows exactly what other members share (kids are users too)" do
+    kid = users(:two)
+    shared = kid.events.create!(title: "Dentist", starts_at: 2.weeks.from_now, all_day: true)
+    shared.sections << sections(:health)
+    AccessGrant.create!(grantor: kid, grantee: users(:one), subject: shared)
+    hidden = kid.events.create!(title: "Eye exam", starts_at: 3.weeks.from_now, all_day: true)
+    hidden.sections << sections(:health)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Household care", response.body
+    assert_match "Dental — booked", response.body
+    assert_no_match "Vision —", response.body, "the unshared eye exam stays invisible"
+  end
+
+  test "no shared health events means no household care card" do
+    get section_path("health")
+    assert_no_match "Household care", response.body
+  end
+
+  test "a booked radar tile offers visit prep prefilled" do
+    booked = users(:one).events.create!(title: "Annual physical", starts_at: 3.weeks.from_now, all_day: true)
+    booked.sections << sections(:health)
+
+    get section_path("health")
+    assert_match "Prep for this visit", response.body
+    assert_match new_tool_run_path("doctor_visit_prep", inputs: { reason: "Annual physical" }), response.body
+  end
+
+  test "the medications card lists meds and takes new ones" do
+    med = users(:one).notes.create!(kind: Note::MEDICATION, title: "Lisinopril 10mg", body: "one every morning")
+    med.sections << sections(:health)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Medications", response.body
+    assert_match "Lisinopril 10mg", response.body
+    assert_match medications_path, response.body
+  end
+
   test "the Hobbies page asks what you do for fun and suggests hobbies" do
     get section_path("hobbies")
     assert_response :success

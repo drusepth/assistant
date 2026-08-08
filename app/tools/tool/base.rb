@@ -159,6 +159,13 @@ module Tool
         Context.new(user: user, section_slugs: slugs, budget: budget)
       end
 
+      # The household's jurisdiction (D34) for state-sensitive tools — nil
+      # when unset, so prompts fall back to asking or to placeholders.
+      def region_line
+        region = user.household.region
+        "Where the household lives (tailor jurisdiction-specific details to this): #{region}" if region.present?
+      end
+
       # ── Landing primitives ─────────────────────────────────────────────
 
       def create_note(title:, body:)

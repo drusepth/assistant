@@ -213,6 +213,18 @@
 
     <% if Current.user.admin? %>
       <div class="mt-5 border-t border-edge pt-4">
+        <h3 class="text-sm font-semibold text-ink">Where the household lives</h3>
+        <p class="mb-3 mt-0.5 text-xs text-soft">
+          State-sensitive tools (deposit deadlines, benefits, insurance, crisis lines) tailor to this — leave it blank and they'll ask or use placeholders.
+        </p>
+        <%= form_with url: household_path, method: :patch, class: "flex flex-wrap gap-2" do %>
+          <%= text_field_tag "household[region]", Current.user.household.region,
+                placeholder: "“Texas, USA”, “Ontario, Canada”…", class: "input max-w-xs flex-1" %>
+          <%= submit_tag "Save", class: "btn btn-secondary" %>
+        <% end %>
+      </div>
+
+      <div class="mt-5 border-t border-edge pt-4">
         <h3 class="text-sm font-semibold text-ink">Invite someone</h3>
         <p class="mb-3 mt-0.5 text-xs text-soft">
           Creates a join link to copy and send however you like — no email setup needed. Links expire after 7 days.

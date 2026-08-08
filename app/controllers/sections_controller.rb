@@ -3,8 +3,14 @@ class SectionsController < ApplicationController
     @section = Section.find_by!(slug: params[:slug])
     section_ids = [ @section.id, *@section.children.ids ]
 
+    # A built-out section's lead panel (D37) carries its own data and hides
+    # the tool cards it surfaces with better context; this controller never
+    # changes per section.
+    @panel = Sections::Panel.for(@section, Current.user)
     @tools = Tool.for_section(@section)
+      .reject { |tool| @panel&.hidden_tool_slugs&.include?(tool.slug) }
     @subsection_summaries = Sections::Summary.for(Current.user, @section.children)
+
     @suggestions = Current.user.suggestions.actionable.in_section(section_ids)
       .order(created_at: :desc).includes(:sections)
 
