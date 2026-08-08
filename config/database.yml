@@ -9,23 +9,43 @@ default: &default
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
 
+# Two databases everywhere (D32): `primary` is the life file — the small,
+# copy-me backup artifact that IS the user's data — and `mirror` holds the
+# high-churn, re-syncable caches of outside sources (email first). Keeping
+# them apart isolates sync/FTS write bursts from the primary's single
+# writer and keeps the precious file small; losing the mirror costs a
+# re-sync, nothing more.
 development:
-  <<: *default
-  database: storage/development.sqlite3
+  primary:
+    <<: *default
+    database: storage/development.sqlite3
+  mirror:
+    <<: *default
+    database: storage/development_mirror.sqlite3
+    migrations_paths: db/mirror_migrate
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
-  <<: *default
-  database: storage/test.sqlite3
+  primary:
+    <<: *default
+    database: storage/test.sqlite3
+  mirror:
+    <<: *default
+    database: storage/test_mirror.sqlite3
+    migrations_paths: db/mirror_migrate
 
-# Store production database in the storage/ directory, which by default
+# Store production databases in the storage/ directory, which by default
 # is mounted as a persistent Docker volume in config/deploy.yml.
 production:
   primary:
     <<: *default
     database: storage/production.sqlite3
+  mirror:
+    <<: *default
+    database: storage/production_mirror.sqlite3
+    migrations_paths: db/mirror_migrate
   cache:
     <<: *default
     database: storage/production_cache.sqlite3

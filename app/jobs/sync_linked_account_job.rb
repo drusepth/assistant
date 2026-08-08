@@ -19,7 +19,10 @@ class SyncLinkedAccountJob < ApplicationJob
     service = linked_account.sync_service or return
     result = service.new(linked_account).call
     linked_account.update!(synced_at: Time.current, sync_error: result.error)
-  rescue Dav::Client::Error => e
+    # A large backfill works in bounded batches (Email::ImapSync): when a
+    # run reports there's more, chain the next batch immediately.
+    self.class.perform_later(linked_account) if result.respond_to?(:more?) && result.more?
+  rescue Dav::Client::Error, Email::ImapClient::Error => e
     linked_account.update!(sync_error: e.message)
   rescue StandardError
     # A bug, not a user-facing condition: record that the sync didn't land,

@@ -124,11 +124,12 @@ class LinkedAccountsControllerTest < ActionDispatch::IntegrationTest
 
   test "providers without a sync consumer cannot be synced" do
     sign_in_as users(:one)
+    account = users(:one).linked_accounts.create!(provider: "facebook", credentials: { access_token: "t" })
 
     assert_no_enqueued_jobs do
-      post sync_linked_account_path(linked_accounts(:alice_email))
+      post sync_linked_account_path(account)
     end
-    assert_equal "Email — Personal doesn't sync yet.", flash[:alert]
+    assert_equal "Facebook doesn't sync yet.", flash[:alert]
   end
 
   test "users cannot sync another user's link" do

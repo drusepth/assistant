@@ -450,6 +450,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
+  net-imap
   pdf-reader
   propshaft
   puma (>= 5.0)

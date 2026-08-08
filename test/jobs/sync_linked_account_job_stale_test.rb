@@ -9,6 +9,7 @@ class SyncLinkedAccountJobStaleTest < ActiveJob::TestCase
     calendar = linked_accounts(:alice_calendar)
     contacts.update!(synced_at: 2.hours.ago)
     calendar.update!(synced_at: 5.minutes.ago)
+    linked_accounts(:alice_email).update!(synced_at: 1.minute.ago)
 
     SyncLinkedAccountJob.sync_stale
 

@@ -23,6 +23,7 @@ class LinkedAccount < ApplicationRecord
       label: "Email",
       description: "Any mailbox over IMAP — Gmail, Zoho, iCloud, Fastmail, or your own server.",
       multi: true,
+      sync_service: "Email::ImapSync",
       sync_every: 15.minutes,
       fields: [
         { key: "host", label: "IMAP server", placeholder: "imap.gmail.com" },
@@ -103,6 +104,10 @@ class LinkedAccount < ApplicationRecord
   # JSON coder (hash in Ruby, ciphertext in the file).
   serialize :credentials, coder: JSON
   encrypts :credentials
+
+  # Unlinking purges this mailbox's mirror (EMAIL_PLAN.md §3); promoted
+  # primitives are the user's items and survive.
+  before_destroy { Email::Mirror.purge(self) if provider == "email" }
 
   validates :provider, inclusion: { in: PROVIDERS.keys }
   validates :provider, uniqueness: { scope: :user_id }, unless: :multi?

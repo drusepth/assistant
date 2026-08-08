@@ -80,7 +80,12 @@ class LinkedAccountTest < ActiveSupport::TestCase
     contacts.update!(settings: { "paused" => true })
     assert_not contacts.sync_due?, "paused links never sync"
 
-    assert_not linked_accounts(:alice_email).sync_due?, "email has no sync consumer yet"
+    email = linked_accounts(:alice_email)
+    email.update!(synced_at: 20.minutes.ago)
+    assert email.sync_due?, "email is due on its faster 15-minute cadence"
+
+    facebook = users(:one).linked_accounts.create!(provider: "facebook", credentials: { access_token: "t" })
+    assert_not facebook.sync_due?, "providers without a sync consumer are never due"
   end
 
   test "every declared credential field is required" do

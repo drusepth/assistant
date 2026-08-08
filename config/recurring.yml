@@ -27,3 +27,7 @@ production:
   sync_linked_accounts:
     command: "SyncLinkedAccountJob.sync_stale"
     schedule: every 5 minutes
+  # The mirror is a window, not an archive (EMAIL_PLAN.md §4).
+  prune_email_mirror:
+    command: "Email::PruneMirrorJob.prune_all"
+    schedule: every day at 3:30am

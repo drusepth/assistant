@@ -56,6 +56,9 @@ gem "web-push", "~> 3.0"
 # Parse CSV address-book exports (stdlib csv leaves the default gems in Ruby 3.4)
 gem "csv"
 
+# IMAP client for the email mirror (also leaving the default gems in Ruby 3.4)
+gem "net-imap", require: false
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
