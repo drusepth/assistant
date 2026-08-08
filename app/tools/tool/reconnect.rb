@@ -37,25 +37,16 @@ module Tool
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "The user's name: #{user.name}"
-        parts << "Reaching out to: #{person.name}"
-        parts << "Relationship: #{person.relationship}" if person.relationship.present?
-        parts << "Birthday: #{person.birthday.strftime("%B %-d")}" if person.birthday
-        parts << "Last logged contact: #{person.last_contacted_on.iso8601}" if person.respond_to?(:last_contacted_on) && person.last_contacted_on
-        parts << "What the user has noted about them:\n#{person.notes.truncate(2_000)}" if person.notes.present?
+        parts << "Reaching out to:\n#{person_context(person)}"
         parts << "What's going on: #{inputs[:context]}" if inputs[:context].present?
         parts.join("\n\n")
       end
 
-      def person
-        @person ||= Person.visible_to(user).find_by(id: inputs[:person_id]) ||
-          raise(Llm::Error, "That person is gone or no longer shared with you.")
-      end
+      def person = chosen_person
 
       def fallback_title = "Message to #{person.name}"
 
       # Filed under People plus wherever the person themselves is filed.
-      def filing
-        @filing ||= (self.class.section_records + person.sections).uniq
-      end
+      def filing_sources = [ person ]
   end
 end

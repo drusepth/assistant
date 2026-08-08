@@ -1,5 +1,5 @@
 module Watcher
-  # The job scout (D32) — the first watcher allowed off the SQL-only leash:
+  # The job scout (D-career-web) — the first watcher allowed off the SQL-only leash:
   # it fetches the user's configured feeds (Web::Fetch, ToS-clean sources
   # only) and makes one model call to rank fresh postings against the
   # tracked record across Career, Hobbies, and Education. What survives is

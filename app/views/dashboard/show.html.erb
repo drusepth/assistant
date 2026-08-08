@@ -1,24 +1,19 @@
-<div data-controller="quick-add" data-action="keydown.esc->quick-add#closeAll">
+<div data-controller="quick-add" data-action="keydown.esc@window->quick-add#closeAll click@window->quick-add#clickOutside">
   <%= render Ui::PageHeaderComponent.new(title: "Dashboard", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
     <% header.with_actions do %>
-      <% [ [ "task", "Task", "btn-secondary" ], [ "note", "Note", "btn-secondary" ],
-           [ "event", "Event", "btn-secondary" ], [ "goal", "Goal", "btn-primary" ] ].each do |name, label, style| %>
-        <%= tag.button type: "button", class: "btn #{style}", aria: { expanded: false },
-              data: { quick_add_target: "button", action: "quick-add#toggle", quick_add_name_param: name } do %>
-          <%= icon(:plus, css_class: "size-4") %> <%= label %>
-        <% end %>
+      <%= render Ui::QuickAddComponent.new(name: "task", label: "Task", title: "New task") do %>
+        <%= render "tasks/quick_form", task: @quick_task, return_to: root_path, autofocus: false %>
+      <% end %>
+      <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note") do %>
+        <%= render "notes/quick_form", note: @quick_note, return_to: root_path, autofocus: false %>
+      <% end %>
+      <%= render Ui::QuickAddComponent.new(name: "event", label: "Event", title: "New event") do %>
+        <%= render "events/quick_form", event: @quick_event, return_to: root_path, autofocus: false %>
+      <% end %>
+      <%= render Ui::QuickAddComponent.new(name: "goal", label: "Goal", title: "New goal", primary: true) do %>
+        <%= render "goals/quick_form", goal: @quick_goal, return_to: root_path, autofocus: false %>
       <% end %>
     <% end %>
-  <% end %>
-
-  <% [ [ "task", "New task", render("tasks/quick_form", task: @quick_task, return_to: root_path, autofocus: false) ],
-       [ "note", "New note", render("notes/quick_form", note: @quick_note, return_to: root_path, autofocus: false) ],
-       [ "event", "New event", render("events/quick_form", event: @quick_event, return_to: root_path, autofocus: false) ],
-       [ "goal", "New goal", render("goals/quick_form", goal: @quick_goal, return_to: root_path, autofocus: false) ] ].each do |name, title, form| %>
-    <div class="mb-6 hidden max-w-xl card p-5" data-quick-add-target="panel" data-name="<%= name %>">
-      <h2 class="mb-3 text-sm font-semibold text-ink"><%= title %></h2>
-      <%= form %>
-    </div>
   <% end %>
 </div>
 

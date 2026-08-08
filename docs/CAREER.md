@@ -4,9 +4,9 @@ Section deep-dive for **Career** — design for how the section earns its place
 across all three modes (D6). Everything here rides existing infrastructure
 (D17 breakdown, D19 tools, D20 watchers, D26 linked accounts, D28 routing,
 D29 chat) except where explicitly flagged. The one new decision it needs —
-how career signal gets into the app — is **D30** in `DECISIONS.md`; the
-external-data questions it raised — Q14–Q15 — are resolved as **D31**
-(local public datasets) and **D32** (the web on three leashes + ask-then-
+how career signal gets into the app — is **D-career-signal** in `DECISIONS.md`; the
+external-data questions it raised are resolved as **D-public-datasets**
+(local public datasets) and **D-career-web** (the web on three leashes + ask-then-
 send). Everything in this document is built, ✅-marked in §7.
 
 ## Why this section matters (mission tie)
@@ -40,7 +40,7 @@ posture is the negotiation-prep tool's posture, generalized: even the odds,
 maximize the value of the user's time, and be honest when the data to do
 that has to come from outside.
 
-## 1. Knowing the user's work life (the foundation — D30)
+## 1. Knowing the user's work life (the foundation — D-career-signal)
 
 Everything else needs to know: what the user does, what they're paid, what
 they've accomplished, and when compensation last moved. The answer is a
@@ -151,7 +151,7 @@ serve, funnel-widest first.
 The highest-frequency high-stakes moment, split the tutor way:
 
 - **Interview prep** (draft): inputs are the job listing — pasted text or a
-  vault Document; a URL is Q15's first slice, see §5 — plus optional
+  vault Document; the app fetches a URL for you, see §5 — plus optional
   "what worries you". Context: resume Document, work-history Note, win log.
   Output lands as Notes: a prep sheet (what this role actually wants,
   translated from the listing's jargon; which of *your* logged wins answer
@@ -202,14 +202,14 @@ The tool the comp timeline and win log exist for. Inputs: optional
 "anything not tracked here" free text. Context: win log, the comp timeline
 (granted ∪ logged — tenure since the last change is the number most people
 can't recall under pressure), current role Note, and the real-terms math
-when the Q14 datasets are present ("since your last change, CPI rose 7.1%;
+when the public datasets are present ("since your last change, CPI rose 7.1%;
 your raise-adjusted pay is down $X in real terms" — computed by code from
 owned data + public data, the strongest sentence in the memo). Output: a
 raise-case memo Note — accomplishments grouped by what-it-did-for-the-
 business, scope added since the last comp change, the tenure and real-terms
 math — plus a research checklist naming exactly the market numbers still to
 fetch and where (BLS occupational tables, state wage boards, current
-postings for your title — Q14 upgrades this in place), placeholders where
+postings for your title — the datasets fill these in where they can), placeholders where
 they'll slot in. Routes onward to negotiation-prep, which turns the case +
 the numbers into the script and the counter-message. If the user's own data
 shows the gap, the memo says so plainly — "you should be told you're
@@ -242,7 +242,7 @@ location, body); surfaces adjacent moves the user's own history supports,
 including trade/certificate/self-employment paths, not just degree paths;
 honest about evergreen tradeoffs (schedule, physicality, licensing) and
 placeholder-honest about anything current (specific wages, local demand —
-named as things to verify, with the Q14 wage tables slotting in when
+named as things to verify, with the public wage tables slotting in when
 present). "Save a recap" lands the exploration Note; the natural exit
 routes to Learn-something ("plan the reskilling") — Education's reskilling
 line and this tool are two doors into the same room.
@@ -311,7 +311,7 @@ every nudge below is arithmetic over sourced facts, never inference.
   stub or log your last raise and I'll keep watch"). Yearly fingerprint
   buckets (the checkup convention).
 - **Real-terms drift** — the quiet pay cut, caught: comp timeline flat
-  while the Q14 CPI series rose past a threshold → "your pay has lost
+  while the on-file CPI series rose past a threshold → "your pay has lost
   ~6% of its buying power since your last change" with the arithmetic
   shown; accept opens the raise case with the math pre-loaded. Pure code
   over owned data + a public dataset; no LLM, no web at nudge time. This
@@ -338,15 +338,15 @@ every nudge below is arithmetic over sourced facts, never inference.
   Note in 8+ weeks → one quiet "log a win while it's fresh". The habit is
   the asset; this guards it. Quarterly fingerprints, Quiet-dial only —
   this one must never nag.
-- **Job scout / market-rate radar** *(Tier B, deferred — see §5 and Q15)*.
+- **Job scout / market-rate radar** *(built — see §5)*.
 
-## 5. The external-data layer (built — D31/D32)
+## 5. The external-data layer (built — D-public-datasets/D-career-web)
 
 The three headline asks — watch job boards for me, tell me what my role
 pays elsewhere, apply on my behalf — resolved into two decisions and are
 built:
 
-- **Market-rate data is local public data (D31).** A two-layer dataset
+- **Market-rate data is local public data (D-public-datasets).** A two-layer dataset
   store (`storage/datasets/` from `RefreshDatasetsJob` or `/admin`'s
   air-gapped file import, over `db/datasets/` seeds) serves BLS numbers
   with the vintage always displayed. The CPI-U annual series ships seeded;
@@ -356,7 +356,7 @@ built:
   watcher** turns a flat comp timeline × risen CPI into "your pay lost ~6%
   of its buying power" — arithmetic, no LLM, no web at nudge time. Absent
   data degrades to the placeholder behavior, never to a guess.
-- **The web arrives on three leashes (D32).** `Web::Fetch` is the
+- **The web arrives on three leashes (D-career-web).** `Web::Fetch` is the
   app-side floor — deterministic, SSRF-guarded, size-capped fetch of one
   user-supplied URL — behind the paste-a-listing-link inputs on interview
   prep and the application tailor, identical on frontier APIs and local
@@ -370,7 +370,7 @@ built:
   only — one per posting ever, accept opens Tailor-my-application
   prefilled. First sanctioned exception to SQL-only watchers; zero
   exception to the D20 write surface.
-- **Auto-apply is ask-then-send, email only (D32).** The compose panel on
+- **Auto-apply is ask-then-send, email only (D-career-web).** The compose panel on
   a Tailor-my-application run is the review: the user's own linked
   mailbox, their edits to every word, one explicit click — and the sent
   application lands on the record as an Applied Event plus a follow-up
@@ -403,7 +403,7 @@ built:
 
 ## 7. Build order
 
-1. ✅ **Foundation (D30)** — Career page capture ("Tell me about your work"
+1. ✅ **Foundation (D-career-signal)** — Career page capture ("Tell me about your work"
    + the win-log quick capture + "log a comp change"), plus **pay-stub-aware
    document analysis** feeding the comp timeline (extraction + auto-Event
    with provenance); renewal radar and negotiation-prep get better for
@@ -423,7 +423,7 @@ built:
    interview-ahead watchers riding their conventions.
 7. ✅ **Find-my-next-move chat** + accommodation request + decode-letter
    routing (employer mail now routes to decode_offer and wage_claim).
-8. ✅ **The external-data layer (D31/D32)** — the dataset tier (CPI seed,
+8. ✅ **The external-data layer (D-public-datasets/D-career-web)** — the dataset tier (CPI seed,
    OES fetch/import, admin card, real-terms-drift watcher, raise-case
    integration), the web floor (`Web::Fetch` + listing-URL inputs +
    `web_capable` flag), the job scout (`job_feeds` + parsers + the ranking

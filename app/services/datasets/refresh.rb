@@ -2,7 +2,7 @@ require "net/http"
 
 module Datasets
   # Fetches the public datasets from BLS when the instance's network allows
-  # (D31) — CPI-U annual averages via the public timeseries API (no key),
+  # (D-public-datasets) — CPI-U annual averages via the public timeseries API (no key),
   # the OES/OEWS national wage table via its published zip. Fetched data
   # lands in storage/datasets/ and wins over the seeds; air-gapped installs
   # use the admin import instead and never need this to run. Each dataset

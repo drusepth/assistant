@@ -1,12 +1,12 @@
-<%# The job scout's sources (docs/CAREER.md §5, D32): feeds and open board
-    APIs the user chooses — leads arrive as suggestions, and applying is
-    always the user's click. %>
+<%# The job scout's sources (docs/CAREER.md §5, D-career-web): feeds and open
+    board APIs the user chooses — leads arrive as suggestions, and applying
+    is always the user's click. Locals: panel. %>
 <%= render Ui::CardComponent.new(
       title: "Job scout",
       subtitle: "Paste job feeds and the scout flags postings that fit your record — including your hobbies."
     ) do %>
   <div class="space-y-3">
-    <% feeds = Current.user.job_feeds.order(:created_at) %>
+    <% feeds = panel.job_feeds %>
     <% if feeds.any? %>
       <ul class="divide-y divide-edge text-sm">
         <% feeds.each do |feed| %>

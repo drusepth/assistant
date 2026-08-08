@@ -1,7 +1,7 @@
 module Watcher
   # The section's flagship nudge (docs/CAREER.md §4), checkup-cadence's
   # twin: when the comp timeline says pay hasn't moved in a year, say so and
-  # offer the raise-case tool. Reads only the D30 timeline — granted or
+  # offer the raise-case tool. Reads only the D-career-signal timeline — granted or
   # logged, never guessed; with no timeline at all, one lifetime invitation
   # to start it (no signal, no nudge — Q8 discipline).
   class RaiseCadence < Base

@@ -2,7 +2,7 @@
 # U.S. city average, all items). Shipped so real-terms math works offline
 # from first boot; RefreshDatasetsJob (or an admin file import) extends it
 # with newer years, and every consumer displays the as-of year — staleness
-# is always visible, never silent (D31).
+# is always visible, never silent (D-public-datasets).
 series_id: CUUR0000SA0
 label: CPI-U annual average, U.S. city average, all items
 source: https://www.bls.gov/cpi/

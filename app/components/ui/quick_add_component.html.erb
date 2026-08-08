@@ -1,0 +1,11 @@
+<div class="relative">
+  <%= tag.button type: "button", class: button_classes, aria: { expanded: false, haspopup: true },
+        data: { quick_add_target: "button", action: "quick-add#toggle", quick_add_name_param: name } do %>
+    <%= helpers.icon(:plus, css_class: "size-4") %> <%= label %>
+  <% end %>
+  <div class="hidden fixed inset-x-3 top-20 z-30 card p-5 shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-[calc(100vw-3rem)]"
+       data-quick-add-target="panel" data-name="<%= name %>">
+    <h2 class="mb-3 text-sm font-semibold text-ink"><%= title %></h2>
+    <%= content %>
+  </div>
+</div>

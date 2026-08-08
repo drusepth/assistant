@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   post "join/:token" => "invitations#accept"
 
   resources :household_members, only: %i[ update destroy ]
+  resource :household, only: %i[ update ]
 
   get "welcome(/:step)" => "onboarding#show", as: :onboarding, constraints: { step: /[1-4]/ }
   patch "welcome/:step" => "onboarding#update", constraints: { step: /[1-4]/ }
@@ -20,6 +21,13 @@ Rails.application.routes.draw do
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
   get "sections/:slug" => "sections#show", as: :section
   resources :hobbies, only: %i[ create destroy ]
+  resources :groups, only: %i[ create destroy ]
+
+  get "health/care-settings" => "care_settings#show", as: :care_settings
+  patch "health/care-settings" => "care_settings#update"
+  delete "health/care-settings/:kind_key" => "care_settings#destroy", as: :care_setting
+  post "health/medications" => "medications#create", as: :medications
+
   post "career/win" => "career#create_win", as: :career_win
   post "career/comp_change" => "career#create_comp_change", as: :career_comp_change
   resources :job_feeds, only: %i[ create destroy ]
@@ -40,6 +48,9 @@ Rails.application.routes.draw do
   end
   resources :events
   resources :tasks do
+    # The task page's embedded chat (D30) — find-or-create the bound run,
+    # append the turn.
+    resource :conversation, only: :create, module: :tasks
     member do
       patch :complete
       patch :reopen
@@ -55,6 +66,7 @@ Rails.application.routes.draw do
   end
   namespace :people do
     resource :import, only: %i[ new create ]
+    resource :circle, only: %i[ create destroy ]
   end
   resources :people do
     member do
@@ -70,6 +82,21 @@ Rails.application.routes.draw do
   end
   resources :notes
 
+  resources :photos, except: :new do
+    member do
+      post :ingest
+      post :caption
+      patch :apply_suggestion
+    end
+  end
+  resources :albums do
+    member do
+      post :add_photos
+      delete :remove_photos
+    end
+  end
+  resources :photo_people, only: %i[ create destroy ]
+
   resources :suggestions, only: [] do
     member do
       patch :accept
@@ -80,7 +107,7 @@ Rails.application.routes.draw do
 
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
-  resources :tool_runs, only: :show do
+  resources :tool_runs, only: %i[ show destroy ] do
     resources :messages, only: :create, controller: "tool_run_messages"
     resource :application_email, only: :create
     member do

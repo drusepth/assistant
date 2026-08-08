@@ -1,6 +1,6 @@
 class CreateJobFeeds < ActiveRecord::Migration[8.1]
   def change
-    # The job scout's sources (D32): per-user feed/board URLs — RSS/Atom,
+    # The job scout's sources (D-career-web): per-user feed/board URLs — RSS/Atom,
     # Greenhouse and Lever public boards, USAJobs — scanned on the agent
     # cadence. ToS-clean by construction: feeds and open APIs only.
     create_table :job_feeds do |t|

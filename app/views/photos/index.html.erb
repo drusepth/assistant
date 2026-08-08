@@ -1,0 +1,91 @@
+<div data-controller="photo-upload lightbox photo-select"
+     data-action="dragover->photo-upload#dragOver dragleave->photo-upload#dragLeave drop->photo-upload#drop">
+  <%= render Ui::PageHeaderComponent.new(title: "Photos", subtitle: "The household album") do |header| %>
+    <% header.with_actions do %>
+      <%= link_to "Albums", albums_path, class: "btn btn-secondary" %>
+      <% if @photos.any? %>
+        <button type="button" class="btn btn-secondary"
+                data-action="photo-select#toggleMode" data-photo-select-target="toggle">Select</button>
+      <% end %>
+      <button type="button" class="btn btn-primary" data-action="photo-upload#choose">
+        <%= icon(:plus, css_class: "size-4") %> Photos
+      </button>
+    <% end %>
+  <% end %>
+
+  <%# The whole page is a drop target; this form is also the no-JS path. %>
+  <%= form_with url: photos_path, multipart: true, data: { photo_upload_target: "form" } do %>
+    <label class="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-edge px-4 py-3 text-sm text-soft transition-colors hover:border-primary-500 hover:text-ink"
+           data-photo-upload-target="zone">
+      <%= icon(:photo, css_class: "size-5") %>
+      <span><span class="font-semibold text-primary-700">Add photos</span> — click, or drag them anywhere on this page</span>
+      <%= file_field_tag "photos[images][]", multiple: true, accept: "image/*", direct_upload: true,
+            class: "sr-only", data: { photo_upload_target: "input", action: "photo-upload#changed" } %>
+      <noscript><button type="submit" class="btn btn-primary btn-sm">Upload</button></noscript>
+    </label>
+    <div class="mb-4 hidden space-y-1" data-photo-upload-target="progress"></div>
+  <% end %>
+
+  <% if @person %>
+    <div class="mb-4">
+      <span class="chip inline-flex items-center gap-1.5 bg-ink text-white">
+        Photos of <%= @person.name %>
+        <%= link_to "✕", photos_path(section: params[:section].presence, year: params[:year].presence),
+              class: "text-white/70 hover:text-white", "aria-label": "Clear person filter" %>
+      </span>
+    </div>
+  <% end %>
+
+  <div class="mb-4 flex flex-wrap gap-1.5">
+    <%= link_to "All", photos_path(year: params[:year].presence, person: params[:person].presence),
+          class: "chip #{@section.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+    <% Section.top_level.each do |section| %>
+      <%= link_to section.name, photos_path(section: section.slug, year: params[:year].presence, person: params[:person].presence),
+            class: "chip #{@section == section ? "bg-ink text-white" : "#{section_chip_classes(section)} hover:opacity-80"}" %>
+    <% end %>
+  </div>
+
+  <% if @years.many? %>
+    <div class="mb-4 flex flex-wrap gap-1.5">
+      <%= link_to "All years", photos_path(section: params[:section].presence),
+            class: "chip #{@year.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+      <% @years.each do |year| %>
+        <%= link_to year, photos_path(year: year, section: params[:section].presence),
+              class: "chip #{@year.to_s == year ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @photos.any? %>
+    <div class="space-y-8">
+      <% @photos.group_by { |photo| photo.taken_at.beginning_of_month }.each do |month, photos| %>
+        <section>
+          <h2 class="mb-3 text-sm font-medium text-soft"><%= month.strftime("%B %Y") %></h2>
+          <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-6">
+            <%= render partial: "photos/photo_tile", collection: photos, as: :photo %>
+          </div>
+        </section>
+      <% end %>
+    </div>
+
+    <% if @more %>
+      <% last = @photos.last %>
+      <div class="mt-8 text-center">
+        <%= link_to "Older photos",
+              photos_path(section: params[:section].presence, year: params[:year].presence,
+                person: params[:person].presence,
+                before_at: last.taken_at.utc.iso8601(6), before_id: last.id),
+              class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  <% else %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: @section || @year ? "No photos here" : "No photos yet",
+          description: @section || @year ?
+            "Nothing matches this filter — photos land here as they're tagged." :
+            "Drop some photos on this page (or use the button above) and the timeline builds itself, ordered by when each photo was taken."
+        ) %>
+  <% end %>
+
+  <%= render "photos/select_bar", albums: Current.user.albums.order(:title), remove_album: nil %>
+</div>

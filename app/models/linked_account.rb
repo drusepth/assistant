@@ -26,7 +26,7 @@ class LinkedAccount < ApplicationRecord
         { key: "password", label: "Password", secret: true,
           hint: "Most providers want an app-specific password here, not your login password." },
         { key: "smtp_host", label: "SMTP server", placeholder: "smtp.gmail.com", optional: true,
-          hint: "For sending (D32's ask-then-send). Blank = guessed from the IMAP server; same password." }
+          hint: "For sending job applications you approve. Blank = guessed from the IMAP server; same password." }
       ],
       scopes: {
         "read_inbox" => "Read incoming mail",

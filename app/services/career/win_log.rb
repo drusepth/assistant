@@ -1,5 +1,5 @@
 module Career
-  # The win log (D30): one-line accomplishment Notes wearing a "Win:" title
+  # The win log (D-career-signal): one-line accomplishment Notes wearing a "Win:" title
   # prefix, quick-captured from the Career page. The payoff comes later —
   # the raise case, resume tailoring, and interview prep all build from
   # these receipts instead of the user's memory the night before a review.

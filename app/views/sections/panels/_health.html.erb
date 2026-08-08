@@ -1,0 +1,168 @@
+<%# The Health lead panel (docs/HEALTH.md): the personal-assistant answer to
+    "am I on top of my health?" at a glance. The care radar is a derived
+    view over the user's own Health-tagged events — booked / on track / due /
+    not tracked per kind of routine care — and the coverage card is where
+    insurance lives (as vault documents) and where its tools start.
+    All data comes from the panel (Sections::Panels::Health, D37). %>
+<% statuses = panel.care_statuses
+   family_care = panel.family_care
+   coverage_documents = panel.coverage_documents
+   medications = panel.medications
+   last_check_in = panel.last_check_in %>
+<% if statuses.any? %>
+  <%= render Ui::CardComponent.new(
+        title: "Routine care",
+        subtitle: "Booked means you can stop thinking about it. Due means it's worth a call this week."
+      ) do |card| %>
+    <% card.with_actions do %>
+      <%= link_to "Tune", care_settings_path, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <% statuses.each do |status| %>
+        <div class="space-y-2 rounded-xl bg-stone-100/70 p-4">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-medium text-ink"><%= status.kind.label %></span>
+            <span class="chip <%= care_state_chip_classes(status.state) %>"><%= care_state_label(status.state) %></span>
+          </div>
+          <p class="text-sm text-soft"><%= care_status_line(status) %></p>
+          <div class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+            <% if status.state == :booked %>
+              <%= link_to "View appointment", event_path(status.next_visit), class: "text-primary-700 hover:underline" %>
+              <%= link_to "Prep for this visit",
+                    new_tool_run_path("doctor_visit_prep", inputs: { reason: status.next_visit.title }),
+                    class: "text-primary-700 hover:underline" %>
+            <% else %>
+              <% if status.state != :ok %>
+                <%= link_to "Find a provider",
+                      new_tool_run_path("find_care", inputs: { specialty: status.kind.provider }),
+                      class: "text-primary-700 hover:underline" %>
+              <% end %>
+              <%= link_to status.state == :unknown ? "Log a past visit" : "Add appointment",
+                    new_event_path(title: status.kind.appointment_title, section_ids: [ section.id ]),
+                    class: "text-primary-700 hover:underline" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# Household care (docs/HEALTH.md §3): other members' radars over exactly
+    the events they share with you — visible_to is the only read path, so a
+    kid who shares their Health calendar shows up, and one who doesn't
+    stays invisible. Kinds and intervals are each member's own settings. %>
+<% if family_care.any? %>
+  <%= render Ui::CardComponent.new(
+        title: "Household care",
+        subtitle: "What they share with you — booked and due at a glance."
+      ) do %>
+    <div class="space-y-3">
+      <% family_care.each do |member, statuses| %>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="min-w-24 text-sm font-medium text-ink"><%= member.name %></span>
+          <% statuses.each do |status| %>
+            <span class="chip <%= care_state_chip_classes(status.state) %>">
+              <%= status.kind.label %> — <%= care_state_label(status.state).downcase %><%= " #{status.next_visit_on.strftime("%b %-d")}" if status.state == :booked %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# Mind (docs/HEALTH.md §6, D32): mental health as a first-class half of
+    the section — a check-in that listens, a practice that steadies, and
+    the honest road to a real therapist. Support, not therapy, said out
+    loud right here. %>
+<%= render Ui::CardComponent.new(
+      title: "Mind",
+      subtitle: "The other half of health — a place to talk, breathe, and build steady habits."
+    ) do %>
+  <div class="space-y-3">
+    <div class="flex flex-wrap gap-2">
+      <%= link_to "Check in", new_tool_run_path("check_in"), class: "btn btn-primary btn-sm" %>
+      <%= link_to "Start a calm practice", new_tool_run_path("start_a_practice"), class: "btn btn-secondary btn-sm" %>
+      <%= link_to "Find a therapist",
+            new_tool_run_path("find_care", inputs: { specialty: "therapist or counselor" }),
+            class: "btn btn-secondary btn-sm" %>
+    </div>
+    <% if last_check_in %>
+      <p class="text-sm text-soft">
+        Your last check-in stays open —
+        <%= link_to "pick it back up", tool_run_path(last_check_in), class: "text-primary-700 hover:underline" %>,
+        or start fresh and it remembers what mattered.
+      </p>
+    <% end %>
+    <p class="hint">
+      Check-ins are supportive self-reflection, not therapy. In a crisis, call or text 988 (US)
+      or your local emergency line.
+    </p>
+  </div>
+<% end %>
+
+<%# Medications (docs/HEALTH.md §7): a med is a Note (kind: medication) +
+    an optional all-day refill Event the renewal-radar watcher gives lead
+    time to. The list feeds doctor-visit prep automatically — it reads
+    Health notes. %>
+<%= render Ui::CardComponent.new(title: "Medications", padded: false) do %>
+  <% if medications.any? %>
+    <div class="divide-y divide-edge">
+      <% medications.each do |medication| %>
+        <div class="flex items-center justify-between gap-4 px-5 py-3">
+          <div class="min-w-0">
+            <%= link_to medication.title, medication, class: "text-sm font-medium text-ink hover:underline" %>
+            <% if medication.body != medication.title %>
+              <p class="truncate text-xs text-soft"><%= medication.body %></p>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="<%= medications.any? ? "border-t border-edge" : "" %> p-5">
+    <%= form_with url: medications_path, class: "flex flex-wrap items-end gap-2" do %>
+      <div class="min-w-40 flex-1 space-y-1">
+        <%= label_tag :name, "Medication", class: "label" %>
+        <%= text_field_tag :name, nil, class: "input", placeholder: "“Lisinopril 10mg”" %>
+      </div>
+      <div class="min-w-40 flex-1 space-y-1">
+        <%= label_tag :details, "Dose & schedule", class: "label" %>
+        <%= text_field_tag :details, nil, class: "input", placeholder: "Optional — “one every morning”" %>
+      </div>
+      <div class="space-y-1">
+        <%= label_tag :refill_on, "Next refill", class: "label" %>
+        <%= date_field_tag :refill_on, nil, class: "input" %>
+      </div>
+      <%= submit_tag "Add", class: "btn btn-secondary" %>
+    <% end %>
+    <p class="hint mt-2">A refill date lands on the calendar as “Refill …” — the assistant gives it lead time.</p>
+  </div>
+<% end %>
+
+<%= render Ui::CardComponent.new(title: "Insurance & coverage", padded: false) do %>
+  <% if coverage_documents.any? %>
+    <div class="divide-y divide-edge"><%= render coverage_documents %></div>
+    <div class="flex flex-wrap gap-x-4 gap-y-1 border-t border-edge px-5 py-3 text-sm">
+      <%= link_to "Understand my insurance →",
+            new_tool_run_path("insurance_explainer", inputs: { document_id: coverage_documents.first.id }),
+            class: "text-primary-700 hover:underline" %>
+      <% if coverage_documents.many? %>
+        <%= link_to "Compare plans →",
+              new_tool_run_path("compare_plans", inputs: {
+                plan_a_id: coverage_documents.first.id, plan_b_id: coverage_documents.second.id
+              }),
+              class: "text-primary-700 hover:underline" %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="space-y-2 p-5">
+      <p class="text-sm text-soft">
+        Add your insurance card, a Summary of Benefits, or a plan letter to the vault, and the
+        insurance tools can read them — plain-language answers about your own coverage.
+      </p>
+      <%= link_to "Upload a plan document", new_document_path, class: "btn btn-secondary btn-sm" %>
+    </div>
+  <% end %>
+<% end %>

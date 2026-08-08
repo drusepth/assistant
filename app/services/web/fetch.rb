@@ -3,7 +3,7 @@ require "resolv"
 require "ipaddr"
 
 module Web
-  # The app-side web floor (D32): deterministic code fetches one
+  # The app-side web floor (D-career-web): deterministic code fetches one
   # user-supplied URL and hands the model text — the model never drives the
   # connection, so this works identically on a frontier API and a local
   # 7B model, and what was fetched is auditable. Guardrails are structural:

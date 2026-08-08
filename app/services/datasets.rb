@@ -1,4 +1,4 @@
-# Bundled public data (D31): public-domain statistics served from local
+# Bundled public data (D-public-datasets): public-domain statistics served from local
 # files so Tier-A tools can cite real numbers without scraping or per-user
 # web calls. Two-layer lookup — `storage/datasets/` (refreshed or imported)
 # wins over the `db/datasets/` seeds — and every consumer shows the data's

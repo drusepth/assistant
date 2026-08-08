@@ -1,5 +1,5 @@
 module Admin
-  # The D31 dataset controls: fetch from BLS when the network allows, or
+  # The D-public-datasets dataset controls: fetch from BLS when the network allows, or
   # import the downloaded files by hand on an air-gapped install. Both paths
   # land in storage/datasets/ and win over the shipped seeds.
   class DatasetsController < BaseController

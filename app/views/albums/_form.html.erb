@@ -1,0 +1,14 @@
+<%= form_with model: album, class: "space-y-4" do |form| %>
+  <%= form.field :title %>
+  <%= form.field :description, as: :text_area, hint: "What holds these photos together?" %>
+  <% if album.persisted? && album.photos.any? %>
+    <%= form.field :cover_photo_id, label_text: "Cover photo" do %>
+      <%= form.collection_select :cover_photo_id, album.photos.order(taken_at: :desc), :id, :display_title,
+            { include_blank: "Newest photo (automatic)" } %>
+    <% end %>
+  <% end %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", album.persisted? ? album_path(album) : albums_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

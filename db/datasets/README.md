@@ -1,4 +1,4 @@
-# Bundled public datasets (D31)
+# Bundled public datasets (D-public-datasets)
 
 Seed snapshots of public-domain statistics the Career tools read locally —
 no scraping, no per-user web calls. The lookup order everywhere is

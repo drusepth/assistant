@@ -3,7 +3,7 @@ require "csv"
 module Datasets
   # National occupational wage medians (BLS OES/OEWS). No seed ships — the
   # table is large and revised annually — so this is empty until the admin
-  # fetches or imports it (D31); consumers degrade to the placeholder
+  # fetches or imports it (D-public-datasets); consumers degrade to the placeholder
   # behavior they already had. Lookup is keyword scoring over occupation
   # titles: honest about being "closest matches", never an assertion that
   # this row is your job.

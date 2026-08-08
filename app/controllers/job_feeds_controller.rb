@@ -1,4 +1,4 @@
-# The job scout's sources (D32): paste a feed or board link, the kind is
+# The job scout's sources (D-career-web): paste a feed or board link, the kind is
 # sniffed on save, and the scout scans it on the agent cadence.
 class JobFeedsController < ApplicationController
   def create

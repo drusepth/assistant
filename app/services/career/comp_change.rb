@@ -1,5 +1,5 @@
 module Career
-  # The comp timeline (D30): a compensation change is an ordinary
+  # The comp timeline (D-career-signal): a compensation change is an ordinary
   # Career-tagged all-day Event wearing a recognizable title prefix, so the
   # one-tap manual log and pay-stub extraction write to one timeline and the
   # raise-cadence watcher reads it with plain SQL. Manual wins conflicts by

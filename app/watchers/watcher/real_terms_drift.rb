@@ -1,5 +1,5 @@
 module Watcher
-  # The quiet pay cut, caught (docs/CAREER.md §4): pay flat on the D30 comp
+  # The quiet pay cut, caught (docs/CAREER.md §4): pay flat on the D-career-signal comp
   # timeline while the CPI-U series on file rose past the threshold. Pure
   # arithmetic over owned data plus a local public dataset — no LLM and no
   # web at nudge time — and it fires for exactly the people who never think

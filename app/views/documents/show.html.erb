@@ -35,6 +35,25 @@
             <dd class="whitespace-pre-wrap text-ink"><%= @document.description %></dd>
           </div>
         <% end %>
+        <%# The coverage card's correction path (docs/HEALTH.md §4): the
+            owner's word beats the keyword heuristic — pin a plan the
+            keywords miss, banish the car-insurance policy they caught. %>
+        <% if own %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 pt-1.5 text-soft">Health plan</dt>
+            <dd class="min-w-0">
+              <%= form_with model: @document, class: "flex items-center gap-2" do %>
+                <%= select_tag "document[health_plan]",
+                      options_for_select(
+                        [ [ "Auto — #{Health::Coverage.match?(@document) ? "shows" : "doesn't show"} on the Health page", "" ],
+                          [ "Yes — pin it there", "true" ], [ "No — keep it off", "false" ] ],
+                        @document.health_plan.nil? ? "" : @document.health_plan.to_s
+                      ), class: "input w-auto py-1 text-sm" %>
+                <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
+              <% end %>
+            </dd>
+          </div>
+        <% end %>
       </dl>
     <% end %>
 

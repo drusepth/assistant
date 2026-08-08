@@ -13,7 +13,7 @@ module Documents
 
     Result = Data.define(:summary, :section_slugs, :extracted_text, :facts)
 
-    # Career-aware extraction (D30, docs/CAREER.md §1): the fields kept from
+    # Career-aware extraction (D-career-signal, docs/CAREER.md §1): the fields kept from
     # a pay-stub read. Code whitelists, so the stored JSON never grows keys
     # the consumers don't know.
     PAY_STUB_FIELDS = %w[ employer pay_date period_start period_end rate hours overtime_hours gross net ].freeze

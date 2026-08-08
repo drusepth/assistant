@@ -53,6 +53,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "album_photos", force: :cascade do |t|
+    t.integer "album_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "photo_id", null: false
+    t.integer "position"
+    t.datetime "updated_at", null: false
+    t.index ["album_id", "photo_id"], name: "index_album_photos_on_album_id_and_photo_id", unique: true
+    t.index ["album_id"], name: "index_album_photos_on_album_id"
+    t.index ["photo_id"], name: "index_album_photos_on_photo_id"
+  end
+
+  create_table "albums", force: :cascade do |t|
+    t.integer "cover_photo_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["cover_photo_id"], name: "index_albums_on_cover_photo_id"
+    t.index ["user_id"], name: "index_albums_on_user_id"
+  end
+
   create_table "app_errors", force: :cascade do |t|
     t.text "backtrace"
     t.json "context", default: {}, null: false
@@ -67,6 +89,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.index ["user_id"], name: "index_app_errors_on_user_id"
   end
 
+  create_table "care_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "interval_months"
+    t.string "kind_key", null: false
+    t.string "label"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "kind_key"], name: "index_care_settings_on_user_id_and_kind_key", unique: true
+    t.index ["user_id"], name: "index_care_settings_on_user_id"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.string "analysis_error"
     t.string "analysis_status"
@@ -74,6 +108,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.text "description"
     t.json "extracted_facts", default: {}, null: false
     t.text "extracted_text"
+    t.boolean "health_plan"
     t.json "suggested_sections", default: []
     t.text "summary"
     t.string "title", null: false
@@ -84,6 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
 
   create_table "events", force: :cascade do |t|
     t.boolean "all_day", default: false, null: false
+    t.string "care_kind"
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "ends_at"
@@ -113,6 +149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.string "region"
     t.datetime "updated_at", null: false
   end
 
@@ -161,6 +198,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.string "model", default: "gpt-4o-mini"
     t.string "provider", default: "openai", null: false
     t.datetime "updated_at", null: false
+    t.boolean "vision", default: false, null: false
     t.boolean "web_capable", default: false, null: false
     t.index ["household_id"], name: "index_model_profiles_on_household_id", unique: true
   end
@@ -168,6 +206,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
   create_table "notes", force: :cascade do |t|
     t.text "body", null: false
     t.datetime "created_at", null: false
+    t.string "kind"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -190,6 +229,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.date "birthday"
     t.datetime "created_at", null: false
     t.string "email"
+    t.boolean "keep_in_touch", default: false, null: false
     t.date "last_contacted_on"
     t.integer "linked_user_id"
     t.string "name", null: false
@@ -200,6 +240,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.integer "user_id", null: false
     t.index ["linked_user_id"], name: "index_people_on_linked_user_id"
     t.index ["user_id"], name: "index_people_on_user_id"
+  end
+
+  create_table "photo_people", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "person_id", null: false
+    t.integer "photo_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["person_id"], name: "index_photo_people_on_person_id"
+    t.index ["photo_id", "person_id"], name: "index_photo_people_on_photo_id_and_person_id", unique: true
+    t.index ["photo_id"], name: "index_photo_people_on_photo_id"
+  end
+
+  create_table "photos", force: :cascade do |t|
+    t.text "caption"
+    t.string "caption_error"
+    t.string "caption_status"
+    t.datetime "created_at", null: false
+    t.string "ingest_error"
+    t.string "ingest_status", default: "queued", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.json "suggested_sections", default: []
+    t.datetime "taken_at", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "taken_at"], name: "index_photos_on_user_id_and_taken_at"
+    t.index ["user_id"], name: "index_photos_on_user_id"
   end
 
   create_table "section_taggings", force: :cascade do |t|
@@ -257,7 +325,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.datetime "created_at", null: false
     t.date "due_on"
     t.integer "goal_id"
+    t.json "guiding_questions", default: [], null: false
     t.text "notes"
+    t.text "resolution"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -295,9 +365,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.json "output", default: {}, null: false
     t.datetime "recap_requested_at"
     t.string "status", default: "queued", null: false
+    t.integer "subject_id"
+    t.string "subject_type"
     t.string "tool_slug", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["subject_type", "subject_id"], name: "index_tool_runs_on_subject"
     t.index ["user_id", "created_at"], name: "index_tool_runs_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_tool_runs_on_user_id"
   end
@@ -334,7 +407,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
   add_foreign_key "access_grants", "users", column: "grantor_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "album_photos", "albums"
+  add_foreign_key "album_photos", "photos"
+  add_foreign_key "albums", "photos", column: "cover_photo_id", on_delete: :nullify
+  add_foreign_key "albums", "users"
   add_foreign_key "app_errors", "users"
+  add_foreign_key "care_settings", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
@@ -348,6 +426,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
   add_foreign_key "notification_channels", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
+  add_foreign_key "photo_people", "people"
+  add_foreign_key "photo_people", "photos"
+  add_foreign_key "photos", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"

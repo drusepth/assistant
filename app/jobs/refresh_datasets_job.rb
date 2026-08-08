@@ -1,4 +1,4 @@
-# Refreshes the D31 public datasets from BLS. Fired from the /admin button
+# Refreshes the D-public-datasets public datasets from BLS. Fired from the /admin button
 # (and safe to wire to a recurring schedule); partial failures are recorded
 # per dataset, never raised — an unreachable bls.gov leaves the current
 # files exactly as they were.

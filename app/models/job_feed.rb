@@ -1,4 +1,4 @@
-# A source the job scout watches for one user (D32): a feed or open board
+# A source the job scout watches for one user (D-career-web): a feed or open board
 # API — never a scraped site. Kind is sniffed from the URL at save so the
 # user just pastes a link; USAJobs additionally wants their free API key.
 class JobFeed < ApplicationRecord

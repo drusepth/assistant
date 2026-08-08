@@ -43,11 +43,20 @@ class Suggestion < ApplicationRecord
 
   def tool_action = action["tool"]
 
+  # An in-app destination ("look at these photos") — internal paths only,
+  # so a payload can never send the user off the instance.
+  def path_action
+    path = action["path"]
+    path if path.is_a?(String) && path.start_with?("/")
+  end
+
   def accept_label
+    return action["accept_label"] if action["accept_label"].present?
     return "Add task" if action["task"]
     return "Add event" if action["event"]
     return "Do it today" if action["schedule_task"]
     return "Open tool" if tool_action
+    return "View" if path_action
 
     "Accept"
   end
@@ -59,28 +68,39 @@ class Suggestion < ApplicationRecord
   end
 
   private
+    # A payload may carry several keys (birthday radar lands a gift task
+    # *and* the day on the calendar); each present key materializes, and the
+    # first creation names the flash notice.
     def materialize
+      created = []
+
       if (attrs = action["task"])
         task = user.tasks.create!(
           title: attrs["title"], notes: attrs["notes"],
           due_on: attrs["due_on"].presence, bucket: :today
         )
         task.sections = sections.to_a
-        task
-      elsif (attrs = action["event"])
+        created << task
+      end
+
+      if (attrs = action["event"])
         event = user.events.create!(
           title: attrs["title"], starts_at: attrs["starts_at"], all_day: attrs.fetch("all_day", true)
         )
         event.sections = sections.to_a
-        event
-      elsif (attrs = action["schedule_task"])
+        created << event
+      end
+
+      if (attrs = action["schedule_task"])
         # Pulls an existing task into Today instead of creating anything. The
         # date is stamped at accept time, not scan time, so a nudge accepted
         # days later still means "today". A task completed or deleted in the
         # meantime is simply nothing left to do.
         task = user.tasks.open.find_by(id: attrs["id"])
         task&.update!(due_on: Date.current, bucket: :today)
-        task
+        created << task if task
       end
+
+      created.first
     end
 end

@@ -87,8 +87,8 @@ module Tool
         end
       end
 
-      # The D31 datasets, when loaded: code fetches the numbers, the model
-      # only phrases them — always with their vintage attached.
+      # The public datasets (D-public-datasets), when loaded: code fetches
+      # the numbers, the model only phrases them — vintage always attached.
       def public_data_lines
         lines = []
         if (last = Career::CompChange.latest_on(user))

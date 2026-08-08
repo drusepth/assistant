@@ -1,4 +1,4 @@
-# The two one-tap capture verbs of the career signal (D30, docs/CAREER.md
+# The two one-tap capture verbs of the career signal (D-career-signal, docs/CAREER.md
 # §1): a win-log line and a comp-change entry, landing as ordinary
 # Career-tagged primitives — the receipts the raise tools read later.
 class CareerController < ApplicationController

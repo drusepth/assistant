@@ -39,7 +39,7 @@ class AnalyzeDocumentJob < ApplicationJob
 
   private
     # A rate change against the previous stub lands on the comp timeline
-    # (D30). The analysis itself succeeded — a timeline hiccup is recorded,
+    # (D-career-signal). The analysis itself succeeded — a timeline hiccup is recorded,
     # never surfaced as a failed document.
     def record_comp_change(document)
       Career::RecordCompChange.new(document).call

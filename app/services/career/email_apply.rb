@@ -1,5 +1,5 @@
 module Career
-  # Ask-then-send, email only (D32): carries an application the user just
+  # Ask-then-send, email only (D-career-web): carries an application the user just
   # reviewed and edited out through THEIR linked mailbox — their address,
   # their SMTP server, their explicit click. The compose form is the ask;
   # this only delivers it. Deliberately narrow: no ATS form automation, no

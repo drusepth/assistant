@@ -20,6 +20,18 @@ class ToolRunsController < ApplicationController
     @tool_run = Current.user.tool_runs.find(params[:id])
   end
 
+  # Runs are deletable — for chats that's the trust feature (D33: a
+  # check-in transcript is yours to destroy), for anything else it's tidy
+  # history. Created primitives (notes, tasks, events) are their own
+  # records and stay.
+  def destroy
+    run = Current.user.tool_runs.find(params[:id])
+    section = run.tool.section_slugs.first
+    notice = run.chat? ? "Conversation deleted." : "Run deleted."
+    run.destroy!
+    redirect_to section ? section_path(section) : root_path, notice: notice
+  end
+
   # "Save a recap" on a chat run (D29) — the explicit click that turns a
   # session into an owned Note (D20: nothing lands without the user asking).
   # recap_requested_at is the in-flight marker: it drives the button's
@@ -30,7 +42,9 @@ class ToolRunsController < ApplicationController
       run.update_column(:recap_requested_at, Time.current)
       ChatRecapJob.perform_later(run)
     end
-    redirect_to run
+    # Back to whichever chat surface the click came from — the run page or a
+    # task page hosting the conversation (D30).
+    redirect_back fallback_location: run
   end
 
   # "Try again" after a failed turn: drop the failure notice and re-enqueue
@@ -41,7 +55,7 @@ class ToolRunsController < ApplicationController
       run.tool_run_messages.ordered.last.destroy!
       ChatTurnJob.perform_later(run)
     end
-    redirect_to run
+    redirect_back fallback_location: run
   end
 
   private
@@ -51,7 +65,9 @@ class ToolRunsController < ApplicationController
 
     def load_input_choices
       @document_choices = Document.visible_to(Current.user).order(created_at: :desc) if @tool.inputs.any?(&:document?)
-      @person_choices = Person.visible_to(Current.user).order(:name) if @tool.inputs.any?(&:person?)
+      # Circle first (D30) — the people you're tending are almost always the
+      # ones a People tool is about.
+      @person_choices = Person.visible_to(Current.user).order(keep_in_touch: :desc, name: :asc) if @tool.inputs.any?(&:person?)
       # Hobby lenses (D25); with none yet the form falls back to free text,
       # so the Hobbies tools work before any lens exists.
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)
