@@ -1,0 +1,74 @@
+<%= render Ui::PageHeaderComponent.new(title: "Match up the columns",
+      subtitle: "One-time setup for #{@account.name} — we'll remember this mapping for every future import") %>
+
+<% guess = @probe.guess %>
+
+<div class="mx-auto max-w-2xl space-y-4">
+  <% if @probe.samples.any? %>
+    <div class="overflow-x-auto rounded-xl border border-edge bg-surface">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="border-b border-edge text-soft">
+            <% @probe.headers.each do |header| %><th class="px-3 py-2 font-medium"><%= header %></th><% end %>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-edge">
+          <% @probe.samples.each do |row| %>
+            <tr><% @probe.headers.each do |header| %><td class="px-3 py-2 text-ink"><%= row[header].to_s.truncate(24) %></td><% end %></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <%= form_with url: spending_import_apply_path, method: :post, class: "space-y-4 rounded-xl border border-edge bg-surface p-6" do %>
+    <%= hidden_field_tag :document_id, @document.id %>
+    <%= hidden_field_tag :account_id, @account.id %>
+
+    <% header_options = [ [ "—", "" ] ] + @probe.headers.map { |h| [ h, h ] } %>
+
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-sm font-medium text-ink">Date column</label>
+        <%= select_tag :date, options_for_select(header_options, guess["date"]), class: "input w-full" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-ink">Description column</label>
+        <%= select_tag :description, options_for_select(header_options, guess["description"]), class: "input w-full" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-ink">Amount column</label>
+        <%= select_tag :amount, options_for_select(header_options, guess["amount"]), class: "input w-full" %>
+        <p class="mt-1 text-xs text-soft">One signed column — or leave blank and use debit/credit below.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="mb-1 block text-sm font-medium text-ink">Debit column</label>
+          <%= select_tag :debit, options_for_select(header_options, guess["amount"] ? nil : guess["debit"]), class: "input w-full" %>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-ink">Credit column</label>
+          <%= select_tag :credit, options_for_select(header_options, guess["amount"] ? nil : guess["credit"]), class: "input w-full" %>
+        </div>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-ink">Date format</label>
+        <%= select_tag :date_format,
+              options_for_select([ [ "Figure it out per row", "" ],
+                                   [ "2026-01-31", "%Y-%m-%d" ], [ "01/31/2026", "%m/%d/%Y" ],
+                                   [ "31/01/2026", "%d/%m/%Y" ], [ "01/31/26", "%m/%d/%y" ],
+                                   [ "31/01/26", "%d/%m/%y" ], [ "31.01.2026", "%d.%m.%Y" ] ], guess["date_format"]),
+              class: "input w-full" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-ink">Which sign is spending?</label>
+        <%= select_tag :sign,
+              options_for_select([ [ "Negative numbers are spending (most banks)", "negative_out" ],
+                                   [ "Positive numbers are spending", "positive_out" ] ], guess["sign"]),
+              class: "input w-full" %>
+      </div>
+    </div>
+
+    <%= submit_tag "Save mapping and import", class: "btn btn-primary w-full" %>
+  <% end %>
+</div>

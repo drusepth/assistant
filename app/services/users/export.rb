@@ -19,6 +19,9 @@ module Users
       "photos" => ->(user) { user.photos },
       "albums" => ->(user) { user.albums },
       "suggestions" => ->(user) { user.suggestions },
+      "spending_accounts" => ->(user) { user.spending_accounts },
+      "budget_categories" => ->(user) { user.budget_categories },
+      "spending_rules" => ->(user) { user.spending_rules },
       "credentials" => ->(user) { user.credentials }
     }.freeze
 
@@ -42,6 +45,12 @@ module Users
             zip.write(row_for(record).to_json << "\n")
           end
         end
+
+        # The ledger's carve-out (D-spending-mirror): unlike the email
+        # mirror, spending history often has no other durable copy — bank
+        # portals age statements out — so it leaves with the user as plain CSV.
+        zip.put_next_entry("spending.csv")
+        zip.write(spending_csv)
 
         @user.documents.includes(file_attachment: :blob).find_each do |document|
           next unless document.file.attached?
@@ -68,7 +77,7 @@ module Users
           exported_at: Time.current.iso8601,
           user: { name: @user.name, email_address: @user.email_address },
           household: @user.household.name,
-          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "files/", "photo_files/" ],
+          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/" ],
           credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked"
         }
       end
@@ -91,6 +100,22 @@ module Users
 
       def photo_entry_name(photo)
         "photo_files/#{photo.id}-#{photo.image.filename}"
+      end
+
+      def spending_csv
+        accounts = @user.spending_accounts.index_by(&:id)
+        categories = @user.budget_categories.index_by(&:id)
+
+        CSV.generate do |csv|
+          csv << %w[ date amount_cents currency account category merchant descriptor source transfer ]
+          SpendingTransaction.where(user_id: @user.id).order(:occurred_on, :id).each do |row|
+            csv << [
+              row.occurred_on.iso8601, row.amount_cents, @user.household.currency,
+              accounts[row.spending_account_id]&.name, categories[row.budget_category_id]&.name,
+              row.merchant, row.descriptor, row.source, row.transfer
+            ]
+          end
+        end
       end
   end
 end

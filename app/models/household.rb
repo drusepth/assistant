@@ -19,6 +19,11 @@ class Household < ApplicationRecord
   validates :home_status, inclusion: { in: HOME_STATUSES }, allow_blank: true
   validate :time_zone_is_recognized
 
+  # Money formatting everywhere reads this (MoneyHelper). A code, not an
+  # enum — the D34 audience argument; blank falls back to USD.
+  before_validation { self.currency = currency.to_s.upcase.strip.presence || "USD" }
+  validates :currency, format: { with: /\A[A-Z]{3}\z/, message: "should be a three-letter code like USD or EUR" }
+
   # Everything dated in the app — "due today", all-day events, the weekly
   # scan — is computed in this zone. Blank means the instance default
   # (UTC), which is wrong for most of the planet after 4pm; setting it once

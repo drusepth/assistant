@@ -44,6 +44,18 @@ Rails.application.routes.draw do
       post :triage
     end
   end
+  # The spending ledger (D-spending-mirror): owner-only browse over the
+  # mirror, quick-log, statement imports, and the taught rules.
+  get "spending" => "spending#index", as: :spending
+  get "spending/import" => "spending_imports#new", as: :new_spending_import
+  post "spending/import" => "spending_imports#create", as: :spending_imports
+  get "spending/import/mapping" => "spending_imports#mapping", as: :spending_import_mapping
+  post "spending/import/mapping" => "spending_imports#apply_mapping", as: :spending_import_apply
+  resources :spending_transactions, only: %i[ create update destroy ]
+  resources :spending_accounts, only: %i[ create destroy ]
+  resources :spending_rules, only: %i[ destroy ]
+  resources :budget_categories, only: %i[ create update destroy ]
+
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]

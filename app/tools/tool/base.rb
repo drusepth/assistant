@@ -29,6 +29,8 @@ module Tool
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
       def email_message? = kind == :email_message
+      def budget_category? = kind == :budget_category
+      def ledger_month? = kind == :ledger_month
       def textarea? = kind == :textarea
       def date? = kind == :date
     end

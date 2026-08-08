@@ -89,6 +89,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.index ["user_id"], name: "index_app_errors_on_user_id"
   end
 
+  create_table "budget_categories", force: :cascade do |t|
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.string "group", default: "needs", null: false
+    t.integer "monthly_target_cents"
+    t.string "name", null: false
+    t.integer "position"
+    t.string "target_set_by"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "name"], name: "index_budget_categories_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_budget_categories_on_user_id"
+  end
+
   create_table "care_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
@@ -199,6 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   create_table "households", force: :cascade do |t|
     t.text "address"
     t.datetime "created_at", null: false
+    t.string "currency", default: "USD", null: false
     t.string "home_status"
     t.date "moved_in_on"
     t.string "name", null: false
@@ -376,6 +391,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "spending_accounts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.json "csv_mapping"
+    t.string "kind", default: "checking", null: false
+    t.string "last4"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_spending_accounts_on_user_id"
+  end
+
+  create_table "spending_rules", force: :cascade do |t|
+    t.integer "budget_category_id", null: false
+    t.datetime "created_at", null: false
+    t.string "matcher", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["budget_category_id"], name: "index_spending_rules_on_budget_category_id"
+    t.index ["user_id", "matcher"], name: "index_spending_rules_on_user_id_and_matcher", unique: true
+    t.index ["user_id"], name: "index_spending_rules_on_user_id"
+  end
+
   create_table "suggestions", force: :cascade do |t|
     t.json "action", default: {}, null: false
     t.text "body"
@@ -505,6 +542,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   add_foreign_key "albums", "photos", column: "cover_photo_id", on_delete: :nullify
   add_foreign_key "albums", "users"
   add_foreign_key "app_errors", "users"
+  add_foreign_key "budget_categories", "users"
   add_foreign_key "care_settings", "users"
   add_foreign_key "credential_keys", "credentials"
   add_foreign_key "credential_keys", "users"
@@ -532,6 +570,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "spending_accounts", "users"
+  add_foreign_key "spending_rules", "budget_categories"
+  add_foreign_key "spending_rules", "users"
   add_foreign_key "suggestions", "users"
   add_foreign_key "tasks", "goals"
   add_foreign_key "tasks", "users"

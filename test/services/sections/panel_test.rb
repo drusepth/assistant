@@ -9,7 +9,9 @@ class Sections::PanelTest < ActiveSupport::TestCase
     assert_equal "sections/panels/health", health.partial
 
     assert_instance_of Sections::Panels::Hobbies, Sections::Panel.for(sections(:hobbies), users(:one))
-    assert_nil Sections::Panel.for(sections(:money), users(:one))
+    assert_instance_of Sections::Panels::Money, Sections::Panel.for(sections(:money), users(:one))
+    assert_instance_of Sections::Panels::Budget, Sections::Panel.for(sections(:budget), users(:one))
+    assert_nil Sections::Panel.for(sections(:rights), users(:one))
   end
 
   test "a custom hobby lens slug never resolves a panel" do
