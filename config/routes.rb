@@ -23,6 +23,13 @@ Rails.application.routes.draw do
 
   resource :settings, only: %i[ show update ]
   resource :household, only: %i[ update ]
+
+  resources :mail, only: %i[ index show destroy ], controller: "mail" do
+    member do
+      post :promote
+      post :remind
+    end
+  end
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]

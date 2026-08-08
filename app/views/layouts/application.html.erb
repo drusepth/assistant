@@ -72,6 +72,9 @@
                 <%= nav_link_to "Address Book", people_path, :users %>
                 <%= nav_link_to "Documents", documents_path, :document %>
                 <%= nav_link_to "Notes", notes_path, :note %>
+                <% if Current.user.linked_accounts.where(provider: "email").exists? %>
+                  <%= nav_link_to "Mail", mail_index_path, :envelope %>
+                <% end %>
               </div>
             </div>
           </nav>

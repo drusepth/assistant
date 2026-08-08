@@ -62,4 +62,28 @@
   <% if own %>
     <div><%= render "shared/share_controls", subject: @person %></div>
   <% end %>
+
+  <%# Recent correspondence (EMAIL_PLAN.md §7) — owner-only by
+      construction: the mirror has no visibility path, so a granted-in
+      viewer of this Person never sees a mail card. %>
+  <% if own && (mail = EmailMessage.where(user_id: Current.user.id, person_id: @person.id)
+        .newest_first.limit(30).to_a.uniq(&:thread_key).first(5)).any? %>
+    <div>
+      <%= render Ui::CardComponent.new(title: "Recent correspondence", subtitle: "From your linked mail — only you can see this") do %>
+        <ul class="divide-y divide-edge">
+          <% mail.each do |message| %>
+            <li>
+              <%= link_to mail_path(message), class: "flex items-center gap-3 py-2.5 text-sm hover:bg-stone-50" do %>
+                <span class="chip <%= message.outbound? ? "bg-stone-100 text-stone-600" : "bg-primary-50 text-primary-800" %>">
+                  <%= message.outbound? ? "sent" : "received" %>
+                </span>
+                <span class="min-w-0 flex-1 truncate text-ink"><%= message.subject.presence || "(no subject)" %></span>
+                <span class="shrink-0 text-xs text-soft"><%= message.sent_at&.to_date&.strftime("%b %-d") %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+  <% end %>
 </div>
