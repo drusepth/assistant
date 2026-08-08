@@ -4,9 +4,10 @@ Section deep-dive for **People** — what the section page *is*, now that the
 Address Book exists, and how the section earns its place across all three
 modes (D6). Everything rides existing infrastructure (D18 anatomy, D19 tools,
 D25 lenses, D28 routing, D29 chat) except where flagged. The one decision it
-needs — the roster/dashboard split — is proposed as **D30** in `DECISIONS.md`;
+needs — the roster/dashboard split — is **D30** in `DECISIONS.md`;
 person↔item linking is logged as open question **Q14**. (Numbers provisional
-per the merge-time renumbering rule in `CLAUDE.md`.)
+per the merge-time renumbering rule in `CLAUDE.md`.) The first build pass —
+steps 1–6 of §9 — is built, marked ✅ below.
 
 ## Why this section matters (mission tie)
 
@@ -124,7 +125,7 @@ circle first, then the rest alphabetically. Typeahead is later polish.
 Built already: **Reconnect** (the section's core promise) and **Plan a move**
 (registered here for the address-change surface).
 
-1. **"What do I say?"** *(chat, D29)* — the flagship, and the relationship
+1. ✅ **"What do I say?"** *(chat, D29 — built)* — the flagship, and the relationship
    analog of the Rights letter family: social scripts for people who weren't
    handed them. Preset chips seed the first message — *check in on someone
    who's struggling, apologize, condolences, ask for help, set a boundary,
@@ -132,7 +133,7 @@ Built already: **Reconnect** (the section's core promise) and **Plan a move**
    conversation opens knowing the context. The chat shape matters: hard
    conversations need back-and-forth ("she replied this — now what?"), which
    is exactly what D29 built for the tutor. "Save a recap" files the plan.
-2. **"Plan a get-together"** *(plan)* — occasion + who + an optional date →
+2. ✅ **"Plan a get-together"** *(plan — built)* — occasion + who + an optional date →
    Goal + prep Tasks + the Event on the calendar. One mechanical honesty
    note for the builder: `plan_goal!` → `Goals::BreakDown` produces Goal +
    Tasks *only*, so the Event does not fall out of the plan pipeline — the
@@ -142,11 +143,11 @@ Built already: **Reconnect** (the section's core promise) and **Plan a move**
    date." The brief steers hard toward small, cheap, and scheduled — the
    taco night that actually happens beats the dinner party that never does.
    Covers PRODUCT.md's "event planning" line with zero new machinery.
-3. **"Gift ideas"** *(draft)* — reads the person's notes and section overlaps
+3. ✅ **"Gift ideas"** *(draft — built)* — reads the person's notes and section overlaps
    (a hobby-buddy tag is half the answer) → 5–8 ideas sized to a budget line,
    placeholders naming what it doesn't know. Chained from birthday radar via
    the D28 pattern; multi-tags into Money when it ends in a planned purchase.
-4. **"Make new friends"** *(plan)* — the widest loneliness funnel. Brief
+4. ✅ **"Make new friends"** *(plan — built)* — the widest loneliness funnel. Brief
    pushes the evidence-shaped path: pick a *recurring* venue (club, class,
    volunteering — one-off events don't compound), commit to showing up N
    times, follow-up scripts for turning acquaintances into plans.
@@ -169,7 +170,7 @@ place shared-history context gets added.
 ## 5. Agent (D20 watchers — SQL-first)
 
 - ✅ **Stay in touch** (built, Q8) — unchanged.
-- **Birthday radar** — the section's cheapest delight and the next build:
+- ✅ **Birthday radar** *(built)* — the section's cheapest delight:
   pure SQL over `people.birthday` (already imported for free), ~3 weeks out,
   fingerprinted per person per year. Accept = an all-day Event + a lead-time
   task; the suggestion offers Gift ideas and Reconnect prefilled (D28
@@ -231,20 +232,23 @@ queued consumers.
 
 ## 9. Build order
 
-1. **The D30 split** — `keep_in_touch` flag (+ backfill from
+1. ✅ **The D30 split** — `keep_in_touch` flag (+ backfill from
    `last_contacted_on`, §2) + person-page toggle, the "Who do you want to
    stay close to?" capture, `StayInTouch` circle-scoping, section page
    rebuilt (Coming up / Your circle / lens lists sans Person grid / Address
    Book link), circle-first person pickers.
-2. **Birthday radar** watcher (circle-scoped, sharing
-   `Person.birthday_within` with Coming up; D28-routes to Reconnect now,
-   Gift ideas when it ships).
-3. **"Gift ideas" + "Plan a get-together"** — one draft, one plan, both thin
-   classes on existing contracts, preceded by the `person_context`
-   extraction (§4).
-4. **"What do I say?"** chat tool (second consumer of D29 after the tutor).
-5. **"Make new friends"** plan tool.
-6. **Groups** — generalize D25 lens creation to People; community tools get
-   their own design conversation after real use.
+2. ✅ **Birthday radar** watcher (circle-scoped, sharing
+   `Person.birthday_within` with Coming up; the Coming up rows offer Gift
+   ideas and Reconnect prefilled).
+3. ✅ **"Gift ideas" + "Plan a get-together"** — one draft, one plan, both
+   thin classes on existing contracts, preceded by the
+   `chosen_person`/`person_context` extraction (§4) and a new `:date` input
+   kind.
+4. ✅ **"What do I say?"** chat tool (second consumer of D29 after the
+   tutor).
+5. ✅ **"Make new friends"** plan tool.
+6. ✅ **Groups** — D25 lens creation generalized into `Sections::Lens`
+   (`People::Group` / `Hobbies::Lens` as its two front doors); community
+   tools get their own design conversation after real use.
 7. Deferred: Q14 links → afterglow watcher + per-person history, cadence
    upgrade, caregiving/co-parenting Situations.
