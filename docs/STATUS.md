@@ -2,12 +2,14 @@
 
 Where we left off — what is built, oldest first, then what's next.
 
-**One entry per line.** This file is touched on nearly every branch, and git
-merges line by line: entries on their own lines mean two branches that add
-different milestones merge automatically, and a genuine collision shows up as a
-readable one-line diff. Please don't rewrap these into paragraphs or join them
-up — that is exactly what made this log the most conflict-prone thing in the
-repo when it lived inside `CLAUDE.md`.
+**One entry per line, append-only.** This file is touched on nearly every
+branch, so `.gitattributes` gives it `merge=union`: two branches appending
+different milestone lines merge automatically with both entries kept, no
+conflict. The flip side is that this file never shows conflict markers at all,
+so only ever *append* here — never rewrite or rewrap existing lines on a
+branch, or two branches' edits to the same line will silently both survive.
+That rewrap hazard is exactly what made this log the most conflict-prone thing
+in the repo when it lived inside `CLAUDE.md`.
 
 ## Built
 
@@ -40,6 +42,7 @@ repo when it lived inside `CLAUDE.md`.
 - **Subsections are browse grids, not header chips**: the chip cloud didn't scale (five hobbies already cluttered the Hobbies header; Money seeds seven subsections) and carried zero pull, so section pages no longer render children as header chips at all. `Sections::Summary` (batched, `visible_to`-only) gives every child section engagement signal — soonest upcoming event, open-task and project counts — and two grids render it: the Hobbies page leads with a "Your hobbies" card grid (full-height cards, "Nothing planned yet — dive back in" when quiet, capture shrunk to a dashed add-tile at the end; the "What do you do for fun?" card still leads while no lenses exist), while seeded subsections (Money, Rights) get a compact Browse tile grid — name + one line of signal (event beats counts beats "Nothing yet"), sized for a fixed handful that's often empty.
 
 - **Task pages talk (D30)**: every task page embeds the D29 chat surface (now a shared `tool_runs/_chat` partial) through a sectionless `task_chat` tool bound via polymorphic `tool_runs.subject`; the conversation opens with capture-time `guiding_questions` (Tasks::Categorize and Goals::BreakDown both emit them in their existing single calls; stock fallback otherwise) at zero model cost until the user replies (run created lazily on first message, seeded with the openers); tasks gained `resolution` — an answer card with Save / Save-&-complete — and the chat's recap verb became "Save as the answer", distilling the conversation onto the task instead of filing a Note.
+- **Quick-add is a dropdown**: `Ui::QuickAdd` component — a page-header + button whose capture form opens in a panel anchored beneath it (bottom sheet on small screens; Escape, Cancel, or click-outside closes) instead of an inline card pushing the page down; Dashboard's four buttons and the Notes index's + Note now share it.
 
 ## Next up
 

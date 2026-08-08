@@ -111,4 +111,10 @@ Several branches land concurrently, so two rules for the global sequences:
   appends to (`ICON_PATHS`, `routes.rb`, `User` has_many, `Tool::SLUGS`,
   fixture files) merge with a trivial keep-both — resolve, don't redesign.
   `db/schema.rb` is never hand-merged: take main's copy and re-run
-  `bin/rails db:migrate` to regenerate it.
+  `bin/rails db:migrate` to regenerate it. `docs/STATUS.md` no longer
+  conflicts at all: it merges with `merge=union` (see `.gitattributes`), so
+  colliding appends keep both lines automatically — the tradeoff is that you
+  must only append to it, never rewrite existing lines. Note GitHub's web UI
+  ignores merge attributes, so a PR may still *show* a STATUS.md conflict —
+  a local `git fetch origin main && git merge origin/main` resolves it
+  hands-free; push the merge and the PR clears.
