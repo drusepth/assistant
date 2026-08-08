@@ -329,6 +329,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_033048) do
     t.string "error"
     t.json "inputs", default: {}, null: false
     t.json "output", default: {}, null: false
+    t.datetime "recap_requested_at"
     t.string "status", default: "queued", null: false
     t.string "tool_slug", null: false
     t.datetime "updated_at", null: false

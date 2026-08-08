@@ -96,6 +96,7 @@ Rails.application.routes.draw do
     resources :messages, only: :create, controller: "tool_run_messages"
     member do
       post :recap
+      post :retry_reply
     end
   end
 

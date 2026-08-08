@@ -10,8 +10,7 @@ class SuggestionsController < ApplicationController
       redirect_to path
     else
       created = @suggestion.accept!
-      notice = created ? "Added “#{created.title}”." : "Done."
-      redirect_back fallback_location: root_path, notice: notice
+      redirect_back fallback_location: root_path, notice: @suggestion.accept_notice(created)
     end
   end
 

@@ -8,7 +8,9 @@ class TodayController < ApplicationController
     @prep_range = prep_range
     @prep_tasks = tasks.where(due_on: @prep_range).order(:due_on)
     @unscheduled_count = tasks.where(due_on: nil).count
-    @unscheduled_tasks = tasks.where(due_on: nil).order(created_at: :desc).limit(UNSCHEDULED_LIMIT)
+    # Oldest first: the newest undated task is the one you just wrote down,
+    # while the oldest is the one about to be forgotten.
+    @unscheduled_tasks = tasks.where(due_on: nil).order(created_at: :asc).limit(UNSCHEDULED_LIMIT)
 
     events = Event.visible_to(Current.user).includes(:sections)
     @today_events = events.overlapping(Time.current.beginning_of_day..Time.current.end_of_day)

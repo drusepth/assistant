@@ -22,9 +22,25 @@ class ToolRunsController < ApplicationController
 
   # "Save a recap" on a chat run (D29) — the explicit click that turns a
   # session into an owned Note (D20: nothing lands without the user asking).
+  # recap_requested_at is the in-flight marker: it drives the button's
+  # "Saving recap…" state and keeps a double-click from filing two notes.
   def recap
     run = Current.user.tool_runs.find(params[:id])
-    ChatRecapJob.perform_later(run) if run.chat? && run.tool_run_messages.conversational.exists?
+    if run.chat? && run.tool_run_messages.conversational.exists? && !run.recap_pending?
+      run.update_column(:recap_requested_at, Time.current)
+      ChatRecapJob.perform_later(run)
+    end
+    redirect_to run
+  end
+
+  # "Try again" after a failed turn: drop the failure notice and re-enqueue
+  # the reply — the user's message is answered without retyping it.
+  def retry_reply
+    run = Current.user.tool_runs.find(params[:id])
+    if run.reply_failed?
+      run.tool_run_messages.ordered.last.destroy!
+      ChatTurnJob.perform_later(run)
+    end
     redirect_to run
   end
 

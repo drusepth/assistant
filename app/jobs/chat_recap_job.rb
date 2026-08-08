@@ -15,6 +15,9 @@ class ChatRecapJob < ApplicationJob
     AppError.record(e, source: self.class.name, user: run.user, context: { tool_run_id: run.id })
     raise
   ensure
-    Turbo::StreamsChannel.broadcast_refresh_to(run) if run&.persisted?
+    if run&.persisted?
+      run.update_column(:recap_requested_at, nil)
+      Turbo::StreamsChannel.broadcast_refresh_to(run)
+    end
   end
 end
