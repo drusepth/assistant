@@ -58,7 +58,8 @@ module Tool
         unless context.empty?
           parts << "The user's tracked record across Career, Hobbies, and Education — explore from this:\n#{context.to_prompt}"
         end
-        parts.join("\n\n")
+        parts << web_capability_note
+        parts.compact.join("\n\n")
       end
 
       def opening_instruction

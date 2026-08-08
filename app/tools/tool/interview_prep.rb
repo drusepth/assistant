@@ -17,7 +17,10 @@ module Tool
       hint: "“Warehouse shift lead at Acme”, “junior developer, remote”."
     input :listing, kind: :textarea,
       label: "Paste the job listing",
-      hint: "Optional if you pick it from your documents below."
+      hint: "Optional if you give a link or pick a document below."
+    input :listing_url,
+      label: "…or a link to the listing",
+      hint: "The app fetches the page itself — works with any model."
     input :document_id, kind: :document,
       label: "…or the listing from your documents"
     input :concerns,
@@ -55,8 +58,8 @@ module Tool
     PROMPT
 
     def call
-      if inputs[:listing].blank? && chosen_document.nil?
-        raise Llm::Error, "Paste the listing text or pick it from your documents — either works."
+      if inputs[:listing].blank? && inputs[:listing_url].blank? && chosen_document.nil?
+        raise Llm::Error, "Paste the listing text, give a link, or pick it from your documents — any works."
       end
       super
     end
@@ -74,14 +77,18 @@ module Tool
         parts << "The job: #{inputs[:role]}"
         parts << "What worries the user: #{inputs[:concerns]}" if inputs[:concerns].present?
         parts << "The job listing:\n#{inputs[:listing]}" if inputs[:listing].present?
+        if (page = fetched_page)
+          parts << "The job listing (fetched from #{page.final_url}):\n#{page.text.truncate(MAX_DOCUMENT_CHARS)}"
+        end
         if (document = chosen_document)
           parts << "The job listing (from the document “#{document.title}”):\n#{document_text(document)}"
         end
+        parts << web_capability_note
         context = section_context
         unless context.empty?
           parts << "The user's tracked career record — wins, work history, resume:\n#{context.to_prompt}"
         end
-        parts.join("\n\n")
+        parts.compact.join("\n\n")
       end
 
       def filing_sources = [ chosen_document ]

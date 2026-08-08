@@ -3,7 +3,7 @@ class ModelProfilesController < ApplicationController
 
   def update
     profile = Current.user.household.model_profile || Current.user.household.build_model_profile
-    attributes = params.expect(model_profile: [ :provider, :base_url, :model, :api_key ])
+    attributes = params.expect(model_profile: [ :provider, :base_url, :model, :api_key, :web_capable ])
     attributes.delete(:api_key) if attributes[:api_key].blank? # blank = keep the stored key
 
     if profile.update(attributes)

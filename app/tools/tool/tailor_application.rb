@@ -16,7 +16,10 @@ module Tool
       hint: "“Warehouse shift lead at Acme”."
     input :listing, kind: :textarea,
       label: "Paste the job listing",
-      hint: "Optional if you pick it from your documents below."
+      hint: "Optional if you give a link or pick a document below."
+    input :listing_url,
+      label: "…or a link to the listing",
+      hint: "The app fetches the page itself — works with any model."
     input :listing_document_id, kind: :document,
       label: "…or the listing from your documents"
     input :resume_document_id, kind: :document,
@@ -60,8 +63,8 @@ module Tool
     PROMPT
 
     def call
-      if inputs[:listing].blank? && chosen_document(:listing_document_id).nil?
-        raise Llm::Error, "Paste the listing text or pick it from your documents — either works."
+      if inputs[:listing].blank? && inputs[:listing_url].blank? && chosen_document(:listing_document_id).nil?
+        raise Llm::Error, "Paste the listing text, give a link, or pick it from your documents — any works."
       end
       super
     end
@@ -78,6 +81,9 @@ module Tool
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "The job: #{inputs[:role]}"
         parts << "The job listing:\n#{inputs[:listing]}" if inputs[:listing].present?
+        if (page = fetched_page)
+          parts << "The job listing (fetched from #{page.final_url}):\n#{page.text.truncate(MAX_DOCUMENT_CHARS)}"
+        end
         if (listing = chosen_document(:listing_document_id))
           parts << "The job listing (from the document “#{listing.title}”):\n#{document_text(listing)}"
         end

@@ -54,6 +54,43 @@ class InterviewPrepToolTest < ActiveJob::TestCase
     assert_requested(:post, ENDPOINT) { |request| request.body.include?("Shift lead role, nights.") }
   end
 
+  test "a listing URL is fetched by the app and joins the prompt" do
+    Web::Fetch.resolver = Class.new { def getaddresses(_h) = [ "93.184.216.34" ] }.new
+    stub_request(:get, "https://jobs.example.com/shift-lead").to_return(
+      status: 200, headers: { "Content-Type" => "text/html" },
+      body: "<html><body>Night shift lead. Forklift certification required.</body></html>"
+    )
+    run = users(:one).tool_runs.create!(
+      tool_slug: "interview_prep",
+      inputs: { "role" => "Shift lead", "listing_url" => "https://jobs.example.com/shift-lead" }
+    )
+    stub_llm(prep: { title: "t", body: "b" }, research: [], follow_ups: [])
+
+    ToolRunJob.perform_now(run)
+
+    assert run.reload.done?
+    assert_requested(:post, ENDPOINT) { |request| request.body.include?("Forklift certification") }
+  ensure
+    Web::Fetch.resolver = Resolv
+  end
+
+  test "an unreachable listing URL fails the run with the paste fallback named" do
+    Web::Fetch.resolver = Class.new { def getaddresses(_h) = [ "93.184.216.34" ] }.new
+    stub_request(:get, "https://jobs.example.com/gone").to_return(status: 404, body: "")
+    run = users(:one).tool_runs.create!(
+      tool_slug: "interview_prep",
+      inputs: { "role" => "Shift lead", "listing_url" => "https://jobs.example.com/gone" }
+    )
+
+    ToolRunJob.perform_now(run)
+
+    assert run.reload.failed?
+    assert_match(/Pasting the text works too/, run.error)
+    assert_not_requested :post, ENDPOINT
+  ensure
+    Web::Fetch.resolver = Resolv
+  end
+
   test "no listing at all fails with a friendly message before any model call" do
     run = users(:one).tool_runs.create!(tool_slug: "interview_prep", inputs: { "role" => "Shift lead" })
 

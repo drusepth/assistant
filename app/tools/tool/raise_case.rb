@@ -72,7 +72,8 @@ module Tool
         unless context.empty?
           parts << "The user's tracked career record — logged wins, work history, pay-change events:\n#{context.to_prompt}"
         end
-        parts.join("\n\n")
+        parts << web_capability_note
+        parts.compact.join("\n\n")
       end
 
       # Code states the timeline fact; the model only phrases it.

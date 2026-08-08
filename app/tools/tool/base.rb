@@ -160,6 +160,31 @@ module Tool
         Context.new(user: user, section_slugs: slugs, budget: budget)
       end
 
+      # D32's app-side web floor: fetch one user-supplied URL through
+      # Web::Fetch (deterministic code, SSRF-guarded, size-capped) and hand
+      # the model the text. A blank input is nil; a failed fetch fails the
+      # run with a message that names the paste-the-text fallback.
+      def fetched_page(input_name = :listing_url)
+        return nil if inputs[input_name].blank?
+
+        (@fetched_pages ||= {})[input_name.to_s] ||= begin
+          Web::Fetch.text(inputs[input_name])
+        rescue Web::Fetch::Error => e
+          raise Llm::Error, "Couldn't fetch that link — #{e.message}. Pasting the text works too."
+        end
+      end
+
+      # D32's model-side rung: when the admin has declared the provider
+      # web-capable, prompts may relax never-assert-current-facts into
+      # look-it-up-and-cite. Nil otherwise, so callers can compact it away.
+      def web_capability_note
+        return nil unless profile.web_capable?
+
+        "The configured model has live web access: where these instructions say to never assert " \
+        "current facts, you may instead look them up and cite what you found — keeping fetched " \
+        "facts clearly separate from the user's own records."
+      end
+
       # ── Landing primitives ─────────────────────────────────────────────
 
       def create_note(title:, body:)
