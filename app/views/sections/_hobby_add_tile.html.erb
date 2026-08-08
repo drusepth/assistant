@@ -1,0 +1,17 @@
+<%# The shrunken capture (docs/HOBBIES.md §1): once lenses exist, adding
+    another hobby is a quiet tile at the end of the grid, not the page's
+    headline. Dashed on purpose — an invitation, not a card. %>
+<div class="rounded-xl border border-dashed border-edge p-5">
+  <p class="text-sm font-medium text-soft">Add another hobby</p>
+  <%= form_with url: hobbies_path, class: "mt-2 flex gap-2" do %>
+    <%= text_field_tag :name, nil, class: "input", placeholder: "Name a hobby…" %>
+    <%= submit_tag "Add", class: "btn btn-secondary" %>
+  <% end %>
+  <% if (suggestions = hobby_suggestions(hobbies).first(4)).any? %>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <% suggestions.each do |name| %>
+        <%= button_to name, hobbies_path(name: name), class: "chip bg-amber-100 text-amber-800 hover:bg-amber-200" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

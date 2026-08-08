@@ -1,8 +1,12 @@
+<%# Hobby lenses are unbounded, so they get the browse grid below rather
+    than header chips; the seeded subsections (Money, Rights) stay chips —
+    a fixed handful, unqualified since the parent names the context. %>
+<% header_chips = @section.slug == "hobbies" ? [] : @section.children %>
 <%= render Ui::PageHeaderComponent.new(title: @section.qualified_name) do |header| %>
-  <% if @section.children.any? || @section.custom? %>
+  <% if header_chips.any? || @section.custom? %>
     <% header.with_actions do %>
-      <% @section.children.each do |child| %>
-        <%= render Ui::SectionChipComponent.new(section: child) %>
+      <% header_chips.each do |child| %>
+        <%= render Ui::SectionChipComponent.new(section: child, qualified: false) %>
       <% end %>
       <% if @section.custom? %>
         <%= button_to "Remove this hobby", hobby_path(@section), method: :delete, class: "btn btn-ghost",
@@ -13,10 +17,21 @@
 <% end %>
 
 <div class="space-y-8">
-  <%# Hobby identity capture (D25) — the section needs to know what the
-      hobbies are before its tools and lenses can do anything. %>
+  <%# Hobby identity (D25): before any lenses exist the page leads with the
+      capture question; after, each hobby is a card with engagement signal
+      and capture shrinks to a tile at the end of the grid. %>
   <% if @section.slug == "hobbies" %>
-    <%= render "sections/hobby_capture", hobbies: @section %>
+    <% if @hobby_summaries.any? %>
+      <div>
+        <h2 class="mb-3 text-sm font-medium text-soft">Your hobbies</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <%= render partial: "sections/hobby_card", collection: @hobby_summaries, as: :summary %>
+          <%= render "sections/hobby_add_tile", hobbies: @section %>
+        </div>
+      </div>
+    <% else %>
+      <%= render "sections/hobby_capture", hobbies: @section %>
+    <% end %>
   <% end %>
 
   <%# Act zone (D18): what the app can do here — present even, especially,
