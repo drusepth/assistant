@@ -9,6 +9,10 @@ class PhotosController < ApplicationController
       @section = Section.find_by!(slug: params[:section])
       base = base.in_section([ @section.id, *@section.children.ids ])
     end
+    if params[:person].present?
+      @person = Person.visible_to(Current.user).find(params[:person])
+      base = base.joins(:photo_people).where(photo_people: { person_id: @person.id })
+    end
     @years = base.distinct.pluck(Arel.sql("strftime('%Y', taken_at)")).sort.reverse
 
     if params[:year].present?
@@ -27,6 +31,14 @@ class PhotosController < ApplicationController
 
   def show
     @photo = Photo.visible_to(Current.user).find(params[:id])
+    # Tags name, they never grant: a viewer sees only tagged people they
+    # could already see.
+    @person_tags = @photo.photo_people.joins(:person)
+      .merge(Person.visible_to(Current.user)).includes(:person)
+    if @photo.user_id == Current.user.id
+      @taggable_people = Person.visible_to(Current.user)
+        .where.not(id: @photo.photo_people.select(:person_id)).order(:name)
+    end
   end
 
   # Batch capture: files from the multipart fallback or signed blob ids from

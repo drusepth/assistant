@@ -78,6 +78,7 @@ Rails.application.routes.draw do
       delete :remove_photos
     end
   end
+  resources :photo_people, only: %i[ create destroy ]
 
   resources :suggestions, only: [] do
     member do

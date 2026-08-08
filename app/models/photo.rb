@@ -15,6 +15,8 @@ class Photo < ApplicationRecord
 
   has_many :album_photos, dependent: :destroy
   has_many :albums, through: :album_photos
+  has_many :photo_people, dependent: :destroy
+  has_many :people, through: :photo_people
 
   # The album sharing path (D30): a grant on a containing album exposes the
   # photo — but only when the grant's grantor owns the photo, so a future

@@ -58,6 +58,19 @@
         <% end %>
       </dl>
     <% end %>
+
+    <% if @photos.any? %>
+      <div class="mt-6" data-controller="lightbox">
+        <%= render Ui::CardComponent.new(title: "Photos", subtitle: "Tagged with #{@person.name}") do |card| %>
+          <% card.with_actions do %>
+            <%= link_to "All photos", photos_path(person: @person.id), class: "btn btn-ghost btn-sm" %>
+          <% end %>
+          <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
+            <%= render partial: "photos/photo_tile", collection: @photos, as: :photo %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   </div>
   <% if own %>
     <div><%= render "shared/share_controls", subject: @person %></div>

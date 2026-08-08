@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_032055) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_032626) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -209,6 +209,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_032055) do
     t.index ["user_id"], name: "index_people_on_user_id"
   end
 
+  create_table "photo_people", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "person_id", null: false
+    t.integer "photo_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["person_id"], name: "index_photo_people_on_person_id"
+    t.index ["photo_id", "person_id"], name: "index_photo_people_on_photo_id_and_person_id", unique: true
+    t.index ["photo_id"], name: "index_photo_people_on_photo_id"
+  end
+
   create_table "photos", force: :cascade do |t|
     t.text "caption"
     t.datetime "created_at", null: false
@@ -372,6 +382,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_032055) do
   add_foreign_key "notification_channels", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
+  add_foreign_key "photo_people", "people"
+  add_foreign_key "photo_people", "photos"
   add_foreign_key "photos", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"

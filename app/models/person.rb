@@ -9,5 +9,8 @@ class Person < ApplicationRecord
 
   belongs_to :linked_user, class_name: "User", optional: true
 
+  has_many :photo_people, dependent: :destroy
+  has_many :photos, through: :photo_people
+
   validates :name, presence: true
 end

@@ -26,11 +26,21 @@
     <div class="mb-4 hidden space-y-1" data-photo-upload-target="progress"></div>
   <% end %>
 
+  <% if @person %>
+    <div class="mb-4">
+      <span class="chip inline-flex items-center gap-1.5 bg-ink text-white">
+        Photos of <%= @person.name %>
+        <%= link_to "✕", photos_path(section: params[:section].presence, year: params[:year].presence),
+              class: "text-white/70 hover:text-white", "aria-label": "Clear person filter" %>
+      </span>
+    </div>
+  <% end %>
+
   <div class="mb-4 flex flex-wrap gap-1.5">
-    <%= link_to "All", photos_path(year: params[:year].presence),
+    <%= link_to "All", photos_path(year: params[:year].presence, person: params[:person].presence),
           class: "chip #{@section.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
     <% Section.top_level.each do |section| %>
-      <%= link_to section.name, photos_path(section: section.slug, year: params[:year].presence),
+      <%= link_to section.name, photos_path(section: section.slug, year: params[:year].presence, person: params[:person].presence),
             class: "chip #{@section == section ? "bg-ink text-white" : "#{section_chip_classes(section)} hover:opacity-80"}" %>
     <% end %>
   </div>
@@ -63,6 +73,7 @@
       <div class="mt-8 text-center">
         <%= link_to "Older photos",
               photos_path(section: params[:section].presence, year: params[:year].presence,
+                person: params[:person].presence,
                 before_at: last.taken_at.utc.iso8601(6), before_id: last.id),
               class: "btn btn-secondary" %>
       </div>

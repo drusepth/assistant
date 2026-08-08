@@ -42,7 +42,7 @@
 
   <%# Browse zone: the lens itself. The empty state is quick capture
       pre-tagged with this section — never a dead end. %>
-  <% if [ @events, @tasks, @documents, @people, @goals, @notes ].all?(&:empty?) %>
+  <% if [ @events, @tasks, @documents, @people, @goals, @notes, @photos ].all?(&:empty?) %>
     <%= render Ui::EmptyStateComponent.new(
           title: "Nothing in #{@section.name} yet",
           description: "Anything you add here starts tagged #{@section.name} — and one item can live in several sections at once."
@@ -91,6 +91,19 @@
         <%= render Ui::CardComponent.new(title: "Notes", padded: false) do %>
           <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @notes %></div>
         <% end %>
+      <% end %>
+
+      <% if @photos.any? %>
+        <div data-controller="lightbox">
+          <%= render Ui::CardComponent.new(title: "Photos") do |card| %>
+            <% card.with_actions do %>
+              <%= link_to "All #{@photo_count}", photos_path(section: @section.slug), class: "btn btn-ghost btn-sm" %>
+            <% end %>
+            <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+              <%= render partial: "photos/photo_tile", collection: @photos, as: :photo %>
+            </div>
+          <% end %>
+        </div>
       <% end %>
     </div>
   <% end %>

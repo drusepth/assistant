@@ -40,6 +40,30 @@
           <dt class="w-24 shrink-0 text-soft">Sections</dt>
           <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @photo %></dd>
         </div>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">People</dt>
+          <dd class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <% @person_tags.each do |tag| %>
+              <span class="chip inline-flex items-center gap-1 bg-stone-100 text-stone-700">
+                <%= link_to tag.person.name, person_path(tag.person), class: "hover:underline" %>
+                <% if own %>
+                  <%= button_to "✕", photo_person_path(tag), method: :delete,
+                        class: "cursor-pointer text-soft hover:text-ink", form: { class: "inline-flex" } %>
+                <% end %>
+              </span>
+            <% end %>
+            <% if own && @taggable_people.any? %>
+              <%= form_with url: photo_people_path, class: "inline-flex items-center gap-1.5" do %>
+                <%= hidden_field_tag :photo_id, @photo.id %>
+                <%= select_tag :person_id, options_from_collection_for_select(@taggable_people, :id, :name),
+                      prompt: "Who's in it?", class: "input !w-auto py-1 text-sm" %>
+                <button type="submit" class="btn btn-ghost btn-sm">Tag</button>
+              <% end %>
+            <% elsif @person_tags.none? %>
+              <span class="text-soft">—</span>
+            <% end %>
+          </dd>
+        </div>
         <% if own && @photo.coordinates? %>
           <%# Location is owner-only (Q14): shared viewers get stripped variants
               and never this row. %>
