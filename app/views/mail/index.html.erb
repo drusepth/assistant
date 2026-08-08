@@ -1,0 +1,68 @@
+<%= render Ui::PageHeaderComponent.new(title: "Mail",
+      subtitle: "The assistant's view of your linked #{"mailbox".pluralize(@accounts.size)} — search it, promote what matters, ignore the rest") %>
+
+<% if @backfilling %>
+  <div class="mb-4 rounded-lg border border-primary-200 bg-primary-50/60 px-4 py-3 text-sm text-primary-900">
+    Still syncing your mail in — <%= number_with_delimiter(@mirrored_count) %> messages so far. This first pass can take a while on a big mailbox.
+  </div>
+<% end %>
+
+<div class="mb-4 flex flex-wrap items-center gap-2">
+  <%= form_with url: mail_index_path, method: :get, class: "flex min-w-64 flex-1 items-center gap-2" do %>
+    <%= text_field_tag :q, @query, class: "input flex-1", placeholder: "Search sender, subject, or text…" %>
+    <% if params[:account].present? %><%= hidden_field_tag :account, params[:account] %><% end %>
+    <%= submit_tag "Search", class: "btn btn-secondary" %>
+  <% end %>
+  <%= link_to "Ask your email", new_tool_run_path("ask_your_email"), class: "btn btn-primary" %>
+
+  <% if @accounts.size > 1 %>
+    <div class="flex items-center gap-1.5">
+      <%= link_to "All", mail_index_path(q: @query.presence, filter: @filter),
+            class: "chip #{params[:account].blank? ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
+      <% @accounts.each do |account| %>
+        <%= link_to account.label, mail_index_path(account: account.id, q: @query.presence, filter: @filter),
+              class: "chip #{params[:account].to_i == account.id ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center gap-1.5">
+    <% { nil => "Everything", "action" => "Needs action", "time" => "Time-sensitive" }.each do |key, filter_label| %>
+      <%= link_to filter_label, mail_index_path(q: @query.presence, account: params[:account].presence, filter: key),
+            class: "chip #{@filter == key ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
+    <% end %>
+  </div>
+</div>
+
+<% if @threads.empty? %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: @query.present? ? "Nothing in your mirrored mail matches" : "No mail mirrored yet",
+        description: @query.present? ? "The mirror holds a window of recent mail — older messages live in your mailbox itself." :
+          "Mail appears here after the first sync finishes. You can nudge it along with “Sync now” in Settings.") %>
+<% else %>
+  <div class="divide-y divide-edge overflow-hidden rounded-xl border border-edge bg-surface">
+    <% @threads.each do |thread| %>
+      <% newest = thread.first %>
+      <%= link_to mail_path(newest), class: "flex items-center gap-3 px-4 py-3 hover:bg-stone-50" do %>
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center gap-2 text-sm">
+            <span class="<%= newest.seen? ? "text-soft" : "font-semibold text-ink" %> min-w-0 truncate">
+              <%= newest.inbound? ? (newest.from_name.presence || newest.from_email) : "To: #{Array(newest.to_emails).first}" %>
+            </span>
+            <% if thread.size > 1 %><span class="chip bg-stone-100 text-stone-600"><%= thread.size %></span><% end %>
+            <% if newest.bulk? %><span class="chip bg-stone-100 text-stone-500">bulk</span><% end %>
+            <% if newest.reply_wanted_by %><span class="chip bg-amber-100 text-amber-800">awaiting reply</span><% end %>
+            <% if newest.triage&.dig("category") == "action_needed" %>
+              <span class="chip bg-red-50 text-red-700">needs action</span>
+            <% elsif newest.triage&.dig("category") == "time_sensitive" %>
+              <span class="chip bg-amber-100 text-amber-800">time-sensitive</span>
+            <% end %>
+          </span>
+          <span class="block truncate text-sm <%= newest.seen? ? "text-soft" : "text-ink" %>"><%= newest.subject.presence || "(no subject)" %></span>
+          <span class="block truncate text-xs text-soft"><%= newest.snippet %></span>
+        </span>
+        <span class="shrink-0 text-xs text-soft"><%= newest.sent_at ? time_ago_in_words(newest.sent_at) + " ago" : "" %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

@@ -48,6 +48,26 @@
       <% end %>
     <% end %>
   <% else %>
+    <%# Ask-your-email answers render here rather than landing anything —
+        "Save as note" is the explicit door into the primitive pool
+        (D-mirror-layer). %>
+    <% if (answer = @tool_run.output["answer"]).present? %>
+      <%= render Ui::CardComponent.new(title: answer["question"],
+            subtitle: "Answered from #{answer["searched"]} — save it if it's worth keeping") do |card| %>
+        <% card.with_actions do %>
+          <%= button_to "Save as note", save_answer_tool_run_path(@tool_run), method: :post, class: "btn btn-secondary btn-sm" %>
+        <% end %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= answer["body"] %></p>
+        <% if Array(answer["citations"]).any? %>
+          <ul class="mt-3 space-y-1 border-t border-edge pt-3 text-xs text-soft">
+            <% answer["citations"].each do |citation| %>
+              <li>— <%= citation["from"] %><%= ", #{citation["date"]}" if citation["date"].present? %><%= ": #{citation["note"]}" if citation["note"].present? %></li>
+            <% end %>
+          </ul>
+        <% end %>
+      <% end %>
+    <% end %>
+
     <% items = @tool_run.items %>
     <% drafts = items.grep(Note) %>
     <% goals = items.grep(Goal) %>
@@ -84,7 +104,7 @@
       <% end %>
     <% end %>
 
-    <% if @tool_run.items.empty? %>
+    <% if @tool_run.items.empty? && @tool_run.output["answer"].blank? %>
       <%= render Ui::CardComponent.new do %>
         <p class="text-sm text-soft">The run finished but produced nothing — try again with more detail.</p>
       <% end %>

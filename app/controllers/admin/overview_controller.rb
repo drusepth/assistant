@@ -19,6 +19,10 @@ module Admin
 
       @cpi = Datasets::Cpi.current
       @wages = Datasets::Wages.current
+
+      # Counts only, same rule as above: what a reset would take, never what
+      # any of it is.
+      @reset_preview = HouseholdReset.preview(Current.user.household)
     end
   end
 end

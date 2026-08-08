@@ -10,6 +10,7 @@ module Tool
     negotiation_prep benefits_screener learn_something tutor task_chat
     cancel_subscription reconnect gift_ideas get_together what_do_i_say make_new_friends moving
     caregiver bereavement
+    email_follow_up ask_your_email
     start_a_hobby what_should_i_make_next find_your_people
     interview_prep mock_interview check_pay_stub wage_claim tailor_application
     raise_case decode_offer lost_my_job plan_job_search
