@@ -5,7 +5,9 @@
         <%= render Ui::SectionChipComponent.new(section: child) %>
       <% end %>
       <% if @section.custom? %>
-        <%= button_to "Remove this hobby", hobby_path(@section), method: :delete, class: "btn btn-ghost",
+        <% group = @section.parent&.slug == "people" %>
+        <%= button_to group ? "Remove this group" : "Remove this hobby",
+              group ? group_path(@section) : hobby_path(@section), method: :delete, class: "btn btn-ghost",
               data: { turbo_confirm: "Remove #{@section.name}? Your items stay — they just lose this tag." } %>
       <% end %>
     <% end %>
@@ -51,7 +53,7 @@
       inside it, so the generic versions below are skipped on this page. %>
   <% if @section.slug == "people" %>
     <%= render "sections/people_hub", circle: @circle, birthdays: @upcoming_birthdays, events: @events,
-          address_book_size: @address_book_size %>
+          address_book_size: @address_book_size, groups: @section.children %>
   <% end %>
 
   <%# Browse zone: the lens itself. The empty state is quick capture

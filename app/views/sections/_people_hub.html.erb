@@ -30,6 +30,28 @@
   </p>
 <% end %>
 
+<%# Groups as sub-lenses (docs/PEOPLE.md §6): the community layer. Each
+    group is a custom child section of People — its page, calendar filter,
+    and sharing come from the existing lens machinery. %>
+<%= render Ui::CardComponent.new(
+      title: "Groups",
+      subtitle: "Family, church, the book club, the mutual-aid crew — each group gets its own page."
+    ) do %>
+  <div class="space-y-3">
+    <% if groups.any? %>
+      <div class="flex flex-wrap gap-2">
+        <% groups.each do |group| %>
+          <%= render Ui::SectionChipComponent.new(section: group) %>
+        <% end %>
+      </div>
+    <% end %>
+    <%= form_with url: groups_path, class: "flex gap-2" do %>
+      <%= text_field_tag :name, nil, class: "input max-w-60", placeholder: "Start a group…" %>
+      <%= submit_tag "Add", class: "btn btn-secondary" %>
+    <% end %>
+  </div>
+<% end %>
+
 <% if circle.any? %>
   <%= render Ui::CardComponent.new(title: "Your circle", padded: false) do %>
     <div class="divide-y divide-edge">

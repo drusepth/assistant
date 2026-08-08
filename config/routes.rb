@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
   get "sections/:slug" => "sections#show", as: :section
   resources :hobbies, only: %i[ create destroy ]
+  resources :groups, only: %i[ create destroy ]
 
   resource :settings, only: %i[ show update ]
   resource :export, only: %i[ create ]

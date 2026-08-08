@@ -143,6 +143,14 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
       "rolodex birthdays stay off the dashboard (the capture dropdown may list the person; rows must not)"
   end
 
+  test "the People page offers group capture and lists existing groups" do
+    People::Group.find_or_create!("D&D table")
+
+    get section_path("people")
+    assert_match "Start a group", response.body
+    assert_match "D&amp;D table", response.body
+  end
+
   test "other sections keep their filtered person lists" do
     doctor = users(:one).people.create!(name: "Dr. Chen")
     doctor.sections << sections(:health)
