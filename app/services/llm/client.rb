@@ -79,7 +79,18 @@ module Llm
       def parse_json(content)
         JSON.parse(content)
       rescue JSON::ParserError
-        raise TransientError, "The model returned invalid JSON."
+        embedded_json(content) or raise TransientError, "The model returned invalid JSON."
+      end
+
+      # Providers that ignore response_format — local models especially — often
+      # wrap perfectly valid JSON in a markdown fence or a sentence of prose,
+      # and retrying yields the same wrapping every time. The object is still
+      # in there: take the outermost {...} or [...] and try again.
+      def embedded_json(content)
+        embedded = content[/\{.*\}|\[.*\]/m]
+        JSON.parse(embedded) if embedded
+      rescue JSON::ParserError
+        nil
       end
 
       def error_message(body)

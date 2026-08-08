@@ -76,6 +76,30 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_match "unexpected response shape", error.message
   end
 
+  test "salvages JSON the model wrapped in a markdown fence" do
+    fenced = "```json\n{\"answer\": 42}\n```"
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: fenced } } ] }.to_json)
+
+    assert_equal({ "answer" => 42 }, @client.chat([ { role: "user", content: "Hi" } ], json: true))
+  end
+
+  test "salvages JSON the model wrapped in prose" do
+    chatty = "Here is the plan you asked for:\n\n{\"steps\": [{\"title\": \"Call the clinic\"}]}\n\nGood luck!"
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: chatty } } ] }.to_json)
+
+    assert_equal({ "steps" => [ { "title" => "Call the clinic" } ] },
+      @client.chat([ { role: "user", content: "Hi" } ], json: true))
+  end
+
+  test "braces alone are not enough — unsalvageable content is still transient" do
+    stub_request(:post, @endpoint)
+      .to_return(status: 200, body: { choices: [ { message: { content: "set {a: b} then done" } } ] }.to_json)
+
+    assert_raises(Llm::TransientError) { @client.chat([ { role: "user", content: "Hi" } ], json: true) }
+  end
+
   test "invalid JSON is transient, because another sample often parses" do
     stub_request(:post, @endpoint)
       .to_return(status: 200, body: { choices: [ { message: { content: "not json" } } ] }.to_json)
