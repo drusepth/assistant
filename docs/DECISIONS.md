@@ -120,6 +120,9 @@ Three escape hatches for the derived view (extends D31): **tuning** (`care_setti
 **D36. A medication is a Note with a kind, plus a refill Event.**
 No new primitive: the Medications card files a Note (`notes.kind = "medication"`, name as title, dose/schedule as body) and optionally an all-day "Refill …" Event, both under Health. Every existing surface then works unpaid — renewal-radar gives refills lead time ("refill" keyword, Health section), doctor-visit-prep reads the med list because it already reads Health notes, meds export/share as notes, and refill events are radar-excluded by code (`care_kind: "none"`). Deliberately not built: dose-time reminders and adherence tracking — an assistant that nags nightly gets turned off. `notes.kind` is a primitive-level attribute (like `events.care_kind`), not a section-owned table, so the lens model holds. — *Built.*
 
+**D37. Section pages compose per-section panels by convention.**
+Born from a merge: the Hobbies, subsection-tile, and Health buildouts all edited `SectionsController`, `sections/show.html.erb`, and `SectionsHelper`, and collided. Now a section's lead panel is discovered, not wired: `Sections::Panel.for(section, viewer)` resolves `Sections::Panels::<Slug>` (nil for sections without one — they get the generic subsection browse grid), the panel object carries all section-specific page data as memoized methods plus `hidden_tool_slugs` for Act-zone curation, and the view renders `sections/panels/_<slug>.html.erb` with the panel as a local. Building out a section therefore adds files (a panel class, a panel partial, services, tools, watchers) and edits only registries — two section buildouts in parallel touch disjoint files. The shared page files change only when the *anatomy* (D18) changes. — *Built.*
+
 ## Resolved questions
 
 **Q1. Benefits placement: Money.**

@@ -2,7 +2,13 @@
     "am I on top of my health?" at a glance. The care radar is a derived
     view over the user's own Health-tagged events — booked / on track / due /
     not tracked per kind of routine care — and the coverage card is where
-    insurance lives (as vault documents) and where its tools start. %>
+    insurance lives (as vault documents) and where its tools start.
+    All data comes from the panel (Sections::Panels::Health, D37). %>
+<% statuses = panel.care_statuses
+   family_care = panel.family_care
+   coverage_documents = panel.coverage_documents
+   medications = panel.medications
+   last_check_in = panel.last_check_in %>
 <% if statuses.any? %>
   <%= render Ui::CardComponent.new(
         title: "Routine care",

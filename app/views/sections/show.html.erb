@@ -11,23 +11,14 @@
 <% end %>
 
 <div class="space-y-8">
-  <%# Hobby identity (D25): before any lenses exist the page leads with the
-      capture question; after, each hobby is a card with engagement signal
-      and capture shrinks to a tile at the end of the grid. %>
-  <% if @section.slug == "hobbies" %>
-    <% if @subsection_summaries.any? %>
-      <div>
-        <h2 class="mb-3 text-sm font-medium text-soft">Your hobbies</h2>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <%= render partial: "sections/hobby_card", collection: @subsection_summaries, as: :summary %>
-          <%= render "sections/hobby_add_tile", hobbies: @section %>
-        </div>
-      </div>
-    <% else %>
-      <%= render "sections/hobby_capture", hobbies: @section %>
-    <% end %>
-  <%# Seeded subsections (Money, Rights) are a fixed handful that's often
-      empty, so they browse as compact tiles: name + one line of signal. %>
+  <%# Per-section lead panels (D37): a built-out section registers
+      Sections::Panels::<Slug> and its partial under sections/panels/ —
+      this file and the controller never change per section. Sections
+      without a panel get the generic browse grid: seeded subsections
+      (Money, Rights) are a fixed handful that's often empty, so they
+      browse as compact tiles — name + one line of signal. %>
+  <% if @panel %>
+    <%= render @panel.partial, panel: @panel, section: @section, summaries: @subsection_summaries %>
   <% elsif @subsection_summaries.any? %>
     <div>
       <h2 class="mb-3 text-sm font-medium text-soft">Browse</h2>
@@ -35,13 +26,6 @@
         <%= render partial: "sections/subsection_tile", collection: @subsection_summaries, as: :summary %>
       </div>
     </div>
-  <% end %>
-
-  <%# The Health lead panel (docs/HEALTH.md): routine-care radar + coverage. %>
-  <% if @section.slug == "health" %>
-    <%= render "sections/health_care", statuses: @care_statuses, family_care: @family_care,
-          coverage_documents: @coverage_documents, medications: @medications,
-          last_check_in: @last_check_in, section: @section %>
   <% end %>
 
   <%# Act zone (D18): what the app can do here — present even, especially,
