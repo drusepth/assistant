@@ -29,10 +29,11 @@ module Web
     # Injectable so tests run without DNS; anything answering getaddresses.
     cattr_accessor :resolver, default: Resolv
 
-    def self.text(url) = new(url).call
+    def self.text(url, headers: {}) = new(url, headers: headers).call
 
-    def initialize(url)
+    def initialize(url, headers: {})
       @url = url.to_s.strip
+      @headers = headers
     end
 
     def call
@@ -83,7 +84,10 @@ module Web
         http.use_ssl = uri.scheme == "https"
         http.open_timeout = OPEN_TIMEOUT
         http.read_timeout = READ_TIMEOUT
-        request = Net::HTTP::Get.new(uri, "User-Agent" => USER_AGENT, "Accept" => "text/html, application/xhtml+xml, text/*, application/json")
+        request = Net::HTTP::Get.new(uri, {
+          "User-Agent" => USER_AGENT,
+          "Accept" => "text/html, application/xhtml+xml, text/*, application/json"
+        }.merge(@headers))
         http.request(request)
       rescue Timeout::Error, SocketError, SystemCallError, OpenSSL::SSL::SSLError => e
         raise Error, "couldn't reach the site (#{e.class.name.demodulize})"

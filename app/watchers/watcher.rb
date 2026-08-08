@@ -4,10 +4,14 @@
 # digest); the *decision* that something deserves attention is always plain
 # code. Like tools, watchers are first-party only and this explicit slug
 # list is the whole registry.
+#
+# One sanctioned exception to SQL-only (D32): job_scout fetches the user's
+# configured feeds and ranks postings with one model call. The write-surface
+# discipline is untouched — suggestions only, propose-don't-dispose.
 module Watcher
   SLUGS = %w[
     checkup_cadence stay_in_touch renewal_radar goal_stall neglected_hobby same_day_sync stale_task
-    stub_anomaly raise_cadence interview_ahead application_follow_up real_terms_drift
+    stub_anomaly raise_cadence interview_ahead application_follow_up real_terms_drift job_scout
   ].freeze
 
   module_function

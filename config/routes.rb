@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   resources :hobbies, only: %i[ create destroy ]
   post "career/win" => "career#create_win", as: :career_win
   post "career/comp_change" => "career#create_comp_change", as: :career_comp_change
+  resources :job_feeds, only: %i[ create destroy ]
 
   resource :settings, only: %i[ show update ]
   resource :export, only: %i[ create ]
