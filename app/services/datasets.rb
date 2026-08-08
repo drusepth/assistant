@@ -6,6 +6,10 @@
 module Datasets
   SEED_DIR = Rails.root.join("db/datasets")
 
+  # Raised when a dataset can't be fetched, read, or parsed. Named so the
+  # /admin error log says which subsystem broke instead of "StandardError".
+  Error = Class.new(StandardError)
+
   # Overridable so tests write to a tmpdir instead of the instance's storage.
   mattr_accessor :store_dir, default: Rails.root.join("storage/datasets")
 
@@ -17,6 +21,18 @@ module Datasets
 
     seeded = SEED_DIR.join(filename)
     seeded if seeded.exist?
+  end
+
+  # The sidecar .yml a fetch or import writes next to each dataset: where it
+  # came from and when. Unreadable metadata is missing metadata — a mangled
+  # sidecar must never take the dataset itself down.
+  def metadata(filename)
+    path = read_path(filename)
+    return {} unless path
+
+    YAML.safe_load(path.read, permitted_classes: [ Date, Time ]).presence || {}
+  rescue Psych::Exception, SystemCallError
+    {}
   end
 
   def write!(filename, content)

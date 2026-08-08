@@ -22,10 +22,7 @@ module Datasets
     def present? = @rows.any?
 
     # "May 2024" style vintage recorded at fetch/import time.
-    def as_of
-      meta_path = Datasets.read_path(META_FILENAME)
-      meta_path && YAML.safe_load(meta_path.read)["as_of"]
-    end
+    def as_of = Datasets.metadata(META_FILENAME)["as_of"]
 
     def search(text, limit: 3)
       terms = text.to_s.downcase.scan(/[a-z]+/).uniq - STOPWORDS
