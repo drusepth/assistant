@@ -128,7 +128,7 @@ class LinkedAccountsControllerTest < ActionDispatch::IntegrationTest
     assert_no_enqueued_jobs do
       post sync_linked_account_path(linked_accounts(:alice_email))
     end
-    assert_equal "Email doesn't sync yet.", flash[:alert]
+    assert_equal "Email — Personal doesn't sync yet.", flash[:alert]
   end
 
   test "users cannot sync another user's link" do

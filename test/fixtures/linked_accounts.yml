@@ -1,26 +1,21 @@
+# credentials is a serialized-JSON text column (encrypted at rest in the
+# app; fixtures store the plaintext JSON, which support_unencrypted_data
+# keeps readable) — so values here are JSON strings, not YAML hashes.
 alice_email:
   user: one
   provider: email
-  credentials:
-    host: imap.example.com
-    username: one@example.com
-    password: app-password
+  label: Personal
+  credentials: '{"host":"imap.example.com","username":"one@example.com","password":"app-password"}'
   disabled_scopes: []
 
 alice_contacts:
   user: one
   provider: contacts
-  credentials:
-    server_url: https://dav.example.com/
-    username: one@example.com
-    password: app-password
+  credentials: '{"server_url":"https://dav.example.com/","username":"one@example.com","password":"app-password"}'
   disabled_scopes: []
 
 alice_calendar:
   user: one
   provider: calendar
-  credentials:
-    server_url: https://cal.example.com/
-    username: one@example.com
-    password: app-password
+  credentials: '{"server_url":"https://cal.example.com/","username":"one@example.com","password":"app-password"}'
   disabled_scopes: []

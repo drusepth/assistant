@@ -31,12 +31,56 @@ class LinkedAccountTest < ActiveSupport::TestCase
 
   test "one link per provider per user, but other users can link the same provider" do
     duplicate = users(:one).linked_accounts.build(
-      provider: "email", credentials: { host: "h", username: "u", password: "p" })
+      provider: "contacts", credentials: { server_url: "https://d.example.com/", username: "u", password: "p" })
     assert_not duplicate.valid?
 
     other = users(:two).linked_accounts.build(
-      provider: "email", credentials: { host: "h", username: "u", password: "p" })
+      provider: "contacts", credentials: { server_url: "https://d.example.com/", username: "u", password: "p" })
     assert other.valid?
+  end
+
+  test "multi-link providers allow several links told apart by required labels" do
+    creds = { host: "h", username: "u", password: "p" }
+
+    unlabeled = users(:one).linked_accounts.build(provider: "email", credentials: creds)
+    assert_not unlabeled.valid?, "a second mailbox needs a label"
+
+    duplicate_label = users(:one).linked_accounts.build(provider: "email", label: "Personal", credentials: creds)
+    assert_not duplicate_label.valid?
+
+    work = users(:one).linked_accounts.build(provider: "email", label: "Work", credentials: creds)
+    assert work.valid?
+    assert_equal "Email — Work", work.display_name
+  end
+
+  test "credentials are encrypted at rest but read as a hash" do
+    account = users(:two).linked_accounts.create!(
+      provider: "email", label: "Personal",
+      credentials: { host: "imap.example.com", username: "bob@example.com", password: "s3cret" })
+
+    assert_equal "s3cret", account.reload.credentials["password"]
+    raw = LinkedAccount.connection.select_value(
+      "SELECT credentials FROM linked_accounts WHERE id = #{account.id}")
+    assert_not_includes raw, "s3cret"
+    assert_not_includes raw, "imap.example.com"
+  end
+
+  test "background sync is due by the provider's cadence and skips paused links" do
+    contacts = linked_accounts(:alice_contacts)
+
+    contacts.update!(synced_at: nil)
+    assert contacts.sync_due?, "a never-synced syncable link is due"
+
+    contacts.update!(synced_at: 10.minutes.ago)
+    assert_not contacts.sync_due?, "an hourly link synced 10 minutes ago is not due"
+
+    contacts.update!(synced_at: 2.hours.ago)
+    assert contacts.sync_due?
+
+    contacts.update!(settings: { "paused" => true })
+    assert_not contacts.sync_due?, "paused links never sync"
+
+    assert_not linked_accounts(:alice_email).sync_due?, "email has no sync consumer yet"
   end
 
   test "every declared credential field is required" do

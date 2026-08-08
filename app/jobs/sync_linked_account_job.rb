@@ -6,7 +6,16 @@
 class SyncLinkedAccountJob < ApplicationJob
   queue_as :default
 
+  # Recurring background sync (email plan E0): the schedule fans out every
+  # few minutes; each link's registry cadence (sync_every) decides whether
+  # it's actually due, so email can poll faster than DAV without separate
+  # schedules. Cheap by design — a handful of rows, in-Ruby filtering.
+  def self.sync_stale
+    LinkedAccount.find_each { |account| perform_later(account) if account.sync_due? }
+  end
+
   def perform(linked_account)
+    return if linked_account.paused?
     service = linked_account.sync_service or return
     result = service.new(linked_account).call
     linked_account.update!(synced_at: Time.current, sync_error: result.error)

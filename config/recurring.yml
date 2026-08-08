@@ -21,3 +21,9 @@ production:
   daily_agent_scan:
     command: "AgentScanJob.scan_all(cadence: :daily)"
     schedule: every day at 8:30am
+  # Background sync for linked accounts (email plan E0): the fan-out runs
+  # often; each link's registry sync_every decides whether it's due, so
+  # email polls at minutes while DAV stays hourly.
+  sync_linked_accounts:
+    command: "SyncLinkedAccountJob.sync_stale"
+    schedule: every 5 minutes

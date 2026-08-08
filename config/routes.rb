@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   resources :hobbies, only: %i[ create destroy ]
 
   resource :settings, only: %i[ show update ]
+  resource :household, only: %i[ update ]
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]
