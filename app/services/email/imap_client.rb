@@ -84,6 +84,24 @@ class Email::ImapClient
     end
   end
 
+  # Block inside IMAP IDLE until the server signals new mail or the
+  # timeout passes (re-issue well under the RFC's ~29-minute ceiling).
+  # => :activity | :timeout. Servers without IDLE raise Error — the
+  # listener treats that link as polling-only.
+  def idle_wait(folder, timeout: 600)
+    wrap("idling on #{folder}") do
+      examine(folder)
+      activity = false
+      imap.idle(timeout) do |response|
+        if response.is_a?(Net::IMAP::UntaggedResponse) && %w[ EXISTS RECENT ].include?(response.name)
+          activity = true
+          imap.idle_done
+        end
+      end
+      activity ? :activity : :timeout
+    end
+  end
+
   def disconnect
     @imap&.logout
   rescue StandardError

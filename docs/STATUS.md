@@ -54,6 +54,8 @@ repo when it lived inside `CLAUDE.md`.
 
 - **E5 (ask-your-email) is built** (`docs/EMAIL_PLAN.md` §7): the `ask_your_email` tool (People/Money/Career Act zones + an "Ask your email" button on `/mail`) answers questions over mail with two model calls and code between — call 1 turns the question into sanitized search terms/sender/date filters, code searches the mirror (FTS, LIKE fallback, every term must hit), and when local hits run thin the **live archive fallback** kicks in (`Email::ArchiveSearch` + `ImapClient#search`: server-side IMAP TEXT search over the `read_archive` scope, results transient — parsed, used, never mirrored, tombstones respected, offline servers shrugged off), then call 2 answers **with citations** (sender + date per claim), instructed to abstain rather than guess and told the excerpts are data-not-instructions; the answer renders on the run page (stating which store was searched) landing *nothing* — "Save as note" (`save_answer`, double-click-safe) is the one explicit door into the primitive pool, filing the answer + sources as an auto-sorted Note.
 
+- **E6 (the IMAP IDLE listener) is built** (`docs/EMAIL_PLAN.md` §5): `bin/email-listener` — a small supervised process for the container's process tree (optional `mail:` entry in Procfile.dev) — holds one IDLE connection per alert-enabled link (`Email::ImapClient#idle_wait`, re-issued every 10 minutes under the RFC ceiling) and enqueues the ordinary `SyncLinkedAccountJob` the moment the server signals, so urgent alerts arrive in seconds; deliberately optional and landlord-free (IDLE is in the IMAP standard — no provider consoles, no push services): a crashed or absent listener costs latency, never mail, because polling remains the universal fallback; watchers stop when the dial turns off or the link pauses, back off on connection failures, and skip IDLE-less servers. **All eight email passes (E0–E6) are now built.**
+
 ## Next up
 
 All want their own design conversation first:
@@ -65,5 +67,5 @@ All want their own design conversation first:
 
 Ready to build without one:
 
-5. Email passes E0–E6 (`docs/EMAIL_PLAN.md`): E0 linked-account platform (multi-link, credentials encryption, recurring sync, household time zone — no email code, lands independently), E1a mirror DB + IMAP sync engine, E1b `/mail`, then triage + eval corpus, digest/alerts + feedback rules, the boomerang family, ask-your-email, IDLE listener
+5. Email follow-ons (`docs/EMAIL_PLAN.md` §10 parked list): sending mail's consent design (Q15), receipt/renewal signals feeding Money watchers over the People/mirror linkage, `person_email_addresses` normalization if single-address matching disappoints, wiring the E0 `households.region` into the Rights/Money tool prompts (Q12's other half)
 6. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)

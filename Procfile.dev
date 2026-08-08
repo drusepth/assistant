@@ -1,2 +1,4 @@
 web: bin/rails server
 css: bin/rails tailwindcss:watch
+# Optional real-time mail alerts (EMAIL_PLAN.md E6) — uncomment to run:
+# mail: bin/email-listener
