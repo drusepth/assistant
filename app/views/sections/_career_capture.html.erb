@@ -1,0 +1,46 @@
+<%# The career-signal capture (docs/CAREER.md §1, D-career-signal): the win
+    log and the comp timeline are what the raise case, resume tailoring, and
+    interview prep read — capture stays one line, the assistant does the
+    filing. Locals: panel, section. %>
+<%= render Ui::CardComponent.new(
+      title: "Your work, on the record",
+      subtitle: "Wins and pay changes logged here become the receipts for raise cases, resumes, and interview prep."
+    ) do %>
+  <div class="space-y-3">
+    <%= form_with url: career_win_path, class: "flex gap-2" do %>
+      <%= text_field_tag :text, nil, class: "input",
+            placeholder: "Log a win — “caught the inventory error before the audit”" %>
+      <%= submit_tag "Log win", class: "btn btn-primary" %>
+    <% end %>
+    <% if panel.recent_wins.any? %>
+      <ul class="space-y-1 text-sm text-soft">
+        <% panel.recent_wins.each do |win| %>
+          <li class="truncate">
+            <%= link_to win.body, win, class: "hover:text-ink" %>
+            <span class="text-xs"><%= win.created_at.strftime("%b %-d") %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <%= form_with url: career_comp_change_path, class: "flex flex-wrap gap-2" do %>
+      <%= text_field_tag :summary, nil, class: "input flex-1",
+            placeholder: "Log a pay change — “Raise: $19 → $21/hr”" %>
+      <%= date_field_tag :on, Date.current, class: "input w-auto" %>
+      <%= submit_tag "Log change", class: "btn btn-secondary" %>
+    <% end %>
+    <% if panel.last_comp_change_on %>
+      <p class="text-sm text-soft">
+        Pay last moved <%= panel.last_comp_change_on.strftime("%B %Y") %> —
+        <%= pluralize(panel.months_since_comp_change, "month") %> ago.
+      </p>
+    <% end %>
+
+    <p class="text-sm text-soft">
+      Pay stubs added to <%= link_to "Documents", documents_path, class: "underline" %> join the same
+      timeline automatically, and a
+      <%= link_to "“Tell me about your work” note", new_note_path(section_ids: [ section.id ], title: "About my work"), class: "underline" %>
+      gives every Career tool its context.
+    </p>
+  </div>
+<% end %>

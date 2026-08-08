@@ -16,6 +16,7 @@ class User < ApplicationRecord
   has_many :albums, dependent: :destroy
   has_many :tool_runs, dependent: :destroy
   has_many :suggestions, dependent: :destroy
+  has_many :job_feeds, dependent: :destroy
   has_many :linked_accounts, dependent: :destroy
   has_many :notification_channels, dependent: :destroy
   has_many :care_settings, dependent: :destroy

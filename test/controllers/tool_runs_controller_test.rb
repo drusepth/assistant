@@ -268,6 +268,6 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "To whom it may concern", response.body
     assert_match "Mail the letter", response.body
-    assert_match "never sends anything on your behalf", response.body
+    assert_match "nothing ever goes out without your explicit click", response.body
   end
 end

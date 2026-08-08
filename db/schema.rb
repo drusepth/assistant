@@ -106,6 +106,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_060958) do
     t.string "analysis_status"
     t.datetime "created_at", null: false
     t.text "description"
+    t.json "extracted_facts", default: {}, null: false
     t.text "extracted_text"
     t.boolean "health_plan"
     t.json "suggested_sections", default: []
@@ -169,6 +170,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_060958) do
     t.index ["inviter_id"], name: "index_invitations_on_inviter_id"
   end
 
+  create_table "job_feeds", force: :cascade do |t|
+    t.string "api_key"
+    t.datetime "created_at", null: false
+    t.string "kind", default: "rss", null: false
+    t.string "label"
+    t.string "last_error"
+    t.datetime "last_scanned_at"
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_job_feeds_on_user_id"
+  end
+
   create_table "linked_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.json "credentials", default: {}, null: false
@@ -191,6 +205,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_060958) do
     t.string "provider", default: "openai", null: false
     t.datetime "updated_at", null: false
     t.boolean "vision", default: false, null: false
+    t.boolean "web_capable", default: false, null: false
     t.index ["household_id"], name: "index_model_profiles_on_household_id", unique: true
   end
 
@@ -410,6 +425,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_060958) do
   add_foreign_key "goals", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"
+  add_foreign_key "job_feeds", "users"
   add_foreign_key "linked_accounts", "users"
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"

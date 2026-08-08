@@ -16,6 +16,9 @@ module Admin
       @failed_documents = Document.where(analysis_status: :failed).count
 
       @storage = StorageStatus.new(Current.user.household)
+
+      @cpi = Datasets::Cpi.current
+      @wages = Datasets::Wages.current
     end
   end
 end

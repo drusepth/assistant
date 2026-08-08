@@ -1,0 +1,44 @@
+<%# The job scout's sources (docs/CAREER.md §5, D-career-web): feeds and open
+    board APIs the user chooses — leads arrive as suggestions, and applying
+    is always the user's click. Locals: panel. %>
+<%= render Ui::CardComponent.new(
+      title: "Job scout",
+      subtitle: "Paste job feeds and the scout flags postings that fit your record — including your hobbies."
+    ) do %>
+  <div class="space-y-3">
+    <% feeds = panel.job_feeds %>
+    <% if feeds.any? %>
+      <ul class="divide-y divide-edge text-sm">
+        <% feeds.each do |feed| %>
+          <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+            <div class="min-w-0">
+              <span class="font-medium text-ink"><%= feed.display_label %></span>
+              <span class="chip ml-1"><%= feed.kind %></span>
+              <p class="text-xs text-soft">
+                <% if feed.last_error.present? %>
+                  Last check failed: <%= feed.last_error %>
+                <% elsif feed.last_scanned_at %>
+                  Checked <%= time_ago_in_words(feed.last_scanned_at) %> ago
+                <% else %>
+                  Not checked yet — runs with your agent schedule
+                <% end %>
+              </p>
+            </div>
+            <%= button_to "Remove", job_feed_path(feed), method: :delete, class: "btn btn-ghost btn-sm" %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <%= form_with url: job_feeds_path, scope: :job_feed, class: "flex flex-wrap gap-2" do |form| %>
+      <%= form.text_field :url, class: "input flex-1", placeholder: "https://boards.greenhouse.io/…, jobs.lever.co/…, an RSS feed, or data.usajobs.gov/…" %>
+      <%= form.text_field :label, class: "input w-32", placeholder: "Label (optional)" %>
+      <%= form.text_field :api_key, class: "input w-36", placeholder: "API key (USAJobs)" %>
+      <%= form.submit "Add feed", class: "btn btn-secondary" %>
+    <% end %>
+    <p class="text-xs text-soft">
+      Feeds and open APIs only — nothing here scrapes sites that forbid it. Leads land under
+      “Needs your attention”; accepting one opens Tailor-my-application with the posting attached.
+      You always hit send.
+    </p>
+  </div>
+<% end %>
