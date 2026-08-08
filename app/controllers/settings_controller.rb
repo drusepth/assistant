@@ -6,7 +6,6 @@ class SettingsController < ApplicationController
     @section_grants = Current.user.granted_access_grants.where(subject_type: "Section")
       .includes(:grantee, :subject)
     @linked_accounts = Current.user.linked_accounts.index_by(&:provider)
-    @pending_invitations = Current.user.household.invitations.pending.order(:created_at) if Current.user.admin?
   end
 
   def update

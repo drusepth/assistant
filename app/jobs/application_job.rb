@@ -10,11 +10,21 @@ class ApplicationJob < ActiveJob::Base
   # backend, where on a self-hosted box nobody is looking.
   around_perform :record_unhandled_errors
 
+  # Background work computes dates too — the weekly scan, the watchers, the
+  # renewal radar. Without this they'd disagree with the pages that show
+  # their output (D-household-profile).
+  around_perform :use_household_time_zone
+
   private
+    def use_household_time_zone(&block)
+      zone = job_user&.household&.zone
+      zone ? Time.use_zone(zone, &block) : block.call
+    end
+
     def record_unhandled_errors
       yield
     rescue StandardError => e
-      record_failure(e, user: failure_user) unless recorded?(e) || will_retry?(e)
+      record_failure(e, user: job_user) unless recorded?(e) || will_retry?(e)
       raise
     end
 
@@ -30,8 +40,9 @@ class ApplicationJob < ActiveJob::Base
     def recorded?(error) = @recorded_errors&.include?(error)
 
     # Best-effort attribution: jobs take either the user or one of the
-    # user's records as an argument.
-    def failure_user
+    # user's records as an argument. Used for error attribution and for the
+    # time zone the job should compute in.
+    def job_user
       arguments.each do |argument|
         return argument if argument.is_a?(User)
 

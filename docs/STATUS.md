@@ -57,6 +57,8 @@ in the repo when it lived inside `CLAUDE.md`.
 
 - **The caregiver and bereavement Situations are built** (`docs/PEOPLE.md` §4.5): two more D7 plan tools on the shared `plan_goal!` contract — **Becoming a caregiver** (people/health/money: current-state note, HIPAA/POA find-out steps, benefits-screener crossover, duty-splitting, respite; the brief paces it as a marathon, never an alarm) and **After a loss** (people/money/rights: certified copies, the stop-things notification sweep, estate find-out steps never framed as legal advice; the brief is mostly tone — calm, few near-term due dates, "what can wait" made explicit). "New baby" and co-parenting stay on demand; the other People deferrals now carry explicit wait conditions (see Next up).
 
+- **The household is a first-class object (D-household-profile)**: `/household` is its own admin-edited page — name, tagline, banner, mailing address, `region` (D34, unchanged), phone, own-vs-rent, move-in date, time zone — and the member roster plus invite links moved there off personal Settings, which now links across. Every field has a consumer: address + phone feed `Tool::Base#sender_address_block` (opt-in per tool; deposit-demand is the first), `time_zone` sets `Time.zone` for every request and job, own-vs-rent routes housing help, move-in date drives anniversary and lease-clock math. The Dashboard now opens with a **household hero** (`Households::Hero` + `dashboard/_hero`) that absorbs the old page header: greeting, household name, tagline, member avatars, and up to three highlights computed from owned data — circle birthdays, the home anniversary, an on-this-day photo — with a quiet day showing none.
+
 ## Next up
 
 All want their own design conversation first:
