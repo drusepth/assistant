@@ -9,9 +9,12 @@ class Person < ApplicationRecord
 
   belongs_to :linked_user, class_name: "User", optional: true
 
+  has_many :photo_people, dependent: :destroy
+  has_many :photos, through: :photo_people
+
   validates :name, presence: true
 
-  # The circle (D38): relationships the user is tending, marked explicitly —
+  # The circle (D-people-dashboard): relationships the user is tending, marked explicitly —
   # an import must not turn 300 contacts into 300 obligations. The flag is
   # intent; last_contacted_on (Q8) stays the only recency signal.
   scope :circle, -> { where(keep_in_touch: true) }

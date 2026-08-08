@@ -4,10 +4,9 @@ Section deep-dive for **People** — what the section page *is*, now that the
 Address Book exists, and how the section earns its place across all three
 modes (D6). Everything rides existing infrastructure (D18 anatomy, D19 tools,
 D25 lenses, D28 routing, D29 chat) except where flagged. The one decision it
-needs — the roster/dashboard split — is **D38** in `DECISIONS.md`;
-person↔item linking is logged as open question **Q14**. (Numbers provisional
-per the merge-time renumbering rule in `CLAUDE.md`.) The first build pass —
-steps 1–6 of §9 — is built, marked ✅ below.
+needs — the roster/dashboard split — is **D-people-dashboard** in `DECISIONS.md`
+(a slug ID per the post-D37 convention); person↔item linking is open question
+**Q17**. The first build pass — steps 1–7 of §9 — is built, marked ✅ below.
 
 ## Why this section matters (mission tie)
 
@@ -29,7 +28,7 @@ maintaining records. And per PRODUCT.md's atomization line, the section must
 eventually serve *groups* (church, clubs, mutual aid), not just dyads — an
 assistant that only optimizes individual friendships recreates the problem.
 
-## 1. The identity question: section page vs. Address Book (D38)
+## 1. The identity question: section page vs. Address Book (D-people-dashboard)
 
 Today the People section page is the generic D18 lens, and its Browse zone
 renders a grid of Person cards — a duplicate of the Address Book. Worse than
@@ -46,7 +45,7 @@ slice. Same split here, sharpened, because People has *three* surfaces:
 | **Person page** (`people#show`) | One relationship: profile, notes, log contact, Reconnect | Per-person |
 | **People section page** | The social dashboard: who's drifting, what's coming up, tools | None |
 
-**D38**: the section page stops listing Person rows entirely. A one-line
+**D-people-dashboard**: the section page stops listing Person rows entirely. A one-line
 "N people in your Address Book →" link replaces the grid. The page is about
 the *state of your relationships*, not the existence of contacts — the
 lens model's real dividend here is that the People lens still holds Events,
@@ -73,7 +72,7 @@ mom" costs trust the app never earns back.
   nudge — the Q8 rule, unchanged). Unflagged → invisible to the dashboard
   regardless of logs; the Address Book still has them.
 - **The watcher gets circle-scoped, with a backfill.** `Watcher::StayInTouch`
-  today scans *everyone* with a `last_contacted_on`; under D38 it adds the
+  today scans *everyone* with a `last_contacted_on`; under D-people-dashboard it adds the
   flag to its `where`. That silently changes behavior for existing users
   unless the migration backfills `keep_in_touch = true` wherever
   `last_contacted_on` is set — logging contact *was* the opt-in until now, so
@@ -114,7 +113,7 @@ and stay-in-touch will feed Attend). Browse rebuilds as modules:
    contact** and **Reconnect**. This is the pull-side twin of the
    stay-in-touch watcher — same math, always visible, no nudge required.
 3. **The lens lists** — People-tagged Tasks, Events, Goals, Notes as today,
-   *minus* the Person grid (D38), plus the Address Book link line. The grid
+   *minus* the Person grid (D-people-dashboard), plus the Address Book link line. The grid
    removal is the *People page only*: other sections' small filtered person
    lists (your cardiologist on Health, the landlord on Rights) are genuinely
    useful and stay.
@@ -176,7 +175,7 @@ hand-rolls its person block (name, relationship, birthday, last contact, the
 What-do-I-say need the identical block, so extract it into a shared helper on
 `Tool::Base` first — the `section_context` pattern at person granularity,
 `visible_to` the only read path — and refit Reconnect onto it. Three
-consumers, one assembly, and when Q14 links land the helper is the single
+consumers, one assembly, and when Q17 links land the helper is the single
 place shared-history context gets added.
 
 ## 5. Agent (D20 watchers — SQL-first)
@@ -195,7 +194,7 @@ place shared-history context gets added.
 - **Balance insight** — digest garnish, already the Hobbies pattern: a week
   ahead that is all deadlines and zero People-tagged anything gets named
   gently in the synthesis.
-- **Event afterglow** *(deferred on Q14)* — a People-linked event passes →
+- **Event afterglow** *(deferred on Q17)* — a People-linked event passes →
   offer to log contact for its people. Closes the manual-signal loop without
   inference; needs person↔event links to exist first.
 
@@ -230,7 +229,7 @@ collective-capacity line of the mission lives here.
   task over circle people (and later, a per-group heads-up); new-baby and
   caregiver Situations are People-heavy by construction.
 
-## 8. Open question Q14 — person↔item links
+## 8. Open question Q17 — person↔item links
 
 Section tags answer "which lenses"; nothing answers "which *people*." An
 attendees join (polymorphic `person_links`: person ↔ Event/Task/Note/Goal)
@@ -244,7 +243,7 @@ queued consumers.
 
 ## 9. Build order
 
-1. ✅ **The D38 split** — `keep_in_touch` flag (+ backfill from
+1. ✅ **The D-people-dashboard split** — `keep_in_touch` flag (+ backfill from
    `last_contacted_on`, §2) + person-page toggle, the "Who do you want to
    stay close to?" capture, `StayInTouch` circle-scoping, section page
    rebuilt (Coming up / Your circle / lens lists sans Person grid / Address
@@ -265,7 +264,7 @@ queued consumers.
 7. ✅ **Caregiver + bereavement Situations** (decided 2026-08: demand was
    affirmed for these two; "new baby" and co-parenting stay on demand).
 8. Deferred — each behind an explicit wait decided 2026-08, not indecision:
-   **Q14 links** (→ afterglow watcher + per-person history) wait for a
+   **Q17 links** (→ afterglow watcher + per-person history) wait for a
    second consumer to demand them; the **cadence upgrade** waits for a
    real user to hit a wrong-feeling 90-day nudge; **community tools for
    groups** wait for a real group to live in a lens first.

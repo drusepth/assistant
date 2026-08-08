@@ -1,0 +1,21 @@
+<%= render Ui::PageHeaderComponent.new(title: "Albums", subtitle: "Curated sets from the household's photos") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Photos", photos_path, class: "btn btn-secondary" %>
+    <%= link_to new_album_path, class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Album
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if @albums.any? %>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <%= render partial: "albums/album_card", collection: @albums, as: :album %>
+  </div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "No albums yet",
+        description: "An album is a set you curate — a trip, a year of the kids, the garden through the seasons. Photos can live in as many albums as fit."
+      ) do |empty| %>
+    <% empty.with_action { link_to "Create an album", new_album_path, class: "btn btn-primary" } %>
+  <% end %>
+<% end %>

@@ -7,6 +7,9 @@ class PeopleController < ApplicationController
 
   def show
     @person = Person.visible_to(Current.user).find(params[:id])
+    @photos = Photo.visible_to(Current.user)
+      .joins(:photo_people).where(photo_people: { person_id: @person.id })
+      .with_attached_image.order(taken_at: :desc, id: :desc).limit(12)
   end
 
   def new

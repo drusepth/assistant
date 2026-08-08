@@ -262,7 +262,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "been a while", response.body
   end
 
-  test "the People page is the circle's dashboard, not the roster (D38)" do
+  test "the People page is the circle's dashboard, not the roster (D-people-dashboard)" do
     users(:one).people.create!(name: "Circle Sam", keep_in_touch: true, last_contacted_on: 2.weeks.ago.to_date)
     rolodex = users(:one).people.create!(name: "Rolodex Rex")
     rolodex.sections << sections(:people)

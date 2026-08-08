@@ -1,7 +1,7 @@
 module Sections
   # User-created sub-lenses, the D25 mechanism generalized: a custom child
   # section of a seeded parent — hobbies under Hobbies, groups under People
-  # (D38) — after which the whole lens machinery (tagging, section pages,
+  # (D-people-dashboard) — after which the whole lens machinery (tagging, section pages,
   # calendar filters, sharing grants, the LLM taxonomy listing) applies for
   # free. Lenses are household-shared like the rest of the taxonomy; the
   # items tagged with them stay private per D9.

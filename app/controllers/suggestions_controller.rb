@@ -5,6 +5,9 @@ class SuggestionsController < ApplicationController
     if (tool = @suggestion.tool_action)
       @suggestion.accept!
       redirect_to new_tool_run_path(tool["slug"], inputs: tool["inputs"] || {})
+    elsif (path = @suggestion.path_action)
+      @suggestion.accept!
+      redirect_to path
     else
       created = @suggestion.accept!
       redirect_back fallback_location: root_path, notice: @suggestion.accept_notice(created)

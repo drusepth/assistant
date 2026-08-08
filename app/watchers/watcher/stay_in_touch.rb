@@ -3,7 +3,7 @@ module Watcher
   # deliberately manual last_contacted_on (Q8: one tap on the person page —
   # the app can't see your texts and shouldn't pretend to), so this watcher
   # only ever speaks about people the user has logged contact with — and,
-  # since D38, only about the circle: relationships the user chose to tend.
+  # since D-people-dashboard, only about the circle: relationships the user chose to tend.
   # Accepting opens the Reconnect tool prefilled.
   class StayInTouch < Base
     self.section_slugs = %w[ people ]

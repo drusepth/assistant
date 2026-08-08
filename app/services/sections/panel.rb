@@ -29,7 +29,7 @@ module Sections
 
     # Generic browse cards the panel replaces with better-context versions
     # (symbols: :events, :people, …); the browse zone skips them. People
-    # hides the roster grid this way — the Address Book is the roster (D38).
+    # hides the roster grid this way — the Address Book is the roster (D-people-dashboard).
     def hidden_browse = []
 
     def partial = "sections/panels/#{section.slug}"

@@ -159,7 +159,7 @@ module Tool
 
       # What's known about a person, assembled once for every People tool
       # (docs/PEOPLE.md §4): profile fields, filing, the user's own notes.
-      # When Q14 person↔item links land, shared history joins here.
+      # When Q17 person↔item links land, shared history joins here.
       def person_context(person)
         parts = [ "Name: #{person.name}" ]
         parts << "Relationship: #{person.relationship}" if person.relationship.present?

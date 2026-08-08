@@ -16,6 +16,8 @@ module Users
       "people" => ->(user) { user.people },
       "goals" => ->(user) { user.goals },
       "notes" => ->(user) { user.notes },
+      "photos" => ->(user) { user.photos },
+      "albums" => ->(user) { user.albums },
       "suggestions" => ->(user) { user.suggestions }
     }.freeze
 
@@ -44,6 +46,15 @@ module Users
           zip.put_next_entry(file_entry_name(document))
           zip.write(document.file.download)
         end
+
+        # Photo originals, untouched — EXIF included; it's the owner's own
+        # data leaving with them (stripping only applies to shared viewers).
+        @user.photos.includes(image_attachment: :blob).find_each do |photo|
+          next unless photo.image.attached?
+
+          zip.put_next_entry(photo_entry_name(photo))
+          zip.write(photo.image.download)
+        end
       end.tap(&:rewind)
     end
 
@@ -54,7 +65,7 @@ module Users
           exported_at: Time.current.iso8601,
           user: { name: @user.name, email_address: @user.email_address },
           household: @user.household.name,
-          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "files/" ]
+          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "files/", "photo_files/" ]
         }
       end
 
@@ -62,11 +73,17 @@ module Users
         row = record.attributes.except(*OMITTED_COLUMNS)
         row["sections"] = record.sections.map(&:slug) if record.respond_to?(:sections)
         row["file"] = file_entry_name(record) if record.is_a?(Document) && record.file.attached?
+        row["file"] = photo_entry_name(record) if record.is_a?(Photo) && record.image.attached?
+        row["photo_ids"] = record.photo_ids if record.is_a?(Album)
         row
       end
 
       def file_entry_name(document)
         "files/#{document.id}-#{document.file.filename}"
+      end
+
+      def photo_entry_name(photo)
+        "photo_files/#{photo.id}-#{photo.image.filename}"
       end
   end
 end

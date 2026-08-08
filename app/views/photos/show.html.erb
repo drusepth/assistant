@@ -1,0 +1,129 @@
+<% own = @photo.user_id == Current.user.id %>
+
+<%= render Ui::PageHeaderComponent.new(title: @photo.display_title,
+      subtitle: "Taken #{@photo.taken_at.strftime("%B %-d, %Y at %-l:%M %p")}") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Download", rails_blob_path(@photo.image, disposition: "attachment"), class: "btn btn-secondary" %>
+    <% if own %>
+      <%= link_to "Edit", edit_photo_path(@photo), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @photo, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this photo?" } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-5xl gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <div class="overflow-hidden rounded-xl bg-stone-950">
+      <%= image_tag url_for(@photo.image.variant(:large)), alt: @photo.display_title,
+            class: "mx-auto max-h-[75vh] w-auto" %>
+    </div>
+
+    <% if @photo.ingest_failed? && own %>
+      <div class="card flex items-center justify-between gap-3 p-4">
+        <p class="text-sm text-red-600"><%= @photo.ingest_error %></p>
+        <%= button_to "Retry", ingest_photo_path(@photo), method: :post, class: "btn btn-secondary btn-sm" %>
+      </div>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Taken</dt>
+          <dd><%= @photo.taken_at.strftime("%B %-d, %Y at %-l:%M %p") %></dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">File</dt>
+          <dd class="min-w-0 wrap-anywhere"><%= @photo.image.filename %> (<%= number_to_human_size(@photo.image.byte_size) %>)</dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Sections</dt>
+          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @photo %></dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">People</dt>
+          <dd class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <% @person_tags.each do |tag| %>
+              <span class="chip inline-flex items-center gap-1 bg-stone-100 text-stone-700">
+                <%= link_to tag.person.name, person_path(tag.person), class: "hover:underline" %>
+                <% if own %>
+                  <%= button_to "✕", photo_person_path(tag), method: :delete,
+                        class: "cursor-pointer text-soft hover:text-ink", form: { class: "inline-flex" } %>
+                <% end %>
+              </span>
+            <% end %>
+            <% if own && @taggable_people.any? %>
+              <%= form_with url: photo_people_path, class: "inline-flex items-center gap-1.5" do %>
+                <%= hidden_field_tag :photo_id, @photo.id %>
+                <%= select_tag :person_id, options_from_collection_for_select(@taggable_people, :id, :name),
+                      prompt: "Who's in it?", class: "input !w-auto py-1 text-sm" %>
+                <button type="submit" class="btn btn-ghost btn-sm">Tag</button>
+              <% end %>
+            <% elsif @person_tags.none? %>
+              <span class="text-soft">—</span>
+            <% end %>
+          </dd>
+        </div>
+        <% if own && @photo.coordinates? %>
+          <%# Location is owner-only (Q14): shared viewers get stripped variants
+              and never this row. %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Location</dt>
+            <dd>
+              <%= link_to "#{@photo.latitude}, #{@photo.longitude}",
+                    "https://www.openstreetmap.org/?mlat=#{@photo.latitude}&mlon=#{@photo.longitude}#map=15/#{@photo.latitude}/#{@photo.longitude}",
+                    target: "_blank", rel: "noopener", class: "text-primary-700 hover:underline" %>
+              <span class="text-xs text-soft">(only you see this)</span>
+            </dd>
+          </div>
+        <% end %>
+        <% if @photo.caption.present? %>
+          <div>
+            <dt class="mb-1 text-soft">Caption</dt>
+            <dd class="whitespace-pre-wrap text-ink"><%= @photo.caption %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+
+    <%# The optional AI garnish (W5): present only when the household's
+        model is declared image-capable — otherwise the feature isn't there. %>
+    <% if own && (@photo.captionable_profile || @photo.caption_status.present?) %>
+      <%= render Ui::CardComponent.new(title: "Understanding", subtitle: "AI description and suggested sections") do |card| %>
+        <% if @photo.captionable_profile && !@photo.caption_queued? && !@photo.caption_processing? %>
+          <% card.with_actions do %>
+            <%= button_to @photo.caption_captioned? || @photo.caption_failed? ? "Re-describe" : "Describe",
+                  caption_photo_path(@photo), method: :post, class: "btn btn-secondary btn-sm" %>
+          <% end %>
+        <% end %>
+
+        <% if @photo.caption_queued? || @photo.caption_processing? %>
+          <p class="text-sm text-soft">Describing — refresh in a moment.</p>
+        <% elsif @photo.caption_failed? %>
+          <p class="text-sm text-red-600"><%= @photo.caption_error %></p>
+        <% elsif @photo.caption_captioned? %>
+          <p class="text-sm text-soft">The caption above was written by the household's model.</p>
+          <% suggestions = @photo.suggested_section_records %>
+          <% if suggestions.any? %>
+            <div class="mt-4 border-t border-edge pt-3">
+              <p class="mb-2 text-xs font-medium text-soft">Suggested sections — apply the ones that fit:</p>
+              <div class="flex flex-wrap gap-1.5">
+                <% suggestions.each do |section| %>
+                  <%= button_to apply_suggestion_photo_path(@photo, slug: section.slug), method: :patch,
+                        class: "chip cursor-pointer #{section_chip_classes(section)} hover:opacity-80" do %>
+                    + <%= section.qualified_name %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-soft">Not described yet — the model writes a caption and suggests sections.</p>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+  <% if own %>
+    <div><%= render "shared/share_controls", subject: @photo %></div>
+  <% end %>
+</div>

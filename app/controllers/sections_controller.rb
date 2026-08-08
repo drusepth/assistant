@@ -20,5 +20,9 @@ class SectionsController < ApplicationController
     @people = Person.visible_to(Current.user).in_section(section_ids).order(:name).includes(:sections, :user)
     @goals = Goal.visible_to(Current.user).in_section(section_ids).where.not(status: :done).includes(:sections, :user)
     @notes = Note.visible_to(Current.user).in_section(section_ids).order(updated_at: :desc).includes(:sections, :user)
+
+    photos = Photo.visible_to(Current.user).in_section(section_ids)
+    @photo_count = photos.count
+    @photos = photos.with_attached_image.order(taken_at: :desc, id: :desc).limit(6)
   end
 end

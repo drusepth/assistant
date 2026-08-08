@@ -1,0 +1,18 @@
+<%= link_to photo_path(photo),
+      class: "group relative block aspect-square overflow-hidden rounded-lg bg-stone-100",
+      data: {
+        lightbox_target: "item",
+        photo_select_target: "tile",
+        photo_id: photo.id,
+        action: "click->photo-select#toggleTile click->lightbox#open",
+        large_url: url_for(photo.image.variant(:large)),
+        caption: photo.display_title
+      } do %>
+  <%= image_tag url_for(photo.image.variant(:thumb)), loading: "lazy", alt: photo.display_title,
+        class: "size-full object-cover transition-transform duration-150 group-hover:scale-105" %>
+  <% if photo.ingest_failed? %>
+    <span class="absolute right-1.5 top-1.5 rounded-full bg-red-600 p-1 text-white" title="Couldn't process this photo">
+      <%= icon(:warning, css_class: "size-3.5") %>
+    </span>
+  <% end %>
+<% end %>

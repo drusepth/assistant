@@ -1,0 +1,15 @@
+<%= render Ui::PageHeaderComponent.new(title: "Edit photo") %>
+
+<div class="max-w-xl">
+  <%= form_with model: @photo, class: "space-y-4" do |form| %>
+    <%= form.field :title, hint: "Optional — untitled photos go by their date." %>
+    <%= form.field :caption, as: :text_area %>
+    <%= form.field :taken_at, as: :datetime_local_field, label_text: "Taken",
+          hint: "Set from the photo's own metadata when it has some." %>
+    <%= render "shared/section_picker", form: form %>
+    <div class="flex items-center gap-2 pt-2">
+      <%= form.submit %>
+      <%= link_to "Cancel", @photo, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>

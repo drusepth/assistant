@@ -1,6 +1,6 @@
 module Sections
   module Panels
-    # The People lead panel (D38, docs/PEOPLE.md): the social dashboard
+    # The People lead panel (D-people-dashboard, docs/PEOPLE.md): the social dashboard
     # over the kept-in-touch circle — capture, Coming up, Your circle,
     # groups — while the roster stays in the Address Book. The circle is
     # personal (own people, never visible_to): the flag is the owner's

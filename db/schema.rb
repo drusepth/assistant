@@ -53,6 +53,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "album_photos", force: :cascade do |t|
+    t.integer "album_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "photo_id", null: false
+    t.integer "position"
+    t.datetime "updated_at", null: false
+    t.index ["album_id", "photo_id"], name: "index_album_photos_on_album_id_and_photo_id", unique: true
+    t.index ["album_id"], name: "index_album_photos_on_album_id"
+    t.index ["photo_id"], name: "index_album_photos_on_photo_id"
+  end
+
+  create_table "albums", force: :cascade do |t|
+    t.integer "cover_photo_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["cover_photo_id"], name: "index_albums_on_cover_photo_id"
+    t.index ["user_id"], name: "index_albums_on_user_id"
+  end
+
   create_table "app_errors", force: :cascade do |t|
     t.text "backtrace"
     t.json "context", default: {}, null: false
@@ -162,6 +184,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
     t.string "model", default: "gpt-4o-mini"
     t.string "provider", default: "openai", null: false
     t.datetime "updated_at", null: false
+    t.boolean "vision", default: false, null: false
     t.index ["household_id"], name: "index_model_profiles_on_household_id", unique: true
   end
 
@@ -202,6 +225,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
     t.integer "user_id", null: false
     t.index ["linked_user_id"], name: "index_people_on_linked_user_id"
     t.index ["user_id"], name: "index_people_on_user_id"
+  end
+
+  create_table "photo_people", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "person_id", null: false
+    t.integer "photo_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["person_id"], name: "index_photo_people_on_person_id"
+    t.index ["photo_id", "person_id"], name: "index_photo_people_on_photo_id_and_person_id", unique: true
+    t.index ["photo_id"], name: "index_photo_people_on_photo_id"
+  end
+
+  create_table "photos", force: :cascade do |t|
+    t.text "caption"
+    t.string "caption_error"
+    t.string "caption_status"
+    t.datetime "created_at", null: false
+    t.string "ingest_error"
+    t.string "ingest_status", default: "queued", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.json "suggested_sections", default: []
+    t.datetime "taken_at", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "taken_at"], name: "index_photos_on_user_id_and_taken_at"
+    t.index ["user_id"], name: "index_photos_on_user_id"
   end
 
   create_table "section_taggings", force: :cascade do |t|
@@ -341,6 +392,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
   add_foreign_key "access_grants", "users", column: "grantor_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "album_photos", "albums"
+  add_foreign_key "album_photos", "photos"
+  add_foreign_key "albums", "photos", column: "cover_photo_id", on_delete: :nullify
+  add_foreign_key "albums", "users"
   add_foreign_key "app_errors", "users"
   add_foreign_key "care_settings", "users"
   add_foreign_key "documents", "users"
@@ -355,6 +410,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_051939) do
   add_foreign_key "notification_channels", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
+  add_foreign_key "photo_people", "people"
+  add_foreign_key "photo_people", "photos"
+  add_foreign_key "photos", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
