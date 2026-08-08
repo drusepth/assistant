@@ -160,10 +160,15 @@ Built already: **Reconnect** (the section's core promise) and **Plan a move**
    times, follow-up scripts for turning acquaintances into plans.
    Cross-registers with Hobbies' find-your-people; same Tier-A honesty (never
    invents local venues).
-5. **Situations, later** — "becoming a caregiver," "new baby," bereavement:
-   the coordination-heavy life events PRODUCT.md names (caregiving,
-   co-parenting logistics) are plan tools with rich briefs once demand shows,
-   exactly like "moving" was.
+5. **Situations** — the coordination-heavy life events PRODUCT.md names,
+   each a plan tool with a rich cross-section brief, exactly like "moving"
+   was. ✅ **"Becoming a caregiver"** (people/health/money: the current-state
+   note, HIPAA/POA find-out steps, benefits crossover, splitting duties,
+   respite — paced as a marathon, never an alarm) and ✅ **"After a loss"**
+   (people/money/rights: certified copies, the notification sweep, estate
+   find-out steps — the brief is mostly tone: calm, few near-term due dates,
+   no productivity cheer) are built (2026-08). "New baby" and co-parenting
+   logistics stay on demand.
 
 **The one infra seam this slate needs: `Base#person_context`.** Reconnect
 hand-rolls its person block (name, relationship, birthday, last contact, the
@@ -257,5 +262,10 @@ queued consumers.
 6. ✅ **Groups** — D25 lens creation generalized into `Sections::Lens`
    (`People::Group` / `Hobbies::Lens` as its two front doors); community
    tools get their own design conversation after real use.
-7. Deferred: Q14 links → afterglow watcher + per-person history, cadence
-   upgrade, caregiving/co-parenting Situations.
+7. ✅ **Caregiver + bereavement Situations** (decided 2026-08: demand was
+   affirmed for these two; "new baby" and co-parenting stay on demand).
+8. Deferred — each behind an explicit wait decided 2026-08, not indecision:
+   **Q14 links** (→ afterglow watcher + per-person history) wait for a
+   second consumer to demand them; the **cadence upgrade** waits for a
+   real user to hit a wrong-feeling 90-day nudge; **community tools for
+   groups** wait for a real group to live in a lens first.
