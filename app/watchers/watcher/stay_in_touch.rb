@@ -2,7 +2,8 @@ module Watcher
   # "It's been a while since you talked to Mom." The signal is the
   # deliberately manual last_contacted_on (Q8: one tap on the person page —
   # the app can't see your texts and shouldn't pretend to), so this watcher
-  # only ever speaks about people the user has logged contact with.
+  # only ever speaks about people the user has logged contact with — and,
+  # since D30, only about the circle: relationships the user chose to tend.
   # Accepting opens the Reconnect tool prefilled.
   class StayInTouch < Base
     self.section_slugs = %w[ people ]
@@ -10,7 +11,7 @@ module Watcher
     QUIET_AFTER = 90.days
 
     def scan
-      user.people.where(last_contacted_on: ..QUIET_AFTER.ago.to_date).find_each do |person|
+      user.people.circle.where(last_contacted_on: ..QUIET_AFTER.ago.to_date).find_each do |person|
         days = (Date.current - person.last_contacted_on).to_i
         propose(
           fingerprint: "person:#{person.id}/#{quarter}",

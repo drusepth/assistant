@@ -1,0 +1,52 @@
+<%# The social dashboard modules (D30, docs/PEOPLE.md §3): dates that
+    matter, then the circle stalest-first. Person rows live in the Address
+    Book, not here. %>
+<% if birthdays.any? || events.any? %>
+  <%= render Ui::CardComponent.new(title: "Coming up", padded: false) do %>
+    <div class="divide-y divide-edge">
+      <% birthdays.each do |person| %>
+        <div class="flex items-center gap-3 p-4">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-800">
+            <%= person.name.split.map(&:first).join[0, 2].upcase %>
+          </span>
+          <div class="min-w-0 flex-1">
+            <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+            <p class="text-xs text-soft">Birthday — <%= birthday_phrase(person) %></p>
+          </div>
+          <%= link_to "Reconnect", new_tool_run_path("reconnect", inputs: { person_id: person.id }), class: "btn btn-ghost" %>
+        </div>
+      <% end %>
+      <%= render events %>
+    </div>
+  <% end %>
+<% end %>
+
+<% if address_book_size.positive? %>
+  <p class="text-sm text-soft">
+    <%= link_to people_path, class: "text-primary-700 hover:underline" do %><%= pluralize(address_book_size, "person") %> in your Address Book →<% end %>
+  </p>
+<% end %>
+
+<% if circle.any? %>
+  <%= render Ui::CardComponent.new(title: "Your circle", padded: false) do %>
+    <div class="divide-y divide-edge">
+      <% circle.each do |person| %>
+        <div class="flex flex-wrap items-center gap-3 p-4">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-800">
+            <%= person.name.split.map(&:first).join[0, 2].upcase %>
+          </span>
+          <div class="min-w-0 flex-1">
+            <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+            <p class="text-xs text-soft">
+              <% if person.relationship.present? %><%= person.relationship %> · <% end %><%= contact_recency_phrase(person) %>
+            </p>
+          </div>
+          <div class="flex shrink-0 gap-2">
+            <%= button_to "Log contact", log_contact_person_path(person), method: :patch, class: "btn btn-ghost" %>
+            <%= link_to "Reconnect", new_tool_run_path("reconnect", inputs: { person_id: person.id }), class: "btn btn-secondary" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

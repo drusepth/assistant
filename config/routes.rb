@@ -52,6 +52,7 @@ Rails.application.routes.draw do
   end
   namespace :people do
     resource :import, only: %i[ new create ]
+    resource :circle, only: %i[ create destroy ]
   end
   resources :people do
     member do

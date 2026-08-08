@@ -7,10 +7,10 @@ class WatchersTest < ActiveSupport::TestCase
     @user = users(:one)
   end
 
-  test "stay-in-touch nudges about a quiet person and prefills the Reconnect tool" do
-    mom = @user.people.create!(name: "Mom", last_contacted_on: 4.months.ago.to_date)
-    @user.people.create!(name: "Recent friend", last_contacted_on: 2.weeks.ago.to_date)
-    @user.people.create!(name: "Never logged")
+  test "stay-in-touch nudges about a quiet circle person and prefills the Reconnect tool" do
+    mom = @user.people.create!(name: "Mom", keep_in_touch: true, last_contacted_on: 4.months.ago.to_date)
+    @user.people.create!(name: "Recent friend", keep_in_touch: true, last_contacted_on: 2.weeks.ago.to_date)
+    @user.people.create!(name: "Never logged", keep_in_touch: true)
 
     Watcher::StayInTouch.new(@user).scan
 
@@ -21,11 +21,19 @@ class WatchersTest < ActiveSupport::TestCase
   end
 
   test "stay-in-touch says nothing about people with no logged contact" do
-    @user.people.create!(name: "Never logged")
+    @user.people.create!(name: "Never logged", keep_in_touch: true)
 
     Watcher::StayInTouch.new(@user).scan
 
     assert_empty @user.suggestions, "no signal, no nudge — the app doesn't guess"
+  end
+
+  test "stay-in-touch says nothing about people outside the circle" do
+    @user.people.create!(name: "Old acquaintance", last_contacted_on: 4.months.ago.to_date)
+
+    Watcher::StayInTouch.new(@user).scan
+
+    assert_empty @user.suggestions, "unflagged people are the Address Book's business, not the agent's"
   end
 
   test "renewal radar flags a lease-end event with lead time" do

@@ -104,4 +104,50 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     get section_path("hobbies")
     assert_no_match "been a while", response.body
   end
+
+  test "the People page is the circle's dashboard, not the roster (D30)" do
+    users(:one).people.create!(name: "Circle Sam", keep_in_touch: true, last_contacted_on: 2.weeks.ago.to_date)
+    rolodex = users(:one).people.create!(name: "Rolodex Rex")
+    rolodex.sections << sections(:people)
+
+    get section_path("people")
+    assert_response :success
+    assert_match "Your circle", response.body
+    assert_match "Circle Sam", response.body
+    assert_match "Last contact", response.body
+    assert_match "in your Address Book", response.body
+    assert_select "a", { text: "Rolodex Rex", count: 0 },
+      "unflagged people belong to the Address Book (the capture dropdown may list them; rows must not)"
+  end
+
+  test "the People page leads with circle capture and offers address-book candidates" do
+    users(:one).people.create!(name: "Pickable Pat")
+
+    get section_path("people")
+    assert_match "Who do you want to stay close to?", response.body
+    assert_match "Pickable Pat", response.body
+
+    users(:one).people.create!(name: "Flagged", keep_in_touch: true)
+    get section_path("people")
+    assert_match "Add someone to your circle", response.body
+  end
+
+  test "Coming up lists circle birthdays but not the rolodex's" do
+    users(:one).people.create!(name: "Birthday Kid", keep_in_touch: true, birthday: 10.days.from_now.to_date - 30.years)
+    users(:one).people.create!(name: "Distant Cousin", birthday: 10.days.from_now.to_date - 40.years)
+
+    get section_path("people")
+    assert_match "Coming up", response.body
+    assert_match "Birthday Kid", response.body
+    assert_select "a", { text: "Distant Cousin", count: 0 },
+      "rolodex birthdays stay off the dashboard (the capture dropdown may list the person; rows must not)"
+  end
+
+  test "other sections keep their filtered person lists" do
+    doctor = users(:one).people.create!(name: "Dr. Chen")
+    doctor.sections << sections(:health)
+
+    get section_path("health")
+    assert_match "Dr. Chen", response.body
+  end
 end
