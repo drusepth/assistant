@@ -4,6 +4,14 @@ class SectionsController < ApplicationController
     section_ids = [ @section.id, *@section.children.ids ]
 
     @tools = Tool.for_section(@section)
+
+    # Health leads with its care radar and coverage card (docs/HEALTH.md) —
+    # the section-specific panel pattern the Hobbies capture card set.
+    if @section.slug == "health"
+      @care_statuses = Health::CareRadar.new(Current.user).statuses
+      @coverage_documents = Health::Coverage.documents(Current.user)
+    end
+
     @suggestions = Current.user.suggestions.actionable.in_section(section_ids)
       .order(created_at: :desc).includes(:sections)
 

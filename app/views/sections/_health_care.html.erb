@@ -1,0 +1,63 @@
+<%# The Health lead panel (docs/HEALTH.md): the personal-assistant answer to
+    "am I on top of my health?" at a glance. The care radar is a derived
+    view over the user's own Health-tagged events — booked / on track / due /
+    not tracked per kind of routine care — and the coverage card is where
+    insurance lives (as vault documents) and where its tools start. %>
+<% if statuses.any? %>
+  <%= render Ui::CardComponent.new(
+        title: "Routine care",
+        subtitle: "Booked means you can stop thinking about it. Due means it's worth a call this week."
+      ) do %>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <% statuses.each do |status| %>
+        <div class="space-y-2 rounded-xl bg-stone-100/70 p-4">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-medium text-ink"><%= status.kind.label %></span>
+            <span class="chip <%= care_state_chip_classes(status.state) %>"><%= care_state_label(status.state) %></span>
+          </div>
+          <p class="text-sm text-soft"><%= care_status_line(status) %></p>
+          <div class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+            <% if status.state == :booked %>
+              <%= link_to "View appointment", event_path(status.next_visit), class: "text-primary-700 hover:underline" %>
+            <% else %>
+              <% if status.state != :ok %>
+                <%= link_to "Find a provider",
+                      new_tool_run_path("find_care", inputs: { specialty: status.kind.provider }),
+                      class: "text-primary-700 hover:underline" %>
+              <% end %>
+              <%= link_to status.state == :unknown ? "Log a past visit" : "Add appointment",
+                    new_event_path(title: status.kind.appointment_title, section_ids: [ section.id ]),
+                    class: "text-primary-700 hover:underline" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%= render Ui::CardComponent.new(title: "Insurance & coverage", padded: false) do %>
+  <% if coverage_documents.any? %>
+    <div class="divide-y divide-edge"><%= render coverage_documents %></div>
+    <div class="flex flex-wrap gap-x-4 gap-y-1 border-t border-edge px-5 py-3 text-sm">
+      <%= link_to "Understand my insurance →",
+            new_tool_run_path("insurance_explainer", inputs: { document_id: coverage_documents.first.id }),
+            class: "text-primary-700 hover:underline" %>
+      <% if coverage_documents.many? %>
+        <%= link_to "Compare plans →",
+              new_tool_run_path("compare_plans", inputs: {
+                plan_a_id: coverage_documents.first.id, plan_b_id: coverage_documents.second.id
+              }),
+              class: "text-primary-700 hover:underline" %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="space-y-2 p-5">
+      <p class="text-sm text-soft">
+        Add your insurance card, a Summary of Benefits, or a plan letter to the vault, and the
+        insurance tools can read them — plain-language answers about your own coverage.
+      </p>
+      <%= link_to "Upload a plan document", new_document_path, class: "btn btn-secondary btn-sm" %>
+    </div>
+  <% end %>
+<% end %>

@@ -33,6 +33,33 @@ module SectionsHelper
     (section.parent || section).slug
   end
 
+  # The care radar's four states (docs/HEALTH.md), as chip copy + classes.
+  CARE_STATE_CHIPS = {
+    booked: [ "Booked", "bg-emerald-100 text-emerald-800" ],
+    ok: [ "On track", "bg-primary-100 text-primary-800" ],
+    due: [ "Due", "bg-amber-100 text-amber-800" ],
+    unknown: [ "Not tracked", "bg-stone-100 text-stone-600" ]
+  }.freeze
+
+  def care_state_label(state) = CARE_STATE_CHIPS.fetch(state).first
+  def care_state_chip_classes(state) = CARE_STATE_CHIPS.fetch(state).second
+
+  def care_status_line(status)
+    case status.state
+    when :booked
+      "#{status.next_visit.title} — #{status.next_visit_on.strftime("%b %-d, %Y")}, " \
+        "#{distance_of_time_in_words(Date.current, status.next_visit_on)} away."
+    when :ok
+      "Last visit #{care_month(status.last_visit_on)} — nothing needed until around #{care_month(status.due_on)}."
+    when :due
+      "Last visit #{care_month(status.last_visit_on)} — due since #{care_month(status.due_on)}."
+    else
+      "No visits on record yet. Log your last one and the radar takes it from there."
+    end
+  end
+
+  def care_month(date) = date.strftime("%b %Y")
+
   # Chip suggestions for the hobby capture card — a broad, cheap-to-start
   # spread, minus the lenses the household already has.
   HOBBY_SUGGESTIONS = [

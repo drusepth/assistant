@@ -22,6 +22,7 @@ Build order and trust ladder: Organize → Tools → Agent. Agent aggressiveness
 - Checkup/screening cadence tracking → Calendar
 - Mental health check-ins
 - Note: medical *billing disputes* live in Rights → Disputes; care itself lives here.
+- Full section deep-dive in `docs/HEALTH.md`: the care radar (per-kind checkup tracking), the insurance stack (find-care, explainer, plan comparison), the data-source survey, and the later rungs (medications, symptom journal, wearables).
 
 ### 2. Hobbies
 - Project tracking for creative work, side builds, collections

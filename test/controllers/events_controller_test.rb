@@ -25,6 +25,12 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_match "2026-08-10", response.body
   end
 
+  test "new form accepts a prefilled title, care-radar style" do
+    get new_event_path(title: "Dental cleaning", section_ids: [ sections(:health).id ])
+    assert_response :success
+    assert_match "Dental cleaning", response.body
+  end
+
   test "quick-adding a title and day queues auto-sorting" do
     assert_enqueued_with(job: CategorizeEventJob) do
       post events_path, params: { event: { title: "Dentist at 3pm", starts_date: "2026-08-10" } }

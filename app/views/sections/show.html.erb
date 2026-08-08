@@ -19,6 +19,12 @@
     <%= render "sections/hobby_capture", hobbies: @section %>
   <% end %>
 
+  <%# The Health lead panel (docs/HEALTH.md): routine-care radar + coverage. %>
+  <% if @section.slug == "health" %>
+    <%= render "sections/health_care", statuses: @care_statuses,
+          coverage_documents: @coverage_documents, section: @section %>
+  <% end %>
+
   <%# Act zone (D18): what the app can do here — present even, especially,
       when the section is empty. %>
   <% if @tools.any? %>
