@@ -5,7 +5,9 @@ across all three modes (D6). Everything here rides existing infrastructure
 (D17 breakdown, D19 tools, D20 watchers, D26 linked accounts, D28 routing,
 D29 chat) except where explicitly flagged. The one new decision it needs —
 how career signal gets into the app — is **D30** in `DECISIONS.md`; the
-external-data questions it raises are **Q14–Q15**.
+external-data questions it raises are **Q14–Q15**. The whole Tier-A slate
+(§7 steps 1–7: the D30 foundation, eight tools, four watchers) is built,
+marked ✅ in §7; only the Q14/Q15-gated external-data work remains.
 
 ## Why this section matters (mission tie)
 
@@ -402,26 +404,27 @@ lies) forces the split; it doesn't force deferral of everything:
 
 ## 7. Build order
 
-1. **Foundation (D30)** — Career page capture ("Tell me about your work" +
-   the win-log quick capture + "log a comp change"), plus **pay-stub-aware
+1. ✅ **Foundation (D30)** — Career page capture ("Tell me about your work"
+   + the win-log quick capture + "log a comp change"), plus **pay-stub-aware
    document analysis** feeding the comp timeline (extraction + auto-Event
    with provenance); renewal radar and negotiation-prep get better for
    free, and the LinkedIn-export importer bootstraps the profile.
-2. **Interview prep + mock interview** — the asked-for pair; zero new
-   infra (draft + D29 chat + D28 routing).
-3. **Check my pay stub** — rides step 1's extraction; the arithmetic
-   checks, the stub-anomaly watcher, and the wage-claim routing target
-   (the letter itself can land here or in step 7).
-4. **Tailor my application** — completes the application chain
+2. ✅ **Interview prep + mock interview** — the asked-for pair; zero new
+   infra (draft + D29 chat + D28 routing; the `:textarea` input kind is the
+   one DSL addition).
+3. ✅ **Check my pay stub** — rides step 1's extraction; the
+   `Career::PayStubAudit` arithmetic, the stub-anomaly watcher, and the
+   wage-claim letter it routes to.
+4. ✅ **Tailor my application** — completes the application chain
    (tailor → prep → mock → negotiation-prep).
-5. **Build-my-raise-case + Decode-my-offer + raise-cadence watcher** — the
-   comp timeline pays out; the section's proactive flagship.
-6. **"I lost my job" Situation + Plan-my-job-search** — the safety net and
-   the cadence machine (plus the application-follow-up and interview-ahead
-   watchers riding their conventions).
-7. **Find-my-next-move chat** + remaining letter-family additions (wage
-   claim if not landed in step 3, accommodation request) + decode-letter
-   routing.
+5. ✅ **Build-my-raise-case + Decode-my-offer + raise-cadence watcher** —
+   the comp timeline pays out; the section's proactive flagship.
+6. ✅ **"I lost my job" Situation + Plan-my-job-search** — the safety net
+   and the cadence machine, plus the application-follow-up and
+   interview-ahead watchers riding their conventions.
+7. ✅ **Find-my-next-move chat** + accommodation request + decode-letter
+   routing (employer mail now routes to decode_offer and wage_claim).
 8. **Q14 dataset tier** (BLS + CPI → real-terms drift watcher, raise-case
    math upgrade), then **Q15 scout/URL-fetch** when Q9 resolves — the
-   external-data unlocks, upgrading tools in place.
+   external-data unlocks, upgrading tools in place. *(Blocked on Q14/Q15 —
+   everything Tier-A above is built.)*
