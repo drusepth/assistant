@@ -82,6 +82,7 @@ Rails.application.routes.draw do
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
   resources :tool_runs, only: :show do
     resources :messages, only: :create, controller: "tool_run_messages"
+    resource :application_email, only: :create
     member do
       post :recap
       post :retry_reply

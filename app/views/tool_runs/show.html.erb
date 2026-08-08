@@ -135,6 +135,10 @@
       <% end %>
     <% end %>
 
+    <% if @tool_run.tool_slug == "tailor_application" && @tool_run.done? %>
+      <%= render "tool_runs/email_application", tool_run: @tool_run %>
+    <% end %>
+
     <% next_steps = @tool_run.next_steps %>
     <% if next_steps.any? %>
       <%= render Ui::CardComponent.new(title: "Suggested next steps", subtitle: "One click — the form comes prefilled") do %>
@@ -156,7 +160,7 @@
     <% end %>
 
     <p class="text-xs text-soft">
-      Drafts are yours to review, fill in, and send — the app never sends anything on your behalf.
+      Drafts are yours to review, fill in, and send — nothing ever goes out without your explicit click.
     </p>
   <% end %>
 </div>
