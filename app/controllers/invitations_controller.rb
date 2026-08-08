@@ -31,6 +31,7 @@ class InvitationsController < ApplicationController
     if @user.save
       @invitation.update!(accepted_at: Time.current)
       start_new_session_for(@user)
+      unlock_vault_for(@user, user_params[:password])
       redirect_to root_path, notice: "Welcome to #{@invitation.household.name}, #{@user.name.split.first}!"
     else
       render :show, status: :unprocessable_entity

@@ -18,7 +18,8 @@ module Users
       "notes" => ->(user) { user.notes },
       "photos" => ->(user) { user.photos },
       "albums" => ->(user) { user.albums },
-      "suggestions" => ->(user) { user.suggestions }
+      "suggestions" => ->(user) { user.suggestions },
+      "credentials" => ->(user) { user.credentials }
     }.freeze
 
     OMITTED_COLUMNS = %w[ user_id ].freeze
@@ -35,7 +36,9 @@ module Users
 
         MODELS.each do |name, scope|
           zip.put_next_entry("#{name}.jsonl")
-          scope.call(@user).includes(:sections).find_each do |record|
+          records = scope.call(@user)
+          records = records.includes(:sections) if records.klass.reflect_on_association(:sections)
+          records.find_each do |record|
             zip.write(row_for(record).to_json << "\n")
           end
         end
@@ -65,12 +68,16 @@ module Users
           exported_at: Time.current.iso8601,
           user: { name: @user.name, email_address: @user.email_address },
           household: @user.household.name,
-          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "files/", "photo_files/" ]
+          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "files/", "photo_files/" ],
+          credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked"
         }
       end
 
       def row_for(record)
         row = record.attributes.except(*OMITTED_COLUMNS)
+        # The vault's rule (D-passwords-vault): ciphertext never leaves in a
+        # background job — metadata only here.
+        row = row.except("secrets_ciphertext") if record.is_a?(Credential)
         row["sections"] = record.sections.map(&:slug) if record.respond_to?(:sections)
         row["file"] = file_entry_name(record) if record.is_a?(Document) && record.file.attached?
         row["file"] = photo_entry_name(record) if record.is_a?(Photo) && record.image.attached?

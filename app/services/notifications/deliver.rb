@@ -6,9 +6,12 @@ module Notifications
   class Deliver
     TIMEOUT = 5
 
-    def initialize(user, titles:)
+    # summary: overrides the suggestion-count phrasing for one-off system
+    # messages (emergency vault access) that aren't agent suggestions.
+    def initialize(user, titles:, summary: nil)
       @user = user
       @titles = titles
+      @summary_override = summary
     end
 
     def call
@@ -23,6 +26,8 @@ module Notifications
 
     private
       def summary
+        return @summary_override if @summary_override.present?
+
         count = @titles.size
         "#{count} #{"suggestion".pluralize(count)} from your assistant: #{@titles.first(3).join("; ")}#{"…" if count > 3}"
       end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_064530) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -101,6 +101,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.index ["user_id"], name: "index_care_settings_on_user_id"
   end
 
+  create_table "credential_keys", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "credential_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_item_key", null: false
+    t.index ["credential_id", "user_id"], name: "index_credential_keys_on_credential_id_and_user_id", unique: true
+    t.index ["credential_id"], name: "index_credential_keys_on_credential_id"
+    t.index ["user_id"], name: "index_credential_keys_on_user_id"
+  end
+
+  create_table "credentials", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "kind", default: "login", null: false
+    t.datetime "last_used_at"
+    t.string "name", null: false
+    t.datetime "secret_changed_at"
+    t.binary "secrets_ciphertext"
+    t.boolean "totp_present", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.integer "user_id", null: false
+    t.string "username"
+    t.index ["user_id"], name: "index_credentials_on_user_id"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.string "analysis_error"
     t.string "analysis_status"
@@ -115,6 +141,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_documents_on_user_id"
+  end
+
+  create_table "emergency_contacts", force: :cascade do |t|
+    t.integer "contact_user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "released_at"
+    t.datetime "requested_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "wait_days", default: 7, null: false
+    t.binary "wrapped_vault_key", null: false
+    t.index ["contact_user_id"], name: "index_emergency_contacts_on_contact_user_id"
+    t.index ["user_id", "contact_user_id"], name: "index_emergency_contacts_on_user_id_and_contact_user_id", unique: true
+    t.index ["user_id"], name: "index_emergency_contacts_on_user_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -175,6 +215,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
     t.string "url", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_job_feeds_on_user_id"
+  end
+
+  create_table "keyrings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "kdf_iterations", null: false
+    t.string "key_salt", null: false
+    t.text "public_key", null: false
+    t.datetime "recovery_confirmed_at"
+    t.string "recovery_salt"
+    t.binary "recovery_wrapped_key"
+    t.datetime "reset_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_key", null: false
+    t.binary "wrapped_private_key", null: false
+    t.index ["user_id"], name: "index_keyrings_on_user_id", unique: true
   end
 
   create_table "linked_accounts", force: :cascade do |t|
@@ -413,13 +469,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_055200) do
   add_foreign_key "albums", "users"
   add_foreign_key "app_errors", "users"
   add_foreign_key "care_settings", "users"
+  add_foreign_key "credential_keys", "credentials"
+  add_foreign_key "credential_keys", "users"
+  add_foreign_key "credentials", "users"
   add_foreign_key "documents", "users"
+  add_foreign_key "emergency_contacts", "users"
+  add_foreign_key "emergency_contacts", "users", column: "contact_user_id"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
   add_foreign_key "goals", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "job_feeds", "users"
+  add_foreign_key "keyrings", "users"
   add_foreign_key "linked_accounts", "users"
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"

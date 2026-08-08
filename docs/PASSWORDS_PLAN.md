@@ -3,8 +3,9 @@
 Build plan for the **password vault**: per-account password storage under the Vault
 sidebar group, so a household stores and manages its passwords on the box it owns
 instead of renting a corporate password manager — and, later, uses the vault as the
-home base for deciding which accounts AI agents may act on. **Status: designed
-(hardening pass applied); build not started.**
+home base for deciding which accounts AI agents may act on. **Status: built —
+waves 1–5 landed** (see `STATUS.md`); W6 (the agent bridge) stays gated on the
+agent-actuator milestone, and this document remains the design record.
 
 Decisions here are logged as **D-passwords-vault** and **D-vault-crypto** in
 `DECISIONS.md`. Open questions are logged as **Q-vault-autolock, Q-vault-collections,
@@ -479,15 +480,36 @@ Each wave lands green (`bin/rails test`, `bin/rubocop`) and independently shippa
 | **W1 — the vault** | `Vault::Crypto` (KDF, AAD-bound GCM, RSA wrap, TOTP math) + the three tables; lazy keyring init + recovery kit; unlock-at-sign-in, lock, re-unlock banner, session-bound path-scoped cookie, 12h window; **Settings change-password form** (new — the app has none) with rewrap; reset-flow recovery step; `Credential` CRUD (`login` kind), search-first index, generator + passphrase mode, reveal/copy endpoints + clipboard controller; **app-wide nonce-based CSP**; sidebar entry, `filter_parameters`, rate limits. |
 | **W2 — daily driver** | TOTP (enrollment, live codes, countdown, clock-drift warning); kinds `wifi`/`card`/`note`; `Vault::Import` (Bitwarden/LastPass/1Password/Chrome/Firefox CSV); "Download my passwords" + metadata-only line in the M4.2 archive. |
 | **W3 — sharing** | `Vault::Share`/unshare on credential-scoped routes, share card with eligibility + read-only framing, grant↔key-row lockstep, **item-key rotation on revoke**, household-wide button, lost-vault re-share suggestions. |
-| **W4 — stewardship** | Health panel (weak/reused/aging, in-request only); offline pwned-passwords bloom filter on the D-public-datasets layer; HIBP live check behind admin opt-in; reveal/copy audit trail if Q-vault-audit resolves yes. |
+| **W4 — stewardship** | Health panel (weak/reused/aging, in-request only); offline common-passwords list on the D-public-datasets layer. *Built as a plain line-per-password list, not a bloom filter — at the scale a household imports (tens of thousands of lines) a Set costs a megabyte and stays greppable/auditable; the bloom filter is what a 600M-row list would need, and nothing local-first ships that.* The live HIBP check and the reveal/copy audit trail were **deliberately not built** — both are open questions (Q-vault-breach, Q-vault-audit), and building them would answer questions the plan says are still open. |
 | **W5 — emergency access** | §7: contact designation, wrapped-key escrow, request/deny/wait flow on D22 notification channels, prominent audit. |
-| **W6 — agent bridge** | §8, gated on the agent-actuator milestone; design fixed here so waves 1–5 need no rework. |
+| **W6 — agent bridge** | §8, gated on the agent-actuator milestone; design fixed here so waves 1–5 need no rework. **Not built.** |
 
 W1 is the trust-critical wave and gets the test weight: known-answer vectors for
 every `Vault::Crypto` operation (so a refactor that silently changes ciphertext
 framing fails loudly), round-trip property tests, unlock/expiry/session-binding
 cases, password change and both reset branches, share/revoke/rotation, and a
 regression asserting no secret field ever appears in a rendered index/show body.
+
+### Build notes (what the build changed about the design)
+
+Four things the plan didn't anticipate, decided during the build:
+
+- **The keyring's own key rows are the "secret lost" marker.** `Keyring#reset!`
+  deletes the user's `credential_keys` rather than setting a flag on each
+  credential: the rows are what make a secret readable, so deleting them *is*
+  the loss, and no per-entry state can drift out of sync with the crypto.
+  `Credential#secret_lost_for?` is a query, not a column.
+- **Re-entering a lost secret rotates rather than writes.** The edit path for a
+  lost entry mints a fresh item key wrapped for the owner *and every grantee
+  whose key row survived* — so a re-entered household password reaches the
+  people it was already shared with, without a re-share round trip.
+- **`kind` is immutable after creation**, because it's sealed into the AAD.
+  The edit form submits it but the controller drops it; changing an entry's
+  kind means creating a new one. Cheap, and it keeps the AAD binding honest.
+- **The unlock window is what expires, not the session.** The existing session
+  cookie is permanent, so a member who leaves a tab open for a day meets the
+  unlock banner, not a sign-in page — exactly the surface Q-vault-autolock is
+  about. Tests must re-unlock after `travel`ing past 12 hours.
 
 ---
 

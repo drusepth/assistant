@@ -175,6 +175,18 @@
     </div>
   <% end %>
 
+  <%= render Ui::CardComponent.new(title: "Change password", subtitle: "Also re-seals your password vault — no reset, nothing lost") do %>
+    <%= form_with url: user_password_path, method: :patch, class: "grid gap-3 sm:grid-cols-3" do |form| %>
+      <%= form.password_field :password_challenge, placeholder: "Current password", autocomplete: "current-password", required: true %>
+      <%= form.password_field :password, placeholder: "New password", autocomplete: "new-password", required: true, maxlength: 72 %>
+      <%= form.password_field :password_confirmation, placeholder: "Repeat new password", autocomplete: "new-password", required: true, maxlength: 72 %>
+      <div class="sm:col-span-3">
+        <%= form.submit "Change password", class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+    <p class="mt-2 text-xs text-soft">Forgot it? Use the reset link on the sign-in page — you'll need your vault recovery code there.</p>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Your data", subtitle: "Everything you own — items as JSON, documents as files — in one zip") do %>
     <div class="flex flex-wrap items-center gap-3">
       <%= button_to "Build export", export_path, method: :post, class: "btn btn-secondary" %>
@@ -241,7 +253,7 @@
               </span>
             </div>
             <input type="text" readonly value="<%= join_url(invitation.join_token) %>"
-                   data-clipboard-target="source" onclick="this.select()"
+                   data-clipboard-target="source" data-action="click->clipboard#selectAll"
                    class="input mt-2 text-xs text-soft">
           </div>
         <% end %>

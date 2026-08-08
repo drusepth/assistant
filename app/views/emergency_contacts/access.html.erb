@@ -1,0 +1,41 @@
+<%# Emergency read (PASSWORDS_PLAN §7): released escrow, read-only, the
+    owner was notified the moment this opened. Reveals ride a dedicated
+    endpoint that unwraps owner-vault-key → owner-private-key → item key. %>
+<%= render Ui::PageHeaderComponent.new(title: "#{@owner.name}'s vault",
+      subtitle: "Emergency access — read-only. #{@owner.name} was notified when this opened.") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Back", credentials_path, class: "btn btn-ghost" %>
+  <% end %>
+<% end %>
+
+<% if @credentials.empty? %>
+  <%= render Ui::EmptyStateComponent.new(title: "Nothing stored", description: "#{@owner.name}'s vault is empty.") %>
+<% else %>
+  <div class="card divide-y divide-edge">
+    <% @credentials.each do |credential| %>
+      <div class="flex items-center gap-3 p-3"
+           data-controller="secret" data-secret-url-value="<%= emergency_reveal_emergency_contact_path(@role, credential_id: credential.id) %>">
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-ink"><%= credential.name %></p>
+          <p class="truncate text-xs text-soft"><%= credential.username.presence || credential.kind_settings[:label] %></p>
+        </div>
+        <div class="flex shrink-0 items-center gap-1.5">
+          <% if credential.username.present? %>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="secret#copyText"
+                    data-secret-text-param="<%= credential.username %>">user</button>
+          <% end %>
+          <% (credential.kind_settings[:secret_fields] - %w[ totp ]).each do |field| %>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="secret#copy"
+                    data-secret-field-param="<%= field %>"><%= field == "password" ? "pass" : field %></button>
+          <% end %>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="secret#copy"
+                  data-secret-field-param="notes">notes</button>
+          <% if credential.totp_present %>
+            <button type="button" class="btn btn-ghost btn-sm font-mono" data-action="secret#copy"
+                    data-secret-field-param="totp">2FA</button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

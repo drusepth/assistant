@@ -19,7 +19,15 @@ class PasswordsController < ApplicationController
   end
 
   def update
+    # A reset can't rewrap the vault (no old password), so the keyring needs
+    # the recovery code — or an explicit, knowing forfeit (D-vault-crypto).
+    if needs_recovery_decision? && !recovery_code_valid? && params[:forfeit_vault] != "1"
+      return redirect_to edit_password_path(params[:token]),
+        alert: "That recovery code didn't match. Enter the code from your recovery kit, or confirm you're giving up your saved passwords."
+    end
+
     if @user.update(params.permit(:password, :password_confirmation))
+      carry_keyring_through_reset
       @user.sessions.destroy_all
       redirect_to new_session_path, notice: "Password has been reset."
     else
@@ -32,5 +40,31 @@ class PasswordsController < ApplicationController
       @user = User.find_by_password_reset_token!(params[:token])
     rescue ActiveSupport::MessageVerifier::InvalidSignature
       redirect_to new_password_path, alert: "Password reset link is invalid or has expired."
+    end
+
+    def needs_recovery_decision?
+      @user.keyring&.recovery_wrapped_key.present?
+    end
+
+    def recovery_code_valid?
+      return false if params[:recovery_code].blank?
+
+      @recovered_vault_key ||= @user.keyring.unlock_with_recovery(params[:recovery_code])
+      @recovered_vault_key.present?
+    end
+
+    def carry_keyring_through_reset
+      keyring = @user.keyring or return
+
+      if needs_recovery_decision? && recovery_code_valid?
+        # Same vault key, new wrap; the used recovery wrap is cleared so the
+        # next unlocked visit prompts for a fresh kit.
+        keyring.rewrap!(@recovered_vault_key, params[:password])
+        keyring.update!(recovery_salt: nil, recovery_wrapped_key: nil, recovery_confirmed_at: nil)
+      else
+        # No recovery wrap on file, or an explicit forfeit: fresh keys, own
+        # key rows deleted (secrets show as lost), escrow rows die too.
+        keyring.reset!(params[:password])
+      end
     end
 end
