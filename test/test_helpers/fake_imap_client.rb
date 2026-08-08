@@ -40,6 +40,12 @@ class FakeImapClient
     uids.index_with { |uid| @flag_map.dig(name, uid) || [] }
   end
 
+  def search(name, terms, since: nil, before: nil)
+    @mailbox.fetch(name).fetch(:messages, {}).select { |_uid, raw|
+      Array(terms).all? { |term| raw.downcase.include?(term.to_s.downcase) }
+    }.keys.sort
+  end
+
   def disconnect = @disconnected = true
   def disconnected? = @disconnected
 end

@@ -13,6 +13,7 @@
     <% if params[:account].present? %><%= hidden_field_tag :account, params[:account] %><% end %>
     <%= submit_tag "Search", class: "btn btn-secondary" %>
   <% end %>
+  <%= link_to "Ask your email", new_tool_run_path("ask_your_email"), class: "btn btn-primary" %>
 
   <% if @accounts.size > 1 %>
     <div class="flex items-center gap-1.5">

@@ -94,6 +94,7 @@ Rails.application.routes.draw do
     member do
       post :recap
       post :retry_reply
+      post :save_answer
     end
   end
 

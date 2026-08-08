@@ -33,6 +33,23 @@ class ToolRunsController < ApplicationController
     redirect_to run
   end
 
+  # Ask-your-email answers render on the run page without landing anything;
+  # this is the explicit door into the primitive pool (D30) — one click,
+  # one Note, auto-filed per D16.
+  def save_answer
+    run = Current.user.tool_runs.find(params[:id])
+    answer = run.output["answer"]
+    if answer.present? && run.items.grep(Note).empty?
+      body = [ answer["body"],
+               Array(answer["citations"]).map { |citation| "— #{citation["from"]}#{", #{citation["date"]}" if citation["date"].present?}" }.join("\n").presence
+             ].compact.join("\n\nSources:\n")
+      note = Current.user.notes.create!(title: "From your mail: #{answer["question"].to_s.first(80)}", body: body)
+      note.enqueue_auto_sort!
+      run.tool_run_items.create!(item: note)
+    end
+    redirect_to run
+  end
+
   # "Try again" after a failed turn: drop the failure notice and re-enqueue
   # the reply — the user's message is answered without retyping it.
   def retry_reply

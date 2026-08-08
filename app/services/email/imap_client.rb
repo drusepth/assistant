@@ -61,6 +61,20 @@ class Email::ImapClient
     end
   end
 
+  # Server-side text search (the read_archive fallback, EMAIL_PLAN.md §7):
+  # every term must match (IMAP TEXT keys AND together), optional date
+  # bounds. Returns UIDs, newest last.
+  def search(folder, terms, since: nil, before: nil)
+    wrap("searching #{folder}") do
+      examine(folder)
+      keys = Array(terms).flat_map { |term| [ "TEXT", term.to_s ] }
+      keys += [ "SINCE", since.strftime("%d-%b-%Y") ] if since
+      keys += [ "BEFORE", before.strftime("%d-%b-%Y") ] if before
+      keys = [ "ALL" ] if keys.empty?
+      imap.uid_search(keys).sort
+    end
+  end
+
   # => { uid => [:Seen, :Answered, ...] }
   def flags(folder, uids)
     return {} if uids.empty?
