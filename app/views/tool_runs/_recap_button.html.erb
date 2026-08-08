@@ -1,0 +1,9 @@
+<%# One recap button, two homes (page header + under the composer), one
+    state: idle → "Saving recap…" while ChatRecapJob is in flight
+    (recap_pending?) → idle again, relabeled, once the note lands. %>
+<% if tool_run.recap_pending? %>
+  <span class="btn btn-secondary opacity-60">Saving recap…</span>
+<% else %>
+  <%= button_to tool_run.items.grep(Note).any? ? "Save another recap" : "Save a recap",
+        recap_tool_run_path(tool_run), method: :post, class: "btn btn-secondary" %>
+<% end %>

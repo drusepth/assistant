@@ -10,6 +10,12 @@ module Tool
     self.title = "Study with a tutor"
     self.description = "An infinitely patient 1:1 tutor that knows your plan and remembers last time."
     self.section_slugs = %w[ education ]
+    self.quick_replies = [
+      "I don't get it — can you explain it another way?",
+      "Show me an example",
+      "Quiz me",
+      "Got it — what's next?"
+    ]
 
     input :topic, required: true,
       label: "What are we working on?",
