@@ -10,6 +10,7 @@ module Tool
     cancel_subscription reconnect moving
     start_a_hobby what_should_i_make_next find_your_people
     interview_prep mock_interview check_pay_stub wage_claim tailor_application
+    raise_case decode_offer
   ].freeze
 
   module_function
