@@ -1,20 +1,8 @@
 <div data-controller="quick-add" data-action="keydown.esc@window->quick-add#closeAll click@window->quick-add#clickOutside">
-  <%= render Ui::PageHeaderComponent.new(title: "Dashboard", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
-    <% header.with_actions do %>
-      <%= render Ui::QuickAddComponent.new(name: "task", label: "Task", title: "New task") do %>
-        <%= render "tasks/quick_form", task: @quick_task, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note") do %>
-        <%= render "notes/quick_form", note: @quick_note, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "event", label: "Event", title: "New event") do %>
-        <%= render "events/quick_form", event: @quick_event, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "goal", label: "Goal", title: "New goal", primary: true) do %>
-        <%= render "goals/quick_form", goal: @quick_goal, return_to: root_path, autofocus: false %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%# The hero absorbs the page header: the household's name is the title of
+      its own dashboard, and the quick-add row rides along inside it. %>
+  <%= render "hero", hero: @hero, quick_task: @quick_task, quick_note: @quick_note,
+        quick_event: @quick_event, quick_goal: @quick_goal %>
 </div>
 
 <% attention_count = @overdue_tasks.size + @due_today_tasks.size %>

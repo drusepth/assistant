@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_060249) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_060958) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -157,10 +157,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_060249) do
   end
 
   create_table "households", force: :cascade do |t|
+    t.text "address"
     t.datetime "created_at", null: false
+    t.string "home_status"
+    t.date "moved_in_on"
     t.string "name", null: false
+    t.string "phone"
     t.string "region"
-    t.string "time_zone", default: "UTC", null: false
+    t.string "tagline"
+    t.string "time_zone"
     t.datetime "updated_at", null: false
   end
 

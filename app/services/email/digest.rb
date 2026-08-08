@@ -33,7 +33,7 @@ class Email::Digest
     # Deterministic: live arrivals since the last digest, important per
     # triage (sender rules already shaped importance), newest first.
     def select_items
-      since = (@user.mail_digest_generated_on || Date.yesterday).in_time_zone(@user.household.tz.name)
+      since = (@user.mail_digest_generated_on || Date.yesterday).in_time_zone(@user.household.zone)
       EmailMessage.where(linked_account_id: accounts.map(&:id), backfilled: false)
         .where("importance >= ?", MIN_IMPORTANCE)
         .where("created_at > ?", since)

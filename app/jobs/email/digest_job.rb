@@ -7,7 +7,7 @@ class Email::DigestJob < ApplicationJob
 
   def self.dispatch_due
     User.joins(:linked_accounts).where(linked_accounts: { provider: "email" }).distinct.find_each do |user|
-      now = Time.current.in_time_zone(user.household.tz.name)
+      now = Time.current.in_time_zone(user.household.zone)
       next if now.hour < user.mail_digest_hour
       next if user.mail_digest_generated_on == now.to_date
 

@@ -1,7 +1,8 @@
 # The email plan's E0 pass (EMAIL_PLAN.md §10): the linked-account layer
 # grows what every consumer after it needs — multiple links per provider,
-# encrypted credentials, per-link settings — and households get a clock.
-class PlatformPassForMultiLinkAccountsAndHouseholdClock < ActiveRecord::Migration[8.1]
+# encrypted credentials, per-link settings. (The household clock the mail
+# digest reads is `households.time_zone`, added by D-household-profile.)
+class PlatformPassForMultiLinkAccounts < ActiveRecord::Migration[8.1]
   def up
     # Multi-link providers (email first): one row per mailbox, told apart
     # by a user-facing label. Uniqueness moves to model validations, which
@@ -22,15 +23,9 @@ class PlatformPassForMultiLinkAccountsAndHouseholdClock < ActiveRecord::Migratio
     change_column :linked_accounts, :credentials, :text, null: false, default: "{}"
     LinkedAccount.reset_column_information
     LinkedAccount.find_each(&:encrypt)
-
-    # The household clock: the mail digest needs "8:00 in *your* timezone"
-    # to mean something. (Jurisdiction is `households.region`, added by
-    # D34's own migration.)
-    add_column :households, :time_zone, :string, null: false, default: "UTC"
   end
 
   def down
-    remove_column :households, :time_zone
     change_column :linked_accounts, :credentials, :json, null: false, default: {}
     remove_column :linked_accounts, :settings
     remove_index :linked_accounts, %i[ user_id provider ]

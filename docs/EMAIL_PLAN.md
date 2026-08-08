@@ -218,11 +218,11 @@ app to point the adapter at a model running in your own house.
   stops being deferrable the moment mailbox passwords flow through at volume. The M4
   AR-encryption setup (per-instance keys in `storage/`) already exists; this is
   `encrypts :credentials` + a backfill migration, done in E0.
-- **Prerequisite: a household clock.** The digest promises "8:00 in your timezone" and
-  no timezone exists anywhere in the schema. E0 adds `households.time_zone` (+ an
-  optional region/state field — the household setting **Q12** has been waiting for on
-  behalf of the Rights/Benefits tools) as ordinary Settings fields. One tiny
-  migration, three features served.
+- **Prerequisite: a household clock.** The digest promises "8:00 in your timezone",
+  which needs a household-level time zone to mean anything. This landed on main as
+  part of **D-household-profile** (`households.time_zone`, read through
+  `Household#zone`, edited on the household page alongside D34's `region`), so the
+  digest simply consumes it — E0 no longer adds a column of its own.
 
 ### Mirror lifecycle controls (the user's side of the cache)
 
@@ -462,8 +462,8 @@ Deterministic selection, LLM phrasing, in-app body — the `Users::WeeklyDigest`
 merged across accounts:
 
 - A dispatcher job runs every 15 minutes and fires each user's digest when *their*
-  chosen delivery time arrives (default 8:00, `households.time_zone` from E0 — a
-  per-user clock can't be one fixed cron entry). It collects new messages since the
+  chosen delivery time arrives (default 8:00, on `Household#zone` per
+  D-household-profile — a per-user clock can't be one fixed cron entry). It collects new messages since the
   last digest with `importance >= 2` (sender rules already applied), plus counts by
   category, across every digest-enabled link.
 - **An empty selection sends nothing and renders nothing.** Silence is a feature; "no
@@ -625,8 +625,8 @@ existing DAV consumers immediately.
 1. **E0 — Linked-account platform pass (no email code).** Multi-link providers
    (`multi: true`, labels, uniqueness change, stacked Settings cards);
    `encrypts :credentials` + backfill migration; recurring background sync fan-out
-   (`sync_every:`, all syncable providers); `households.time_zone` (+ optional region
-   — the Q12 household setting) in Settings.
+   (`sync_every:`, all syncable providers). The household clock the digest reads
+   comes from D-household-profile, not from this pass.
 2. **E1a — The mirror + sync engine (no UI).** The mirror database (D-mirror-database:
    `database.yml`, migrations path, `MirrorRecord`); `email_folders` /
    `email_messages` (person matching, own-address direction, `reply_wanted_by`) /
