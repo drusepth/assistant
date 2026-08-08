@@ -28,6 +28,7 @@ module Tool
       def hobby? = kind == :hobby
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
+      def date? = kind == :date
     end
 
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil
@@ -144,6 +145,30 @@ module Tool
         (@chosen_documents ||= {})[input_name.to_s] ||=
           Document.visible_to(user).find_by(id: inputs[input_name]) ||
             raise(Llm::Error, "That document is gone or no longer shared with you.")
+      end
+
+      # The person an input points at, through the visibility wall — same
+      # contract as chosen_document: blank input nil, vanished pick raises.
+      def chosen_person(input_name = :person_id)
+        return nil if inputs[input_name].blank?
+
+        (@chosen_people ||= {})[input_name.to_s] ||=
+          Person.visible_to(user).find_by(id: inputs[input_name]) ||
+            raise(Llm::Error, "That person is gone or no longer shared with you.")
+      end
+
+      # What's known about a person, assembled once for every People tool
+      # (docs/PEOPLE.md §4): profile fields, filing, the user's own notes.
+      # When Q14 person↔item links land, shared history joins here.
+      def person_context(person)
+        parts = [ "Name: #{person.name}" ]
+        parts << "Relationship: #{person.relationship}" if person.relationship.present?
+        parts << "Birthday: #{person.birthday.strftime("%B %-d")}" if person.birthday
+        parts << "Last logged contact: #{person.last_contacted_on.iso8601}" if person.last_contacted_on
+        filed = person.sections.map(&:qualified_name)
+        parts << "Filed under: #{filed.join(", ")}" if filed.any?
+        parts << "What the user has noted about them:\n#{person.notes.truncate(2_000)}" if person.notes.present?
+        parts.join("\n")
       end
 
       def document_text(document)

@@ -53,6 +53,8 @@
                 <%= link_to "add someone first", new_person_path, class: "text-primary-700 hover:underline" %>.
               </p>
             <% end %>
+          <% elsif input.date? %>
+            <%= date_field_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", id: "inputs_#{input.name}" %>
           <% elsif input.hobby? && @hobby_choices.any? %>
             <%= select_tag "inputs[#{input.name}]",
                   options_for_select(@hobby_choices.map(&:name), @tool_run.inputs[input.name]),
