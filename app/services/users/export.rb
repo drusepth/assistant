@@ -17,6 +17,7 @@ module Users
       "goals" => ->(user) { user.goals },
       "notes" => ->(user) { user.notes },
       "photos" => ->(user) { user.photos },
+      "albums" => ->(user) { user.albums },
       "suggestions" => ->(user) { user.suggestions }
     }.freeze
 
@@ -73,6 +74,7 @@ module Users
         row["sections"] = record.sections.map(&:slug) if record.respond_to?(:sections)
         row["file"] = file_entry_name(record) if record.is_a?(Document) && record.file.attached?
         row["file"] = photo_entry_name(record) if record.is_a?(Photo) && record.image.attached?
+        row["photo_ids"] = record.photo_ids if record.is_a?(Album)
         row
       end
 

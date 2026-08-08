@@ -31,9 +31,11 @@ class PhotosController < ApplicationController
 
   # Batch capture: files from the multipart fallback or signed blob ids from
   # direct upload — attach accepts both, so one path serves JS and no-JS.
+  # An album_id (from an album page's upload zone) files the batch there too.
   def create
+    album = Current.user.albums.find(params.dig(:photos, :album_id)) if params.dig(:photos, :album_id).present?
     images = Array(params.dig(:photos, :images)).reject(&:blank?)
-    return redirect_back_to_library(alert: "Choose some photos first.") if images.empty?
+    return redirect_back_to_library(album, alert: "Choose some photos first.") if images.empty?
 
     added = skipped = rejected = 0
     images.each do |image|
@@ -46,6 +48,7 @@ class PhotosController < ApplicationController
           skipped += 1
         else
           photo.enqueue_ingest!
+          album&.album_photos&.create!(photo: photo)
           added += 1
         end
       else
@@ -53,7 +56,7 @@ class PhotosController < ApplicationController
       end
     end
 
-    redirect_back_to_library(notice: upload_summary(added, skipped, rejected))
+    redirect_back_to_library(album, notice: upload_summary(added, skipped, rejected))
   end
 
   def edit
@@ -96,8 +99,8 @@ class PhotosController < ApplicationController
       scope
     end
 
-    def redirect_back_to_library(**flash)
-      redirect_back fallback_location: photos_path, **flash
+    def redirect_back_to_library(album = nil, **flash)
+      redirect_back fallback_location: album || photos_path, **flash
     end
 
     def upload_summary(added, skipped, rejected)

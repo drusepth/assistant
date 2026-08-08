@@ -72,6 +72,12 @@ Rails.application.routes.draw do
       post :ingest
     end
   end
+  resources :albums do
+    member do
+      post :add_photos
+      delete :remove_photos
+    end
+  end
 
   resources :suggestions, only: [] do
     member do

@@ -2,7 +2,9 @@
       class: "group relative block aspect-square overflow-hidden rounded-lg bg-stone-100",
       data: {
         lightbox_target: "item",
-        action: "click->lightbox#open",
+        photo_select_target: "tile",
+        photo_id: photo.id,
+        action: "click->photo-select#toggleTile click->lightbox#open",
         large_url: url_for(photo.image.variant(:large)),
         caption: photo.display_title
       } do %>

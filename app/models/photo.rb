@@ -13,6 +13,27 @@ class Photo < ApplicationRecord
       saver: { quality: 85, strip: true }
   end
 
+  has_many :album_photos, dependent: :destroy
+  has_many :albums, through: :album_photos
+
+  # The album sharing path (D30): a grant on a containing album exposes the
+  # photo — but only when the grant's grantor owns the photo, so a future
+  # collaborative album (Q15) can never leak a contributor's photo through
+  # someone else's grant.
+  def self.extra_visibility_clauses
+    [ <<~SQL ]
+      EXISTS (
+        SELECT 1 FROM access_grants
+        INNER JOIN album_photos
+          ON album_photos.album_id = access_grants.subject_id
+          AND album_photos.photo_id = photos.id
+        WHERE access_grants.grantee_id = :viewer_id
+          AND access_grants.subject_type = 'Album'
+          AND access_grants.grantor_id = photos.user_id
+      )
+    SQL
+  end
+
   enum :ingest_status, {
     queued: "queued", processing: "processing", ready: "ready", failed: "failed"
   }, prefix: :ingest

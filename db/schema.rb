@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_031209) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_032055) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -51,6 +51,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_031209) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "album_photos", force: :cascade do |t|
+    t.integer "album_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "photo_id", null: false
+    t.integer "position"
+    t.datetime "updated_at", null: false
+    t.index ["album_id", "photo_id"], name: "index_album_photos_on_album_id_and_photo_id", unique: true
+    t.index ["album_id"], name: "index_album_photos_on_album_id"
+    t.index ["photo_id"], name: "index_album_photos_on_photo_id"
+  end
+
+  create_table "albums", force: :cascade do |t|
+    t.integer "cover_photo_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["cover_photo_id"], name: "index_albums_on_cover_photo_id"
+    t.index ["user_id"], name: "index_albums_on_user_id"
   end
 
   create_table "app_errors", force: :cascade do |t|
@@ -333,6 +355,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_031209) do
   add_foreign_key "access_grants", "users", column: "grantor_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "album_photos", "albums"
+  add_foreign_key "album_photos", "photos"
+  add_foreign_key "albums", "photos", column: "cover_photo_id", on_delete: :nullify
+  add_foreign_key "albums", "users"
   add_foreign_key "app_errors", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "events", "goals"

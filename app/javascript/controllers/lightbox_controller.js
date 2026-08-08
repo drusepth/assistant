@@ -9,6 +9,7 @@ export default class extends Controller {
 
   open(event) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    if (this.element.dataset.selecting === "true") return
     event.preventDefault()
 
     this.index = this.itemTargets.indexOf(event.currentTarget)

@@ -1,0 +1,67 @@
+<% own = @album.user_id == Current.user.id %>
+
+<div data-controller="photo-upload lightbox photo-select"
+     <% if own %>data-action="dragover->photo-upload#dragOver dragleave->photo-upload#dragLeave drop->photo-upload#drop"<% end %>>
+  <%= render Ui::PageHeaderComponent.new(title: @album.title,
+        subtitle: own ? pluralize(@photos.size, "photo") : "#{pluralize(@photos.size, "photo")} · shared by #{@album.user.name}") do |header| %>
+    <% header.with_actions do %>
+      <% if own && @photos.any? %>
+        <button type="button" class="btn btn-secondary"
+                data-action="photo-select#toggleMode" data-photo-select-target="toggle">Select</button>
+      <% end %>
+      <% if own %>
+        <button type="button" class="btn btn-primary" data-action="photo-upload#choose">
+          <%= icon(:plus, css_class: "size-4") %> Photos
+        </button>
+        <%= link_to "Edit", edit_album_path(@album), class: "btn btn-secondary" %>
+        <%= button_to "Delete", @album, method: :delete, class: "btn btn-danger",
+              data: { turbo_confirm: "Delete this album? The photos in it stay in your library." } %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if @album.description.present? %>
+    <p class="mb-6 max-w-2xl text-sm text-soft"><%= @album.description %></p>
+  <% end %>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <div class="lg:col-span-2">
+      <% if own %>
+        <%= form_with url: photos_path, multipart: true, data: { photo_upload_target: "form" } do %>
+          <%= hidden_field_tag "photos[album_id]", @album.id %>
+          <label class="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-edge px-4 py-3 text-sm text-soft transition-colors hover:border-primary-500 hover:text-ink"
+                 data-photo-upload-target="zone">
+            <%= icon(:photo, css_class: "size-5") %>
+            <span><span class="font-semibold text-primary-700">Add photos to this album</span> — click or drop them here</span>
+            <%= file_field_tag "photos[images][]", multiple: true, accept: "image/*", direct_upload: true,
+                  class: "sr-only", data: { photo_upload_target: "input", action: "photo-upload#changed" } %>
+            <noscript><button type="submit" class="btn btn-primary btn-sm">Upload</button></noscript>
+          </label>
+          <div class="mb-4 hidden space-y-1" data-photo-upload-target="progress"></div>
+        <% end %>
+      <% end %>
+
+      <% if @photos.any? %>
+        <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2">
+          <%= render partial: "photos/photo_tile", collection: @photos, as: :photo %>
+        </div>
+      <% else %>
+        <%= render Ui::EmptyStateComponent.new(
+              title: "Nothing here yet",
+              description: own ?
+                "Drop photos above, or select them from your timeline and add them here." :
+                "This album is empty so far."
+            ) %>
+      <% end %>
+    </div>
+
+    <% if own %>
+      <div><%= render "shared/share_controls", subject: @album %></div>
+    <% end %>
+  </div>
+
+  <% if own %>
+    <%= render "photos/select_bar", albums: Current.user.albums.where.not(id: @album.id).order(:title),
+          remove_album: @album %>
+  <% end %>
+</div>
