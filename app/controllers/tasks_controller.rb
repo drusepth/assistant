@@ -15,6 +15,9 @@ class TasksController < ApplicationController
 
   def show
     @task = Task.visible_to(Current.user).find(params[:id])
+    # The embedded conversation (D30) is the owner's private surface —
+    # household members who can see a shared task never see the chat.
+    @conversation = @task.conversation if @task.user_id == Current.user.id
   end
 
   def new
@@ -36,7 +39,14 @@ class TasksController < ApplicationController
 
   def update
     if @task.update(task_params)
-      redirect_to @task, notice: "Task updated."
+      # "Save & complete" on the answer card (D30): writing the answer is
+      # how a mental task finishes, so the two come as one click.
+      if params[:save_and_complete].present? && !@task.completed?
+        @task.complete!
+        redirect_to @task, notice: "Answer saved — task completed."
+      else
+        redirect_to @task, notice: "Task updated."
+      end
     else
       render :edit, status: :unprocessable_entity
     end
@@ -90,6 +100,6 @@ class TasksController < ApplicationController
     end
 
     def task_params
-      params.expect(task: [ :title, :notes, :due_on, :goal_id, section_ids: [] ])
+      params.expect(task: [ :title, :notes, :due_on, :goal_id, :resolution, section_ids: [] ])
     end
 end

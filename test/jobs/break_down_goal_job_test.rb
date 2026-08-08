@@ -13,7 +13,8 @@ class BreakDownGoalJobTest < ActiveJob::TestCase
       target_on: "2026-10-01",
       steps: [
         { title: "Update resume", notes: "Focus on recent projects", due_on: Date.current.iso8601, sections: [ "career" ] },
-        { title: "List 10 companies to apply to", due_on: Date.tomorrow.iso8601, sections: [] }
+        { title: "List 10 companies to apply to", due_on: Date.tomorrow.iso8601, sections: [],
+          questions: [ "Which industries excite you?", "What's a dealbreaker?" ] }
       ]
     )
 
@@ -32,6 +33,9 @@ class BreakDownGoalJobTest < ActiveJob::TestCase
     assert_equal [ sections(:career) ], first.sections.to_a
     assert_equal "List 10 companies to apply to", second.title
     assert second.later?, "a step due later stays in the backlog"
+    assert_equal [], first.guiding_questions
+    assert_equal [ "Which industries excite you?", "What's a dealbreaker?" ], second.guiding_questions,
+      "step questions seed the task page's conversation (D30)"
   end
 
   test "does not re-break a goal that already has steps" do
