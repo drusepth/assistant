@@ -9,7 +9,7 @@ module Tool
     benefits_screener learn_something tutor
     cancel_subscription reconnect moving
     start_a_hobby what_should_i_make_next find_your_people
-    interview_prep mock_interview
+    interview_prep mock_interview check_pay_stub wage_claim
   ].freeze
 
   module_function

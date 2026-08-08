@@ -15,7 +15,7 @@ module Career
       stub = PayStub.for(@document)
       return unless stub
 
-      previous = previous_stub(stub)
+      previous = PayStub.previous_for(stub)
       return unless previous&.comparable_to?(stub)
 
       summary = described_change(previous, stub)
@@ -30,13 +30,6 @@ module Career
     end
 
     private
-      def previous_stub(stub)
-        PayStub.scope(@user).where.not(id: @document.id)
-          .filter_map { |document| PayStub.for(document) }
-          .select { |other| other.logged_on <= stub.logged_on }
-          .max_by(&:logged_on)
-      end
-
       def described_change(previous, current)
         if previous.rate && current.rate
           "#{money(previous.rate)} → #{money(current.rate)}/hr" unless previous.rate == current.rate

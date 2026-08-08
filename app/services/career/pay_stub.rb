@@ -14,6 +14,14 @@ module Career
       Document.where(user: user).where("json_extract(extracted_facts, '$.pay_stub') IS NOT NULL")
     end
 
+    # The user's nearest earlier stub — what a stub is measured against.
+    def self.previous_for(stub)
+      scope(stub.document.user).where.not(id: stub.document.id)
+        .filter_map { |document| PayStub.for(document) }
+        .select { |other| other.logged_on <= stub.logged_on }
+        .max_by(&:logged_on)
+    end
+
     def initialize(document)
       @document = document
       @facts = document.extracted_facts.fetch("pay_stub", {})
