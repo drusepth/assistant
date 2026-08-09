@@ -14,6 +14,16 @@ class HouseholdsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Invite someone", response.body
   end
 
+  test "a member with an uploaded photo shows it; everyone else keeps their initials" do
+    sign_in_as users(:one)
+    users(:two).avatar.attach(io: file_fixture("photo.jpg").open, filename: "photo.jpg", content_type: "image/jpeg")
+
+    get household_path
+    assert_response :success
+    assert_select "img", count: 1
+    assert_match "AS", response.body # Alice Smith, who hasn't uploaded one
+  end
+
   test "a non-admin reads the profile without the forms" do
     sign_in_as users(:two)
     users(:two).household.update!(phone: "(512) 555-0142")

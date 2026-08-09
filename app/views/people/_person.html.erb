@@ -1,7 +1,5 @@
 <div class="card flex items-start gap-3 p-4">
-  <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-800">
-    <%= person.name.split.map(&:first).join[0, 2].upcase %>
-  </span>
+  <%= render Ui::AvatarComponent.new(user: person.linked_user, name: person.name) %>
 
   <div class="min-w-0 flex-1">
     <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>

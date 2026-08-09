@@ -6,9 +6,7 @@
     <div class="divide-y divide-edge">
       <% birthdays.each do |person| %>
         <div class="flex items-center gap-3 p-4">
-          <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-800">
-            <%= person.name.split.map(&:first).join[0, 2].upcase %>
-          </span>
+          <%= render Ui::AvatarComponent.new(user: person.linked_user, name: person.name, tone: :amber) %>
           <div class="min-w-0 flex-1">
             <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
             <p class="text-xs text-soft">Birthday — <%= birthday_phrase(person) %></p>
@@ -57,9 +55,7 @@
     <div class="divide-y divide-edge">
       <% circle.each do |person| %>
         <div class="flex flex-wrap items-center gap-3 p-4">
-          <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-800">
-            <%= person.name.split.map(&:first).join[0, 2].upcase %>
-          </span>
+          <%= render Ui::AvatarComponent.new(user: person.linked_user, name: person.name) %>
           <div class="min-w-0 flex-1">
             <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
             <p class="text-xs text-soft">

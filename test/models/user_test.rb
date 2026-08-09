@@ -28,6 +28,38 @@ class UserTest < ActiveSupport::TestCase
     assert_equal sections(:health), users(:two).enabled_sections.first
   end
 
+  test "initials fall back to the first letters of the first two words" do
+    assert_equal "AS", users(:one).initials
+    assert_equal "M", User.new(name: "madonna").initials
+    assert_equal "AÉ", User.new(name: "ana école").initials
+    assert_equal "", User.new(name: nil).initials
+  end
+
+  test "an avatar has to be an image the app can actually render" do
+    user = users(:one)
+    user.avatar.attach(io: file_fixture("sample.txt").open, filename: "sample.txt", content_type: "text/plain")
+
+    assert_not user.valid?
+    assert_match "PNG, JPEG, WEBP, or GIF", user.errors.full_messages.to_sentence
+  end
+
+  test "an oversized avatar is refused" do
+    user = users(:one)
+    user.avatar.attach(io: file_fixture("photo.jpg").open, filename: "photo.jpg", content_type: "image/jpeg")
+    user.avatar.blob.update!(byte_size: User::AVATAR_MAX_BYTES + 1)
+
+    assert_not user.valid?
+    assert_match "bigger than", user.errors.full_messages.to_sentence
+  end
+
+  test "avatar_ready? is false until a variable image is attached" do
+    user = users(:one)
+    assert_not user.avatar_ready?
+
+    user.avatar.attach(io: file_fixture("photo.jpg").open, filename: "photo.jpg", content_type: "image/jpeg")
+    assert user.avatar_ready?
+  end
+
   test "destroying a user removes their data but not the household" do
     user = users(:one)
     user.tasks.create!(title: "Task")

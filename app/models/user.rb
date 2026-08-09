@@ -37,6 +37,17 @@ class User < ApplicationRecord
   # newest kept.
   has_one_attached :export_archive
 
+  # Your face on every surface (D-user-avatars). One square variant is all
+  # any surface ever renders — the original is kept but never served, so a
+  # phone-camera JPEG doesn't get shipped to a sidebar 24 pixels wide.
+  has_one_attached :avatar do |attachable|
+    attachable.variant :thumb, resize_to_fill: [ 200, 200 ], format: :webp,
+      saver: { quality: 80, strip: true }
+  end
+
+  AVATAR_CONTENT_TYPES = %w[ image/png image/jpeg image/webp image/gif ].freeze
+  AVATAR_MAX_BYTES = 10.megabytes
+
   has_many :granted_access_grants, class_name: "AccessGrant", foreign_key: :grantor_id,
     inverse_of: :grantor, dependent: :destroy
   has_many :received_access_grants, class_name: "AccessGrant", foreign_key: :grantee_id,
@@ -53,6 +64,20 @@ class User < ApplicationRecord
 
   validates :name, presence: true
   validates :email_address, presence: true, uniqueness: true
+  validate :avatar_must_be_a_supported_image
+
+  # What the initials circle falls back to, and what it always was before
+  # avatars existed: the first letter of the first two words of the name.
+  def initials
+    name.to_s.split.map { |word| word.chars.first }.join[0, 2].upcase
+  end
+
+  # An attached avatar isn't necessarily a *renderable* one — a blob whose
+  # bytes libvips can't open would blow up the variant call on every page
+  # that draws this user, so every surface asks this first.
+  def avatar_ready?
+    avatar.attached? && avatar.variable?
+  end
 
   # Section toggles (D4): sections are enabled unless explicitly disabled,
   # so new sections appear for existing users without backfill.
@@ -82,4 +107,17 @@ class User < ApplicationRecord
     disabled_ids = user_sections.where(enabled: false).pluck(:section_id)
     ordered_sections.reject { |section| disabled_ids.include?(section.id) }
   end
+
+  private
+    def avatar_must_be_a_supported_image
+      return unless avatar.attached?
+
+      unless AVATAR_CONTENT_TYPES.include?(avatar.blob.content_type)
+        errors.add(:avatar, "needs to be a PNG, JPEG, WEBP, or GIF image")
+      end
+
+      if avatar.blob.byte_size > AVATAR_MAX_BYTES
+        errors.add(:avatar, "is bigger than #{AVATAR_MAX_BYTES / 1.megabyte} MB")
+      end
+    end
 end

@@ -97,7 +97,10 @@
             <%= nav_link_to "Household", household_path, :home_modern %>
             <%= nav_link_to "Settings", settings_path, :cog %>
             <div class="flex items-center justify-between gap-2 px-3 py-1">
-              <span class="min-w-0 truncate text-xs text-soft"><%= Current.user.name %></span>
+              <span class="flex min-w-0 items-center gap-2">
+                <%= render Ui::AvatarComponent.new(user: Current.user, size: :xs) %>
+                <span class="min-w-0 truncate text-xs text-soft"><%= Current.user.name %></span>
+              </span>
               <%= button_to "Sign out", session_path, method: :delete,
                     class: "cursor-pointer rounded-md px-2 py-2 text-xs text-soft hover:text-ink" %>
             </div>

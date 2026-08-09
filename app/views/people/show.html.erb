@@ -50,7 +50,12 @@
         <% if @person.linked_user %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Account</dt>
-            <dd class="min-w-0 wrap-anywhere"><span class="chip bg-primary-50 text-primary-800"><%= @person.linked_user.name %> (household member)</span></dd>
+            <dd class="min-w-0 wrap-anywhere">
+              <span class="chip inline-flex items-center gap-1.5 bg-primary-50 py-0.5 pl-0.5 text-primary-800">
+                <%= render Ui::AvatarComponent.new(user: @person.linked_user, size: :xs) %>
+                <%= @person.linked_user.name %> (household member)
+              </span>
+            </dd>
           </div>
         <% end %>
         <div class="flex gap-2">

@@ -39,8 +39,8 @@
     <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
       <%= link_to household_path, class: "flex items-center -space-x-2", title: "#{hero.members.size} in this household" do %>
         <% hero.members.each do |member| %>
-          <span class="flex size-8 items-center justify-center rounded-full border-2 border-surface bg-primary-100 text-xs font-semibold text-primary-800"
-                title="<%= member.name %>"><%= member.name.split.map(&:first).join[0, 2].upcase %></span>
+          <%= render Ui::AvatarComponent.new(user: member, size: :sm, title: member.name,
+                css_class: "border-2 border-surface") %>
         <% end %>
       <% end %>
       <% if hero.facts.any? %>
