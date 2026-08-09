@@ -1,0 +1,4 @@
+<span class="<%= wrapper_classes %>">
+  <%= render Ui::AvatarComponent.new(user: user, name: name, size: size) %>
+  <span class="<%= text_classes %>"><%= content? ? content : name %></span>
+</span>

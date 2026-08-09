@@ -10,6 +10,14 @@
       } do %>
   <%= image_tag url_for(photo.image.variant(:thumb)), loading: "lazy", alt: photo.display_title,
         class: "size-full object-cover transition-transform duration-150 group-hover:scale-105" %>
+  <%# The grid mixes your library with what's shared into it and said
+      nothing about which was which. Only shared tiles get the badge — a
+      mark on every tile is a mark that carries no information. %>
+  <% if photo.user_id != Current.user.id %>
+    <span class="absolute bottom-1.5 left-1.5" title="From <%= photo.user.name %>">
+      <%= render Ui::AvatarComponent.new(user: photo.user, size: :xs, css_class: "border border-white/70 shadow-sm") %>
+    </span>
+  <% end %>
   <% if photo.ingest_failed? %>
     <span class="absolute right-1.5 top-1.5 rounded-full bg-red-600 p-1 text-white" title="Couldn't process this photo">
       <%= icon(:warning, css_class: "size-3.5") %>

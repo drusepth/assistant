@@ -67,6 +67,13 @@ module Users
           zip.put_next_entry(photo_entry_name(photo))
           zip.write(photo.image.download)
         end
+
+        # Your face is yours too (D-user-avatars) — the original, not the
+        # square the app renders.
+        if @user.avatar.attached?
+          zip.put_next_entry(avatar_entry_name)
+          zip.write(@user.avatar.download)
+        end
       end.tap(&:rewind)
     end
 
@@ -75,7 +82,8 @@ module Users
         {
           format: "assistant-export", version: FORMAT_VERSION,
           exported_at: Time.current.iso8601,
-          user: { name: @user.name, email_address: @user.email_address },
+          user: { name: @user.name, email_address: @user.email_address,
+                  avatar: (avatar_entry_name if @user.avatar.attached?) }.compact,
           household: @user.household.name,
           contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/" ],
           credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked"
@@ -100,6 +108,10 @@ module Users
 
       def photo_entry_name(photo)
         "photo_files/#{photo.id}-#{photo.image.filename}"
+      end
+
+      def avatar_entry_name
+        "avatar-#{@user.avatar.filename}"
       end
 
       def spending_csv

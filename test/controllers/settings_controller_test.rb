@@ -10,6 +10,17 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_match users(:two).name, response.body
   end
 
+  test "the photo card offers an upload, and a remove only once there's something to remove" do
+    get settings_path
+    assert_select "form[action=?][enctype=?]", avatar_path, "multipart/form-data"
+    assert_select "a[href=?]", avatar_path, count: 0
+
+    users(:one).avatar.attach(io: file_fixture("photo.jpg").open, filename: "photo.jpg", content_type: "image/jpeg")
+
+    get settings_path
+    assert_select "a[href=?]", avatar_path
+  end
+
   test "toggling a section off persists" do
     health = sections(:health)
     enabled_ids = Section.top_level.where.not(id: health.id).ids

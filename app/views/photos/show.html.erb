@@ -44,7 +44,9 @@
           <dt class="w-24 shrink-0 text-soft">People</dt>
           <dd class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
             <% @person_tags.each do |tag| %>
-              <span class="chip inline-flex items-center gap-1 bg-stone-100 text-stone-700">
+              <span class="chip inline-flex items-center gap-1 bg-stone-100 py-0.5 pl-0.5 text-stone-700">
+                <%= render Ui::AvatarComponent.new(user: tag.person.linked_user, name: tag.person.name,
+                      size: :xs, tone: :stone) %>
                 <%= link_to tag.person.name, person_path(tag.person), class: "hover:underline" %>
                 <% if own %>
                   <%= button_to "✕", photo_person_path(tag), method: :delete,

@@ -13,7 +13,7 @@
   <div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-soft">
     <span class="chip bg-red-50 text-red-700"><%= error.error_class %></span>
     <% if error.user %>
-      <span><%= error.user.name %></span>
+      <%= render Ui::UserLabelComponent.new(user: error.user) %>
     <% end %>
     <% error.context.each do |key, value| %>
       <span class="font-mono"><%= key %>: <%= value %></span>

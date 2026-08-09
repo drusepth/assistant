@@ -1,0 +1,9 @@
+<%= tag.span class: classes, title: title do %>
+  <% if image? %>
+    <%# alt is empty on purpose — the name is always in the row beside it,
+        so announcing it twice is noise to a screen reader. %>
+    <%= image_tag image_url, alt: "", loading: "lazy", class: "size-full object-cover" %>
+  <% else %>
+    <%= initials %>
+  <% end %>
+<% end %>

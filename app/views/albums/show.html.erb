@@ -3,7 +3,14 @@
 <div data-controller="photo-upload lightbox photo-select"
      <% if own %>data-action="dragover->photo-upload#dragOver dragleave->photo-upload#dragLeave drop->photo-upload#drop"<% end %>>
   <%= render Ui::PageHeaderComponent.new(title: @album.title,
-        subtitle: own ? pluralize(@photos.size, "photo") : "#{pluralize(@photos.size, "photo")} · shared by #{@album.user.name}") do |header| %>
+        subtitle: pluralize(@photos.size, "photo")) do |header| %>
+    <% unless own %>
+      <% header.with_meta do %>
+        <%= render Ui::UserLabelComponent.new(user: @album.user) do %>
+          shared by <%= @album.user.name %>
+        <% end %>
+      <% end %>
+    <% end %>
     <% header.with_actions do %>
       <% if own && @photos.any? %>
         <button type="button" class="btn btn-secondary"

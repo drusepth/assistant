@@ -11,8 +11,14 @@
   </div>
   <div class="p-3">
     <p class="text-sm font-medium text-ink"><%= album.title %></p>
-    <p class="mt-0.5 text-xs text-soft">
-      <%= pluralize(album.photos.size, "photo") %><% if album.user_id != Current.user.id %> · by <%= album.user.name %><% end %>
+    <p class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-soft">
+      <span class="shrink-0"><%= pluralize(album.photos.size, "photo") %></span>
+      <% if album.user_id != Current.user.id %>
+        <span aria-hidden="true">·</span>
+        <%= render Ui::UserLabelComponent.new(user: album.user, truncate: true) do %>
+          by <%= album.user.name %>
+        <% end %>
+      <% end %>
     </p>
   </div>
 <% end %>

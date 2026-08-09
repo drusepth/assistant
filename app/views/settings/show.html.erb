@@ -1,6 +1,23 @@
 <%= render Ui::PageHeaderComponent.new(title: "Settings") %>
 
 <div class="max-w-2xl space-y-6">
+  <%= render Ui::CardComponent.new(title: "Your photo",
+        subtitle: "Shown wherever the app says who someone is — your household, the dashboard, anything you share") do %>
+    <div class="flex flex-wrap items-center gap-4">
+      <%= render Ui::AvatarComponent.new(user: Current.user, size: :xl) %>
+      <%= form_with model: Current.user, url: avatar_path, method: :patch, class: "min-w-56 flex-1 space-y-2" do |form| %>
+        <%= form.file_field :avatar, accept: "image/png, image/jpeg, image/webp, image/gif" %>
+        <p class="hint">Square works best — anything else is cropped to the middle. Up to <%= User::AVATAR_MAX_BYTES / 1.megabyte %> MB.</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= form.submit "Save photo", class: "btn-sm" %>
+          <% if Current.user.avatar.attached? %>
+            <%= link_to "Remove photo", avatar_path, data: { turbo_method: :delete }, class: "btn btn-ghost btn-sm" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Sections", subtitle: "Choose which sections appear in your sidebar — drag to reorder them") do %>
     <%= form_with url: settings_path, method: :patch, class: "space-y-3", data: { controller: "sortable" } do |form| %>
       <% @sections.each do |section| %>
@@ -34,9 +51,10 @@
       <ul class="mb-4 space-y-2">
         <% @section_grants.each do |grant| %>
           <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-edge px-4 py-2.5 text-sm">
-            <span>
+            <span class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
               <span class="font-medium text-ink"><%= grant.subject.qualified_name %></span>
-              <span class="text-soft">→ <%= grant.grantee.name %></span>
+              <span class="text-soft">→</span>
+              <%= render Ui::UserLabelComponent.new(user: grant.grantee, css_class: "text-soft") %>
             </span>
             <%= button_to "Revoke", access_grant_path(grant), method: :delete, class: "btn btn-danger btn-sm" %>
           </li>

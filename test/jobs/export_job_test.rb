@@ -33,6 +33,20 @@ class ExportJobTest < ActiveJob::TestCase
     assert_equal "PDF BYTES", entries["files/#{document.id}-lease.pdf"]
   end
 
+  test "your avatar leaves with you, original bytes and all (D-user-avatars)" do
+    users(:one).avatar.attach(io: StringIO.new("JPEG BYTES"), filename: "me.jpg", content_type: "image/jpeg")
+
+    ExportJob.perform_now(users(:one))
+
+    entries = {}
+    Zip::File.open_buffer(StringIO.new(users(:one).export_archive.download)) do |zip|
+      zip.each { |entry| entries[entry.name] = entry.get_input_stream.read }
+    end
+
+    assert_equal "JPEG BYTES", entries["avatar-me.jpg"]
+    assert_equal "avatar-me.jpg", JSON.parse(entries["manifest.json"]).dig("user", "avatar")
+  end
+
   # D-vault-crypto: key material must never ride the job queue, so the
   # archive carries credential *metadata* and the Passwords page owns the
   # in-request secrets export.

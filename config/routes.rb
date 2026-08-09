@@ -35,6 +35,7 @@ Rails.application.routes.draw do
   resources :job_feeds, only: %i[ create destroy ]
 
   resource :settings, only: %i[ show update ]
+  resource :avatar, only: %i[ update destroy ]
   resource :household, only: %i[ update ]
 
   resources :mail, only: %i[ index show destroy ], controller: "mail" do
