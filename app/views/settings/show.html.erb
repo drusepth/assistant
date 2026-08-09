@@ -54,8 +54,7 @@
             <span class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
               <span class="font-medium text-ink"><%= grant.subject.qualified_name %></span>
               <span class="text-soft">→</span>
-              <%= render Ui::AvatarComponent.new(user: grant.grantee, size: :xs) %>
-              <span class="text-soft"><%= grant.grantee.name %></span>
+              <%= render Ui::UserLabelComponent.new(user: grant.grantee, css_class: "text-soft") %>
             </span>
             <%= button_to "Revoke", access_grant_path(grant), method: :delete, class: "btn btn-danger btn-sm" %>
           </li>

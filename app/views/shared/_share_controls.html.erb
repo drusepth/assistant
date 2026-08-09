@@ -7,10 +7,7 @@
     <ul class="mb-4 space-y-2">
       <% grants.each do |grant| %>
         <li class="flex items-center justify-between gap-2 text-sm">
-          <span class="flex min-w-0 items-center gap-2">
-            <%= render Ui::AvatarComponent.new(user: grant.grantee, size: :xs) %>
-            <span class="min-w-0 truncate text-ink"><%= grant.grantee.name %></span>
-          </span>
+          <%= render Ui::UserLabelComponent.new(user: grant.grantee, css_class: "text-ink", truncate: true) %>
           <%= button_to "Revoke", access_grant_path(grant), method: :delete, class: "btn btn-danger btn-sm" %>
         </li>
       <% end %>

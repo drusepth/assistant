@@ -11,6 +11,8 @@ module Ui
   # other.
   class AvatarComponent < ApplicationComponent
     SIZES = {
+      # Small enough to sit inside a calendar pill without growing the row.
+      xxs: "size-4 text-[0.5rem]",
       xs: "size-6 text-[0.625rem]",
       sm: "size-8 text-xs",
       md: "size-10 text-sm",

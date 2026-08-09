@@ -151,10 +151,7 @@
     <div class="mt-3 space-y-1.5 text-sm">
       <% @storage.per_member.each do |row| %>
         <div class="flex flex-wrap items-baseline justify-between gap-2">
-          <span class="flex min-w-0 items-center gap-2">
-            <%= render Ui::AvatarComponent.new(user: row[:user], size: :xs) %>
-            <span class="min-w-0 truncate text-ink"><%= row[:user].name %></span>
-          </span>
+          <%= render Ui::UserLabelComponent.new(user: row[:user], css_class: "text-ink", truncate: true) %>
           <span class="text-soft">
             <%= pluralize(row[:photos], "photo") %> · <%= pluralize(row[:documents], "document") %> ·
             <%= number_to_human_size(row[:bytes]) %>

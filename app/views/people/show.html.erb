@@ -51,9 +51,10 @@
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Account</dt>
             <dd class="min-w-0 wrap-anywhere">
-              <span class="chip inline-flex items-center gap-1.5 bg-primary-50 py-0.5 pl-0.5 text-primary-800">
-                <%= render Ui::AvatarComponent.new(user: @person.linked_user, size: :xs) %>
-                <%= @person.linked_user.name %> (household member)
+              <span class="chip inline-flex items-center bg-primary-50 py-0.5 pl-0.5 text-primary-800">
+                <%= render Ui::UserLabelComponent.new(user: @person.linked_user) do %>
+                  <%= @person.linked_user.name %> (household member)
+                <% end %>
               </span>
             </dd>
           </div>

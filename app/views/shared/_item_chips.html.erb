@@ -4,5 +4,10 @@
   <%= render Ui::SectionChipComponent.new(section: section) %>
 <% end %>
 <% if item.user_id != Current.user.id %>
-  <span class="text-xs <%= local_assigns[:on_dark] ? "text-white/70" : "text-soft" %>">from <%= item.user.name %></span>
+  <%# The one marker that says "this is someone else's" on every primitive,
+      in every view that renders a row — so it leads with their face. %>
+  <%= render Ui::UserLabelComponent.new(user: item.user,
+        css_class: "text-xs #{local_assigns[:on_dark] ? "text-white/70" : "text-soft"}") do %>
+    from <%= item.user.name %>
+  <% end %>
 <% end %>

@@ -3,6 +3,11 @@
     endpoint that unwraps owner-vault-key → owner-private-key → item key. %>
 <%= render Ui::PageHeaderComponent.new(title: "#{@owner.name}'s vault",
       subtitle: "Emergency access — read-only. #{@owner.name} was notified when this opened.") do |header| %>
+  <%# Of every page in the app, this is the one where knowing exactly whose
+      vault you are standing in matters most. %>
+  <% header.with_meta do %>
+    <%= render Ui::UserLabelComponent.new(user: @owner, size: :sm) %>
+  <% end %>
   <% header.with_actions do %>
     <%= link_to "Back", credentials_path, class: "btn btn-ghost" %>
   <% end %>

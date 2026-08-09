@@ -16,6 +16,8 @@ The design language and where to change it. The stack is **Tailwind CSS v4**
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
    `Ui::SectionChip`, `Ui::Avatar` (a member's uploaded photo, falling back
    to their initials — every surface that names a person goes through it),
+   `Ui::UserLabel` (that avatar plus a name, with the wording around the
+   name as block content: "from Bea", "shared by Bea — read-only"),
    `Ui::QuickAdd` (header + button whose capture form
    drops down beneath it; needs an enclosing `data-controller="quick-add"`).
    Structural, slotted, reused everywhere.

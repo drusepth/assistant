@@ -4,6 +4,9 @@
     <% if subtitle %>
       <p class="mt-1 text-sm text-soft"><%= subtitle %></p>
     <% end %>
+    <% if meta? %>
+      <p class="mt-1.5 text-sm text-soft"><%= meta %></p>
+    <% end %>
   </div>
   <% if actions? %>
     <div class="flex flex-wrap items-center gap-2"><%= actions %></div>
