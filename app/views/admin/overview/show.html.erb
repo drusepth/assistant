@@ -64,8 +64,11 @@
     </div>
     <div class="mt-3 flex flex-wrap items-center gap-2">
       <%= button_to "Fetch from BLS", admin_refresh_datasets_path, class: "btn btn-secondary btn-sm" %>
-      <%= form_with url: admin_import_datasets_path, class: "flex items-center gap-2" do %>
-        <%= file_field_tag :file, accept: ".zip,.xlsx,.csv", class: "text-sm" %>
+      <%# The file input carries a wide intrinsic width ("Choose file — no file
+          chosen"), so this row wraps and the input is allowed to shrink —
+          otherwise it pushes the whole admin page sideways on a phone. %>
+      <%= form_with url: admin_import_datasets_path, class: "flex min-w-0 flex-wrap items-center gap-2" do %>
+        <%= file_field_tag :file, accept: ".zip,.xlsx,.csv", class: "min-w-0 max-w-full text-sm" %>
         <%= submit_tag "Import file", class: "btn btn-ghost btn-sm" %>
       <% end %>
     </div>

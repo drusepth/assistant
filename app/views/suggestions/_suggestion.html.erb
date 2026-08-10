@@ -1,5 +1,5 @@
 <div class="flex flex-wrap items-start justify-between gap-3 p-4">
-  <div class="min-w-0 flex-1">
+  <div class="min-w-0 flex-1 basis-full sm:basis-0">
     <p class="text-sm font-medium text-ink"><%= suggestion.title %></p>
     <% if suggestion.body.present? %>
       <p class="mt-0.5 text-sm text-soft"><%= suggestion.body %></p>
@@ -10,7 +10,7 @@
       </div>
     <% end %>
   </div>
-  <div class="flex shrink-0 items-center gap-1.5">
+  <div class="row-actions">
     <%= button_to suggestion.accept_label, accept_suggestion_path(suggestion), method: :patch, class: "btn btn-primary btn-sm" %>
     <%= button_to "Snooze", snooze_suggestion_path(suggestion), method: :patch, class: "btn btn-ghost btn-sm" %>
     <%= button_to "Dismiss", dismiss_suggestion_path(suggestion), method: :patch, class: "btn btn-ghost btn-sm" %>

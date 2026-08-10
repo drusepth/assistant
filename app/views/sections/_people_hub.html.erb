@@ -5,13 +5,13 @@
   <%= render Ui::CardComponent.new(title: "Coming up", padded: false) do %>
     <div class="divide-y divide-edge">
       <% birthdays.each do |person| %>
-        <div class="flex items-center gap-3 p-4">
+        <div class="flex flex-wrap items-center gap-3 p-4">
           <%= render Ui::AvatarComponent.new(user: person.linked_user, name: person.name, tone: :amber) %>
           <div class="min-w-0 flex-1">
             <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
             <p class="text-xs text-soft">Birthday — <%= birthday_phrase(person) %></p>
           </div>
-          <div class="flex shrink-0 gap-2">
+          <div class="row-actions">
             <%= link_to "Gift ideas", new_tool_run_path("gift_ideas", inputs: { person_id: person.id, occasion: "birthday #{person.next_birthday.strftime("%B %-d")}" }), class: "btn btn-ghost" %>
             <%= link_to "Reconnect", new_tool_run_path("reconnect", inputs: { person_id: person.id }), class: "btn btn-ghost" %>
           </div>
@@ -43,8 +43,8 @@
         <% end %>
       </div>
     <% end %>
-    <%= form_with url: groups_path, class: "flex gap-2" do %>
-      <%= text_field_tag :name, nil, class: "input max-w-60", placeholder: "Start a group…" %>
+    <%= form_with url: groups_path, class: "capture-row" do %>
+      <%= text_field_tag :name, nil, class: "input sm:max-w-60", placeholder: "Start a group…" %>
       <%= submit_tag "Add", class: "btn btn-secondary" %>
     <% end %>
   </div>
@@ -62,7 +62,7 @@
               <% if person.relationship.present? %><%= person.relationship %> · <% end %><%= contact_recency_phrase(person) %>
             </p>
           </div>
-          <div class="flex shrink-0 gap-2">
+          <div class="row-actions">
             <%= button_to "Log contact", log_contact_person_path(person), method: :patch, class: "btn btn-ghost" %>
             <%= link_to "Reconnect", new_tool_run_path("reconnect", inputs: { person_id: person.id }), class: "btn btn-secondary" %>
           </div>

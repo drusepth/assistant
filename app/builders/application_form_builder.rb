@@ -64,7 +64,7 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
                 " or drag & drop here"
               ])
             end,
-            accept_hint ? @template.content_tag(:p, "Accepted formats: #{accept_hint}", class: "text-xs font-medium text-soft truncate max-w-xs") : nil
+            accept_hint ? @template.content_tag(:p, "Accepted formats: #{accept_hint}", class: "text-xs font-medium text-soft max-w-full text-balance") : nil
           ].compact)
         end,
         @template.content_tag(:div, class: "hidden flex-col items-center justify-center gap-1.5 pointer-events-none", data: { file_input_target: "selected" }) do

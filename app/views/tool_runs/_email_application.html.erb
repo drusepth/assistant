@@ -11,7 +11,7 @@
   <% if account&.allows?("send") %>
     <% cover = tool_run.items.grep(Note).find { |note| note.title.to_s.start_with?("Cover letter") } %>
     <%= form_with url: tool_run_application_email_path(tool_run), class: "space-y-3" do %>
-      <div class="grid gap-3 sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div class="space-y-1">
           <%= label_tag :to, "To", class: "label" %>
           <%= email_field_tag :to, nil, class: "input", placeholder: "jobs@acme.com" %>

@@ -9,13 +9,13 @@
 <% end %>
 
 <%# One box for everything: name the outcome, the assistant plans the steps (D17). %>
-<%= form_with model: @new_goal, class: "mb-6 flex items-center gap-2" do |form| %>
+<%= form_with model: @new_goal, class: "capture-row mb-6" do |form| %>
   <%= form.text_field :title, placeholder: goal_capture_placeholder, required: true, class: "flex-1" %>
   <%= form.submit "Add goal" %>
 <% end %>
 
 <% if @goals.any? %>
-  <div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
     <%= render @goals %>
   </div>
 <% end %>
@@ -27,7 +27,7 @@
         description: "Name a goal above — big (“get a job”) or small (“renew my passport”) — and your assistant breaks it into day-sized tasks. Or add a one-off task from the button up top."
       ) %>
 <% else %>
-  <div class="grid gap-4 lg:grid-cols-3">
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
     <% columns.each do |name, tasks| %>
       <div class="rounded-xl bg-stone-100/70 p-3">
         <div class="mb-3 flex items-center justify-between px-1">

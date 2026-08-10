@@ -1,4 +1,6 @@
-<div class="flex items-center gap-3 px-4 py-3">
+<%# items-start, not items-center: a title that wraps to two lines on a phone
+    should have its checkbox beside the first line, not floating in the middle. %>
+<div class="flex flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3">
   <% if task.user_id == Current.user.id %>
     <%= button_to task.completed? ? reopen_task_path(task) : complete_task_path(task), method: :patch,
           class: "-m-2 shrink-0 cursor-pointer p-2 text-soft hover:text-primary-600",
@@ -29,7 +31,9 @@
   </div>
 
   <% if local_assigns[:reschedule] && task.user_id == Current.user.id && !task.completed? %>
-    <div class="flex shrink-0 items-center gap-1.5">
+    <%# Indented to the title's left edge on a phone, where these sit on
+        their own line beneath it rather than beside it. %>
+    <div class="row-actions pl-8 sm:pl-0">
       <%= button_to "→ Today", reschedule_task_path(task, to: "today"), method: :patch,
             class: "btn btn-secondary btn-sm", title: "Move due date to today" %>
       <%= button_to "→ Tomorrow", reschedule_task_path(task, to: "tomorrow"), method: :patch,

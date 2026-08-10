@@ -10,7 +10,7 @@
 </div>
 
 <div class="mb-4 flex flex-wrap items-center gap-2">
-  <%= form_with url: spending_path, method: :get, class: "flex items-center gap-2" do %>
+  <%= form_with url: spending_path, method: :get, class: "flex flex-wrap items-center gap-2" do %>
     <%= text_field_tag :q, @query, class: "input w-48", placeholder: "Search merchants…" %>
     <% if params[:account].present? %><%= hidden_field_tag :account, params[:account] %><% end %>
     <% if params[:month].present? %><%= hidden_field_tag :month, params[:month] %><% end %>
@@ -18,7 +18,7 @@
   <% end %>
 
   <% if @accounts.size > 1 %>
-    <div class="flex items-center gap-1.5">
+    <div class="flex flex-wrap items-center gap-1.5">
       <%= link_to "All accounts", spending_path(month: params[:month].presence, q: @query.presence),
             class: "chip #{params[:account].blank? ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-600"}" %>
       <% @accounts.each do |account| %>
@@ -53,22 +53,26 @@
 <% else %>
   <div class="divide-y divide-edge overflow-hidden rounded-xl border border-edge bg-surface">
     <% @transactions.each do |row| %>
-      <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
+      <%# Five columns don't fit on a phone: the merchant takes the rest of
+          the first line beside the date (basis), and the category, amount
+          and Edit wrap onto a second. From sm up the basis is released and
+          the row is the single ledger line it has always been. %>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 text-sm">
         <span class="w-20 shrink-0 text-soft"><%= row.occurred_on.strftime("%b %-d") %></span>
-        <span class="min-w-0 flex-1">
+        <span class="min-w-0 flex-1 basis-[calc(100%-5.75rem)] sm:basis-0">
           <span class="block truncate text-ink" title="<%= row.descriptor %>"><%= row.display_merchant %></span>
           <% if @accounts.size > 1 && row.spending_account %>
-            <span class="text-xs text-soft"><%= row.spending_account.name %></span>
+            <span class="block truncate text-xs text-soft"><%= row.spending_account.name %></span>
           <% end %>
         </span>
 
         <% if row.transfer? %>
           <span class="chip bg-stone-100 text-stone-500">transfer</span>
         <% elsif row.budget_category %>
-          <span class="chip bg-primary-100 text-primary-800"><%= row.budget_category.name %></span>
+          <span class="chip max-w-full truncate bg-primary-100 text-primary-800"><%= row.budget_category.name %></span>
         <% end %>
 
-        <span class="w-24 shrink-0 text-right tabular-nums <%= row.money_in? ? "text-green-700" : "text-ink" %>">
+        <span class="ml-auto w-24 shrink-0 text-right tabular-nums sm:ml-0 <%= row.money_in? ? "text-green-700" : "text-ink" %>">
           <%= money_amount(row.amount_cents, signed: true) %>
         </span>
 
@@ -102,7 +106,7 @@
   </div>
 <% end %>
 
-<div class="mt-6 grid gap-4 md:grid-cols-2">
+<div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
   <% if @accounts.any? %>
     <details class="rounded-xl border border-edge bg-surface p-4">
       <summary class="cursor-pointer text-sm font-medium text-ink">Accounts (<%= @accounts.size %>)</summary>

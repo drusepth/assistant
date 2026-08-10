@@ -10,7 +10,7 @@
   <% end %>
 <% end %>
 
-<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+<div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
   <div class="lg:col-span-2">
     <%= render Ui::CardComponent.new(title: "Details") do %>
       <dl class="space-y-3 text-sm">
@@ -46,7 +46,7 @@
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 pt-1.5 text-soft">Counts as</dt>
             <dd class="min-w-0">
-              <%= form_with model: @event, class: "flex items-center gap-2" do %>
+              <%= form_with model: @event, class: "flex flex-wrap items-center gap-2" do %>
                 <%= select_tag "event[care_kind]", care_kind_options(@event), class: "input w-auto py-1 text-sm" %>
                 <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
               <% end %>

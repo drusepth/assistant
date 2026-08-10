@@ -11,7 +11,7 @@
         <div class="space-y-1">
           <% if input.checkboxes? %>
             <p class="label"><%= input.label %></p>
-            <div class="grid gap-2 pt-1 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
               <% input.options.each do |option| %>
                 <label class="flex items-center gap-2 text-sm text-ink">
                   <%= check_box_tag "inputs[#{input.name}][]", option,

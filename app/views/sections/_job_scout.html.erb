@@ -29,10 +29,10 @@
         <% end %>
       </ul>
     <% end %>
-    <%= form_with url: job_feeds_path, scope: :job_feed, class: "flex flex-wrap gap-2" do |form| %>
+    <%= form_with url: job_feeds_path, scope: :job_feed, class: "capture-row" do |form| %>
       <%= form.text_field :url, class: "input flex-1", placeholder: "https://boards.greenhouse.io/…, jobs.lever.co/…, an RSS feed, or data.usajobs.gov/…" %>
-      <%= form.text_field :label, class: "input w-32", placeholder: "Label (optional)" %>
-      <%= form.text_field :api_key, class: "input w-36", placeholder: "API key (USAJobs)" %>
+      <%= form.text_field :label, class: "input sm:w-32", placeholder: "Label (optional)" %>
+      <%= form.text_field :api_key, class: "input sm:w-36", placeholder: "API key (USAJobs)" %>
       <%= form.submit "Add feed", class: "btn btn-secondary" %>
     <% end %>
     <p class="text-xs text-soft">
