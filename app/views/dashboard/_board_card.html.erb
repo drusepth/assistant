@@ -1,0 +1,48 @@
+<%# One life area on the hub board. A busy area spans two columns and lists
+    its next few tasks; a quiet one stays narrow and says a single honest
+    line. Data comes from Dashboard::Board — this file only decides looks. %>
+<%= link_to section_path(board_card.section.slug),
+      class: "card group flex flex-col gap-3 p-4 transition-colors hover:border-primary-300 #{"sm:col-span-2" if board_card.wide?}" do %>
+  <div class="flex items-center gap-2">
+    <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(board_card.section) %>"></span>
+    <h3 class="text-base font-semibold tracking-tight text-ink"><%= board_card.section.name %></h3>
+    <span class="ml-auto text-xs text-soft"><%= board_card.status %></span>
+  </div>
+
+  <% if board_card.wide? %>
+    <div class="flex flex-col gap-1.5">
+      <% board_card.tasks.each do |task| %>
+        <div class="flex items-center justify-between gap-3 rounded-lg bg-canvas px-3 py-2">
+          <span class="min-w-0 truncate text-sm font-medium text-ink"><%= task.title %></span>
+          <% if task.due_on %>
+            <span class="shrink-0 text-xs <%= task.due_on.before?(Date.current) ? "font-medium text-red-600" : "text-soft" %>">
+              <%= task.due_on.today? ? "Today" : task.due_on.strftime("%b %-d") %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+      <% if board_card.open_count > board_card.tasks.size %>
+        <p class="px-3 text-xs text-soft"><%= board_card.open_count - board_card.tasks.size %> more open</p>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="flex flex-col gap-1">
+      <p class="text-sm font-medium text-pretty text-ink"><%= board_card.headline %></p>
+      <% if (task = board_card.tasks.first) && task.due_on %>
+        <p class="text-xs <%= task.due_on.before?(Date.current) ? "font-medium text-red-600" : "text-soft" %>">
+          <%= task.due_on.today? ? "Due today" : "Due #{task.due_on.strftime("%b %-d")}" %>
+        </p>
+      <% elsif board_card.next_event %>
+        <p class="text-xs text-soft">
+          <%= board_card.next_event.starts_at.to_date.today? ? "Today" : board_card.next_event.starts_at.strftime("%b %-d") %>
+        </p>
+      <% elsif board_card.quiet? %>
+        <p class="text-xs text-soft">Nothing needs you here this week.</p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <span class="mt-auto text-xs font-medium text-primary-700 group-hover:text-primary-800">
+    <%= board_card.section.name %> hub →
+  </span>
+<% end %>

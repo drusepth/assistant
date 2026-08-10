@@ -7,17 +7,25 @@
 
 <% attention_count = @overdue_tasks.size + @due_today_tasks.size %>
 <div class="mb-6 rounded-xl border border-primary-200 bg-primary-50 px-5 py-4">
-  <% if attention_count.positive? %>
-    <p class="text-sm font-medium text-primary-900">
-      <%= pluralize(attention_count, "thing") %> need<%= "s" if attention_count == 1 %> attention:
-      <% parts = [] %>
-      <% parts << pluralize(@overdue_tasks.size, "overdue task") if @overdue_tasks.any? %>
-      <% parts << pluralize(@due_today_tasks.size, "task") + " due today" if @due_today_tasks.any? %>
-      <%= parts.join(" and ") %>.
-    </p>
-  <% else %>
-    <p class="text-sm font-medium text-primary-900">All clear — nothing overdue, nothing due today.</p>
-  <% end %>
+  <%# The attention strip: the headline count, then each kind of pressure as
+      its own badge, then the way through to the Today view. %>
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <% if attention_count.positive? %>
+      <p class="text-sm font-medium text-primary-900">
+        <%= pluralize(attention_count, "thing") %> need<%= "s" if attention_count == 1 %> attention
+      </p>
+      <% if @overdue_tasks.any? %>
+        <span class="chip bg-red-100 text-red-800"><%= @overdue_tasks.size %> overdue</span>
+      <% end %>
+      <% if @due_today_tasks.any? %>
+        <span class="chip bg-primary-100 text-primary-800"><%= @due_today_tasks.size %> due today</span>
+      <% end %>
+      <%= link_to "Open Today →", today_path,
+            class: "ml-auto text-sm font-medium text-primary-800 hover:text-primary-900" %>
+    <% else %>
+      <p class="text-sm font-medium text-primary-900">All clear — nothing overdue, nothing due today.</p>
+    <% end %>
+  </div>
   <% if Current.user.digest.present? && Current.user.digest_generated_at&.after?(8.days.ago) %>
     <p class="mt-2 text-sm text-primary-900/90"><%= Current.user.digest %></p>
     <p class="mt-1 text-xs text-primary-800/70">Your assistant's weekly read — phrased by AI from the locally-computed facts above, refreshed each scan.</p>
@@ -87,3 +95,21 @@
     <% end %>
   <% end %>
 </div>
+
+<%# The hub board: every enabled life area as a doorway to its section page.
+    Busy areas go wide and list rows, quiet ones stay narrow — so the board
+    is a map of where the pressure actually is this week. %>
+<% if @board.cards.any? %>
+  <section class="mt-6">
+    <div class="mb-3 flex items-baseline justify-between gap-3">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-stone-400">Your life</h2>
+      <%= link_to "Settings", settings_path, class: "text-xs text-soft hover:text-ink" %>
+    </div>
+    <%# auto-rows-fr keeps a narrow "Clear" card the same height as the wide
+        card beside it, so the board reads as a grid rather than a collage. %>
+    <div class="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <%= render partial: "board_card", collection: @board.sorted_cards, as: :board_card %>
+    </div>
+  </section>
+<% end %>
+
