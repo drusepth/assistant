@@ -15,7 +15,7 @@
   <% end %>
 <% end %>
 
-<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+<div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
     <%= render Ui::CardComponent.new(title: "Details") do %>
       <dl class="space-y-3 text-sm">
@@ -42,7 +42,7 @@
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 pt-1.5 text-soft">Health plan</dt>
             <dd class="min-w-0">
-              <%= form_with model: @document, class: "flex items-center gap-2" do %>
+              <%= form_with model: @document, class: "flex flex-wrap items-center gap-2" do %>
                 <%= select_tag "document[health_plan]",
                       options_for_select(
                         [ [ "Auto — #{Health::Coverage.match?(@document) ? "shows" : "doesn't show"} on the Health page", "" ],

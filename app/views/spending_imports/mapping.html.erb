@@ -27,7 +27,7 @@
 
     <% header_options = [ [ "—", "" ] ] + @probe.headers.map { |h| [ h, h ] } %>
 
-    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <div>
         <label class="mb-1 block text-sm font-medium text-ink">Date column</label>
         <%= select_tag :date, options_for_select(header_options, guess["date"]), class: "input w-full" %>

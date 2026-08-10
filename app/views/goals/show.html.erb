@@ -19,7 +19,7 @@
   <% end %>
 <% end %>
 
-<div class="grid max-w-4xl gap-6 lg:grid-cols-3">
+<div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
     <% if @goal.description.present? %>
       <%= render Ui::CardComponent.new(title: "About") do %>

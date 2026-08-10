@@ -42,7 +42,7 @@
           <%= form.field :phone, as: :telephone_field, label_text: "Household phone",
                 placeholder: "(512) 555-0142",
                 hint: "The number to put on forms — a shared line, or whoever answers for the house." %>
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <%= form.field :home_status, label_text: "Do you own or rent?",
                   hint: "Decides which housing help is relevant to you." do %>
               <%= form.select :home_status,

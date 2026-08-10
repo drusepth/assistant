@@ -23,7 +23,7 @@
       <% @sections.each do |section| %>
         <label draggable="true"
                data-action="dragstart->sortable#dragStart dragover->sortable#dragOver drop->sortable#drop dragend->sortable#dragEnd"
-               class="flex cursor-pointer items-center gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+               class="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
           <span class="cursor-grab text-stone-300 active:cursor-grabbing" title="Drag to reorder"><%= icon(:bars_3, css_class: "size-4") %></span>
           <%= hidden_field_tag "section_order[]", section.id, id: "section_order_#{section.slug}" %>
           <%= check_box_tag "enabled_section_ids[]", section.id, Current.user.section_enabled?(section),
@@ -38,7 +38,7 @@
           <%= select_tag "agent_levels[#{section.id}]",
                 options_for_select(UserSection::AGENT_LEVELS.map { |level| [ "Assistant: #{level.capitalize}", level ] },
                   @agent_levels[section.id] || UserSection::DEFAULT_AGENT_LEVEL),
-                class: "input ml-auto w-auto py-1 text-xs", id: "agent_level_#{section.slug}",
+                class: "input ml-auto w-auto max-w-full py-1 text-xs", id: "agent_level_#{section.slug}",
                 title: "How proactively the assistant may make suggestions for #{section.name}" %>
         </label>
       <% end %>

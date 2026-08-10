@@ -46,8 +46,10 @@ actions.
    untouched — a `url()` written there resolves undigested and 404s.
 2. **Atoms** — same file, `@layer components`: `.btn` (+ `-primary`,
    `-secondary`, `-danger`, `-ghost`, `-sm`), `.input`, `.label`, `.hint`,
-   `.field-error`, `.card`, `.chip`, and the chat set — `.bubble`
-   (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`).
+   `.field-error`, `.card`, `.chip`, the two phone-shape atoms
+   `.row-actions` and `.capture-row` (see Narrow screens), and the chat
+   set — `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`,
+   `-send`).
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
    `Ui::SectionChip`, `Ui::Avatar` (a member's uploaded photo, falling back
@@ -76,6 +78,38 @@ stay tellable apart at dot size, alternating terracotta and sage so
 neighbours in the sidebar never collide: Health `primary-800` · Hobbies
 `primary-500` · Education `sage-500` · Career `sage-700` · People
 `primary-400` · Money `sage-400` · Rights `primary-700`.
+
+## Narrow screens
+
+The app is used on a phone at least as often as on a laptop, and the whole
+page is 320–430 points wide there. Four rules keep it that way, and
+`test/integration/mobile_layout_test.rb` pins the two that are mechanical:
+
+- **Every `grid` names its base columns.** `class="grid gap-4 sm:grid-cols-2"`
+  has *no* column definition at the base breakpoint, so it lays out in one
+  implicit column — and an implicit column is `auto`, which sizes to its
+  widest child rather than to the page. One card holding a long title then
+  pushes the whole document sideways, and `truncate` inside it never fires.
+  Write `grid grid-cols-1 gap-4 sm:grid-cols-2`: Tailwind compiles
+  `grid-cols-N` to `repeat(N, minmax(0, 1fr))`, and the `minmax(0, …)` is the
+  fix. Same story one level down — a flex child that must be allowed to
+  shrink needs `min-w-0`.
+- **`.row-actions`** for the buttons at the end of a list row. They ride
+  beside the text on a wide screen and take their own full-width line on a
+  phone; without it a 150-point cluster of actions squeezes the title it
+  belongs to into a four-word column. The row that holds it needs
+  `flex-wrap`.
+- **`.capture-row`** for one-line capture (a field and its submit): side by
+  side when there is room, stacked on a phone so neither ends up half a line
+  wide. Fixed field widths inside it belong behind `sm:` (`sm:w-32`).
+- **Nothing that can't shrink.** `.btn` wraps its label rather than carrying
+  `whitespace-nowrap`, and `.input` carries `max-w-full min-w-0` — a
+  `<select>` sizes itself to its longest option, which is regularly wider
+  than the phone it is on.
+
+The check that matters is the page's own width: on a phone
+`document.documentElement.scrollWidth` must equal the viewport width. Any
+excess means something in the page is refusing to shrink.
 
 ## Conventions
 

@@ -4,7 +4,7 @@
 <% if summaries.any? %>
   <div>
     <h2 class="mb-3 text-sm font-medium text-soft">Your hobbies</h2>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <%= render partial: "sections/hobby_card", collection: summaries, as: :summary %>
       <%= render "sections/hobby_add_tile", hobbies: section %>
     </div>
