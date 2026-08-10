@@ -6,31 +6,32 @@
 </div>
 
 <% attention_count = @overdue_tasks.size + @due_today_tasks.size %>
-<div class="mb-6 rounded-xl border border-primary-200 bg-primary-50 px-5 py-4">
-  <%# The attention strip: the headline count, then each kind of pressure as
-      its own badge, then the way through to the Today view. %>
+<%# The attention strip: a solid accent disc, the headline count, each kind
+    of pressure as its own tinted badge, then the way through to Today. %>
+<div class="card mb-6 px-5 py-4">
   <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <span class="size-8 shrink-0 rounded-full bg-primary-600"></span>
     <% if attention_count.positive? %>
-      <p class="text-sm font-medium text-primary-900">
+      <p class="font-semibold text-ink">
         <%= pluralize(attention_count, "thing") %> need<%= "s" if attention_count == 1 %> attention
       </p>
       <% if @overdue_tasks.any? %>
-        <span class="chip bg-red-100 text-red-800"><%= @overdue_tasks.size %> overdue</span>
+        <span class="chip bg-primary-200 font-bold text-primary-800"><%= @overdue_tasks.size %> overdue</span>
       <% end %>
       <% if @due_today_tasks.any? %>
-        <span class="chip bg-primary-100 text-primary-800"><%= @due_today_tasks.size %> due today</span>
+        <span class="chip bg-sage-200 font-bold text-sage-700"><%= @due_today_tasks.size %> due today</span>
       <% end %>
       <%= link_to "Open Today →", today_path,
-            class: "ml-auto text-sm font-medium text-primary-800 hover:text-primary-900" %>
+            class: "ml-auto text-sm font-semibold text-primary-800 hover:text-primary-900" %>
     <% else %>
-      <p class="text-sm font-medium text-primary-900">All clear — nothing overdue, nothing due today.</p>
+      <p class="font-semibold text-ink">All clear — nothing overdue, nothing due today.</p>
     <% end %>
   </div>
   <% if Current.user.digest.present? && Current.user.digest_generated_at&.after?(8.days.ago) %>
-    <p class="mt-2 text-sm text-primary-900/90"><%= Current.user.digest %></p>
-    <p class="mt-1 text-xs text-primary-800/70">Your assistant's weekly read — phrased by AI from the locally-computed facts above, refreshed each scan.</p>
+    <p class="mt-2 text-sm text-ink/90"><%= Current.user.digest %></p>
+    <p class="mt-1 text-xs text-soft">Your assistant's weekly read — phrased by AI from the locally-computed facts above, refreshed each scan.</p>
   <% else %>
-    <p class="mt-1 text-xs text-primary-800/70">This summary is computed locally; your assistant's phrased weekly digest appears after the first weekly scan.</p>
+    <p class="mt-1 text-xs text-soft">This summary is computed locally; your assistant's phrased weekly digest appears after the first weekly scan.</p>
   <% end %>
 </div>
 
@@ -52,7 +53,7 @@
     <%= render Ui::CardComponent.new(title: "Mail",
           subtitle: "Today's mail worth a look — from your linked #{"mailbox".pluralize(Current.user.linked_accounts.where(provider: "email").count)}", padded: false) do %>
       <% if digest["phrased"].present? %>
-        <p class="border-b border-edge px-5 py-3 text-sm text-primary-900/90"><%= digest["phrased"] %></p>
+        <p class="border-b border-edge px-5 py-3 text-sm text-ink/90"><%= digest["phrased"] %></p>
       <% end %>
       <div class="divide-y divide-edge">
         <% Array(digest["items"]).each do |item| %>
@@ -60,7 +61,7 @@
             <%= link_to mail_path(item["id"]), class: "min-w-0 flex-1" do %>
               <span class="font-medium text-ink"><%= item["from"] %></span>
               <span class="text-soft">— <%= item["subject"] %></span>
-              <% if item["deadline_on"] %><span class="chip bg-amber-100 text-amber-800">deadline <%= item["deadline_on"] %></span><% end %>
+              <% if item["deadline_on"] %><span class="chip bg-primary-200 text-primary-800">deadline <%= item["deadline_on"] %></span><% end %>
             <% end %>
             <span class="flex shrink-0 items-center gap-1">
               <%= button_to "More like this", email_sender_rules_path(email: item["from_email"], rule: "vip"),
@@ -102,7 +103,7 @@
 <% if @board.cards.any? %>
   <section class="mt-6">
     <div class="mb-3 flex items-baseline justify-between gap-3">
-      <h2 class="text-sm font-semibold uppercase tracking-wide text-stone-400">Your life</h2>
+      <h2 class="text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Your life</h2>
       <%= link_to "Settings", settings_path, class: "text-xs text-soft hover:text-ink" %>
     </div>
     <%# auto-rows-fr keeps a narrow "Clear" card the same height as the wide

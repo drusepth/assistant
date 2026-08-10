@@ -8,3 +8,33 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+/*
+ * The Organic type pairing (docs/DESIGN.md): Caprasimo for headings over
+ * Figtree for body. Both are self-hosted, so a self-hosted app makes no
+ * third-party request to render its own text and works offline — the
+ * fonts are part of what the user owns.
+ *
+ * These live here rather than in app/assets/tailwind/application.css
+ * because Propshaft digests asset filenames and rewrites url() only in
+ * the stylesheets it processes. The Tailwind input file is compiled by
+ * the standalone binary and passed through untouched, so a url() written
+ * there resolves to an undigested path and 404s.
+ *
+ * Latin subsets. Figtree is a variable font: one file covers 400-700.
+ */
+@font-face {
+  font-family: "Caprasimo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("caprasimo-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("figtree-latin.woff2") format("woff2");
+}

@@ -18,7 +18,8 @@
           class: "text-sm font-medium hover:text-primary-700 #{task.completed? ? "text-soft line-through" : "text-ink"}" %>
     <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
       <% if task.due_on %>
-        <span class="text-xs <%= task.due_on < Date.current && !task.completed? ? "font-medium text-red-600" : "text-soft" %>">
+        <%# Overdue is emphasis, not error: the deep accent step, not alarm red. %>
+        <span class="text-xs <%= task.due_on < Date.current && !task.completed? ? "font-bold text-primary-800" : "text-soft" %>">
           Due <%= task.due_on.strftime("%b %-d") %>
         </span>
       <% end %>

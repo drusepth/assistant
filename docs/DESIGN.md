@@ -3,11 +3,47 @@
 The design language and where to change it. The stack is **Tailwind CSS v4**
 (standalone binary via `tailwindcss-rails` — no Node) + **ViewComponent**.
 
+## The look: Organic
+
+Warm, rounded and a little playful — a cream-and-sand ground with a
+terracotta accent and a sage second voice, Caprasimo display headings over
+Figtree, and radii that grow into pills. Two rules carry most of it:
+
+- **Surface sits *above* the canvas.** Cards are sand (`#ebddc5`) on a cream
+  page (`#f5ead8`) — the inverse of a white-card-on-grey app. That tonal
+  step is what separates a card, so cards need no border, and rows *inside*
+  a card drop back to the canvas color.
+- **Over-round, and don't crowd.** `rounded-full` for buttons, inputs and
+  nav items; `rounded-2xl` for containers. The soft shapes need air to read
+  as soft.
+
+Warmth is the point: don't reach for stock Tailwind hues (`rose-`, `sky-`,
+`amber-`), which read as foreign objects next to cream. Everything comes
+from the two ramps. Overdue/urgent is *emphasis*, not error — it takes the
+deep accent step (`primary-800`), leaving red for genuinely destructive
+actions.
+
 ## The layers (each redesignable in one place)
 
 1. **Tokens** — `app/assets/tailwind/application.css` `@theme` block.
-   Brand ramp (`primary-*`) and semantic neutrals (`canvas`, `surface`,
-   `edge`, `ink`, `soft`). Changing these retunes the whole app.
+   Brand ramp (`primary-*`), the sage second accent (`sage-*`), a warm
+   neutral ramp (`stone-*`, overriding Tailwind's cool default), semantic
+   neutrals (`canvas`, `surface`, `edge`, `ink`, `soft`), the type pairing
+   (`--font-sans`, `--font-display`) and ink-tinted shadows. Changing these
+   retunes the whole app — the ~500 uses of `primary-*`/`stone-*` across
+   the views all resolve here.
+   Both ramps are generated in OKLCH on one shared lightness scale, so the
+   same step of any role carries the same visual weight: 100–300 tint fills
+   and hovers, 500 is the base, 700–900 carry text on tinted fills.
+   Headings pick up the display face from an `@layer base` rule, so views
+   keep writing plain `<h1>`–`<h4>`.
+   **Fonts are self-hosted** (`app/assets/fonts/*.woff2`), so a self-hosted
+   app makes no third-party request to render its own text and works
+   offline. Their `@font-face` rules live in
+   `app/assets/stylesheets/application.css`, *not* in the Tailwind input:
+   Propshaft digests asset filenames and rewrites `url()` only in the
+   stylesheets it processes, and the Tailwind build is passed through
+   untouched — a `url()` written there resolves undigested and 404s.
 2. **Atoms** — same file, `@layer components`: `.btn` (+ `-primary`,
    `-secondary`, `-danger`, `-ghost`, `-sm`), `.input`, `.label`, `.hint`,
    `.field-error`, `.card`, `.chip`, and the chat set — `.bubble`
@@ -34,8 +70,12 @@ The design language and where to change it. The stack is **Tailwind CSS v4**
 
 Sections have stable identity colors, mapped in `SectionsHelper`
 (`section_chip_classes` / `section_dot_classes`, keyed by top-level slug —
-subsections inherit their parent's color). Health rose · Hobbies amber ·
-Education violet · Career sky · People emerald · Money lime · Rights orange.
+subsections inherit their parent's color). The seven are drawn from the two
+Organic ramps rather than stock hues, each taking a distinct step so they
+stay tellable apart at dot size, alternating terracotta and sage so
+neighbours in the sidebar never collide: Health `primary-800` · Hobbies
+`primary-500` · Education `sage-500` · Career `sage-700` · People
+`primary-400` · Money `sage-400` · Rights `primary-700`.
 
 ## Conventions
 

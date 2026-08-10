@@ -5,24 +5,111 @@
    Views consume components and atoms; components and atoms consume tokens.
    ========================================================================== */
 @theme {
-  /* Brand ramp */
-  --color-primary-50: #f0fdfa;
-  --color-primary-100: #ccfbf1;
-  --color-primary-200: #99f6e4;
-  --color-primary-300: #5eead4;
-  --color-primary-400: #2dd4bf;
-  --color-primary-500: #14b8a6;
-  --color-primary-600: #0d9488;
-  --color-primary-700: #0f766e;
-  --color-primary-800: #115e59;
-  --color-primary-900: #134e4a;
+  /* Brand ramp — Organic's terracotta accent. The ramp is generated in
+     OKLCH on one shared lightness scale, so the same step of any role
+     carries the same visual weight. 100-300 tint fills and hovers, 500 is
+     the base, 700-900 carry text on tinted fills and pressed states. */
+  --color-primary-50: #fff8f3;
+  --color-primary-100: #fff2eb;
+  --color-primary-200: #ffe1d0;
+  --color-primary-300: #ffc6a5;
+  --color-primary-400: #f6a06b;
+  --color-primary-500: #d67f48;
+  --color-primary-600: #c67139;
+  --color-primary-700: #b2622d;
+  --color-primary-800: #8c491a;
+  --color-primary-900: #643312;
 
-  /* Semantic neutrals */
-  --color-canvas: #fafaf9;  /* page background */
-  --color-surface: #ffffff; /* cards, sidebar */
-  --color-edge: #e7e5e4;    /* borders, dividers */
-  --color-ink: #1c1917;     /* primary text */
-  --color-soft: #78716c;    /* secondary text */
+  /* The sage second voice — a genuine counterpart to the accent, not a
+     highlight. Used for the calm/positive register (on-track, complete). */
+  --color-sage-50: #f7fcee;
+  --color-sage-100: #f0fae1;
+  --color-sage-200: #e1eecc;
+  --color-sage-300: #ccdbb2;
+  --color-sage-400: #aebf92;
+  --color-sage-500: #8fa073;
+  --color-sage-600: #7a8a5e;
+  --color-sage-700: #56633f;
+  --color-sage-800: #3d472b;
+  --color-sage-900: #272e1b;
+
+  /* Semantic neutrals — a cream-and-sand ground, warm rather than grey.
+     Surface sits *above* the canvas here (sand on cream), which is the
+     inverse of a white-card-on-grey app and is what makes it read warm. */
+  --color-canvas: #f5ead8;  /* page background */
+  --color-surface: #ebddc5; /* cards, sidebar */
+  --color-edge: #dcd3c4;    /* borders, dividers */
+  --color-ink: #201e1d;     /* primary text */
+  --color-soft: #645c50;    /* secondary text */
+
+  /* Warm neutral ramp, replacing Tailwind's cool stone-* where the app
+     reaches for a neutral directly. */
+  --color-stone-50: #f9f4ed;
+  --color-stone-100: #f2ebe0;
+  --color-stone-200: #eee7db;
+  --color-stone-300: #dcd3c4;
+  --color-stone-400: #c0b6a5;
+  --color-stone-500: #a19786;
+  --color-stone-600: #82796a;
+  --color-stone-700: #645c50;
+  --color-stone-800: #474238;
+  --color-stone-900: #2e2b25;
+
+  /* Type — Caprasimo is the only display voice, over Figtree for body. */
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Caprasimo", Georgia, serif;
+
+  /* Elevation, tuned to the warm ground: ink-tinted rather than black. */
+  --shadow-xs: 0 1px 2px rgb(46 43 37 / 0.14);
+  --shadow-sm: 0 1px 2px rgb(46 43 37 / 0.14);
+  --shadow-md: 0 3px 10px rgb(46 43 37 / 0.16);
+  --shadow-lg: 0 12px 32px rgb(46 43 37 / 0.22);
+
+  /* Danger, warmed toward the ground. The palette must not desaturate into
+     alarm-red next to cream, but destructive actions still need to read as
+     destructive — so these stay unmistakably red, just less blue-shifted. */
+  --color-red-50: #fdf1ec;
+  --color-red-100: #fbdfd4;
+  --color-red-200: #f4bda9;
+  --color-red-300: #e5907a;
+  --color-red-400: #d2604f;
+  --color-red-500: #bc3f31;
+  --color-red-600: #a32f24;
+  --color-red-700: #85251d;
+  --color-red-800: #661c16;
+  --color-red-900: #4a1410;
+
+  /* Over-rounded: containers grow toward the pill. */
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+}
+
+/* The @font-face rules live in app/assets/stylesheets/application.css, not
+   here: Propshaft digests asset filenames, and it rewrites url() only in
+   the stylesheets it processes — this file is compiled by the Tailwind
+   binary and passed through, so a url() written here would 404. */
+
+/* ============================================================================
+   Base — the type pairing and the themed interaction states. Headings take
+   the display voice automatically, so views keep using plain <h1>-<h4>.
+   ========================================================================== */
+@layer base {
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.12;
+  }
+
+  /* Never the default blue ring. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: --alpha(var(--color-primary-500) / 30%);
+  }
 }
 
 /* ============================================================================
@@ -31,30 +118,37 @@
    live in app/components as ViewComponents.
    ========================================================================== */
 @layer components {
+  /* Pill-shaped, per the system's "over-round" direction, and lettered in
+     the display face — Organic's buttons speak with the heading voice. */
   .btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors;
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 font-display text-sm transition-colors;
   }
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-primary-600 text-primary-50 hover:bg-primary-700 active:bg-primary-800;
   }
   .btn-secondary {
-    @apply border border-edge bg-surface text-ink hover:bg-stone-50;
+    @apply border border-edge bg-transparent text-ink hover:bg-stone-300/50 active:bg-stone-300;
   }
   .btn-danger {
-    @apply border border-red-200 bg-surface text-red-600 hover:bg-red-50;
+    @apply border border-red-300 bg-transparent text-red-700 hover:bg-red-50;
   }
   .btn-ghost {
-    @apply text-soft hover:bg-stone-100 hover:text-ink;
+    @apply text-primary-800 hover:bg-primary-500/10 active:bg-primary-500/20;
   }
   .btn-sm {
-    @apply rounded-md px-2.5 py-1.5 text-xs;
+    @apply px-3 py-1.5 text-xs;
   }
 
   .label {
     @apply block text-sm font-medium text-ink;
   }
   .input {
-    @apply block w-full rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-ink placeholder:text-stone-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
+    @apply block w-full rounded-full border border-edge bg-surface px-3.5 py-2 text-sm text-ink caret-primary-600 placeholder:text-stone-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
+  }
+  /* A multi-line field can't be a pill without looking broken. */
+  textarea.input,
+  select[multiple].input {
+    @apply rounded-2xl;
   }
   .hint {
     @apply text-xs text-soft;
@@ -66,8 +160,10 @@
     @apply relative flex flex-col items-center justify-center w-full min-h-[112px] p-6 text-center rounded-xl border-2 border-dashed border-primary-300 bg-primary-50/40 hover:bg-primary-50/80 hover:border-primary-500 focus-within:border-primary-600 focus-within:ring-4 focus-within:ring-primary-500/15 transition-all cursor-pointer select-none;
   }
 
+  /* Surface sits above the canvas (sand on cream), so a card needs no
+     border to separate from the page — the tonal step does it. */
   .card {
-    @apply rounded-xl border border-edge bg-surface shadow-xs;
+    @apply rounded-2xl border border-transparent bg-surface;
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;

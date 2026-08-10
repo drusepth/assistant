@@ -1,24 +1,30 @@
 # Stable identity colors per top-level section; subsections inherit their
 # parent's color. Literal class strings so Tailwind's scanner sees them.
+#
+# The seven colors are drawn from the two Organic ramps rather than from
+# Tailwind's stock hues: the palette is warm on purpose, and a stock rose
+# or sky next to cream reads as a foreign object. Each area takes a
+# distinct step so they stay tellable apart at dot size, alternating
+# terracotta and sage so neighbours in the sidebar never collide.
 module SectionsHelper
   CHIP_CLASSES = {
-    "health" => "bg-rose-100 text-rose-800",
-    "hobbies" => "bg-amber-100 text-amber-800",
-    "education" => "bg-violet-100 text-violet-800",
-    "career" => "bg-sky-100 text-sky-800",
-    "people" => "bg-emerald-100 text-emerald-800",
-    "money" => "bg-lime-100 text-lime-800",
-    "rights" => "bg-orange-100 text-orange-800"
+    "health" => "bg-primary-200 text-primary-900",
+    "hobbies" => "bg-primary-100 text-primary-800",
+    "education" => "bg-sage-100 text-sage-800",
+    "career" => "bg-sage-200 text-sage-900",
+    "people" => "bg-primary-100 text-primary-700",
+    "money" => "bg-sage-100 text-sage-700",
+    "rights" => "bg-primary-200 text-primary-800"
   }.freeze
 
   DOT_CLASSES = {
-    "health" => "bg-rose-500",
-    "hobbies" => "bg-amber-500",
-    "education" => "bg-violet-500",
-    "career" => "bg-sky-500",
-    "people" => "bg-emerald-500",
-    "money" => "bg-lime-600",
-    "rights" => "bg-orange-500"
+    "health" => "bg-primary-800",
+    "hobbies" => "bg-primary-500",
+    "education" => "bg-sage-500",
+    "career" => "bg-sage-700",
+    "people" => "bg-primary-400",
+    "money" => "bg-sage-400",
+    "rights" => "bg-primary-700"
   }.freeze
 
   def section_chip_classes(section)
@@ -35,10 +41,10 @@ module SectionsHelper
 
   # The care radar's four states (docs/HEALTH.md), as chip copy + classes.
   CARE_STATE_CHIPS = {
-    booked: [ "Booked", "bg-emerald-100 text-emerald-800" ],
-    ok: [ "On track", "bg-primary-100 text-primary-800" ],
-    due: [ "Due", "bg-amber-100 text-amber-800" ],
-    unknown: [ "Not tracked", "bg-stone-100 text-stone-600" ]
+    booked: [ "Booked", "bg-sage-200 text-sage-800" ],
+    ok: [ "On track", "bg-sage-100 text-sage-700" ],
+    due: [ "Due", "bg-primary-200 text-primary-800" ],
+    unknown: [ "Not tracked", "bg-stone-200 text-stone-700" ]
   }.freeze
 
   def care_state_label(state) = CARE_STATE_CHIPS.fetch(state).first

@@ -24,6 +24,9 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <%# The @font-face rules first (Propshaft digests their url()s), then
+        the Tailwind build that consumes the families. %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
@@ -31,26 +34,26 @@
   <body class="bg-canvas text-ink antialiased">
     <% if authenticated? %>
       <div data-controller="nav" data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close">
-        <header class="sticky top-0 z-20 flex items-center gap-1 border-b border-edge bg-surface px-2 py-1.5 lg:hidden">
+        <header class="sticky top-0 z-20 flex items-center gap-1 bg-surface px-2 py-1.5 lg:hidden">
           <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink"
                   data-action="nav#toggle" aria-label="Open menu">
             <%= icon(:bars_3, css_class: "size-6") %>
           </button>
           <%= link_to root_path, class: "flex items-center gap-2 px-2 py-2" do %>
-            <span class="size-2.5 rounded-full bg-primary-500"></span>
-            <span class="text-base font-bold tracking-tight">Assistant</span>
+            <span class="size-2.5 rounded-full bg-primary-600"></span>
+            <span class="font-display text-lg">Assistant</span>
           <% end %>
         </header>
 
         <div class="hidden fixed inset-0 z-30 bg-black/40 lg:hidden" data-nav-target="backdrop" data-action="click->nav#close"></div>
 
         <div class="min-h-screen lg:flex">
-        <aside class="fixed inset-y-0 left-0 z-40 flex h-dvh w-64 shrink-0 -translate-x-full flex-col border-r border-edge bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-none"
+        <aside class="fixed inset-y-0 left-0 z-40 flex h-dvh w-64 shrink-0 -translate-x-full flex-col bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-none"
                data-nav-target="drawer">
           <div class="flex items-center justify-between pr-2">
             <%= link_to root_path, class: "flex items-center gap-2 px-6 py-5" do %>
-              <span class="size-2.5 rounded-full bg-primary-500"></span>
-              <span class="text-base font-bold tracking-tight">Assistant</span>
+              <span class="size-2.5 rounded-full bg-primary-600"></span>
+              <span class="font-display text-lg">Assistant</span>
             <% end %>
             <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink lg:hidden"
                     data-action="nav#close" aria-label="Close menu">
@@ -67,7 +70,7 @@
             </div>
 
             <div>
-              <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Your life</p>
+              <p class="mb-1 px-3 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Your life</p>
               <div class="space-y-0.5">
                 <% Current.user.enabled_sections.each do |section| %>
                   <%= section_nav_link(section) %>
@@ -76,7 +79,7 @@
             </div>
 
             <div>
-              <p class="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-stone-400">Vault</p>
+              <p class="mb-1 px-3 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Vault</p>
               <div class="space-y-0.5">
                 <%= nav_link_to "Address Book", people_path, :users %>
                 <%= nav_link_to "Photos", photos_path, :photo %>
@@ -90,7 +93,7 @@
             </div>
           </nav>
 
-          <div class="space-y-1 border-t border-edge p-3">
+          <div class="space-y-1 p-3">
             <% if Current.user.admin? %>
               <%= nav_link_to "Admin", admin_root_path, :warning %>
             <% end %>
@@ -116,8 +119,8 @@
       <main class="flex min-h-screen items-center justify-center p-6">
         <div class="w-full max-w-sm">
           <div class="mb-6 flex items-center justify-center gap-2">
-            <span class="size-2.5 rounded-full bg-primary-500"></span>
-            <span class="text-lg font-bold tracking-tight">Assistant</span>
+            <span class="size-2.5 rounded-full bg-primary-600"></span>
+            <span class="font-display text-xl">Assistant</span>
           </div>
           <%= render Ui::FlashComponent.new(flash: flash) %>
           <%= yield %>
