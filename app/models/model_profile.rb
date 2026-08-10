@@ -39,8 +39,17 @@ class ModelProfile < ApplicationRecord
     case provider
     when "openai" then "OpenAI (#{model})"
     when "chroma_golem" then "Chroma Golem"
-    else "#{model} at #{URI(effective_base_url).host}"
+    else "#{model} at #{endpoint_host}"
     end
+  end
+
+  # A custom base_url is free text, so it can be unparseable — and this is
+  # read on the dashboard, where raising would take the whole page down over
+  # a cosmetic label. Fall back to showing the raw value.
+  def endpoint_host
+    URI(effective_base_url.to_s).host.presence || effective_base_url
+  rescue URI::InvalidURIError
+    effective_base_url
   end
 
   def client

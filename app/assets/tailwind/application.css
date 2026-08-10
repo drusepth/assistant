@@ -139,6 +139,32 @@
     @apply px-3 py-1.5 text-xs;
   }
 
+  /* The collapsible sidebar (design 2a). Collapsing is desktop-only — below
+     lg the same <aside> is an off-canvas drawer, and a drawer you opened on
+     purpose should never be a strip of unlabelled icons. So every rule here
+     is inside the lg breakpoint, and `nav-label` (any text in the rail) is
+     what disappears; icons and section dots stay, centered.
+
+     Driven by one data attribute on the rail rather than a class toggled
+     onto each label, so new nav rows only need `nav-label` on their text.
+
+     The rail's own width is NOT set here — it rides a `lg:data-[...]:w-*`
+     utility in the layout. These rules live in the components layer, which
+     cascades before Tailwind's utilities, so anything here that collided
+     with a utility on the same element (`w-64`) would lose on layer order
+     no matter how specific the selector was. Width is the one property
+     that collides, so width stays a utility. */
+  @variant lg {
+    .nav-rail[data-nav-collapsed="true"] .nav-label {
+      @apply hidden;
+    }
+    /* Rows keep their pill shape but center what's left of them. */
+    .nav-rail[data-nav-collapsed="true"] nav a,
+    .nav-rail[data-nav-collapsed="true"] nav span {
+      @apply justify-center px-0;
+    }
+  }
+
   .label {
     @apply block text-sm font-medium text-ink;
   }

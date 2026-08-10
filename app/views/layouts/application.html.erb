@@ -48,16 +48,25 @@
         <div class="hidden fixed inset-0 z-30 bg-black/40 lg:hidden" data-nav-target="backdrop" data-action="click->nav#close"></div>
 
         <div class="min-h-screen lg:flex">
-        <aside class="fixed inset-y-0 left-0 z-40 flex h-dvh w-64 shrink-0 -translate-x-full flex-col bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-none"
-               data-nav-target="drawer">
-          <div class="flex items-center justify-between pr-2">
-            <%= link_to root_path, class: "flex items-center gap-2 px-6 py-5" do %>
-              <span class="size-2.5 rounded-full bg-primary-600"></span>
-              <span class="font-display text-lg">Assistant</span>
+        <%# The rail. `nav-rail` + data-nav-collapsed drive the desktop
+            icon-only mode from one attribute (see application.css) so the
+            labels don't each need a class toggled onto them. %>
+        <aside class="nav-rail fixed inset-y-0 left-0 z-40 flex h-dvh w-64 shrink-0 -translate-x-full flex-col bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-[width] lg:duration-200 lg:data-[nav-collapsed=true]:w-[68px]"
+               data-nav-target="drawer" data-nav-collapsed="false">
+          <div class="flex items-center justify-between gap-1 pr-2 lg:pr-3">
+            <%= link_to root_path, class: "flex min-w-0 items-center gap-2 px-6 py-5 lg:px-5" do %>
+              <span class="size-2.5 shrink-0 rounded-full bg-primary-600"></span>
+              <span class="nav-label font-display text-lg">Assistant</span>
             <% end %>
             <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink lg:hidden"
                     data-action="nav#close" aria-label="Close menu">
               <%= icon(:x_mark, css_class: "size-6") %>
+            </button>
+            <%# Desktop-only: collapsing an off-canvas drawer to unlabelled
+                icons would be a worse drawer, so this is hidden below lg. %>
+            <button type="button" class="hidden size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-canvas text-soft hover:bg-stone-200 hover:text-ink lg:flex"
+                    data-action="nav#toggleCollapsed" aria-label="Collapse or expand the sidebar" title="Collapse or expand the sidebar">
+              <%= icon(:chevrons_left_right, css_class: "size-4") %>
             </button>
           </div>
 
@@ -70,7 +79,7 @@
             </div>
 
             <div>
-              <p class="mb-1 px-3 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Your life</p>
+              <p class="nav-label mb-1 px-3 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Your life</p>
               <div class="space-y-0.5">
                 <% Current.user.enabled_sections.each do |section| %>
                   <%= section_nav_link(section) %>
@@ -79,7 +88,7 @@
             </div>
 
             <div>
-              <p class="mb-1 px-3 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Vault</p>
+              <p class="nav-label mb-1 px-3 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Vault</p>
               <div class="space-y-0.5">
                 <%= nav_link_to "Address Book", people_path, :users %>
                 <%= nav_link_to "Photos", photos_path, :photo %>
@@ -93,17 +102,36 @@
             </div>
           </nav>
 
-          <div class="space-y-1 p-3">
-            <% if Current.user.admin? %>
-              <%= nav_link_to "Admin", admin_root_path, :warning %>
-            <% end %>
-            <%= nav_link_to "Household", household_path, :home_modern %>
-            <%= nav_link_to "Settings", settings_path, :cog %>
-            <div class="flex items-center justify-between gap-2 px-3 py-1">
-              <%= render Ui::UserLabelComponent.new(user: Current.user, css_class: "text-xs text-soft", truncate: true) %>
-              <%= button_to "Sign out", session_path, method: :delete,
-                    class: "cursor-pointer rounded-md px-2 py-2 text-xs text-soft hover:text-ink" %>
+          <%# The three settings destinations fold into a menu above the user
+              button (design 2a), so the rail's foot is one row instead of
+              four. Sign out lives in the menu too — it was the one thing
+              here that could be hit by accident. %>
+          <div class="relative p-3" data-controller="popover"
+               data-action="keydown.esc@window->popover#close click@window->popover#clickOutside">
+            <div class="hidden absolute inset-x-3 bottom-full mb-1.5 flex-col gap-0.5 rounded-2xl bg-canvas p-1.5 shadow-lg"
+                 data-popover-target="panel" role="menu">
+              <%= link_to settings_path, class: "flex items-center gap-2.5 whitespace-nowrap rounded-full px-3 py-2 text-sm text-ink hover:bg-surface", role: "menuitem" do %>
+                <%= icon(:cog, css_class: "size-4 shrink-0") %>Personal settings
+              <% end %>
+              <%= link_to household_path, class: "flex items-center gap-2.5 whitespace-nowrap rounded-full px-3 py-2 text-sm text-ink hover:bg-surface", role: "menuitem" do %>
+                <%= icon(:home_modern, css_class: "size-4 shrink-0") %>Household settings
+              <% end %>
+              <% if Current.user.admin? %>
+                <%= link_to admin_root_path, class: "flex items-center gap-2.5 whitespace-nowrap rounded-full px-3 py-2 text-sm text-ink hover:bg-surface", role: "menuitem" do %>
+                  <%= icon(:warning, css_class: "size-4 shrink-0") %>Admin settings
+                <% end %>
+              <% end %>
+              <%= button_to "Sign out", session_path, method: :delete, role: "menuitem",
+                    class: "w-full cursor-pointer rounded-full px-3 py-2 text-left text-sm text-soft hover:bg-surface hover:text-ink" %>
             </div>
+
+            <button type="button" data-action="popover#toggle" data-popover-target="trigger"
+                    aria-haspopup="menu" aria-expanded="false"
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-full bg-canvas px-2 py-1.5 text-left hover:bg-stone-200">
+              <%= render Ui::AvatarComponent.new(user: Current.user, size: :sm) %>
+              <span class="nav-label min-w-0 flex-1 truncate text-sm font-semibold text-ink"><%= Current.user.name %></span>
+              <%= icon(:cog, css_class: "nav-label size-4 shrink-0 text-soft") %>
+            </button>
           </div>
         </aside>
 
