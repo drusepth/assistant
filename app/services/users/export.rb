@@ -1,3 +1,8 @@
+# Explicit, like datasets/oews_workbook.rb: the Gemfile's `require: "zip"`
+# only fires for processes that boot the current bundle, and this class is
+# reachable from a long-lived worker that may predate the gem.
+require "zip"
+
 module Users
   # The portability half of the mission (D14/M4.2): your life must be
   # *takeable*, not just stored. Own data only — what's shared *with* you
