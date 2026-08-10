@@ -36,7 +36,7 @@
     </div>
 
     <% if summary.budgeted? %>
-      <div class="mt-4 grid gap-3 sm:grid-cols-3">
+      <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <% BudgetCategory::GROUPS.excluding("income").each do |group| %>
           <% spent = summary.group_spent_cents(group); target = summary.group_target_cents(group) %>
           <div>

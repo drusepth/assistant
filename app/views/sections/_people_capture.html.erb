@@ -7,13 +7,13 @@
       subtitle: "This page is about the relationships you're tending — your full address book stays in the vault."
     ) do %>
   <div class="space-y-3">
-    <%= form_with url: people_circle_path, class: "flex flex-wrap gap-2" do %>
+    <%= form_with url: people_circle_path, class: "capture-row" do %>
       <% if candidates.any? %>
         <%= select_tag :person_id,
               options_from_collection_for_select(candidates, :id, :name),
-              include_blank: "Choose from your address book…", class: "input max-w-60" %>
+              include_blank: "Choose from your address book…", class: "input sm:max-w-60" %>
       <% end %>
-      <%= text_field_tag :name, nil, class: "input max-w-60",
+      <%= text_field_tag :name, nil, class: "input sm:max-w-60",
             placeholder: candidates.any? ? "…or add someone new" : "Name someone…" %>
       <%= submit_tag "Add", class: "btn btn-primary" %>
     <% end %>

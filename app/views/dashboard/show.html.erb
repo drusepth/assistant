@@ -58,12 +58,12 @@
       <div class="divide-y divide-edge">
         <% Array(digest["items"]).each do |item| %>
           <div class="flex flex-wrap items-center gap-2 px-5 py-2.5 text-sm">
-            <%= link_to mail_path(item["id"]), class: "min-w-0 flex-1" do %>
+            <%= link_to mail_path(item["id"]), class: "min-w-0 flex-1 basis-full sm:basis-0" do %>
               <span class="font-medium text-ink"><%= item["from"] %></span>
               <span class="text-soft">— <%= item["subject"] %></span>
               <% if item["deadline_on"] %><span class="chip bg-primary-200 text-primary-800">deadline <%= item["deadline_on"] %></span><% end %>
             <% end %>
-            <span class="flex shrink-0 items-center gap-1">
+            <span class="row-actions">
               <%= button_to "More like this", email_sender_rules_path(email: item["from_email"], rule: "vip"),
                     method: :post, class: "btn btn-ghost btn-sm", title: "Always treat mail from this sender as important" %>
               <%= button_to "Not important", email_sender_rules_path(email: item["from_email"], rule: "mute"),
@@ -76,7 +76,7 @@
   </div>
 <% end %>
 
-<div class="grid gap-6 lg:grid-cols-2">
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
   <%= render Ui::CardComponent.new(title: "Needs attention", padded: false) do |card| %>
     <% card.with_actions { link_to "Today view", today_path, class: "btn btn-ghost btn-sm" } %>
     <% needing = @overdue_tasks + @due_today_tasks %>
@@ -108,7 +108,7 @@
     </div>
     <%# auto-rows-fr keeps a narrow "Clear" card the same height as the wide
         card beside it, so the board reads as a grid rather than a collage. %>
-    <div class="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid grid-cols-1 auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <%= render partial: "board_card", collection: @board.sorted_cards, as: :board_card %>
     </div>
   </section>

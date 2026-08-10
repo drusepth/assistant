@@ -31,7 +31,7 @@
     <p class="mb-6 max-w-2xl text-sm text-soft"><%= @album.description %></p>
   <% end %>
 
-  <div class="grid gap-6 lg:grid-cols-3">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <div class="lg:col-span-2">
       <% if own %>
         <%= form_with url: photos_path, multipart: true, data: { photo_upload_target: "form" } do %>

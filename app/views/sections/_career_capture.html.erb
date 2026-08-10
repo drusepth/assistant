@@ -7,7 +7,7 @@
       subtitle: "Wins and pay changes logged here become the receipts for raise cases, resumes, and interview prep."
     ) do %>
   <div class="space-y-3">
-    <%= form_with url: career_win_path, class: "flex gap-2" do %>
+    <%= form_with url: career_win_path, class: "capture-row" do %>
       <%= text_field_tag :text, nil, class: "input",
             placeholder: "Log a win — “caught the inventory error before the audit”" %>
       <%= submit_tag "Log win", class: "btn btn-primary" %>
@@ -23,7 +23,7 @@
       </ul>
     <% end %>
 
-    <%= form_with url: career_comp_change_path, class: "flex flex-wrap gap-2" do %>
+    <%= form_with url: career_comp_change_path, class: "capture-row" do %>
       <%= text_field_tag :summary, nil, class: "input flex-1",
             placeholder: "Log a pay change — “Raise: $19 → $21/hr”" %>
       <%= date_field_tag :on, Date.current, class: "input w-auto" %>

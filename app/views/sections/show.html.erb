@@ -24,7 +24,7 @@
   <% elsif @subsection_summaries.any? %>
     <div>
       <h2 class="mb-3 text-sm font-medium text-soft">Browse</h2>
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <%= render partial: "sections/subsection_tile", collection: @subsection_summaries, as: :summary %>
       </div>
     </div>
@@ -35,7 +35,7 @@
   <% if @tools.any? %>
     <div>
       <h2 class="mb-3 text-sm font-medium text-soft">Tools</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <% @tools.each do |tool| %>
           <%= render Ui::ToolCardComponent.new(tool: tool) %>
         <% end %>
@@ -82,7 +82,7 @@
 
       <% if @goals.any? %>
         <%= render Ui::CardComponent.new(title: "Goals", padded: false) do %>
-          <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @goals %></div>
+          <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2"><%= render @goals %></div>
         <% end %>
       <% end %>
 
@@ -94,13 +94,13 @@
 
       <% if @people.any? && !@panel&.hidden_browse&.include?(:people) %>
         <%= render Ui::CardComponent.new(title: "People", padded: false) do %>
-          <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @people %></div>
+          <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2"><%= render @people %></div>
         <% end %>
       <% end %>
 
       <% if @notes.any? %>
         <%= render Ui::CardComponent.new(title: "Notes", padded: false) do %>
-          <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render @notes %></div>
+          <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2"><%= render @notes %></div>
         <% end %>
       <% end %>
 

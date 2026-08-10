@@ -1,7 +1,7 @@
 <%= form_with model: person, class: "space-y-4" do |form| %>
   <%= form.field :name %>
   <%= form.field :relationship, placeholder: "Mom, landlord, cardiologist…" %>
-  <div class="grid gap-4 sm:grid-cols-2">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <%= form.field :email, as: :email_field %>
     <%= form.field :phone, as: :telephone_field %>
   </div>

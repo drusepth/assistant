@@ -86,7 +86,7 @@
 
     <% if goals.any? %>
       <%= render Ui::CardComponent.new(title: "The plan", subtitle: "Saved to your Tasks board", padded: false) do %>
-        <div class="grid gap-4 p-4 sm:grid-cols-2"><%= render goals %></div>
+        <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2"><%= render goals %></div>
       <% end %>
     <% end %>
 

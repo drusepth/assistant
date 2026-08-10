@@ -17,7 +17,7 @@
     <% card.with_actions do %>
       <%= link_to "Tune", care_settings_path, class: "btn btn-ghost btn-sm" %>
     <% end %>
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <% statuses.each do |status| %>
         <div class="space-y-2 rounded-xl bg-stone-100/70 p-4">
           <div class="flex items-center justify-between gap-2">

@@ -119,9 +119,12 @@
    ========================================================================== */
 @layer components {
   /* Pill-shaped, per the system's "over-round" direction, and lettered in
-     the display face — Organic's buttons speak with the heading voice. */
+     the display face — Organic's buttons speak with the heading voice.
+     A button is never wider than what holds it, and a long label wraps
+     inside the pill rather than pushing a phone-width page sideways —
+     which is why there is no whitespace-nowrap here. */
   .btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 font-display text-sm transition-colors;
+    @apply inline-flex max-w-full cursor-pointer items-center justify-center gap-1.5 rounded-full px-4 py-2 text-center font-display text-sm transition-colors;
   }
   .btn-primary {
     @apply bg-primary-600 text-primary-50 hover:bg-primary-700 active:bg-primary-800;
@@ -168,8 +171,11 @@
   .label {
     @apply block text-sm font-medium text-ink;
   }
+  /* max-w-full matters for the compact inline variants (`input w-auto`):
+     a <select> sizes itself to its longest option, which on a phone is
+     wider than the page it sits on. */
   .input {
-    @apply block w-full rounded-full border border-edge bg-surface px-3.5 py-2 text-sm text-ink caret-primary-600 placeholder:text-stone-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
+    @apply block w-full max-w-full min-w-0 rounded-full border border-edge bg-surface px-3.5 py-2 text-sm text-ink caret-primary-600 placeholder:text-stone-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20;
   }
   /* A multi-line field can't be a pill without looking broken. */
   textarea.input,
@@ -193,6 +199,21 @@
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* The two shapes that decide whether a page reads on a phone.
+
+     A row of buttons at the end of a list row rides beside the text on a
+     wide screen and takes its own full-width line on a phone — otherwise a
+     150px cluster of actions squeezes the title it belongs to into a
+     four-word column. The row that holds it needs `flex-wrap`. */
+  .row-actions {
+    @apply flex w-full shrink-0 flex-wrap items-center gap-1.5 sm:w-auto;
+  }
+  /* One-line capture (a field and its submit): side by side when there is
+     room, stacked on a phone so neither ends up half a line wide. */
+  .capture-row {
+    @apply flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center;
   }
 
   /* Chat (D29): the transcript bubble and the composer shell. Retheming the

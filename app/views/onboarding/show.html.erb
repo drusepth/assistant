@@ -63,7 +63,7 @@
   <% when 4 %>
     <%= render Ui::CardComponent.new(title: "Bring your life in",
           subtitle: "Three shortcuts that pay off immediately — or head straight to your dashboard.") do %>
-      <div class="grid gap-3 sm:grid-cols-3">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <%= link_to new_people_import_path, class: "card block p-4 text-center hover:border-primary-300" do %>
           <p class="text-sm font-semibold text-ink">Import contacts</p>
           <p class="mt-1 text-xs text-soft">vCard or CSV from your phone or Google</p>
