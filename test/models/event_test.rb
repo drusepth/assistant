@@ -88,8 +88,13 @@ class EventTest < ActiveSupport::TestCase
   end
 
   test "early_morning? flags timed events before 9am only" do
-    assert users(:one).events.create!(title: "Flight", starts_at: Date.tomorrow.to_time.change(hour: 6)).early_morning?
-    assert_not users(:one).events.create!(title: "Lunch", starts_at: Date.tomorrow.noon).early_morning?
-    assert_not users(:one).events.create!(title: "Fair", starts_at: Date.tomorrow.to_time, all_day: true).early_morning?
+    # Times are built in the app's zone, not the machine's: early_morning? reads
+    # starts_at.hour back, so a system-local Date.tomorrow.to_time would shift
+    # the hour on any developer machine that isn't already on UTC.
+    tomorrow = Time.zone.tomorrow
+
+    assert users(:one).events.create!(title: "Flight", starts_at: tomorrow.beginning_of_day.change(hour: 6)).early_morning?
+    assert_not users(:one).events.create!(title: "Lunch", starts_at: tomorrow.noon).early_morning?
+    assert_not users(:one).events.create!(title: "Fair", starts_at: tomorrow.beginning_of_day, all_day: true).early_morning?
   end
 end
