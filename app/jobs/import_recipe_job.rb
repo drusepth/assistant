@@ -27,6 +27,9 @@ class ImportRecipeJob < ApplicationJob
     recipe.import_status = :imported
     recipe.import_error = nil
     recipe.save!
+    # Only now is there a recipe to read: at paste time the row was a
+    # placeholder title and a blob of page.
+    recipe.enqueue_auto_sort!
   rescue Llm::Error, Web::Fetch::Error => e
     raise if will_retry?(e)
 

@@ -1,7 +1,12 @@
+<%# Sections are the assistant's job, not the user's (D16) — this is the
+    correction path, which is why every caller renders it inside
+    shared/_advanced rather than at the foot of a capture form. It offers
+    only the sections the household turned on, plus whatever is already
+    applied. %>
 <fieldset class="space-y-1">
   <legend class="label">Sections</legend>
   <div class="flex flex-wrap gap-1.5">
-    <%= form.collection_check_boxes :section_ids, Section.order(:parent_id, :position), :id, :qualified_name do |builder| %>
+    <%= form.collection_check_boxes :section_ids, section_picker_choices(form.object), :id, :qualified_name do |builder| %>
       <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge px-2.5 py-1 text-xs font-medium text-soft has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 has-[:checked]:text-primary-800">
         <%= builder.check_box(class: "size-3.5 accent-primary-600") %>
         <%= builder.text %>

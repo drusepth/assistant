@@ -1,5 +1,8 @@
-<div class="flex items-center gap-4 px-4 py-3">
-  <div class="w-12 shrink-0 rounded-lg bg-stone-100 py-1.5 text-center">
+<%# `item-row`: an `.item-stack` container styles this into a separated block.
+    The date tile carries a border as well as a fill, so it reads on both the
+    canvas-coloured row of a stack and the sand row of a divided list. %>
+<div class="item-row flex items-center gap-4 px-4 py-3">
+  <div class="w-12 shrink-0 rounded-lg border border-edge bg-stone-100 py-1.5 text-center">
     <p class="text-[10px] font-semibold uppercase text-soft"><%= event.starts_at.strftime("%b") %></p>
     <p class="text-lg font-bold leading-5 text-ink"><%= event.starts_at.day %></p>
   </div>

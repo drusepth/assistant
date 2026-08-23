@@ -1,0 +1,16 @@
+<%# The drawer for everything a form shouldn't open with (D16): capture asks
+    for the thing itself, and the settings the assistant can decide for you
+    fold away in here. A layout partial on purpose — it never learns what's
+    inside it, so adding a control later means adding it to the block at the
+    call site rather than teaching this file about a new primitive.
+
+    `hint` puts the state of the drawer's contents on the closed line, so
+    folding something away doesn't hide whether it needs attention; `open`
+    is for when it does (a validation error in here is invisible otherwise). %>
+<details class="rounded-xl border border-edge px-3 py-2" <%= "open" if local_assigns[:open] %>>
+  <summary class="cursor-pointer text-sm font-medium text-ink">
+    Advanced<% if local_assigns[:hint].present? %><span class="font-normal text-soft"> — <%= hint %></span><% end %>
+  </summary>
+
+  <div class="mt-3 space-y-4"><%= yield %></div>
+</details>
