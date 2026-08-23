@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_040410) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -359,6 +359,65 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.index ["user_id"], name: "index_photos_on_user_id"
   end
 
+  create_table "recipe_book_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position"
+    t.integer "recipe_book_id", null: false
+    t.integer "recipe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recipe_book_id", "recipe_id"], name: "index_recipe_book_entries_on_recipe_book_id_and_recipe_id", unique: true
+    t.index ["recipe_book_id"], name: "index_recipe_book_entries_on_recipe_book_id"
+    t.index ["recipe_id"], name: "index_recipe_book_entries_on_recipe_id"
+  end
+
+  create_table "recipe_books", force: :cascade do |t|
+    t.integer "cover_recipe_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["cover_recipe_id"], name: "index_recipe_books_on_cover_recipe_id"
+    t.index ["user_id"], name: "index_recipe_books_on_user_id"
+  end
+
+  create_table "recipe_ingredients", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "item", null: false
+    t.string "item_key", null: false
+    t.string "note"
+    t.boolean "optional", default: false, null: false
+    t.integer "position", null: false
+    t.decimal "quantity", precision: 10, scale: 3
+    t.string "raw", null: false
+    t.integer "recipe_id", null: false
+    t.string "unit"
+    t.datetime "updated_at", null: false
+    t.index ["item_key"], name: "index_recipe_ingredients_on_item_key"
+    t.index ["recipe_id", "position"], name: "index_recipe_ingredients_on_recipe_id_and_position"
+    t.index ["recipe_id"], name: "index_recipe_ingredients_on_recipe_id"
+  end
+
+  create_table "recipes", force: :cascade do |t|
+    t.integer "cook_minutes"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "directions"
+    t.boolean "favorite", default: false, null: false
+    t.date "last_cooked_on"
+    t.text "notes"
+    t.integer "prep_minutes"
+    t.integer "servings"
+    t.string "source_name"
+    t.string "source_url"
+    t.integer "times_cooked", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "title"], name: "index_recipes_on_user_id_and_title"
+    t.index ["user_id"], name: "index_recipes_on_user_id"
+  end
+
   create_table "section_taggings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "section_id", null: false
@@ -389,6 +448,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.string "user_agent"
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "share_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "label"
+    t.datetime "last_viewed_at"
+    t.integer "subject_id", null: false
+    t.string "subject_type", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "views_count", default: 0, null: false
+    t.index ["subject_type", "subject_id"], name: "index_share_links_on_subject"
+    t.index ["token"], name: "index_share_links_on_token", unique: true
+    t.index ["user_id"], name: "index_share_links_on_user_id"
   end
 
   create_table "spending_accounts", force: :cascade do |t|
@@ -567,9 +642,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   add_foreign_key "photo_people", "people"
   add_foreign_key "photo_people", "photos"
   add_foreign_key "photos", "users"
+  add_foreign_key "recipe_book_entries", "recipe_books"
+  add_foreign_key "recipe_book_entries", "recipes"
+  add_foreign_key "recipe_books", "recipes", column: "cover_recipe_id", on_delete: :nullify
+  add_foreign_key "recipe_books", "users"
+  add_foreign_key "recipe_ingredients", "recipes"
+  add_foreign_key "recipes", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "share_links", "users"
   add_foreign_key "spending_accounts", "users"
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"

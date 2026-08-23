@@ -1,0 +1,135 @@
+<% scale_path = ->(count) { recipe_path(@recipe, servings: count) } %>
+
+<%= render Ui::PageHeaderComponent.new(title: @recipe.title, subtitle: @recipe.timing.presence) do |header| %>
+  <% unless @owned %>
+    <% header.with_meta do %>
+      <%= render Ui::UserLabelComponent.new(user: @recipe.user) do %>
+        shared by <%= @recipe.user.name %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <% header.with_actions do %>
+    <% if @owned %>
+      <%= button_to "Cooked it", cook_recipe_path(@recipe), method: :post, class: "btn btn-secondary" %>
+      <%= link_to "Edit", edit_recipe_path(@recipe), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @recipe, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this recipe? Any books it's in keep their other recipes." } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <% if @recipe.image.attached? %>
+      <%= image_tag url_for(@recipe.image.variant(:hero)), alt: @recipe.title,
+            class: "w-full rounded-2xl object-cover" %>
+    <% end %>
+
+    <% if @recipe.description.present? %>
+      <p class="max-w-2xl text-sm text-soft"><%= @recipe.description %></p>
+    <% end %>
+
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-5">
+      <div class="sm:col-span-2">
+        <%= render Ui::CardComponent.new(title: "Ingredients") do %>
+          <%= render "recipes/ingredients", recipe: @recipe, servings: @servings, factor: @factor,
+                scale_path: scale_path %>
+        <% end %>
+      </div>
+      <div class="sm:col-span-3">
+        <%= render Ui::CardComponent.new(title: "Method") do %>
+          <%= render "recipes/method", recipe: @recipe %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @recipe.notes.present? %>
+      <%= render Ui::CardComponent.new(title: "Notes") do %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= @recipe.notes %></p>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <% if @recipe.servings %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Serves</dt>
+            <dd class="min-w-0"><%= @recipe.servings %></dd>
+          </div>
+        <% end %>
+        <% if @recipe.timing.present? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Time</dt>
+            <dd class="min-w-0"><%= @recipe.timing %></dd>
+          </div>
+        <% end %>
+        <% if @recipe.source_name.present? || @recipe.source_url.present? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">From</dt>
+            <dd class="min-w-0 wrap-anywhere">
+              <% if @recipe.source_url.present? %>
+                <%= link_to @recipe.source_name.presence || @recipe.source_url, @recipe.source_url,
+                      class: "text-primary-700 underline", rel: "noopener noreferrer nofollow", target: "_blank" %>
+              <% else %>
+                <%= @recipe.source_name %>
+              <% end %>
+            </dd>
+          </div>
+        <% end %>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Cooked</dt>
+          <dd class="min-w-0">
+            <% if @recipe.times_cooked.positive? %>
+              <%= pluralize(@recipe.times_cooked, "time") %><%= " · last on #{l(@recipe.last_cooked_on, format: :long)}" if @recipe.last_cooked_on %>
+            <% else %>
+              Not yet
+            <% end %>
+          </dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="w-24 shrink-0 text-soft">Sections</dt>
+          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @recipe %></dd>
+        </div>
+      </dl>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Books", subtitle: "Where this recipe is filed") do %>
+      <% if @books.any? %>
+        <ul class="mb-4 space-y-2">
+          <% @books.each do |book| %>
+            <li class="flex items-center justify-between gap-2 text-sm">
+              <%= link_to book.title, book, class: "min-w-0 truncate text-ink hover:underline" %>
+              <% if @owned && book.user_id == Current.user.id %>
+                <%= button_to "Remove", remove_from_book_recipe_path(@recipe, recipe_book_id: book.id),
+                      method: :delete, class: "btn btn-ghost btn-sm" %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+
+      <% if @owned %>
+        <% if @available_books&.any? %>
+          <%= form_with url: add_to_book_recipe_path(@recipe), class: "capture-row" do %>
+            <%= select_tag :recipe_book_id, options_from_collection_for_select(@available_books, :id, :title),
+                  class: "input min-w-40 flex-1" %>
+            <%= submit_tag "Add", class: "btn btn-secondary" %>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-soft">
+            <%= @books.any? ? "In every book you have." : "No books yet." %>
+            <%= link_to "Make one", new_recipe_book_path, class: "text-primary-700 underline" %>.
+          </p>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <% if @owned %>
+      <%= render "shared/share_controls", subject: @recipe %>
+      <%= render "share_links/card", subject: @recipe, links: @share_links,
+            noun: "recipe" %>
+    <% end %>
+  </div>
+</div>

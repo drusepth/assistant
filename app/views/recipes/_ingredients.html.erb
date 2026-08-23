@@ -1,0 +1,38 @@
+<%# Shared by the app's recipe page and the public share page. `scale_path`
+    is a lambda taking a serving count and returning a URL; pass nil to
+    render the list without the stepper. %>
+<% scale_path = local_assigns[:scale_path] %>
+<% servings = local_assigns[:servings] || recipe.servings %>
+<% factor = local_assigns[:factor] || 1.0 %>
+
+<% if recipe.servings.present? && scale_path %>
+  <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
+    <span class="text-soft">Serves</span>
+    <div class="flex items-center gap-1">
+      <%= link_to "−", scale_path.call([ servings - 1, 1 ].max), class: "btn btn-secondary btn-sm",
+            "aria-label": "Fewer servings" %>
+      <span class="min-w-8 text-center font-semibold text-ink"><%= servings %></span>
+      <%= link_to "+", scale_path.call(servings + 1), class: "btn btn-secondary btn-sm",
+            "aria-label": "More servings" %>
+    </div>
+    <% if factor != 1.0 %>
+      <%= link_to "Reset to #{recipe.servings}", scale_path.call(recipe.servings), class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if recipe.recipe_ingredients.any? %>
+  <ul class="space-y-2 text-sm">
+    <% recipe.recipe_ingredients.each do |ingredient| %>
+      <li class="flex gap-2 border-b border-edge/60 pb-2 last:border-0">
+        <span class="min-w-0 flex-1 text-ink">
+          <%= ingredient.display(factor) %><%
+            %><% if ingredient.note.present? %><span class="text-soft">, <%= ingredient.note %></span><% end %><%
+            %><% if ingredient.optional? %><span class="text-soft"> (optional)</span><% end %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="text-sm text-soft">No ingredients listed.</p>
+<% end %>

@@ -1,0 +1,76 @@
+<%= render Ui::PageHeaderComponent.new(title: @book.title,
+      subtitle: pluralize(@recipes.size, "recipe")) do |header| %>
+  <% unless @owned %>
+    <% header.with_meta do %>
+      <%= render Ui::UserLabelComponent.new(user: @book.user) do %>
+        shared by <%= @book.user.name %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <% header.with_actions do %>
+    <% if @owned %>
+      <%= link_to "Edit", edit_recipe_book_path(@book), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @book, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this book? The recipes in it stay in your box." } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if @book.description.present? %>
+  <p class="mb-6 max-w-2xl text-sm text-soft"><%= @book.description %></p>
+<% end %>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <div class="space-y-4 lg:col-span-2">
+    <% if @recipes.any? %>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <%= render partial: "recipes/recipe_card", collection: @recipes, as: :recipe %>
+      </div>
+    <% else %>
+      <%= render Ui::EmptyStateComponent.new(
+            title: "Nothing in this book yet",
+            description: @owned ? "Add recipes from the box below — a recipe can be in as many books as fit." : "This book is empty so far.") %>
+    <% end %>
+
+    <% if @owned && @available_recipes&.any? %>
+      <%= render Ui::CardComponent.new(title: "Add recipes") do %>
+        <%= form_with url: add_recipes_recipe_book_path(@book), class: "space-y-3" do %>
+          <div class="max-h-72 space-y-1.5 overflow-y-auto">
+            <% @available_recipes.each do |recipe| %>
+              <label class="flex items-center gap-2 rounded-full px-2 py-1 text-sm text-ink hover:bg-canvas">
+                <%= check_box_tag "recipe_ids[]", recipe.id, false, class: "size-4 accent-primary-600",
+                      id: "book_recipe_#{recipe.id}" %>
+                <span class="min-w-0 truncate"><%= recipe.title %></span>
+              </label>
+            <% end %>
+          </div>
+          <%= submit_tag "Add to #{@book.title}", class: "btn btn-secondary" %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @owned %>
+    <div class="space-y-6">
+      <%= render "shared/share_controls", subject: @book %>
+      <%= render "share_links/card", subject: @book, links: @share_links, noun: "book" %>
+      <% if @recipes.any? %>
+        <%= render Ui::CardComponent.new(title: "Remove from this book",
+              subtitle: "The recipe stays in your box") do %>
+          <%= form_with url: remove_recipes_recipe_book_path(@book), method: :delete, class: "space-y-3" do %>
+            <div class="max-h-60 space-y-1.5 overflow-y-auto">
+              <% @recipes.each do |recipe| %>
+                <label class="flex items-center gap-2 rounded-full px-2 py-1 text-sm text-ink hover:bg-canvas">
+                  <%= check_box_tag "recipe_ids[]", recipe.id, false, class: "size-4 accent-primary-600",
+                        id: "remove_recipe_#{recipe.id}" %>
+                  <span class="min-w-0 truncate"><%= recipe.title %></span>
+                </label>
+              <% end %>
+            </div>
+            <%= submit_tag "Remove", class: "btn btn-ghost" %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,46 @@
+<%= form_with model: recipe, class: "space-y-4" do |form| %>
+  <%= form.field :title, hint: "What you'd call it out loud — “Mum's lentil soup”" %>
+  <%= form.field :description, as: :text_area, hint: "One line about it, if it needs one.", rows: 2 %>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <%= form.field :servings, as: :number_field %>
+    <%= form.field :prep_minutes, label_text: "Prep (minutes)", as: :number_field %>
+    <%= form.field :cook_minutes, label_text: "Cook (minutes)", as: :number_field %>
+  </div>
+
+  <%# One textarea, one ingredient per line, parsed on save
+      (D-recipe-primitive): capture is a paste, and the line the user typed
+      is kept exactly as typed, so a line read badly is still right here. %>
+  <%= form.field :ingredients_text, label_text: "Ingredients", as: :text_area, rows: 10,
+        hint: "One per line, however you'd write it: “200 g flour”, “2 large onions, finely chopped”, “salt to taste”, “handful of parsley (optional)”. Paste a whole list in — quantities and units get read out of it.",
+        placeholder: "200 g plain flour\n2 large onions, finely chopped\n1 tbsp olive oil\nsalt to taste" %>
+
+  <%= form.field :directions, label_text: "Method", as: :text_area, rows: 10,
+        hint: "One step per line, or a blank line between steps. Numbering is added for you." %>
+
+  <%= form.field :notes, as: :text_area, rows: 3,
+        hint: "Cook's notes — what you'd tell someone the second time. These travel with the recipe when you share it." %>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :source_name, label_text: "From", hint: "“Grandma”, a cookbook, a website" %>
+    <%= form.field :source_url, label_text: "Link", as: :url_field %>
+  </div>
+
+  <%= form.field :image, label_text: "Photo of the dish" do %>
+    <%= form.file_field :image, accept: "image/*" %>
+    <% if recipe.image.attached? %>
+      <p class="hint">Currently: <%= recipe.image.filename %> — choosing a new one replaces it.</p>
+    <% end %>
+  <% end %>
+
+  <label class="flex items-center gap-2 text-sm text-ink">
+    <%= form.check_box :favorite %> One of our favorites
+  </label>
+
+  <%= render "shared/section_picker", form: form %>
+
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", recipe.persisted? ? recipe_path(recipe) : recipes_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

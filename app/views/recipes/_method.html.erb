@@ -1,0 +1,12 @@
+<% if recipe.steps.any? %>
+  <ol class="space-y-4 text-sm">
+    <% recipe.steps.each_with_index do |step, index| %>
+      <li class="flex gap-3">
+        <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-800"><%= index + 1 %></span>
+        <span class="min-w-0 flex-1 whitespace-pre-wrap text-ink"><%= step %></span>
+      </li>
+    <% end %>
+  </ol>
+<% else %>
+  <p class="text-sm text-soft">No method written down yet.</p>
+<% end %>

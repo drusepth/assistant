@@ -1,0 +1,38 @@
+<%= link_to recipe_path(recipe), class: "card group block overflow-hidden p-0" do %>
+  <div class="aspect-[4/3] overflow-hidden bg-stone-100">
+    <% if recipe.image.attached? %>
+      <%= image_tag url_for(recipe.image.variant(:card)), alt: recipe.title, loading: "lazy",
+            class: "size-full object-cover transition-transform duration-150 group-hover:scale-105" %>
+    <% else %>
+      <div class="flex size-full items-center justify-center text-stone-300">
+        <%= icon(:book_open, css_class: "size-10") %>
+      </div>
+    <% end %>
+  </div>
+  <div class="space-y-1.5 p-3">
+    <p class="text-sm font-medium text-ink"><%= recipe.title %></p>
+    <p class="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-soft">
+      <% if recipe.total_minutes %><span><%= recipe.total_minutes %> min</span><% end %>
+      <% if recipe.servings %>
+        <% if recipe.total_minutes %><span aria-hidden="true">·</span><% end %>
+        <span>serves <%= recipe.servings %></span>
+      <% end %>
+      <% if recipe.times_cooked.positive? %>
+        <span aria-hidden="true">·</span>
+        <span>cooked <%= recipe.times_cooked %>×</span>
+      <% end %>
+    </p>
+    <%# Plain spans, not the shared chip partial: this whole card is an <a>,
+        and a nested link would break it out of its own tile. %>
+    <div class="flex flex-wrap items-center gap-1.5">
+      <% recipe.sections.each do |section| %>
+        <span class="chip <%= section_chip_classes(section) %>"><%= section.qualified_name %></span>
+      <% end %>
+      <% if recipe.user_id != Current.user.id %>
+        <%= render Ui::UserLabelComponent.new(user: recipe.user, css_class: "text-xs text-soft", truncate: true) do %>
+          from <%= recipe.user.name %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

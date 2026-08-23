@@ -1,0 +1,43 @@
+<% content_for :title, @book.title %>
+
+<header class="mb-6">
+  <h1 class="text-3xl"><%= @book.title %></h1>
+  <p class="mt-2 text-sm text-soft">
+    Shared by <%= @owner.name.split.first %> · <%= pluralize(@recipes.size, "recipe") %>
+  </p>
+  <% if @book.description.present? %>
+    <p class="mt-3 text-sm text-soft"><%= @book.description %></p>
+  <% end %>
+</header>
+
+<% if @recipes.any? %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <% @recipes.each do |recipe| %>
+      <%= link_to shared_path(@link.token, recipe: recipe.id), class: "card group block overflow-hidden p-0" do %>
+        <div class="aspect-[4/3] overflow-hidden bg-stone-100">
+          <% if recipe.image.attached? %>
+            <%= image_tag url_for(recipe.image.variant(:card)), alt: recipe.title, loading: "lazy",
+                  class: "size-full object-cover transition-transform duration-150 group-hover:scale-105" %>
+          <% else %>
+            <div class="flex size-full items-center justify-center text-stone-300">
+              <%= icon(:book_open, css_class: "size-10") %>
+            </div>
+          <% end %>
+        </div>
+        <div class="p-3">
+          <p class="text-sm font-medium text-ink"><%= recipe.title %></p>
+          <% if recipe.total_minutes || recipe.servings %>
+            <p class="mt-0.5 text-xs text-soft">
+              <%= [ ("#{recipe.total_minutes} min" if recipe.total_minutes),
+                    ("serves #{recipe.servings}" if recipe.servings) ].compact.join(" · ") %>
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-sm text-soft">This book is empty so far.</p>
+<% end %>
+
+<%= render "public/footer" %>

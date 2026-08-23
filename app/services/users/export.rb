@@ -23,6 +23,8 @@ module Users
       "notes" => ->(user) { user.notes },
       "photos" => ->(user) { user.photos },
       "albums" => ->(user) { user.albums },
+      "recipes" => ->(user) { user.recipes },
+      "recipe_books" => ->(user) { user.recipe_books },
       "suggestions" => ->(user) { user.suggestions },
       "spending_accounts" => ->(user) { user.spending_accounts },
       "budget_categories" => ->(user) { user.budget_categories },
@@ -73,6 +75,13 @@ module Users
           zip.write(photo.image.download)
         end
 
+        @user.recipes.includes(image_attachment: :blob).find_each do |recipe|
+          next unless recipe.image.attached?
+
+          zip.put_next_entry(recipe_image_entry_name(recipe))
+          zip.write(recipe.image.download)
+        end
+
         # Your face is yours too (D-user-avatars) — the original, not the
         # square the app renders.
         if @user.avatar.attached?
@@ -90,7 +99,7 @@ module Users
           user: { name: @user.name, email_address: @user.email_address,
                   avatar: (avatar_entry_name if @user.avatar.attached?) }.compact,
           household: @user.household.name,
-          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/" ],
+          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/", "recipe_files/" ],
           credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked"
         }
       end
@@ -104,6 +113,14 @@ module Users
         row["file"] = file_entry_name(record) if record.is_a?(Document) && record.file.attached?
         row["file"] = photo_entry_name(record) if record.is_a?(Photo) && record.image.attached?
         row["photo_ids"] = record.photo_ids if record.is_a?(Album)
+        # A recipe without its ingredients isn't a recipe: the rows travel
+        # inline, raw line included, so an importer can take either the
+        # parse or the text the cook typed.
+        if record.is_a?(Recipe)
+          row["ingredients"] = record.recipe_ingredients.map { |line| line.attributes.except("id", "recipe_id", "created_at", "updated_at") }
+          row["image"] = recipe_image_entry_name(record) if record.image.attached?
+        end
+        row["recipe_ids"] = record.recipe_ids if record.is_a?(RecipeBook)
         row
       end
 
@@ -113,6 +130,10 @@ module Users
 
       def photo_entry_name(photo)
         "photo_files/#{photo.id}-#{photo.image.filename}"
+      end
+
+      def recipe_image_entry_name(recipe)
+        "recipe_files/#{recipe.id}-#{recipe.image.filename}"
       end
 
       def avatar_entry_name

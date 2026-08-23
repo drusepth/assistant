@@ -92,6 +92,7 @@
               <div class="space-y-0.5">
                 <%= nav_link_to "Address Book", people_path, :users %>
                 <%= nav_link_to "Photos", photos_path, :photo %>
+                <%= nav_link_to "Recipes", recipes_path, :book_open %>
                 <%= nav_link_to "Documents", documents_path, :document %>
                 <%= nav_link_to "Notes", notes_path, :note %>
                 <% if Current.user.linked_accounts.where(provider: "email").exists? %>
