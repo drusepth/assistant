@@ -7,10 +7,10 @@
 
 <% if @years.many? %>
   <div class="mb-4 flex flex-wrap gap-1.5">
-    <%= link_to "All years", map_photos_path,
+    <%= link_to "All years", map_photos_path(bbox: params[:bbox].presence),
           class: "chip #{@year.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
     <% @years.each do |year| %>
-      <%= link_to year, map_photos_path(year: year),
+      <%= link_to year, map_photos_path(year: year, bbox: params[:bbox].presence),
             class: "chip #{@year.to_s == year ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
     <% end %>
   </div>
@@ -24,12 +24,37 @@
         <%= pluralize(@map.photo_count, "photo") %> across
         <%= pluralize(@map.place_count, "place") %><%= ", #{@map.first_taken_at.strftime("%b %Y")} – #{@map.last_taken_at.strftime("%b %Y")}" if @map.first_taken_at %>.
         Pick a pin to see what you took there.
+        <% if @bounds %>
+          <%= link_to "Back to the whole world", map_photos_path(year: params[:year].presence),
+                class: "text-primary-700 hover:underline" %>
+        <% end %>
       </p>
     <% end %>
 
+    <%# Zooming in is what separates two cities an hour apart, and a country
+        is the unit people think in — so the countries are the zoom control.
+        Ordinary links: no gesture to discover, and the view that comes back
+        can be bookmarked or sent to someone. %>
+    <% if @countries.present? && @countries.many? %>
+      <div>
+        <h2 class="mb-3 text-sm font-medium text-soft">Zoom in</h2>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <% @countries.each do |country, pins| %>
+            <%= link_to map_photos_path(bbox: Photos::Map.bbox_for(pins), year: params[:year].presence),
+                  class: "card block p-4 transition-colors hover:bg-stone-100" do %>
+              <p class="truncate font-medium text-ink"><%= country || "Places with no name" %></p>
+              <p class="truncate text-sm text-soft">
+                <%= pluralize(pins.size, "place") %> · <%= pluralize(pins.sum(&:count), "photo") %>
+              </p>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
     <%# The pins as a list: the same places, reachable without a mouse and
-        readable without eyes. Places nobody can name — there is no
-        geocoder here on purpose — say when instead of where. %>
+        readable without eyes. Places the gazetteer can't name — it has never
+        heard of the village you stayed in — say when instead of where. %>
     <%= render Ui::CardComponent.new(title: "Places", padded: false) do %>
       <div class="divide-y divide-edge">
         <% @places.each do |pin| %>
@@ -68,7 +93,7 @@
       <% end %>
     <% end %>
 
-    <% if @unplaced.positive? %>
+    <% if @unplaced.positive? && !@bounds %>
       <p class="text-sm text-soft">
         <%= pluralize(@unplaced, "photo") %> in your library <%= @unplaced == 1 ? "doesn't" : "don't" %> say where
         <%= @unplaced == 1 ? "it was" : "they were" %> taken — cameras only record a location when location services
@@ -78,13 +103,19 @@
   </div>
 <% else %>
   <%= render Ui::EmptyStateComponent.new(
-        title: @year ? "Nothing placed in #{@year}" : "No photos with a location yet",
-        description: @year ?
-          "No photo from #{@year} carries coordinates. Try another year." :
-          "This map is built from the coordinates your camera saved into each photo. Nothing here reads a photo's contents, and nothing is looked up anywhere — so photos that arrived without a location (screenshots, scans, anything that came through a chat app) simply aren't on it."
+        title: @bounds ? "Nothing here" : @year ? "Nothing placed in #{@year}" : "No photos with a location yet",
+        description: @bounds ?
+          "No photos in this part of the world#{" in #{@year}" if @year}." :
+          @year ?
+            "No photo from #{@year} carries coordinates. Try another year." :
+            "This map is built from the coordinates your camera saved into each photo. Nothing here reads a photo's contents, and nothing is looked up anywhere — so photos that arrived without a location (screenshots, scans, anything that came through a chat app) simply aren't on it."
       ) do |empty| %>
     <% empty.with_action do %>
-      <%= link_to "Back to the timeline", photos_path, class: "btn btn-primary" %>
+      <% if @bounds %>
+        <%= link_to "Back to the whole world", map_photos_path(year: params[:year].presence), class: "btn btn-primary" %>
+      <% else %>
+        <%= link_to "Back to the timeline", photos_path, class: "btn btn-primary" %>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>

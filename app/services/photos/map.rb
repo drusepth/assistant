@@ -44,7 +44,7 @@ module Photos
     MIN_PADDING = 1.5
     MIN_SPAN = 14.0
     TARGET_ASPECT = 2.0
-    MIN_ASPECT = 1.1
+    MIN_ASPECT = 1.5
 
     # Clustering distance in map units (1 unit = 0.36°). At 6 units two pins
     # can still be told apart at the size the map renders, and cities an
@@ -53,6 +53,10 @@ module Photos
     CLUSTER_RADIUS = 6.0
     # The same radius in degrees, for the Photo.near box a pin links to.
     CLUSTER_DEGREES = (CLUSTER_RADIUS / HEIGHT * 180.0).round(4)
+
+    # How many settlement names a zoomed map is lettered with before it stops
+    # being a map and starts being a list.
+    CONTEXT_LABELS = 12
 
     # A cluster of photos taken in roughly one spot.
     class Pin
@@ -185,6 +189,15 @@ module Photos
       pins
     end
 
+    # The box that holds a set of pins, as a bbox parameter — how a country
+    # row on the map page hands its own corner of the world to a zoom link.
+    def self.bbox_for(pins)
+      latitudes = pins.map(&:latitude)
+      longitudes = pins.map(&:longitude)
+      [ latitudes.min, longitudes.min, latitudes.max, longitudes.max ]
+        .map { |value| value.round(4) }.join(",")
+    end
+
     def pins
       @pins ||= self.class.cluster(rows, radius: cluster_radius).tap do |pins|
         attach_covers(pins)
@@ -228,18 +241,51 @@ module Photos
 
     # A pin's position inside the current window, as CSS percentages.
     def position(pin)
-      { left: percent((pin.x - window[:x]) / window[:width]),
-        top: percent((pin.y - window[:y]) / window[:height]) }
+      left, top = fraction_of(pin.x, pin.y)
+      { left: percent(left), top: percent(top) }
+    end
+
+    # The window in map units — what the basemap needs to pick the coastline
+    # cells that are actually in view.
+    def window_box = window.values_at(:x, :y, :width, :height)
+
+    # Settlement names to letter a zoomed map with. A coastline with nothing
+    # written on it is a shape; the same coastline with "Porto" and "Lisboa"
+    # on it is a map. Drawn only when zoomed, because at world scale a dozen
+    # city names is noise on top of the pins that matter.
+    #
+    # Labels are placed biggest-first and skipped when they'd land on one
+    # already placed — the cheap version of collision avoidance, and enough
+    # when there are at most a dozen.
+    Label = Data.define(:name, :left, :top)
+
+    def context_labels(gazetteer: Datasets::Places.current)
+      return [] unless zoomed?
+
+      @context_labels ||= begin
+        # A pin is the point of the map; lettering is context. Where they
+        # collide, the lettering gives way.
+        placed = pins.map { |pin| fraction_of(pin.x, pin.y) }
+        gazetteer.within(**window_bounds, limit: CONTEXT_LABELS).filter_map do |place|
+          left, top = fraction_of(*project(place.latitude, place.longitude))
+          next if placed.any? { |lx, ly| (lx - left).abs < 0.12 && (ly - top).abs < 0.06 }
+
+          placed << [ left, top ]
+          Label.new(name: place.name, left: percent(left), top: percent(top))
+        end
+      end
     end
 
     # The window's own corners, for a caller that wants to hand this view to
     # someone else as a link.
-    def bbox_param
-      south = 90.0 - ((window[:y] + window[:height]) / HEIGHT * 180.0)
-      north = 90.0 - (window[:y] / HEIGHT * 180.0)
-      west = (window[:x] / WIDTH * 360.0) - 180.0
-      east = ((window[:x] + window[:width]) / WIDTH * 360.0) - 180.0
-      [ south, west, north, east ].map { |value| value.round(4) }.join(",")
+    def bbox_param = window_bounds.values_at(:south, :west, :north, :east).map { |value| value.round(4) }.join(",")
+
+    # The window as latitudes and longitudes rather than map units.
+    def window_bounds
+      { south: 90.0 - ((window[:y] + window[:height]) / HEIGHT * 180.0),
+        north: 90.0 - (window[:y] / HEIGHT * 180.0),
+        west: (window[:x] / WIDTH * 360.0) - 180.0,
+        east: ((window[:x] + window[:width]) / WIDTH * 360.0) - 180.0 }
     end
 
     private
@@ -315,11 +361,17 @@ module Photos
           width: width, height: height }
       end
 
+      # Where a point in map units sits inside the window, 0..1.
+      def fraction_of(x, y)
+        [ (x - window[:x]) / window[:width], (y - window[:y]) / window[:height] ]
+      end
+
       def project(latitude, longitude)
         [ (longitude + 180.0) / 360.0 * WIDTH, (90.0 - latitude) / 180.0 * HEIGHT ]
       end
 
       def percent(fraction) = "#{(fraction * 100).round(4)}%"
+
       # Whole numbers stay whole: "0 22.22 1000 388.89" beats
       # "0.0 22.22 1000.0 388.89" in a viewBox a person might read.
       def round(value)

@@ -52,13 +52,20 @@ the day the vendor changes its terms. The land path is inlined rather than
 served as an `<img>` so it takes `currentColor` and the palette stays in the
 token file (`docs/DESIGN.md`).
 
-**Nothing is geocoded.** A pin knows how many photos it holds and which months
-they span. It does not know it is Paris. Naming a coordinate means either a
-lookup service (see above) or asking a model, and a model that confidently
-says "Paris" about a photo taken in Versailles has made the map worse than a
-dot would have. If place names ever arrive they arrive as a dataset on the
-`db/datasets/` layer (the `docs/DECISIONS.md` Q-recipe-nutrition posture), not
-as an LLM feature and not as a phone-home.
+**Nothing is geocoded over the network, and nothing is asked of a model.**
+Pin names come from `Datasets::Places` — ~7,300 public-domain settlements
+shipped in `db/datasets/places.csv`, matched nearest-first in memory. A lookup
+service would leak the same itinerary as a tile host; a model asked to name a
+coordinate will cheerfully answer "Paris" about a photo taken in Versailles.
+
+What a gazetteer of cities can honestly say is bounded, so the label is too:
+within 20km it says "Lisbon", within 100km "Near Lisbon", and past that
+nothing at all — it has never heard of the village you stayed in, and saying
+so is better than guessing. Nearest wins over most famous (Kyoto stays Kyoto
+next to Osaka), a missing or malformed file leaves an unnamed map rather than
+an error, and every surface keeps the coordinates as its fallback. Zoomed maps
+draw a few nearby settlement names from the same file as context, which is
+what makes a bare coastline readable.
 
 **The map is owner-only.** Photo coordinates are owner-only (Q14): shared
 viewers get EXIF-stripped variants and the photo page hides the location. A
@@ -71,25 +78,63 @@ cannot see where it was taken.
 ### Clustering
 
 Greedy clustering against a spatial hash, newest photo first: each photo joins
-the first pin whose centre is within `CLUSTER_RADIUS` (6 map units ≈ 240km) or
-starts one. Cells are twice the radius, so a centroid drifts at most one cell
-from its seed and scanning the 3×3 neighbourhood is exhaustive rather than
-merely likely.
+the first pin whose centre is within the clustering radius or starts one.
+Cells are twice the radius, so a centroid drifts at most one cell from its
+seed and scanning the 3×3 neighbourhood is exhaustive rather than merely
+likely.
 
-240km is chosen so London and Paris stay two pins — merging them would be a
-lie about where you had been. The cost is that two pins that close *overlap*
-at world zoom, and there is no zoom to escape into. That is accepted: the
-count, the dates and the link ride each pin (and the Places list under the
-map), a solid ring keeps overlapping pins reading as two objects, and smaller
-pins draw last so a single photo never hides behind a city.
+**The radius is a distance on screen, not on Earth.** At world zoom it is 6
+map units (≈240km), chosen so London and Paris stay two pins — merging them
+would be a lie about where you had been. Zoomed views scale it by the window,
+which keeps a pin the same size in the reader's eye and is what finally
+separates two cities an hour apart: at world zoom they share a pin, zoomed
+into their country they do not.
 
-### The window
+Two pins that close still overlap at world zoom, and that is accepted rather
+than fixed: the count, the dates and the link ride each pin (and the Places
+list under the map), a solid ring keeps overlapping pins reading as two
+objects, smaller pins draw last so a single photo never hides behind a city,
+and zoom is the way out.
 
-The viewBox crops the empty polar bands by default (82°N to 58°S) — but only
-as a default. A pin outside that band pushes the window back out rather than
-falling off the edge of its own map, which is the difference between a crop
-and a lie. The container's `aspect-ratio` follows the computed window, so the
-map is never letterboxed or squashed.
+### The window, and zoom
+
+The world view crops the empty polar bands by default (82°N to 58°S) — but
+only as a default. A pin outside that band pushes the window back out rather
+than falling off the edge of its own map, which is the difference between a
+crop and a lie. The container's `aspect-ratio` follows the computed window, so
+the map is never letterboxed or squashed.
+
+**Zoom is navigation, not a gesture.** A view is a `?bbox=south,west,north,east`
+URL: the map page offers one zoom link per country (built from that country's
+own pins), a trip opens at its own box, and the result is a page like any
+other — linkable, bookmarkable, and working with scripting off. A requested
+box is padded so pins never sit on the edge, never narrower than `MIN_SPAN`
+(a day in one city is a box a few hundred metres across, and blown up to fill
+a card that is a meaningless smear of coastline), and shaped by *growing* the
+short side — cropping would drop a photo out of a view that claims to hold it.
+A zoomed map also narrows its SQL to the box, so it reads only the photos it
+is going to draw.
+
+### Two basemaps
+
+At country zoom the 110m outline is a blob with straight edges, so zoomed
+views draw a second file: `world_land_detail.svg`, 1:50m, cut into ~10° grid
+cells that each carry their own bounding box. The component emits only the
+cells the window touches — showing Portugal costs ~4KB of coastline instead
+of the ~150KB ring that Natural Earth actually stores (its land is a handful
+of enormous polygons; Afro-Eurasia is one). Cutting happens in the generator,
+where each ring is clipped (Sutherland–Hodgman) to every cell it touches; a
+cell's rings share one path with `fill-rule="evenodd"` so lakes stay holes
+instead of becoming islands, and cells are clipped a hair oversized so
+neighbours overlap rather than abut — two filled shapes meeting on an exact
+edge leave a one-pixel anti-aliasing seam that reads as a crack across the
+land.
+
+Zoomed maps are also **lettered** from the gazetteer: up to a dozen nearby
+settlement names, biggest first, skipped where they would land on each other
+or on a pin. A coastline with nothing written on it is a shape; the same
+coastline with "Porto" and "Coimbra" on it is a map. The world view gets none
+— at that scale a dozen city names is noise on top of the pins that matter.
 
 ### No JavaScript
 
@@ -170,7 +215,7 @@ Deliberately unbuilt, in rough order of expected demand:
 | Place names | `app/services/datasets/places.rb`, `db/datasets/places.csv`, `script/build_places_dataset.rb` |
 | Trips | `app/services/travel/trips.rb`, `app/models/trip.rb`, `TripsController`, `app/views/trips/` |
 | Drawing | `app/components/ui/photo_map_component.rb` (+ `.html.erb`) |
-| Basemap | `app/assets/images/world_land.svg`, `script/build_world_map.rb` |
+| Basemaps | `app/assets/images/world_land.svg` (world), `world_land_detail.svg` (zoomed), `script/build_world_map.rb` |
 | Full-page map | `PhotosController#map`, `app/views/photos/map.html.erb` |
 | Place filter | `Photo.near`, `PhotosController#parse_place` |
 | Tests | `test/services/photos/map_test.rb`, `test/controllers/travel_section_test.rb`, the map cases in `test/controllers/photos_controller_test.rb` |

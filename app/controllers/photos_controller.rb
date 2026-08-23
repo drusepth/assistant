@@ -1,8 +1,9 @@
 class PhotosController < ApplicationController
   PER_PAGE = 120
   # How many places the map page lists under the map. The map itself always
-  # carries every pin.
+  # carries every pin; a zoomed view has few enough to list them all.
   PLACES_LISTED = 24
+  PLACES_ZOOMED = 60
 
   before_action :set_own_photo, only: %i[ edit update destroy ingest caption apply_suggestion ]
 
@@ -50,8 +51,15 @@ class PhotosController < ApplicationController
       base = base.where(taken_at: Time.zone.local(@year)...Time.zone.local(@year + 1))
     end
 
-    @map = Photos::Map.new(base)
-    @places = @map.recent_pins(PLACES_LISTED)
+    # Zooming is navigation, not a gesture: a country's own pins give the
+    # box, the box goes in the URL, and the view that comes back is a page
+    # like any other — linkable, bookmarkable, and working with scripting
+    # off. Clustering scales with the window, so this is also what finally
+    # separates two cities an hour apart.
+    @bounds = parse_bounds(params[:bbox])
+    @map = Photos::Map.new(base, bounds: @bounds)
+    @places = @map.recent_pins(@bounds ? PLACES_ZOOMED : PLACES_LISTED)
+    @countries = @map.by_country unless @bounds
     @unplaced = Current.user.photos.where(latitude: nil).count
   end
 
@@ -153,6 +161,20 @@ class PhotosController < ApplicationController
       return nil unless latitude.abs <= 90 && longitude.abs <= 180
 
       [ latitude, longitude ]
+    end
+
+    # "south,west,north,east" from a zoom link. Anything else — a
+    # hand-edited URL, a box that is upside down — is the world view rather
+    # than an error page.
+    def parse_bounds(value)
+      return nil if value.blank?
+
+      south, west, north, east = value.to_s.split(",", 4).map { |part| Float(part.strip, exception: false) }
+      return nil unless south && west && north && east
+      return nil unless south.abs <= 90 && north.abs <= 90 && west.abs <= 180 && east.abs <= 180
+      return nil if north < south
+
+      { south: south, west: west, north: north, east: east }
     end
 
     # Keyset pagination: strictly older than the last photo on the previous

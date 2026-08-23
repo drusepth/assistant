@@ -169,6 +169,47 @@ class PhotosControllerTest < ActionDispatch::IntegrationTest
     assert_match "Your photos around Paris, France", response.body
   end
 
+  test "the map offers a zoom per country, and the zoomed view narrows to it" do
+    paris = create_photo(users(:one))
+    paris.update!(latitude: 48.8566, longitude: 2.3522)
+    sydney = create_photo(users(:one), fixture: "photo_no_exif.jpg")
+    sydney.update!(latitude: -33.8688, longitude: 151.2093)
+
+    get map_photos_path
+    assert_response :success
+    assert_match "Zoom in", response.body
+    assert_select "a[href=?]", map_photos_path(bbox: "48.8566,2.3522,48.8566,2.3522")
+
+    get map_photos_path(bbox: "48.0,1.0,50.0,3.0")
+    assert_response :success
+    assert_match "1 photo across 1 place", response.body
+    assert_match "Back to the whole world", response.body
+    assert_no_match "Zoom in", response.body
+  end
+
+  test "a zoomed map draws the detailed coastline and nearby place names" do
+    photo = create_photo(users(:one))
+    photo.update!(latitude: 48.8566, longitude: 2.3522)
+
+    get map_photos_path
+    world = response.body
+    get map_photos_path(bbox: "48.0,1.0,50.0,3.5")
+
+    assert_match "Rouen", response.body, "a zoomed map is lettered with what's around it"
+    assert_not_equal world[/<svg class="absolute[^>]*>.*?<\/svg>/m], response.body[/<svg class="absolute[^>]*>.*?<\/svg>/m],
+      "the zoomed basemap isn't the world one"
+  end
+
+  test "a nonsense zoom is the whole world rather than an error" do
+    photo = create_photo(users(:one))
+    photo.update!(latitude: 48.8566, longitude: 2.3522)
+
+    get map_photos_path(bbox: "not,a,real,box")
+    assert_response :success
+    assert_select "a[href=?]", photos_path(near: "48.8566,2.3522")
+    assert_no_match "Back to the whole world", response.body, "an unreadable box is simply the world view"
+  end
+
   test "a nonsense place filter is ignored rather than an error" do
     photo = create_photo(users(:one))
 

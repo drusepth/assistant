@@ -70,6 +70,24 @@ module Datasets
         distance_km: best[:distance].round(1))
     end
 
+    # The most populous settlements inside a box, biggest first — the labels
+    # a zoomed map draws so a bare coastline is readable. Same file, same
+    # honesty: it can only name what it holds.
+    def within(south:, west:, north:, east:, limit: 12)
+      return [] unless present?
+
+      rows = (south.floor..north.ceil).flat_map { |band| @bands[band] || [] }
+      rows = rows.select do |row|
+        row[:latitude].between?(south, north) &&
+          (west <= east ? row[:longitude].between?(west, east)
+                        : row[:longitude] >= west || row[:longitude] <= east)
+      end
+
+      rows.sort_by { |row| -row[:population] }.first(limit).map do |row|
+        Match.new(**row.slice(:name, :country, :latitude, :longitude, :population), distance_km: 0.0)
+      end
+    end
+
     private
       # One-degree latitude bands. A band is 111km tall, so scanning the
       # photo's band and its two neighbours always covers at least ±1°,

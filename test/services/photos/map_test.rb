@@ -125,6 +125,72 @@ class Photos::MapTest < ActiveSupport::TestCase
     assert_equal [ nil ], Photos::Map.new(users(:one).photos).by_country.map(&:first)
   end
 
+  test "zooming in separates cities that share a pin at world scale" do
+    place(PARIS)
+    place([ 49.4431, 1.0993 ]) # Rouen — 110km from Paris, one pin at world zoom
+
+    world = Photos::Map.new(users(:one).photos)
+    assert_equal 1, world.place_count
+
+    zoomed = Photos::Map.new(users(:one).photos,
+      bounds: { south: 48.0, west: 0.5, north: 50.0, east: 3.0 })
+    assert_equal 2, zoomed.place_count, "the clustering radius is a distance on screen, not on Earth"
+    assert_predicate zoomed, :zoomed?
+    assert_not world.zoomed?
+  end
+
+  test "a zoomed map reads only the photos in its window" do
+    place(PARIS)
+    place(SYDNEY)
+
+    zoomed = Photos::Map.new(users(:one).photos,
+      bounds: { south: 48.0, west: 1.0, north: 50.0, east: 3.0 })
+
+    assert_equal 1, zoomed.photo_count
+  end
+
+  test "a zoomed window is padded and never squashed" do
+    place(PARIS)
+    place([ 41.1579, -8.6291 ]) # Porto — a tall, thin box
+
+    map = Photos::Map.new(users(:one).photos,
+      bounds: { south: 41.1579, west: -9.14, north: 48.8566, east: -0.1 })
+    _x, _y, width, height = map.window_box
+
+    assert_operator map.aspect_ratio, :>=, Photos::Map::MIN_ASPECT
+    assert_operator map.aspect_ratio, :<=, Photos::Map::TARGET_ASPECT
+    assert_operator width, :<, Photos::Map::WIDTH
+    assert_operator height, :>, 0
+    # Every pin still inside the padded window.
+    map.pins.each do |pin|
+      assert_operator map.position(pin)[:left].to_f, :>, 0
+      assert_operator map.position(pin)[:left].to_f, :<, 100
+    end
+  end
+
+  test "a zoomed map is lettered with nearby place names, the world map isn't" do
+    place(PARIS)
+
+    zoomed = Photos::Map.new(users(:one).photos,
+      bounds: { south: 48.0, west: 1.0, north: 50.0, east: 3.5 })
+    names = zoomed.context_labels.map(&:name)
+
+    assert_includes names, "Rouen", "a zoomed map says what's around it"
+    assert_not_includes names, "Paris", "lettering gives way where a pin already names the place"
+    assert_empty Photos::Map.new(users(:one).photos).context_labels,
+      "the world map is pins, not a gazetteer dump"
+  end
+
+  test "a country's pins hand their own corner of the world to a zoom link" do
+    place(PARIS)
+    place(LONDON)
+
+    map = Photos::Map.new(users(:one).photos)
+    france = map.by_country.to_h.fetch("France")
+
+    assert_equal "48.8566,2.3522,48.8566,2.3522", Photos::Map.bbox_for(france)
+  end
+
   test "an empty library is an empty map, not an error" do
     map = Photos::Map.new(users(:one).photos)
 
