@@ -285,8 +285,23 @@ fourth door that skips the model entirely.
 
 One form. Title, an optional photo, servings and times, source, then two
 textareas — ingredients (one per line, paste-friendly, hint text showing
-`200 g flour`) and method — plus notes and the section picker. The parser runs
-on save; the edit form shows the raw lines back.
+`200 g flour`) and method — plus notes. The parser runs on save; the edit form
+shows the raw lines back.
+
+**No section picker on the entry form (D16).** A recipe carries more than
+enough signal to file itself — the low-sodium one is Health, the sourdough is
+Hobbies · Baking, Grandma's is People — so ending a capture form with the whole
+taxonomy (27 checkboxes, most of them about voting and immigration) asked the
+cook to do work the assistant is better at, and buried the Save button under
+it. `CategorizeRecipeJob` files a new recipe after save, from typed capture,
+paste-import, and a landed share-link payload alike; with no model configured
+the recipe just stays unfiled and nothing is lost. The picker survives on the
+**edit** form only, as the correction path, inside a shared **Advanced** drawer
+(`shared/_advanced`) that is closed by default — a layout partial, so the next
+control a cook shouldn't have to think about goes in the block at the call site
+rather than teaching the drawer about a new primitive. Its closed line still
+reports the state of what it hides ("Advanced — filed under Health and People"),
+and the picker inside lists only the sections the household turned on.
 
 ### Books (`/recipe_books`)
 

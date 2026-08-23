@@ -6,7 +6,9 @@
     <%= form.field :caption, as: :text_area %>
     <%= form.field :taken_at, as: :datetime_local_field, label_text: "Taken",
           hint: "Set from the photo's own metadata when it has some." %>
-    <%= render "shared/section_picker", form: form %>
+    <%= render layout: "shared/advanced", locals: { hint: section_filing_hint(form.object) } do %>
+      <%= render "shared/section_picker", form: form %>
+    <% end %>
     <div class="flex items-center gap-2 pt-2">
       <%= form.submit %>
       <%= link_to "Cancel", @photo, class: "btn btn-ghost" %>

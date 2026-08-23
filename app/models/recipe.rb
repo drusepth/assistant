@@ -6,6 +6,9 @@
 class Recipe < ApplicationRecord
   include Visible
   include Sectionable
+  include AutoSortable
+
+  AUTO_SORT_JOB = CategorizeRecipeJob
 
   has_many :recipe_ingredients, -> { order(:position, :id) }, dependent: :destroy, inverse_of: :recipe
   # What the pantry match, the grocery list, and "how many ingredients is
