@@ -42,7 +42,7 @@ class TasksController < ApplicationController
       # "Save & complete" on the answer card (D30): writing the answer is
       # how a mental task finishes, so the two come as one click.
       if params[:save_and_complete].present? && !@task.completed?
-        @task.complete!
+        complete_and_celebrate!
         redirect_to @task, notice: "Answer saved — task completed."
       else
         redirect_to @task, notice: "Task updated."
@@ -58,7 +58,7 @@ class TasksController < ApplicationController
   end
 
   def complete
-    @task.complete!
+    complete_and_celebrate!
     redirect_back fallback_location: tasks_path
   end
 
@@ -77,7 +77,7 @@ class TasksController < ApplicationController
   def move
     case params.expect(:column)
     when "done"
-      @task.complete!
+      complete_and_celebrate!
     when "today"
       @task.reopen! if @task.completed?
       @task.update!(bucket: :today)
@@ -95,6 +95,16 @@ class TasksController < ApplicationController
   end
 
   private
+    # Finishing a task is the app's one genuinely good moment, so it gets a
+    # party (D-task-celebration). The redirect that follows would wipe an
+    # animation started here, so the celebration rides the flash and fires on
+    # the page that comes back.
+    def complete_and_celebrate!
+      @task.complete!
+      payload = Tasks::Celebration.for(@task)
+      flash[:celebrate] = payload.to_json if payload
+    end
+
     def set_own_task
       @task = Current.user.tasks.find(params[:id])
     end

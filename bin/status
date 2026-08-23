@@ -1,18 +1,52 @@
 #!/usr/bin/env bash
-# Print the build log in order: docs/STATUS.md (the log through August 2026)
-# followed by docs/status/*.md, sorted by filename. The log lives in two
-# places so that appending to it is always a *new file* — see
-# docs/status/README.md. Pipe it anywhere: `bin/status | tail -20`.
+# Read the build log, or add to it.
+#
+#   bin/status              print the whole log, oldest first
+#   bin/status tail [n]     print the last n entries (default 10)
+#   bin/status new "Title"  create today's entry file and print its path
+#
+# The log is one file per entry under docs/status/ so that parallel branches
+# never touch the same file — see docs/STATUS.md.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+LOG_DIR="docs/status"
 
-cat docs/STATUS.md
+case "${1:-show}" in
+  show)
+    for entry in "$LOG_DIR"/*.md; do
+      printf -- '- '
+      cat "$entry"
+    done
+    ;;
 
-# LC_ALL=C so the date-prefixed names sort byte-wise everywhere.
-shopt -s nullglob
-entries=(docs/status/*.md)
-for entry in $(printf '%s\n' "${entries[@]}" | grep -v '/README\.md$' | LC_ALL=C sort); do
-  echo
-  cat "$entry"
-done
+  tail)
+    for entry in $(ls "$LOG_DIR"/*.md | tail -n "${2:-10}"); do
+      printf -- '- '
+      cat "$entry"
+    done
+    ;;
+
+  new)
+    title="${2:-}"
+    if [ -z "$title" ]; then
+      echo "usage: bin/status new \"A short title for the entry\"" >&2
+      exit 1
+    fi
+
+    slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-//; s/-$//' | cut -c1-52)
+    date=$(date +%Y-%m-%d)
+    # Next free ordinal for today. Two branches picking the same one is
+    # harmless — the slugs differ, so the filenames do too.
+    ordinal=$(printf '%02d' "$(( $(ls "$LOG_DIR" | grep -c "^$date-" || true) + 1 ))")
+    path="$LOG_DIR/$date-$ordinal-$slug.md"
+
+    printf '**%s**: \n' "$title" > "$path"
+    echo "$path"
+    ;;
+
+  *)
+    echo "usage: bin/status [show|tail [n]|new \"Title\"]" >&2
+    exit 1
+    ;;
+esac

@@ -618,7 +618,7 @@ and chat exports are attacker-adjacent text too.
 ## 10. Build sequence
 
 Split along merge seams — each pass is one focused, independently green branch
-(`bin/rails test`, `bin/rubocop`) with a `docs/status/` entry added. E0 is
+(`bin/rails test`, `bin/rubocop`) with a `bin/status new` entry. E0 is
 platform work with no email-specific risk; it can land this week and benefits the
 existing DAV consumers immediately.
 

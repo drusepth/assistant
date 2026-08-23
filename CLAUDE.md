@@ -80,7 +80,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 
 ## Docs
 
-- `docs/STATUS.md` + `docs/status/` — build log: what is built so far, and what is next (start here; `bin/status` prints both in order)
+- `docs/STATUS.md` — what is next, and the front door to the build log in `docs/status/` (one file per entry; read it with `bin/status`) (start here)
 - `docs/VISION.md` — full mission background and strategic reasoning
 - `docs/PRODUCT.md` — detailed section-by-section feature brainstorm
 - `docs/DECISIONS.md` — decision log + open questions
@@ -95,20 +95,19 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 
 ## Where we left off
 
-Read the build log with `bin/status` — `docs/STATUS.md` (the log through
-August 2026) followed by `docs/status/`, one file per entry after that.
+Run `bin/status` — the build log, oldest first (`bin/status tail 10` for the
+recent stretch). `docs/STATUS.md` carries what's next.
 
-It lives outside this file on purpose. The log changes on nearly every branch,
-and while it lived here it made CLAUDE.md the most conflict-prone file in the
-repo — then it made `STATUS.md` the most conflict-prone file in the repo.
-**Record your milestone by adding a new file** —
-`docs/status/YYYY-MM-DD-kebab-slug.md`, one entry, nothing else in it; see
-`docs/status/README.md`. Never append to `docs/STATUS.md`.
+The log lives outside this file, and outside any single file, on purpose: it
+grows on nearly every branch, so while it lived in CLAUDE.md it made this the
+most conflict-prone file in the repo, and while it was one append-only
+document every parallel branch collided on that. It is now one file per entry
+under `docs/status/`. Add yours with `bin/status new "What landed"` — never by
+editing an entry someone else's branch is holding.
 
 ## Parallel branches: conflict hygiene
 
-Several branches land concurrently, so a few rules for the shared files and
-global sequences:
+Several branches land concurrently, so two rules for the global sequences:
 
 - **New decisions get slug IDs, not sequence numbers.** Two in-flight branches
   can't see each other's claims, so a shared counter guarantees collisions (the
@@ -138,12 +137,12 @@ global sequences:
   Hobbies, subsection-tile, and Health buildouts landed in parallel.
   Merge `origin/main` into your branch early and often; small frequent
   merges beat one big one.
-- **Append-only logs append *files*, not lines.** The build log was the
-  standing counter-example: `merge=union` on `docs/STATUS.md` made `git merge`
-  keep both branches' lines, but GitHub computes PR mergeability without
-  applying `.gitattributes`, so every parallel branch still *showed* a STATUS
-  conflict that only a local merge could clear. Entries now live one per file
-  under `docs/status/` (`YYYY-MM-DD-kebab-slug.md`, see its README), so two
-  branches logging the same week share no line in any file and there is
-  nothing for any tool to conflict over. Reach for the same shape whenever a
-  list only ever grows and order is the only relationship between items.
+- **The build log is one file per entry, so it can't conflict.** Add yours
+  with `bin/status new "What landed"` — never by editing an entry another
+  branch is holding. This replaced a single append-only `docs/STATUS.md`
+  carrying `merge=union`: union merge did resolve those appends silently in
+  git, but GitHub computes a PR's mergeability *without* the repo's
+  `.gitattributes`, so every branch that touched the log still showed a
+  conflict on its PR page and needed a local merge to clear it. That is the
+  general lesson for any file everyone appends to: a merge strategy only
+  quiets your own git, while separate files quiet everything.
