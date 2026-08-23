@@ -61,6 +61,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.btn-danger`, `.btn-alert` — destructive, and behind-but-not-destructive
    - `.btn-now`/`.btn-later` — the go/stop pair (see Narrow screens)
    - `.btn-sm`, `.btn-touch` — the two sizes off the default
+   - `.btn-tile` (+ `.btn-tile-icon`) — the phone's stacked capture tile,
+     folding back into the pill at `sm` (see Narrow screens)
    - `.input`, `.label`, `.hint`, `.field-error` — the form set
    - `.card`, `.chip`
    - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
@@ -156,7 +158,7 @@ card it counts.
 ## Narrow screens
 
 The app is used on a phone at least as often as on a laptop, and the whole
-page is 320–430 points wide there. Four rules keep it that way, and
+page is 320–430 points wide there. Five rules keep it that way, and
 `test/integration/mobile_layout_test.rb` pins the two that are mechanical:
 
 - **Every `grid` names its base columns.** `class="grid gap-4 sm:grid-cols-2"`
@@ -182,6 +184,14 @@ page is 320–430 points wide there. Four rules keep it that way, and
   colour the sides: `.btn-now`/`.btn-later` are the light tinted pair —
   green for "I'll do this now", red for "not now" — so the two are telling
   apart before either is read.
+- **`.btn-tile`** for a *set* of buttons that has to sit at the top of a
+  phone screen — the dashboard hero's four quick-adds are the case. Four
+  pills at 393 points wrap three-then-one, which reads as a mistake rather
+  than a layout; the tile turns the same buttons into equal columns of
+  icon-over-label in a `grid-cols-4`, and folds back into the plain pill
+  from `sm` up. Style the *one* button responsively rather than rendering a
+  phone copy and a desktop copy: anything anchored to the button (the
+  quick-add dropdown) breaks the moment there are two of it.
 - **`.capture-row`** for one-line capture (a field and its submit): side by
   side when there is room, stacked on a phone so neither ends up half a line
   wide. Fixed field widths inside it belong behind `sm:` (`sm:w-32`).
