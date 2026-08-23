@@ -40,9 +40,17 @@
                     class: "size-12 shrink-0 rounded-lg object-cover" %>
             <% end %>
             <div class="min-w-0">
-              <p class="truncate font-medium text-ink"><%= pin.period || "Undated" %></p>
-              <p class="text-sm text-soft">
-                <%= pluralize(pin.count, "photo") %> · <%= number_with_precision(pin.latitude, precision: 3) %>, <%= number_with_precision(pin.longitude, precision: 3) %>
+              <p class="truncate font-medium text-ink"><%= pin.heading %></p>
+              <%# Coordinates are the fallback, not the default: they were
+                  all we could say before the gazetteer, and they are still
+                  all we can say where it knows nothing. %>
+              <p class="truncate text-sm text-soft">
+                <%= pluralize(pin.count, "photo") %>
+                <% if pin.place %>
+                  · <%= pin.country %><%= " · #{pin.period}" if pin.period %>
+                <% else %>
+                  · <%= number_with_precision(pin.latitude, precision: 3) %>, <%= number_with_precision(pin.longitude, precision: 3) %>
+                <% end %>
               </p>
             </div>
           <% end %>

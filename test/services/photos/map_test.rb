@@ -19,7 +19,7 @@ class Photos::MapTest < ActiveSupport::TestCase
     assert_equal 1, map.place_count
     assert_equal 3, map.photo_count
     assert_equal 3, map.pins.first.count
-    assert_equal "3 photos · Jun 2019 – Aug 2019", map.pins.first.label
+    assert_equal "Paris · 3 photos · Jun 2019 – Aug 2019", map.pins.first.label
   end
 
   test "cities an hour apart stay separate pins" do
@@ -98,6 +98,31 @@ class Photos::MapTest < ActiveSupport::TestCase
     latitude, longitude = pin.near_param.split(",").map(&:to_f)
 
     assert_equal 2, users(:one).photos.near(latitude, longitude).count
+  end
+
+  test "pins are named from the local gazetteer, and grouped by country" do
+    place(PARIS)
+    place(LOUVRE)
+    place(LONDON)
+
+    map = Photos::Map.new(users(:one).photos)
+    paris = map.pins.find { |pin| pin.count == 2 }
+
+    assert_equal "Paris", paris.place_name
+    assert_equal "Paris", paris.heading
+    assert_equal "Paris · 2 photos · #{paris.period}", paris.label
+    assert_equal [ "France", "United Kingdom" ], map.by_country.map(&:first).sort
+  end
+
+  test "a pin the gazetteer can't place falls back to when, not to a guess" do
+    place([ 0.0, -140.0 ], taken_at: Time.zone.parse("2019-06-01 10:00")) # mid-Pacific
+
+    pin = Photos::Map.new(users(:one).photos).pins.first
+
+    assert_nil pin.place_name
+    assert_equal "Jun 2019", pin.heading
+    assert_equal "1 photo · Jun 2019", pin.label
+    assert_equal [ nil ], Photos::Map.new(users(:one).photos).by_country.map(&:first)
   end
 
   test "an empty library is an empty map, not an error" do

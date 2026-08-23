@@ -68,12 +68,23 @@ module Photos
       # thumbnail. Set by Map#pins once, in one query for every pin.
       attr_accessor :cover
 
+      # The nearest settlement in the local gazetteer, or nil where it knows
+      # nothing (Datasets::Places). Set by Map#pins for the whole set.
+      attr_accessor :place
+
       def near_param = "#{latitude.round(4)},#{longitude.round(4)}"
 
-      # "12 photos · Jun 2019 – Aug 2019" — count and when, because without
-      # a geocoder those are the only true things we can say about a dot.
+      def place_name = place&.label
+      def country = place&.country
+
+      # What a row leads with: the place if we can honestly name one, else
+      # when — which was the only true thing we could say before the
+      # gazetteer, and still is out at sea.
+      def heading = place_name || period || "Undated"
+
+      # "Lisbon · 12 photos · Jun 2019 – Aug 2019"
       def label
-        [ "#{count} #{"photo".pluralize(count)}", period ].compact.join(" · ")
+        [ place_name, "#{count} #{"photo".pluralize(count)}", period ].compact.join(" · ")
       end
 
       def period
@@ -99,7 +110,18 @@ module Photos
     end
 
     def pins
-      @pins ||= build_pins.tap { |pins| attach_covers(pins) }
+      @pins ||= build_pins.tap do |pins|
+        attach_covers(pins)
+        attach_places(pins)
+      end
+    end
+
+    # Pins grouped by country, busiest first — the shape the map page browses
+    # by, and (once zoom exists) the unit a reader wants to zoom to. Pins the
+    # gazetteer can't place group under nil rather than disappearing.
+    def by_country
+      pins.group_by(&:country)
+        .sort_by { |country, group| [ country ? 0 : 1, -group.sum(&:count) ] }
     end
 
     def any? = pins.any?
@@ -203,6 +225,14 @@ module Photos
         covers = Photo.where(id: pins.map { |pin| pin.ids.first })
           .with_attached_image.index_by(&:id)
         pins.each { |pin| pin.cover = covers[pin.ids.first] }
+      end
+
+      # Names come from the shipped gazetteer, in memory, once per pin — no
+      # network, no model, and an absent or unhelpful file just leaves pins
+      # unnamed (Datasets::Places).
+      def attach_places(pins)
+        gazetteer = Datasets::Places.current
+        pins.each { |pin| pin.place = gazetteer.nearest(pin.latitude, pin.longitude) }
       end
   end
 end

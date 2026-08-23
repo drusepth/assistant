@@ -157,6 +157,18 @@ class PhotosControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", photo_path(shared), count: 0
   end
 
+  test "the map and the place filter name their coordinates from the gazetteer" do
+    photo = create_photo(users(:one))
+    photo.update!(latitude: 48.8566, longitude: 2.3522)
+
+    get map_photos_path
+    assert_match "Paris", response.body
+    assert_match "France", response.body
+
+    get photos_path(near: "48.8566,2.3522")
+    assert_match "Your photos around Paris, France", response.body
+  end
+
   test "a nonsense place filter is ignored rather than an error" do
     photo = create_photo(users(:one))
 

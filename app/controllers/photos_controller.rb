@@ -11,6 +11,7 @@ class PhotosController < ApplicationController
     # so a place filter starts from your own photos — a shared photo's
     # whereabouts are not the grantee's to search by.
     @place = parse_place(params[:near])
+    @place_name = Datasets::Places.current.nearest(*@place) if @place
     base = @place ? Current.user.photos.near(*@place) : Photo.visible_to(Current.user)
 
     if params[:section].present?

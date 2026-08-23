@@ -33,8 +33,10 @@
                     class: "aspect-square w-full object-cover transition-transform duration-150 group-hover:scale-105" %>
             <% end %>
             <div class="p-2">
-              <p class="truncate text-sm font-medium text-ink"><%= pin.period || "Undated" %></p>
-              <p class="text-xs text-soft"><%= pluralize(pin.count, "photo") %></p>
+              <p class="truncate text-sm font-medium text-ink"><%= pin.heading %></p>
+              <p class="truncate text-xs text-soft">
+                <%= pluralize(pin.count, "photo") %><%= " · #{pin.period}" if pin.place && pin.period %>
+              </p>
             </div>
           <% end %>
         <% end %>

@@ -28,11 +28,13 @@
   <% end %>
 
   <% if @place %>
-    <%# Following a map pin. No geocoder, so the chip says the coordinates
-        it was actually given rather than inventing a place name. %>
+    <%# Following a map pin. The name comes from the local gazetteer and
+        falls back to the coordinates it was actually given — never to a
+        guess. %>
     <div class="mb-4">
       <span class="chip inline-flex items-center gap-1.5 bg-ink text-white">
-        Your photos around <%= number_with_precision(@place.first, precision: 3) %>, <%= number_with_precision(@place.second, precision: 3) %>
+        Your photos around <%= @place_name&.qualified ||
+          "#{number_with_precision(@place.first, precision: 3)}, #{number_with_precision(@place.second, precision: 3)}" %>
         <%= link_to "✕", photos_path(section: params[:section].presence, year: params[:year].presence,
               person: params[:person].presence),
               class: "text-white/70 hover:text-white", "aria-label": "Clear place filter" %>
