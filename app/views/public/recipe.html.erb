@@ -8,7 +8,7 @@
 <% end %>
 
 <header class="mb-6">
-  <h1 class="text-3xl"><%= @recipe.title %></h1>
+  <h1 class="display text-3xl"><%= @recipe.title %></h1>
   <p class="mt-2 text-sm text-soft">
     Shared by <%= @owner.name.split.first %><%= " · #{@recipe.timing}" if @recipe.timing.present? %>
   </p>

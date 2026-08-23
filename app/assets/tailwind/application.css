@@ -91,15 +91,19 @@
    binary and passed through, so a url() written here would 404. */
 
 /* ============================================================================
-   Base — the type pairing and the themed interaction states. Headings take
-   the display voice automatically, so views keep using plain <h1>-<h4>.
+   Base — the type pairing and the themed interaction states.
+
+   Headings default to the *body* face, semibold. Caprasimo is a display
+   voice, not a UI voice: it has one weight, tight counters and a lot of
+   personality, and applying it to every <h1>-<h4> put it at 14px card
+   titles and inside buttons, where it turned to mud. The display face is
+   opt-in now, via the `.display` atom below — see docs/DESIGN.md.
    ========================================================================== */
 @layer base {
   h1, h2, h3, h4 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.015em;
-    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
   }
 
   /* Never the default blue ring. */
@@ -118,13 +122,39 @@
    live in app/components as ViewComponents.
    ========================================================================== */
 @layer components {
-  /* Pill-shaped, per the system's "over-round" direction, and lettered in
-     the display face — Organic's buttons speak with the heading voice.
+  /* The display voice. Caprasimo, used with restraint: page titles, the
+     household hero, the wordmark — the moments big enough to carry it.
+     Not card titles, not buttons, not anything at text-sm.
+
+     Three things keep it readable, and all three belong here rather than
+     at the call sites:
+
+     - `font-weight: 400` plus `font-synthesis-weight: none`. The family
+       ships one weight, so a `font-bold` next to it doesn't load a bolder
+       cut — the browser fakes one by smearing the outlines, which on a
+       face this heavy is what made headings hard to read. The synthesis
+       switch means even a stray `font-bold` renders honestly.
+     - `letter-spacing: 0`. Negative tracking is a fix for airy grotesques;
+       on a face whose counters are already nearly closed it welds the
+       letters shut.
+     - Room to breathe: 1.18 leading, per the system's "soft shapes need
+       air to read as soft". */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-synthesis-weight: none;
+    letter-spacing: 0;
+    line-height: 1.18;
+  }
+
+  /* Pill-shaped, per the system's "over-round" direction. Lettered in the
+     body face at semibold: a label sits at text-sm inside a pill, which is
+     the size the display face reads worst at.
      A button is never wider than what holds it, and a long label wraps
      inside the pill rather than pushing a phone-width page sideways —
      which is why there is no whitespace-nowrap here. */
   .btn {
-    @apply inline-flex max-w-full cursor-pointer items-center justify-center gap-1.5 rounded-full px-4 py-2 text-center font-display text-sm transition-colors;
+    @apply inline-flex max-w-full cursor-pointer items-center justify-center gap-1.5 rounded-full px-4 py-2 text-center text-sm font-semibold transition-colors;
   }
   .btn-primary {
     @apply bg-primary-600 text-primary-50 hover:bg-primary-700 active:bg-primary-800;
