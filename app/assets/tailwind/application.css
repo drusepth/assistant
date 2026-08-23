@@ -303,4 +303,85 @@
   .composer-send {
     @apply flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-primary-600 text-white transition-colors hover:bg-primary-700 disabled:cursor-default disabled:bg-stone-200 disabled:text-stone-400;
   }
+
+  /* The celebration (D-task-celebration). The confetti is canvas, drawn by
+     the `celebration` controller; the banner is here, because it's the part
+     that carries words. `pointer-events-none` all the way down: the party
+     must never sit between the user and the next task.
+
+     Everything below removes itself when its animation ends, so retheming
+     the moment means changing durations and keyframes here — the controller
+     only decides how many pieces fly. */
+  .celebrate-banner {
+    @apply pointer-events-none absolute inset-x-0 top-[18vh] flex flex-col items-center gap-1 px-6 text-center;
+    animation: celebrate-banner 2.4s ease-out forwards;
+  }
+  /* The banner lands on top of whatever the page was showing, so it brings
+     its own light: a wash of the canvas colour, fading out well before any
+     edge, which lifts the words off the board without drawing a box. */
+  .celebrate-banner::before {
+    content: "";
+    @apply pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[220%] w-[130%] -translate-x-1/2 -translate-y-1/2;
+    background: radial-gradient(closest-side, var(--color-canvas) 35%, transparent 100%);
+    opacity: 0.85;
+  }
+  /* The one moment in the app big enough for the display voice without
+     argument. The controller writes `display celebrate-headline` on the
+     element — the same way a view composes the atom — so the no-faux-bold
+     rules travel with it; presence comes from size and the tint below,
+     never from a weight utility. */
+  .celebrate-headline {
+    @apply text-4xl text-primary-700 sm:text-6xl;
+    text-shadow: 0 2px 0 var(--color-primary-200), 0 8px 24px rgb(0 0 0 / 0.15);
+  }
+  .celebrate-note {
+    @apply max-w-md text-sm font-semibold text-soft sm:text-base;
+  }
+  /* Goals and a cleared board get the bigger, slower entrance. */
+  .celebrate-banner-big .celebrate-headline {
+    @apply text-5xl sm:text-7xl;
+  }
+  .celebrate-banner-big {
+    animation-duration: 3s;
+  }
+
+  /* A half-second nudge of the whole page for the big tiers only — enough to
+     feel like a thump, small enough that nothing becomes unreadable. */
+  .celebrate-shake {
+    animation: celebrate-shake 0.55s ease-in-out;
+  }
+
+  @keyframes celebrate-banner {
+    0% { opacity: 0; transform: scale(0.4) rotate(-6deg); }
+    12% { opacity: 1; transform: scale(1.18) rotate(2deg); }
+    22% { transform: scale(0.94) rotate(-1deg); }
+    32% { transform: scale(1.04); }
+    42% { transform: scale(1); }
+    80% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0.98) translateY(-18px); }
+  }
+
+  @keyframes celebrate-shake {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    20% { transform: translate3d(-5px, 3px, 0) rotate(-0.4deg); }
+    40% { transform: translate3d(5px, -3px, 0) rotate(0.4deg); }
+    60% { transform: translate3d(-3px, 2px, 0); }
+    80% { transform: translate3d(3px, -2px, 0); }
+  }
+
+  /* Asked for less motion, given less motion: the banner still says the
+     news, it just stops dancing (and the controller skips the confetti). */
+  @media (prefers-reduced-motion: reduce) {
+    .celebrate-banner {
+      animation: celebrate-fade 2.4s ease-out forwards;
+    }
+    .celebrate-shake {
+      animation: none;
+    }
+    @keyframes celebrate-fade {
+      0% { opacity: 0; }
+      10%, 80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  }
 }

@@ -162,6 +162,46 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_not @task.reload.completed?
   end
 
+  test "finishing a task leaves a celebration in the flash, and reopening one doesn't" do
+    patch complete_task_path(@task)
+    party = JSON.parse(flash[:celebrate])
+    assert_equal "board", party["tier"]  # it was the only thing left
+    assert party["token"].present?
+    follow_redirect!
+
+    patch reopen_task_path(@task)
+    assert_nil flash[:celebrate]
+  end
+
+  test "the board and the answer card celebrate too" do
+    patch move_task_path(@task, column: "done")
+    assert flash[:celebrate].present?
+
+    other = users(:one).tasks.create!(title: "Another")
+    patch task_path(other), params: { task: { resolution: "Answered" }, save_and_complete: "1" }
+    assert flash[:celebrate].present?
+  end
+
+  test "no celebration for a user who turned them off" do
+    users(:one).update!(celebrations: false)
+
+    patch complete_task_path(@task)
+
+    assert @task.reload.completed?
+    assert_nil flash[:celebrate]
+  end
+
+  test "the celebration renders the party rig and never a flash banner" do
+    patch complete_task_path(@task)
+    follow_redirect!
+
+    assert_response :success
+    assert_select "[data-controller='celebration'][data-celebration-token-value]"
+    # The payload rides the flash, but it is data, not a sentence: it must
+    # never turn up as a banner full of JSON.
+    assert_no_match(/\{&quot;tier&quot;|\{"tier"/, response.body)
+  end
+
   test "reschedules own task to today or tomorrow" do
     @task.update!(due_on: 3.days.ago)
 
