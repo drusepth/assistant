@@ -21,7 +21,10 @@ Warmth is the point: don't reach for stock Tailwind hues (`rose-`, `sky-`,
 `amber-`), which read as foreign objects next to cream. Everything comes
 from the two ramps. Overdue/urgent is *emphasis*, not error — it takes the
 deep accent step (`primary-800`), leaving red for genuinely destructive
-actions.
+actions, with one deliberate exception: `.btn-later` is the stop half of a
+go/stop pair (see Narrow screens), where red is read as "not now" rather
+than as danger. It stays at the palest step of the warmed ramp and never
+reaches `btn-danger`'s saturation, so the two can't be confused.
 
 ## The layers (each redesignable in one place)
 
@@ -132,8 +135,8 @@ page is 320–430 points wide there. Four rules keep it that way, and
   rather than a glyph — "→" inherits the display face at button size and
   all but disappears. When the row offers a *choice* rather than an action,
   colour the sides: `.btn-now`/`.btn-later` are the light tinted pair —
-  accent for pulling something into today, the sage calm register for
-  letting it wait — so the two are telling apart before either is read.
+  green for "I'll do this now", red for "not now" — so the two are telling
+  apart before either is read.
 - **`.capture-row`** for one-line capture (a field and its submit): side by
   side when there is room, stacked on a phone so neither ends up half a line
   wide. Fixed field widths inside it belong behind `sm:` (`sm:w-32`).

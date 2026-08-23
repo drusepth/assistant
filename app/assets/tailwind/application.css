@@ -149,16 +149,18 @@
   }
   /* The now/later pair. Claiming a task is a choice between two options
      rather than one action, so each side gets its own light tint and the
-     two are telling apart before you read them: the accent for pulling
-     something into today, the sage second voice — the app's calm register —
-     for letting it wait. Both stay quiet enough to sit inside a list row
-     without competing with the title above them, which is why the tint is
-     the 100 step and only the border reaches 300. */
+     two are telling apart before you read them — green for "I'll do this
+     now", red for "not now". This is the one place red is not about
+     destruction: it is the stop half of a go/stop pair, which is why it
+     stays at the palest step of the warmed ramp and never reaches the
+     saturation `btn-danger` uses. Both sides stay quiet enough to sit
+     inside a list row without competing with the title above them: the
+     tint is the 100 step and only the border goes past it. */
   .btn-now {
-    @apply border border-primary-300 bg-primary-100 text-primary-800 hover:bg-primary-200 active:bg-primary-300;
+    @apply border border-sage-300 bg-sage-100 text-sage-800 hover:bg-sage-200 active:bg-sage-300;
   }
   .btn-later {
-    @apply border border-sage-300 bg-sage-100 text-sage-800 hover:bg-sage-200 active:bg-sage-300;
+    @apply border border-red-200 bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-200;
   }
   /* A real thumb target on a phone, a compact `btn-sm` pill on a wide
      screen. The buttons at the end of a list row want both: ~40 points
