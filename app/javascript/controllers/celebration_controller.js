@@ -76,7 +76,9 @@ export default class extends Controller {
     banner.className = tier.shake ? "celebrate-banner celebrate-banner-big" : "celebrate-banner"
 
     const headline = document.createElement("p")
-    headline.className = "celebrate-headline"
+    // `display` is the brand-voice atom (docs/DESIGN.md): composed here, not
+    // baked into .celebrate-headline, because it can't be @apply-ed.
+    headline.className = "display celebrate-headline"
     headline.textContent = this.headlineValue || "Done!"
     banner.append(headline)
 

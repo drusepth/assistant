@@ -325,8 +325,13 @@
     background: radial-gradient(closest-side, var(--color-canvas) 35%, transparent 100%);
     opacity: 0.85;
   }
+  /* The one moment in the app big enough for the display voice without
+     argument. The controller writes `display celebrate-headline` on the
+     element — the same way a view composes the atom — so the no-faux-bold
+     rules travel with it; presence comes from size and the tint below,
+     never from a weight utility. */
   .celebrate-headline {
-    @apply font-display text-4xl text-primary-700 sm:text-6xl;
+    @apply text-4xl text-primary-700 sm:text-6xl;
     text-shadow: 0 2px 0 var(--color-primary-200), 0 8px 24px rgb(0 0 0 / 0.15);
   }
   .celebrate-note {
