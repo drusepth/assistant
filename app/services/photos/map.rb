@@ -60,23 +60,28 @@ module Photos
 
     # A cluster of photos taken in roughly one spot.
     class Pin
-      attr_reader :ids, :x, :y, :latitude, :longitude, :first_taken_at, :last_taken_at
+      attr_reader :ids, :x, :y, :latitude, :longitude, :first_at, :last_at
 
-      def initialize(id, latitude, longitude, taken_at)
+      # Timestamps arrive as epoch seconds and stay that way: a Time is
+      # built only for the two ends of a pin that something is about to
+      # print, not for every photo that went into it.
+      def first_taken_at = @first_taken_at ||= (Time.zone.at(first_at) if first_at)
+      def last_taken_at = @last_taken_at ||= (Time.zone.at(last_at) if last_at)
+
+      def initialize(id, latitude, longitude, at)
         @ids = [ id ]
         @latitude = latitude
         @longitude = longitude
         @days = Set.new
-        @first_taken_at = @last_taken_at = taken_at
-        note_time(taken_at)
+        note_time(at)
         recompute
       end
 
-      def add(id, latitude, longitude, taken_at)
+      def add(id, latitude, longitude, at)
         @latitude = ((@latitude * ids.size) + latitude) / (ids.size + 1)
         @longitude = ((@longitude * ids.size) + longitude) / (ids.size + 1)
         @ids << id
-        note_time(taken_at)
+        note_time(at)
         recompute
       end
 
@@ -118,12 +123,16 @@ module Photos
       end
 
       private
-        def note_time(taken_at)
-          return if taken_at.nil?
+        def note_time(at)
+          return if at.nil?
 
-          @days << taken_at.to_date
-          @first_taken_at = taken_at if @first_taken_at.nil? || taken_at < @first_taken_at
-          @last_taken_at = taken_at if @last_taken_at.nil? || taken_at > @last_taken_at
+          # Integer day buckets rather than Dates: this only ranks which
+          # cluster is home, where a photo taken minutes after midnight on a
+          # daylight-saving boundary landing in the day before changes
+          # nothing. Anything user-visible converts properly (Travel::Trips).
+          @days << ((at + Time.zone.utc_offset) / 86_400)
+          @first_at = at if @first_at.nil? || at < @first_at
+          @last_at = at if @last_at.nil? || at > @last_at
         end
 
         def recompute
@@ -149,9 +158,22 @@ module Photos
     # photos would be 40,000 rows either way, but not 40,000 instantiated
     # models with their attachments in tow. Public because the trip detector
     # works off the same pull rather than making its own.
+    #
+    # The casts are the difference between a map that opens and one that
+    # stalls. A plain pluck of these columns hands back a BigDecimal per
+    # coordinate and a TimeWithZone per photo — on a 60,000-photo library
+    # that is 750ms of object allocation before any arithmetic happens, and
+    # the map wants floats and a number anyway. Asking SQLite for those
+    # directly costs 120ms. (SQLite-specific, which this app is.)
+    ROW_COLUMNS = [
+      "photos.id",
+      "CAST(photos.latitude AS REAL)",
+      "CAST(photos.longitude AS REAL)",
+      "CAST(strftime('%s', photos.taken_at) AS INTEGER)"
+    ].map { |column| Arel.sql(column) }.freeze
+
     def rows
-      @rows ||= @scope.reorder(taken_at: :desc, id: :desc)
-        .pluck(:id, :latitude, :longitude, :taken_at)
+      @rows ||= @scope.reorder(taken_at: :desc, id: :desc).pluck(*ROW_COLUMNS)
     end
 
     # Greedy clustering against a spatial hash: each photo joins the first
@@ -164,30 +186,67 @@ module Photos
     # which spots did these photos happen in?
     def self.cluster(rows, radius: CLUSTER_RADIUS)
       cell_size = radius * 2
-      buckets = Hash.new { |hash, key| hash[key] = [] }
+      buckets = {}
       pins = []
 
-      rows.each do |id, latitude, longitude, taken_at|
+      rows.each do |id, latitude, longitude, at|
         latitude = latitude.to_f
         longitude = longitude.to_f
         x = (longitude + 180.0) / 360.0 * WIDTH
         y = (90.0 - latitude) / 180.0 * HEIGHT
-        cell = [ (x / cell_size).floor, (y / cell_size).floor ]
+        column = (x / cell_size).floor
+        row = (y / cell_size).floor
 
-        match = (-1..1).flat_map { |dx| (-1..1).flat_map { |dy| buckets[[ cell.first + dx, cell.second + dy ]] } }
-          .find { |pin| Math.hypot(pin.x - x, pin.y - y) <= radius }
+        match = nearest_pin(buckets, column, row, x, y, radius)
 
         if match
-          match.add(id, latitude, longitude, taken_at)
+          match.add(id, latitude, longitude, at)
         else
-          pin = Pin.new(id, latitude, longitude, taken_at)
+          pin = Pin.new(id, latitude, longitude, at)
           pins << pin
-          buckets[cell] << pin
+          (buckets[cell_key(column, row)] ||= []) << pin
         end
       end
 
       pins
     end
+
+    # Deliberately loops rather than reading prettily. This runs once per
+    # photo in the library, so the nine-cell probe allocated nine arrays a
+    # photo when it was a flat_map, and the hash's default block was storing
+    # an empty array for every cell it merely looked at.
+    def self.nearest_pin(buckets, column, row, x, y, radius)
+      dx = -1
+      while dx <= 1
+        dy = -1
+        while dy <= 1
+          bucket = buckets[cell_key(column + dx, row + dy)]
+          if bucket
+            index = 0
+            while index < bucket.size
+              pin = bucket[index]
+              a = pin.x - x
+              b = pin.y - y
+              # The cheap rejection first: most candidates fail on one axis
+              # and never need the square root.
+              return pin if a.abs <= radius && b.abs <= radius && Math.sqrt((a * a) + (b * b)) <= radius
+
+              index += 1
+            end
+          end
+          dy += 1
+        end
+        dx += 1
+      end
+      nil
+    end
+
+    # One integer instead of a two-element array, so a probe allocates
+    # nothing. The map is 1000x500 units and cells are never smaller than a
+    # fraction of a unit, so the row fits well inside the multiplier.
+    def self.cell_key(column, row) = (column * 1_000_003) + row
+
+    private_class_method :nearest_pin, :cell_key
 
     # The box that holds a set of pins, as a bbox parameter — how a country
     # row on the map page hands its own corner of the world to a zoom link.

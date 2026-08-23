@@ -191,6 +191,22 @@ class Photos::MapTest < ActiveSupport::TestCase
     assert_equal "48.8566,2.3522,48.8566,2.3522", Photos::Map.bbox_for(france)
   end
 
+  # The map's cost is dominated by what a row costs to build, and a plain
+  # pluck of these columns hands back a BigDecimal per coordinate and a
+  # TimeWithZone per photo — 750ms of allocation on a 60,000-photo library,
+  # for values the map immediately treats as numbers. This pins the casts so
+  # a tidy-up can't quietly put them back (script/benchmark_photo_map.rb).
+  test "rows come out of SQL as primitives, not as objects to be discarded" do
+    place(PARIS)
+
+    id, latitude, longitude, at = Photos::Map.new(users(:one).photos).rows.first
+
+    assert_kind_of Integer, id
+    assert_kind_of Float, latitude
+    assert_kind_of Float, longitude
+    assert_kind_of Integer, at, "timestamps stay epoch seconds until something prints one"
+  end
+
   test "an empty library is an empty map, not an error" do
     map = Photos::Map.new(users(:one).photos)
 

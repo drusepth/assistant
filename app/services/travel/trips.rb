@@ -23,6 +23,12 @@ module Travel
     MIN_DAYS = 2
 
     EARTH_RADIUS_KM = 6371.0
+    KM_PER_DEGREE = 111.32
+    # Beyond this in either direction you are certainly away; inside this in
+    # both you are certainly not. Only the band between needs real
+    # trigonometry.
+    AWAY_DEGREES = AWAY_KM / KM_PER_DEGREE
+    CERTAINLY_NEAR = AWAY_KM / KM_PER_DEGREE / Math.sqrt(2)
 
     # A proposal, not a record: everything here is recomputed from the
     # photos each time, and only becomes a row when the user says so.
@@ -52,23 +58,31 @@ module Travel
     private
       # Photos far enough from home to be somewhere else, grouped into runs
       # of days no more than GAP_DAYS apart.
+      #
+      # Grouping is by integer day bucket rather than by Date, because
+      # building a Date per photo is most of the cost of this pass on a big
+      # library. The dates a candidate actually reports are converted from
+      # real timestamps (see #candidate_for), so the only thing riding on
+      # the arithmetic is which side of a daylight-saving midnight a photo
+      # groups on — and runs join across three blank days anyway.
       def runs
-        away = @map.rows.select do |_id, latitude, longitude, taken_at|
-          taken_at && distance(latitude.to_f, longitude.to_f, home.latitude, home.longitude) > AWAY_KM
-        end
+        offset = Time.zone.utc_offset
+        away = @map.rows.select { |_id, latitude, longitude, at| at && away?(latitude.to_f, longitude.to_f) }
         return [] if away.empty?
 
-        by_day = away.group_by { |_id, _lat, _lon, taken_at| taken_at.to_date }
+        by_day = away.group_by { |_id, _lat, _lon, at| (at + offset) / 86_400 }
         # The gap is *blank* days, so consecutive photo days are 1 apart and
         # have no gap at all.
-        by_day.keys.sort.slice_when { |before, after| (after - before).to_i - 1 > GAP_DAYS }
+        by_day.keys.sort.slice_when { |before, after| after - before - 1 > GAP_DAYS }
           .map { |days| days.flat_map { |day| by_day[day] } }
       end
 
       def candidate_for(rows)
-        days = rows.map { |_id, _lat, _lon, taken_at| taken_at.to_date }.uniq.sort
-        starts_on, ends_on = days.first, days.last
-        return nil if rows.size < MIN_PHOTOS || (ends_on - starts_on).to_i + 1 < MIN_DAYS
+        times = rows.map(&:fourth)
+        starts_on = Time.zone.at(times.min).to_date
+        ends_on = Time.zone.at(times.max).to_date
+        days = (ends_on - starts_on).to_i + 1
+        return nil if rows.size < MIN_PHOTOS || days < MIN_DAYS
 
         # The same clustering the map uses, over just this trip's photos:
         # where within the trip did things actually happen?
@@ -79,7 +93,7 @@ module Travel
 
         Candidate.new(
           starts_on: starts_on, ends_on: ends_on,
-          photo_count: rows.size, day_count: days.size,
+          photo_count: rows.size, day_count: day_count_for(rows),
           bounds: { south: latitudes.min, north: latitudes.max,
                     west: longitudes.min, east: longitudes.max },
           suggested_name: name_for(places, starts_on),
@@ -89,6 +103,13 @@ module Travel
           cover_id: rows.first.first,
           latitude: pins.first.latitude, longitude: pins.first.longitude
         )
+      end
+
+      # Distinct days with a photo — how much of the trip is actually
+      # recorded, as opposed to how long it ran.
+      def day_count_for(rows)
+        offset = Time.zone.utc_offset
+        rows.map { |_id, _lat, _lon, at| (at + offset) / 86_400 }.uniq.size
       end
 
       # What to call it before the user does. One place is that place; a
@@ -105,6 +126,30 @@ module Travel
 
         named.first(2).map(&:name).uniq.to_sentence(two_words_connector: " and ",
           last_word_connector: " and ")
+      end
+
+      # Most photos are obviously home or obviously abroad, and a degree of
+      # latitude is 111km wherever you stand — so a subtraction settles it
+      # for nearly all of them, and only the handful in the band around the
+      # threshold pay for a haversine. This runs once per photo in the
+      # library.
+      def away?(latitude, longitude)
+        d_lat = (latitude - home.latitude).abs
+        return true if d_lat > AWAY_DEGREES
+
+        d_lon = (longitude - home.longitude).abs
+        d_lon = 360 - d_lon if d_lon > 180
+        # A degree of longitude shrinks towards the poles, so the certainly-
+        # far test has to widen with it.
+        return true if d_lon > away_longitude_degrees
+        return false if d_lat < CERTAINLY_NEAR && d_lon < CERTAINLY_NEAR
+
+        distance(latitude, longitude, home.latitude, home.longitude) > AWAY_KM
+      end
+
+      def away_longitude_degrees
+        @away_longitude_degrees ||=
+          AWAY_DEGREES / Math.cos(radians(home.latitude)).abs.clamp(0.01, 1.0)
       end
 
       def distance(lat1, lon1, lat2, lon2)

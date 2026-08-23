@@ -189,7 +189,51 @@ lens on photo coordinates, and sharing one would hand a household member the
 locations the photo pages withhold. The per-album "share locations" toggle
 (Q14's open half) is the decision that would change this.
 
-## 4. What the hub does not have yet
+## 4. What it costs
+
+The Travel hub and the map page both compute everything fresh on each
+request — the `Health::CareRadar` / `Money::MonthSummary` idiom, no cache, no
+denormalised table. That only stays defensible if it is actually fast, so it
+was measured rather than assumed. `script/benchmark_photo_map.rb` runs the
+numbers against a synthetic library of any size (in a transaction it rolls
+back, so it is safe against a real database).
+
+Measured 2026-08, laptop-class hardware:
+
+| Library | rows | clustering | trips | Travel page |
+| --- | --- | --- | --- | --- |
+| 20,000 photos | 40ms | 98ms | 65ms | 234ms |
+| 60,000 photos | 134ms | 355ms | 193ms | 706ms |
+
+Three things came out of measuring, all in the "obvious afterwards" category:
+
+- **Loading rows cost more than clustering them.** A plain
+  `pluck(:id, :latitude, :longitude, :taken_at)` builds a BigDecimal per
+  coordinate and a TimeWithZone per photo — 750ms on a 60,000-photo library,
+  for values the map immediately wants as numbers. Casting in SQL and keeping
+  timestamps as epoch seconds (a `Time` is built only for the two ends of a
+  pin something is about to print) takes it to 134ms. A test pins the types
+  so a tidy-up can't quietly undo it.
+- **The clustering grid was allocating for every probe.** `Hash.new { |h, k|
+  h[k] = [] }` *stores* an empty array for every cell merely looked at — nine
+  per photo — and the neighbourhood scan built nine arrays on top of that.
+  Plain hash, integer keys, no `flat_map`: 990ms → 355ms.
+- **A fourth optimisation was reverted for being slower.** Trying the last
+  matched pin before probing the grid sounded obviously right (consecutive
+  photos are usually in the same place) and measured 349ms against 283ms
+  without it. Kept out.
+
+What did survive on the trip side: most photos are obviously home or
+obviously abroad, and a degree of latitude is 111km wherever you stand, so a
+subtraction settles the away-from-home test for nearly all of them and only
+the band around the threshold pays for a haversine.
+
+If this ever needs to be faster, the next lever is letting SQLite do the
+grouping — `GROUP BY round(latitude, 1), round(longitude, 1)` plus a day
+column would hand Ruby a few thousand rows instead of sixty thousand. It is a
+real rewrite of both services, so it waits for a library that actually hurts.
+
+## 5. What the hub does not have yet
 
 Deliberately unbuilt, in rough order of expected demand:
 
@@ -205,7 +249,7 @@ Deliberately unbuilt, in rough order of expected demand:
    that would let a trip be shared. Worth asking only once someone actually
    wants a household trip to carry its map.
 
-## 5. Files
+## 6. Files
 
 | Concern | File |
 | --- | --- |
@@ -218,4 +262,5 @@ Deliberately unbuilt, in rough order of expected demand:
 | Basemaps | `app/assets/images/world_land.svg` (world), `world_land_detail.svg` (zoomed), `script/build_world_map.rb` |
 | Full-page map | `PhotosController#map`, `app/views/photos/map.html.erb` |
 | Place filter | `Photo.near`, `PhotosController#parse_place` |
+| Benchmark | `script/benchmark_photo_map.rb` |
 | Tests | `test/services/photos/map_test.rb`, `test/controllers/travel_section_test.rb`, the map cases in `test/controllers/photos_controller_test.rb` |
