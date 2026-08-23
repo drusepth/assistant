@@ -1,0 +1,55 @@
+<%# Reminders on one item (D-reminders). Locals: subject (an Event or Task).
+    Two ways to set one, because "an hour before" and "at 7am on the day"
+    are genuinely different asks — the first follows the item if it moves,
+    the second stays put. %>
+<% pending = subject.reminders.pending.order(:deliver_at) %>
+<%= render Ui::CardComponent.new(title: "Reminders",
+      subtitle: "Sent to your notification channels at the time you pick") do %>
+  <% if pending.any? %>
+    <ul class="mb-4 space-y-2">
+      <% pending.each do |reminder| %>
+        <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-edge px-3 py-2 text-sm">
+          <span class="min-w-0">
+            <%= reminder.local_deliver_at.strftime("%a %b %-d at %-l:%M %p") %>
+            <% if reminder.relative? %>
+              <span class="text-soft">— <%= Reminder::LEAD_OPTIONS[reminder.lead_minutes]&.downcase %></span>
+            <% end %>
+          </span>
+          <%= button_to "Remove", reminder_path(reminder), method: :delete, class: "btn btn-ghost btn-sm" %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if subject.remind_from %>
+    <%= form_with model: Reminder.new, url: reminders_path, class: "flex flex-wrap items-end gap-2" do |form| %>
+      <%= form.hidden_field :subject_type, value: subject.class.name, id: nil %>
+      <%= form.hidden_field :subject_id, value: subject.id, id: nil %>
+      <div class="min-w-48 flex-1">
+        <%= form.field :lead_minutes, label_text: "Remind me" do %>
+          <%= form.select :lead_minutes,
+                Reminder::LEAD_OPTIONS.map { |minutes, text| [ text, minutes ] }, selected: 60 %>
+        <% end %>
+      </div>
+      <%= form.submit "Set reminder", class: "btn btn-secondary" %>
+    <% end %>
+  <% end %>
+
+  <details class="<%= "mt-3" if subject.remind_from %>">
+    <summary class="cursor-pointer text-sm font-medium text-primary-700">
+      <%= subject.remind_from ? "Or pick an exact time" : "Pick a time" %>
+    </summary>
+    <%= form_with model: Reminder.new, url: reminders_path, class: "mt-3 flex flex-wrap items-end gap-2" do |form| %>
+      <%= form.hidden_field :subject_type, value: subject.class.name, id: nil %>
+      <%= form.hidden_field :subject_id, value: subject.id, id: nil %>
+      <div class="min-w-40 flex-1">
+        <%= form.field :deliver_on, as: :date_field, label_text: "On" %>
+      </div>
+      <div class="min-w-32">
+        <%= form.field :deliver_time, as: :time_field, label_text: "At",
+              hint: "Blank = #{Reminder::DEFAULT_HOUR}am" %>
+      </div>
+      <%= form.submit "Set reminder", class: "btn btn-secondary" %>
+    <% end %>
+  </details>
+<% end %>

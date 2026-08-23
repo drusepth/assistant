@@ -23,6 +23,7 @@ class User < ApplicationRecord
   has_many :linked_accounts, dependent: :destroy
   has_many :email_sender_rules, dependent: :destroy
   has_many :notification_channels, dependent: :destroy
+  has_many :reminders, dependent: :destroy
   has_many :care_settings, dependent: :destroy
   has_many :spending_accounts, dependent: :destroy
   has_many :budget_categories, dependent: :destroy

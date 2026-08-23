@@ -35,6 +35,8 @@
     <% end %>
   <% end %>
 
+  <%= render "reminders/upcoming", reminders: @reminders %>
+
   <% weekend_prep = @prep_range.count > 1 %>
   <%= render Ui::CardComponent.new(
         title: weekend_prep ? "Get ready for the weekend" : "Get ready for tomorrow",

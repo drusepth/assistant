@@ -36,6 +36,12 @@ production:
   dispatch_mail_digests:
     command: "Email::DigestJob.dispatch_due"
     schedule: every 15 minutes
+  # User-armed reminders (D-reminders). Five minutes is the granularity
+  # the pickers promise: "4pm" means 4:00–4:05, and nothing in the app
+  # asks for tighter than that.
+  dispatch_reminders:
+    command: "Reminders::DispatchJob.dispatch_due"
+    schedule: every 5 minutes
   # Chat transcripts are ephemeral; recaps are the record (D33/Q13).
   prune_chat_transcripts:
     command: "PruneChatTranscriptsJob.perform_later"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_171613) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_172947) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -425,6 +425,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_171613) do
     t.index ["user_id"], name: "index_recipes_on_user_id"
   end
 
+  create_table "reminders", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deliver_at", null: false
+    t.datetime "delivered_at"
+    t.integer "lead_minutes"
+    t.integer "subject_id"
+    t.string "subject_type"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["delivered_at", "deliver_at"], name: "index_reminders_on_delivered_at_and_deliver_at"
+    t.index ["subject_type", "subject_id"], name: "index_reminders_on_subject_type_and_subject_id"
+    t.index ["user_id"], name: "index_reminders_on_user_id"
+  end
+
   create_table "section_taggings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "section_id", null: false
@@ -656,6 +671,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_171613) do
   add_foreign_key "recipe_books", "users"
   add_foreign_key "recipe_ingredients", "recipes"
   add_foreign_key "recipes", "users"
+  add_foreign_key "reminders", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
