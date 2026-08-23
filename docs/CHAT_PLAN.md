@@ -224,7 +224,10 @@ row, so a truncated reply is visible rather than vanished — the same posture
 
 Each wave lands green and independent, and each is worth shipping on its own.
 W1 and W2 together are the bulk of the felt improvement; W3 is polish that
-users notice without being able to name; W4 is the wow.
+users notice without being able to name; W4 is the wow. W6 and W7 came out of
+a second pass over the code rather than the screenshot, and W6 in particular
+is not polish — it is a missing floor, and it should probably ship alongside
+W1.
 
 ### W1 — The shell (the big one)
 
@@ -322,6 +325,114 @@ someone actually designs offline behavior for a database-backed app.
 
 ---
 
+### W6 — Conversations you can get back to (D-chat-index)
+
+`config/routes.rb:198` is `resources :tool_runs, only: %i[ show destroy ]`.
+There is **no index**. The only route back into a conversation is a link
+somebody remembered to hand-place — `sections/panels/_health.html.erb:94`
+offers "pick it back up" for the last check-in, and that is the entire recall
+surface in the app. Every other conversation is effectively write-once: you
+have it, you navigate away, and it is unreachable until
+`PruneChatTranscriptsJob` deletes it at ninety days.
+
+Which is a strange thing to discover, because the continuity is *already
+built*: `ToolRun#previous_recap` renders "Picking up from last time —" at the
+head of a transcript. The app implements resuming a conversation and gives the
+user no way to ask for it.
+
+And it is the load-bearing gap for this plan's own premise. In every app the
+opening section benchmarks against, **the first screen is the list of
+conversations.** Ours doesn't have one.
+
+- `GET /conversations` — chat-kind runs, owner-only, newest first, with the
+  last turn as a preview line and a relative timestamp. Grouped or filterable
+  by tool, because "my tutor sessions" and "my check-ins" are different
+  drawers.
+- The tool's own start page (`tool_runs/new`) leads with "continue where you
+  left off" when recent runs exist, so starting `tutor` offers *calculus,
+  Tuesday* before it offers a blank form.
+- A sidebar entry, which is what makes the chat tools findable at all rather
+  than reachable only from the section panel that happens to link them.
+
+One route, one query, one view. It is the highest value-per-line item left in
+this document, and it should probably ship with W1 rather than after it.
+
+### W7 — The turn belongs to the user
+
+Three places the surface currently takes control away, all of which native
+messaging simply doesn't.
+
+- **You cannot type while it is answering.** `_chat.html.erb` renders the
+  send button `disabled: thinking`, and the composer is dead for the whole
+  reply. No messaging app has ever done this, and it is worst in exactly the
+  case the chat tools are for — the thought that arrives *while* you're
+  reading. Fix: type freely; a message composed during a reply queues and
+  sends when the reply lands.
+- **You cannot stop a reply.** Today the wait is opaque, so there is nothing
+  to stop. After W4 the user watches a wrong answer arrive with no brake,
+  which is worse. Stop is table stakes for a streaming chat: abort the SSE
+  read, keep the partial text, mark it stopped.
+- **Offline is not handled.** W2's "Not sent, retry" is the floor. The
+  polish version watches `navigator.onLine`, holds the queue, and sends when
+  signal returns — phones lose signal in lifts, on trains, and in basements,
+  which is where this app's users are.
+
+### Folded into the earlier waves
+
+Found on review of the code rather than the screenshot, and each belongs in a
+wave that already exists rather than a wave of its own.
+
+**Reduced motion — and it is app-wide (→ W1).**
+`grep -rn "prefers-reduced-motion\|motion-safe\|motion-reduce" app/` returns
+**nothing**. The chat is the app's most motion-heavy surface by a distance:
+three dots bouncing indefinitely, a smooth scroll on every turn, and after W4
+text arriving continuously. For a vestibular disorder that is the difference
+between usable and unusable, and "the 99%" includes them. A base-layer
+`@media (prefers-reduced-motion: reduce)` block plus `behavior: "auto"` in
+`chat-scroll` when it's set. The chat is where it's worst, not where it's
+only.
+
+**Three rendering bugs (→ W3).**
+
+- `.bubble` carries no `overflow-wrap`. A long URL or code span in a reply is
+  an unbreakable token that pushes the bubble past its `max-w-[85%]` and the
+  page sideways — the exact failure `docs/DESIGN.md` § Narrow screens pinned
+  everywhere else in the app, still live here because the offending string
+  arrives from a model at runtime instead of from a view at build time.
+- `chat_body` renders inline code but **not fenced blocks**. A tutor asked
+  anything technical emits ```` ``` ```` and the transcript prints the
+  backticks. Blocks need their own `overflow-x: auto` container, per the same
+  rule.
+- Long transcripts render whole (`run.tool_run_messages.ordered`, no limit).
+  A hundred-turn tutor session is a hundred bubbles of DOM on a phone that may
+  be five years old. Render the last ~40 with "load earlier" above, using
+  scroll anchoring so loading doesn't jump the reader.
+
+**The last five percent of feel (→ W3).**
+
+- Consecutive same-role turns group: tighter spacing, one timestamp for the
+  run. Today every bubble sits in a uniform `gap-4`, which is the single most
+  reliable visual tell of a homemade chat.
+- `.bubble`'s `max-w-[85%]` gets a `ch`-based cap too, so a reply on a wide
+  desktop card isn't a 120-character line.
+- `chat_input_controller`'s `pointer: coarse` test treats a tablet with a
+  keyboard attached as touch, so Enter never sends there. Detect the
+  keyboard, not the pointer.
+- Focus and announcement when the `:screen` layout mounts; `aria-live` held
+  quiet *during* a stream and announced once on completion, so a screen
+  reader isn't read the reply 80 milliseconds at a time.
+- Respect the user's font scale in the transcript rather than pinning
+  `text-sm` — the app's accessibility floor, exposed here first.
+
+### What cannot be tested from this machine
+
+The phone-safe sweep drove a real Chromium at 320/375/414 and that is what
+found the bugs. **None of W1's keyboard work can be verified that way**:
+headless Chromium has no on-screen keyboard, no `visualViewport` offset, no
+zoom-on-focus, and no safe-area inset. That half needs a real iPhone and a
+real Android handset, and this plan says so out loud rather than letting a
+green CI imply coverage it doesn't have.
+
 ## 5. Testing
 
 The two mechanical rules go in `test/integration/mobile_layout_test.rb`
@@ -346,6 +457,25 @@ this plan were all found by looking, not by testing.
 ---
 
 ## 6. Open questions
+
+**Q-chat-suggested-replies.** The quick-reply chips are static per tool
+(`ChatBase.quick_replies`), so the tutor offers "Quiz me" and "Show me an
+example" no matter what was just said. Chips drawn from the actual turn would
+be markedly better, and the cost is real: it conflicts with W4's plain-text
+streaming, so it needs either a second cheap call per turn (latency and tokens
+on every reply, on a self-hosted model that may be slow) or a trailing
+sentinel line the app strips before rendering (fragile — a model that forgets
+it costs nothing, a model that emits it mid-stream shows the user machinery).
+Leaning sentinel-with-graceful-absence, decided after W4 exists. — *Not
+started.*
+
+**Q-chat-attachments.** "Here's a photo of the problem" is the most obvious
+thing a phone user will try in the tutor, and "here's the letter" in
+`what_do_i_say`. The primitives are there (Document, Photo) and so is the
+plumbing, but it needs a vision-capable model — which most self-hosted
+endpoints are not — so it needs the Q9 capability question answered first, and
+it must degrade to something honest rather than silently dropping the image.
+— *Not started.*
 
 **Q-chat-fullscreen.** Should a chat on desktop also get a viewport-height
 screen layout, or stay a card in the page? A tall desktop window makes the
