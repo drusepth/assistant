@@ -2,8 +2,10 @@ class ToolRunsController < ApplicationController
   before_action :set_tool, only: %i[ new create ]
   before_action :load_input_choices, only: %i[ new create ]
 
+  # Declared defaults prefill the fresh form; anything passed in (a "Run
+  # again" or a next-step link) wins over them.
   def new
-    @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params)
+    @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: @tool.default_inputs.merge(input_params))
   end
 
   def create

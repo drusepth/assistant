@@ -325,8 +325,9 @@ established `{"letter": {...}, "follow_ups": [...]}` family shape.
 ### 4.9 `tutor` — "Study with a tutor" (Education, **chat**)
 
 - **Inputs** (opening form): `topic` (required — "algebra homework", "Spanish
-  practice", or pick up a Learn-something goal); `learner` (optional — "me" / "my
-  9-year-old", shapes register and level).
+  practice", or pick up a Learn-something goal); `learner` (behind the form's
+  collapsed **Advanced** disclosure, defaulted to "me" — "my 9-year-old" shapes
+  register and level).
 - **Context** (system prompt): `section_context(%w[education])` — active
   Education-tagged Goals and their step Tasks (the Learn-something plans), recent
   recap Notes from *previous tutor runs*. This is the continuity moat: the tutor knows

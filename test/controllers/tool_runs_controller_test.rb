@@ -89,6 +89,22 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input#inputs_intent[value='it was an emergency']"
   end
 
+  test "advanced inputs sit inside the collapsed disclosure, prefilled with their default" do
+    get new_tool_run_path("tutor")
+
+    assert_response :success
+    assert_select "input#inputs_topic"
+    assert_select "details:not([open]) summary", "Advanced"
+    assert_select "details input#inputs_learner[value=me]"
+  end
+
+  test "a query-string value beats an input's declared default" do
+    get new_tool_run_path("tutor", inputs: { learner: "my 9-year-old" })
+
+    assert_response :success
+    assert_select "input#inputs_learner[value='my 9-year-old']"
+  end
+
   test "show renders a finished run's suggested next steps as prefilled links" do
     run = users(:one).tool_runs.create!(tool_slug: "decode_letter", inputs: { "document_id" => @document.id.to_s })
     run.update!(status: :done, output: { "next_tools" => [

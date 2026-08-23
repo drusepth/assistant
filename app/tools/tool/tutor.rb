@@ -22,7 +22,8 @@ module Tool
       hint: "“Algebra homework”, “Spanish practice”, “the fractions unit”."
     input :learner,
       label: "Who's learning?",
-      hint: "Optional — “me”, “my 9-year-old”."
+      hint: "“me”, “my 9-year-old” — the tutor pitches the session to whoever it is.",
+      advanced: true, default: "me"
 
     BEHAVIOR = <<~PROMPT.freeze
       You are the tutor feature of a private, self-hosted life assistant — an
