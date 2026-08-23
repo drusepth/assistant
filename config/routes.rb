@@ -199,7 +199,7 @@ Rails.application.routes.draw do
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
   resources :tool_runs, only: %i[ show destroy ] do
-    resources :messages, only: :create, controller: "tool_run_messages"
+    resources :messages, only: %i[ index create ], controller: "tool_run_messages"
     resource :application_email, only: :create
     member do
       post :recap

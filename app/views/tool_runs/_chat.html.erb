@@ -10,6 +10,8 @@
 <% thinking = run&.awaiting_reply? %>
 <%# A suggestion the user already took is noise, not an offer. %>
 <% suggestions = run ? run.unused_quick_replies : tool.quick_replies %>
+<%# The newest page of turns, and whether there is history above them. %>
+<% messages, earlier = run ? run.tool_run_messages.window : [ [], false ] %>
 
 <%= render Ui::CardComponent.new(title: title, padded: false) do %>
   <div class="relative" data-controller="chat-scroll">
@@ -23,36 +25,44 @@
     <%# The id is what lets a morphing refresh match this element to itself
         and mutate its children, rather than swapping the scroller out from
         under its observer and scroll position. %>
-    <div id="chat-transcript" class="flex max-h-[calc(100dvh-20rem)] flex-col gap-4 overflow-y-auto p-4 sm:p-5 <%= "min-h-72" if run %>"
+    <%# gap-1 is the spacing *within* a run of turns from one speaker; anything
+        that stands alone adds its own mt-3 on top (see chat_turns and
+        tool_runs/_message). A single uniform gap between every bubble is what
+        made three quick messages read as three separate events. %>
+    <div id="chat-transcript" class="flex max-h-[calc(100dvh-20rem)] flex-col gap-1 overflow-y-auto p-4 sm:p-5 <%= "min-h-72" if run %>"
          role="log" aria-live="polite" aria-relevant="additions" aria-busy="<%= thinking.present? %>"
          data-chat-scroll-target="scroller" data-action="scroll->chat-scroll#track">
       <% if run %>
         <% if (recap = run.previous_recap) %>
-          <p class="text-center text-xs text-soft">
+          <p class="mt-3 text-center text-xs text-soft">
             Picking up from last time —
             <%= link_to recap.title, recap, class: "underline decoration-stone-300 underline-offset-2 hover:text-ink" %>
           </p>
         <% end %>
-        <%= render partial: "tool_runs/message", collection: run.tool_run_messages.ordered %>
+        <%= render "tool_runs/earlier", run: run, before: (messages.first if earlier) %>
+        <% chat_turns(messages).each do |turn| %>
+          <%= render "tool_runs/message", message: turn.message,
+                continues: turn.continues, ends_group: turn.ends_group %>
+        <% end %>
       <% else %>
         <% openers.each do |opener| %>
-          <div class="flex justify-start">
-            <div class="bubble bubble-assistant whitespace-pre-wrap"><%= opener %></div>
+          <div class="mt-3 flex justify-start">
+            <div class="bubble bubble-assistant bubble-assistant-tail whitespace-pre-wrap"><%= opener %></div>
           </div>
         <% end %>
       <% end %>
 
       <% if thinking %>
-        <div class="flex justify-start" role="status">
+        <div class="mt-3 flex justify-start" role="status">
           <span class="sr-only">Writing a reply…</span>
-          <div class="bubble bubble-assistant flex items-center gap-1 py-3.5">
+          <div class="bubble bubble-assistant bubble-assistant-tail flex items-center gap-1 py-3.5">
             <span class="size-1.5 animate-bounce rounded-full bg-stone-400"></span>
             <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:150ms]"></span>
             <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:300ms]"></span>
           </div>
         </div>
       <% elsif run&.reply_failed? %>
-        <div class="flex justify-center">
+        <div class="mt-3 flex justify-center">
           <%= button_to "Try again", retry_reply_tool_run_path(run), method: :post,
                 class: "btn btn-secondary btn-sm" %>
         </div>
@@ -88,8 +98,8 @@
           composer's controller. It lives here rather than in the transcript
           markup because nothing on the server knows about it. %>
       <template data-chat-input-target="pendingTemplate">
-        <div class="flex flex-col items-end" data-pending-bubble>
-          <div class="bubble bubble-user opacity-60">
+        <div class="mt-3 flex flex-col items-end" data-pending-bubble>
+          <div class="bubble bubble-user bubble-user-tail opacity-60">
             <p class="whitespace-pre-wrap" data-pending-text></p>
           </div>
           <p class="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-[0.6875rem] text-soft">

@@ -438,14 +438,33 @@ its fade to nothing and the banner would have vanished before it was read.
 - Long transcripts render whole (`run.tool_run_messages.ordered`, no limit).
   A hundred-turn tutor session is a hundred bubbles of DOM on a phone that may
   be five years old. Render the last ~40 with "load earlier" above, using
-  scroll anchoring so loading doesn't jump the reader. — *Still open; the
-  other two shipped.*
+  scroll anchoring so loading doesn't jump the reader. — *Built.* Three notes.
+  The cursor is the `(created_at, id)` **pair**, not the id, so paging back
+  agrees exactly with the order `ordered` renders in — an id cursor would
+  disagree the moment two rows share a timestamp out of id order. The seam
+  (`#chat-earlier`) stays in the DOM once the history runs out, hidden and
+  empty, because it is also the anchor each older batch is inserted *after* —
+  so successive loads stack correctly without knowing about each other. And
+  the anchoring is ours rather than the browser's: Chrome and Firefox have
+  scroll anchoring for exactly this and Safari doesn't, so `chat-scroll`
+  captures `scrollHeight`/`scrollTop` on the click and spends it when the
+  batch lands. Both stream actions apply in one synchronous pass, so the
+  MutationObserver fires once against the finished height — verified at 0px
+  drift, with a named turn holding its exact offset across the load.
 
 **The last five percent of feel (→ W3).**
 
 - Consecutive same-role turns group: tighter spacing, one timestamp for the
   run. Today every bubble sits in a uniform `gap-4`, which is the single most
-  reliable visual tell of a homemade chat.
+  reliable visual tell of a homemade chat. — *Built.* The transcript's gap
+  became the spacing *within* a group (`gap-1`) and anything that stands alone
+  adds its own `mt-3`, which is cheaper and less fragile than negative margins
+  on the grouped ones. The bubble's **tail** — the one squared corner pointing
+  at the speaker — moved out of `.bubble-user`/`.bubble-assistant` into its own
+  atom and now lands only on the last bubble of a run, which is most of what
+  makes three quick messages read as one utterance. A group breaks on a change
+  of speaker, on a five-minute silence (yesterday's last word and today's first
+  are not one utterance), and on a notice from either side.
 - `.bubble`'s `max-w-[85%]` gets a `ch`-based cap too, so a reply on a wide
   desktop card isn't a 120-character line.
 - `chat_input_controller`'s `pointer: coarse` test treats a tablet with a

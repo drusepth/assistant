@@ -25,6 +25,7 @@ export default class extends Controller {
   disconnect() {
     this.observer?.disconnect()
     clearTimeout(this.autoScrollTimer)
+    clearTimeout(this.anchorTimer)
   }
 
   track() {
@@ -43,8 +44,32 @@ export default class extends Controller {
     this.refreshJump()
   }
 
+  // Loading older turns inserts content *above* the reader, which without
+  // this walks the conversation out from under them: the browser holds
+  // scrollTop, so everything they were reading slides down by the height of
+  // what arrived. Chrome and Firefox have scroll anchoring for exactly this,
+  // Safari doesn't, so we hold the place ourselves — captured on the click,
+  // spent when the batch lands.
+  capture() {
+    this.anchor = { height: this.scrollerTarget.scrollHeight, top: this.scrollerTarget.scrollTop }
+    // A request that never arrives shouldn't leave an anchor lying in wait
+    // for some later, unrelated turn.
+    clearTimeout(this.anchorTimer)
+    this.anchorTimer = setTimeout(() => { this.anchor = null }, 10000)
+  }
+
   follow() {
+    if (this.anchor) return this.restore()
     if (this.pinned) this.scrollToBottom("smooth")
+    this.refreshJump()
+  }
+
+  restore() {
+    const { height, top } = this.anchor
+    this.anchor = null
+    clearTimeout(this.anchorTimer)
+
+    this.scrollerTarget.scrollTop = top + (this.scrollerTarget.scrollHeight - height)
     this.refreshJump()
   }
 

@@ -93,8 +93,43 @@ class ChatHelperTest < ActionView::TestCase
     assert_select_fragment html, "pre code", count: 1
   end
 
+  test "consecutive turns from one speaker group, and the last of them ends it" do
+    turns = chat_turns([
+      said(:user, 0), said(:user, 30), said(:assistant, 60), said(:user, 90)
+    ])
+
+    assert_equal [ false, true, false, false ], turns.map(&:continues)
+    assert_equal [ false, true, true, true ], turns.map(&:ends_group)
+  end
+
+  test "a long enough silence breaks a group even from the same speaker" do
+    turns = chat_turns([ said(:user, 0), said(:user, 10.minutes) ])
+
+    assert_equal [ false, false ], turns.map(&:continues)
+    assert_equal [ true, true ], turns.map(&:ends_group)
+  end
+
+  test "a notice breaks a group from both sides" do
+    turns = chat_turns([ said(:user, 0), said(:notice, 1), said(:user, 2) ])
+
+    assert_equal [ false, false, false ], turns.map(&:continues)
+    assert_equal [ true, true, true ], turns.map(&:ends_group)
+  end
+
+  test "one turn on its own is a group of one" do
+    turns = chat_turns([ said(:user, 0) ])
+
+    assert_equal [ false ], turns.map(&:continues)
+    assert_equal [ true ], turns.map(&:ends_group)
+  end
+
   private
     def assert_select_fragment(html, selector, **options)
       assert_select Nokogiri::HTML5.fragment(html), selector, **options
+    end
+
+    # Unsaved rows are enough: chat_turns only reads role and created_at.
+    def said(role, offset)
+      ToolRunMessage.new(role: role, content: "x", created_at: Time.current + offset)
     end
 end

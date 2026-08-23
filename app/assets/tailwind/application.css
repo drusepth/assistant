@@ -308,10 +308,20 @@
     overflow-wrap: normal;
   }
   .bubble-user {
-    @apply rounded-br-md bg-primary-600 text-white;
+    @apply bg-primary-600 text-white;
   }
   .bubble-assistant {
-    @apply rounded-bl-md bg-stone-100 text-ink;
+    @apply bg-stone-100 text-ink;
+  }
+  /* The tail — the one squared-off corner that points at the speaker. It
+     belongs to the *last* bubble of a run of turns, not to every one of them
+     (see chat_turns), which is what makes three quick messages read as one
+     utterance rather than three. */
+  .bubble-user-tail {
+    @apply rounded-br-md;
+  }
+  .bubble-assistant-tail {
+    @apply rounded-bl-md;
   }
   /* One rounded field holding the growing textarea and its send button, with
      the focus ring on the whole thing — the shape every chat box has. */
