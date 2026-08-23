@@ -1,0 +1,34 @@
+<%= link_to recipe_path(recipe), class: "card group block overflow-hidden p-0" do %>
+  <%= render "recipes/thumb", recipe: recipe %>
+  <div class="space-y-1.5 p-3">
+    <p class="text-sm font-medium text-ink"><%= recipe.title %></p>
+    <p class="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-soft">
+      <% if recipe.importing? %>
+        <span class="animate-pulse">reading it…</span>
+      <% elsif recipe.import_failed? %>
+        <span class="text-primary-800">import didn't work</span>
+      <% end %>
+      <% if recipe.total_minutes %><span><%= recipe.total_minutes %> min</span><% end %>
+      <% if recipe.servings %>
+        <% if recipe.total_minutes %><span aria-hidden="true">·</span><% end %>
+        <span>serves <%= recipe.servings %></span>
+      <% end %>
+      <% if recipe.times_cooked.positive? %>
+        <span aria-hidden="true">·</span>
+        <span>cooked <%= recipe.times_cooked %>×</span>
+      <% end %>
+    </p>
+    <%# Plain spans, not the shared chip partial: this whole card is an <a>,
+        and a nested link would break it out of its own tile. %>
+    <div class="flex flex-wrap items-center gap-1.5">
+      <% recipe.sections.each do |section| %>
+        <span class="chip <%= section_chip_classes(section) %>"><%= section.qualified_name %></span>
+      <% end %>
+      <% if recipe.user_id != Current.user.id %>
+        <%= render Ui::UserLabelComponent.new(user: recipe.user, css_class: "text-xs text-soft", truncate: true) do %>
+          from <%= recipe.user.name %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

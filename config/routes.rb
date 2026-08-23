@@ -157,6 +157,34 @@ Rails.application.routes.draw do
   end
   resources :photo_people, only: %i[ create destroy ]
 
+  # The recipe box (D-recipe-primitive): recipes, the books that curate
+  # them, and the read-only links that carry either outside the household
+  # (D-share-link — /s/:token is the only unauthenticated read path in the
+  # app, and ShareLink::SHAREABLE_TYPES is what keeps it that narrow).
+  resources :recipes do
+    collection do
+      get :import, action: :new_import
+      post :import, action: :create_import
+    end
+    member do
+      post :cook
+      post :add_to_book
+      delete :remove_from_book
+      post :retry_import
+      post :confirm_import
+      post :attach_photo
+    end
+  end
+  resources :recipe_books do
+    member do
+      post :add_recipes
+      delete :remove_recipes
+      patch :reorder
+    end
+  end
+  resources :share_links, only: %i[ create destroy ]
+  get "s/:token" => "public#show", as: :shared
+
   resources :suggestions, only: [] do
     member do
       patch :accept

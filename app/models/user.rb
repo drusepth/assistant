@@ -14,6 +14,9 @@ class User < ApplicationRecord
   has_many :notes, dependent: :destroy
   has_many :photos, dependent: :destroy
   has_many :albums, dependent: :destroy
+  has_many :recipes, dependent: :destroy
+  has_many :recipe_books, dependent: :destroy
+  has_many :share_links, dependent: :destroy
   has_many :tool_runs, dependent: :destroy
   has_many :suggestions, dependent: :destroy
   has_many :job_feeds, dependent: :destroy

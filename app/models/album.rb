@@ -7,6 +7,7 @@ class Album < ApplicationRecord
 
   has_many :album_photos, dependent: :destroy
   has_many :photos, through: :album_photos
+  has_many :share_links, as: :subject, dependent: :destroy
   belongs_to :cover_photo, class_name: "Photo", optional: true
 
   validates :title, presence: true

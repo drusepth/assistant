@@ -1,0 +1,5 @@
+<% content_for :title, "Link not available" %>
+
+<%= render Ui::EmptyStateComponent.new(
+      title: "This link isn't available",
+      description: "It may have expired, or the person who shared it may have revoked it. Ask them for a fresh one.") %>

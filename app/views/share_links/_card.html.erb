@@ -1,0 +1,55 @@
+<%# The D-share-link surface. Only rendered for the owner, and only for the
+    two allowlisted types. Links are rows the user made and can see, with
+    what they've been used for — never an ambient setting. %>
+<%= render Ui::CardComponent.new(title: "Share a link",
+      subtitle: "For people outside the household — no account needed") do %>
+  <% if links.any? %>
+    <ul class="mb-4 space-y-3">
+      <% links.each do |link| %>
+        <li class="space-y-1.5 border-b border-edge/60 pb-3 last:border-0 last:pb-0">
+          <div class="flex flex-wrap items-center gap-2"
+               data-controller="clipboard" data-clipboard-text-value="<%= shared_url(link.token) %>">
+            <%= text_field_tag "share_link_#{link.id}", shared_url(link.token), readonly: true,
+                  class: "input min-w-0 flex-1 text-xs", "aria-label": "Share link",
+                  data: { action: "click->clipboard#selectAll" } %>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+          </div>
+          <details class="group">
+            <summary class="cursor-pointer text-xs text-primary-700 hover:underline">Show a QR code</summary>
+            <div class="mt-2 w-40 rounded-xl bg-white p-2">
+              <%= share_link_qr(shared_url(link.token)) %>
+            </div>
+            <p class="hint mt-1">Point a phone at it — no typing, no app.</p>
+          </details>
+
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <p class="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-soft">
+              <% if link.label.present? %><span class="font-medium text-ink"><%= link.label %></span><span aria-hidden="true">·</span><% end %>
+              <span><%= link.views_count.zero? ? "not opened yet" : "opened #{pluralize(link.views_count, "time")}" %></span>
+              <span aria-hidden="true">·</span>
+              <span><%= link.expires_at ? "expires #{l(link.expires_at.to_date, format: :long)}" : "no expiry" %></span>
+            </p>
+            <%= button_to "Revoke", share_link_path(link), method: :delete, class: "btn btn-ghost btn-sm",
+                  data: { turbo_confirm: "Revoke this link? Anyone holding it loses access immediately." } %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= form_with url: share_links_path, class: "space-y-2" do %>
+    <%= hidden_field_tag :subject_type, subject.class.name %>
+    <%= hidden_field_tag :subject_id, subject.id %>
+    <div class="capture-row">
+      <%= text_field_tag :label, nil, placeholder: "Who's it for? (optional)", class: "input w-full" %>
+      <%= select_tag :expires_in_days, options_for_select(ShareLink::EXPIRY_CHOICES.to_a), class: "input sm:w-40" %>
+    </div>
+    <%= submit_tag "Create a link", class: "btn btn-secondary w-full" %>
+  <% end %>
+  <p class="hint mt-2">
+    <%= local_assigns[:detail] ||
+        "Anyone with the link can read this #{noun} and see your first name. They can't see anything "\
+        "else here, and revoking cuts them off." %>
+  </p>
+<% end %>
