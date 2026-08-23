@@ -1,0 +1,84 @@
+<div class="space-y-1">
+  <% if input.checkboxes? %>
+    <p class="label"><%= input.label %></p>
+    <div class="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+      <% input.options.each do |option| %>
+        <label class="flex items-center gap-2 text-sm text-ink">
+          <%= check_box_tag "inputs[#{input.name}][]", option,
+                Array(@tool_run.inputs[input.name]).include?(option),
+                id: "inputs_#{input.name}_#{option.parameterize(separator: "_")}" %>
+          <%= option %>
+        </label>
+      <% end %>
+    </div>
+  <% else %>
+    <%= label_tag "inputs_#{input.name}", input.label, class: "label" %>
+    <% if input.select? %>
+      <%= select_tag "inputs[#{input.name}]",
+            options_for_select(input.options, @tool_run.inputs[input.name]),
+            include_blank: "Choose…", class: "input", id: "inputs_#{input.name}" %>
+    <% elsif input.document? %>
+      <% if @document_choices.any? %>
+        <%= select_tag "inputs[#{input.name}]",
+              options_from_collection_for_select(@document_choices, :id, :title, @tool_run.inputs[input.name]),
+              include_blank: "Choose a document…", class: "input", id: "inputs_#{input.name}" %>
+      <% else %>
+        <p class="hint">
+          Nothing in your documents yet —
+          <%= link_to "upload one first", new_document_path, class: "text-primary-700 hover:underline" %>.
+        </p>
+      <% end %>
+    <% elsif input.person? %>
+      <% if @person_choices.any? %>
+        <%= select_tag "inputs[#{input.name}]",
+              options_from_collection_for_select(@person_choices, :id, :name, @tool_run.inputs[input.name]),
+              include_blank: "Choose a person…", class: "input", id: "inputs_#{input.name}" %>
+      <% else %>
+        <p class="hint">
+          Nobody in your address book yet —
+          <%= link_to "add someone first", new_person_path, class: "text-primary-700 hover:underline" %>.
+        </p>
+      <% end %>
+    <% elsif input.email_message? %>
+      <% if @email_choices.any? %>
+        <%= select_tag "inputs[#{input.name}]",
+              options_from_collection_for_select(@email_choices, :id, :choice_label, @tool_run.inputs[input.name]),
+              include_blank: "Choose an email…", class: "input", id: "inputs_#{input.name}" %>
+      <% else %>
+        <p class="hint">
+          No mirrored mail yet —
+          <%= link_to "link a mailbox first", settings_path, class: "text-primary-700 hover:underline" %>.
+        </p>
+      <% end %>
+    <% elsif input.ledger_month? %>
+      <%= select_tag "inputs[#{input.name}]",
+            options_for_select(@ledger_month_choices, @tool_run.inputs[input.name]),
+            class: "input", id: "inputs_#{input.name}" %>
+    <% elsif input.budget_category? %>
+      <% if @budget_category_choices.any? %>
+        <%= select_tag "inputs[#{input.name}]",
+              options_from_collection_for_select(@budget_category_choices, :id, :name, @tool_run.inputs[input.name]),
+              include_blank: "The whole budget", class: "input", id: "inputs_#{input.name}" %>
+      <% else %>
+        <p class="hint">
+          No envelopes yet —
+          <%= link_to "build your budget first", new_tool_run_path("build_my_budget"), class: "text-primary-700 hover:underline" %>.
+        </p>
+      <% end %>
+    <% elsif input.date? %>
+      <%= date_field_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", id: "inputs_#{input.name}" %>
+    <% elsif input.hobby? && @hobby_choices.any? %>
+      <%= select_tag "inputs[#{input.name}]",
+            options_for_select(@hobby_choices.map(&:name), @tool_run.inputs[input.name]),
+            include_blank: input.required? ? "Choose a hobby…" : "All my hobbies",
+            class: "input", id: "inputs_#{input.name}" %>
+    <% elsif input.textarea? %>
+      <%= text_area_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", rows: 6, id: "inputs_#{input.name}" %>
+    <% else %>
+      <%= text_field_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", id: "inputs_#{input.name}" %>
+    <% end %>
+  <% end %>
+  <% if input.hint %>
+    <p class="hint"><%= input.hint %></p>
+  <% end %>
+</div>

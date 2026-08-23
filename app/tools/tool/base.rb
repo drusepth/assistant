@@ -21,8 +21,9 @@ module Tool
   # `create_*` landing helpers (deadlines land as all-day calendar Events),
   # and `store_next_tools` — the D28 routing seam.
   class Base
-    Input = Data.define(:name, :label, :kind, :required, :hint, :options) do
+    Input = Data.define(:name, :label, :kind, :required, :hint, :options, :advanced, :default) do
       def required? = required
+      def advanced? = advanced
       def document? = kind == :document
       def person? = kind == :person
       def hobby? = kind == :hobby
@@ -58,11 +59,21 @@ module Tool
     class << self
       def slug = name.demodulize.underscore
 
-      def input(name, label:, kind: :text, required: false, hint: nil, options: nil)
-        self.input_definitions += [ Input.new(name: name.to_s, label:, kind:, required:, hint:, options:) ]
+      # `advanced: true` tucks an input behind the form's collapsed Advanced
+      # disclosure — the dials a run rarely needs to touch, kept out of the
+      # way without being taken away. `default:` prefills the field on a
+      # fresh form, so the common answer is already there.
+      def input(name, label:, kind: :text, required: false, hint: nil, options: nil, advanced: false, default: nil)
+        self.input_definitions += [ Input.new(name: name.to_s, label:, kind:, required:, hint:, options:, advanced:, default:) ]
       end
 
       def inputs = input_definitions
+
+      def basic_inputs = input_definitions.reject(&:advanced?)
+
+      def advanced_inputs = input_definitions.select(&:advanced?)
+
+      def default_inputs = input_definitions.filter_map { |input| [ input.name, input.default ] if input.default }.to_h
 
       def section_records = Section.where(slug: section_slugs).order(:parent_id, :position)
     end
