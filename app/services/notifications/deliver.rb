@@ -16,7 +16,15 @@ module Notifications
       return if @titles.empty?
 
       @user.notification_channels.active.find_each do |channel|
+        # A metered channel that has spent its day stays quiet rather than
+        # billing the user for a chatty scan (D-sms-channels).
+        if channel.over_daily_limit?
+          Rails.logger.info("notification #{channel.kind}##{channel.id} skipped: daily limit #{channel.daily_limit} reached")
+          next
+        end
+
         deliver_to(channel)
+        channel.record_send! if channel.daily_limit
       rescue StandardError => error
         Rails.logger.warn("notification #{channel.kind}##{channel.id} failed: #{error.class}: #{error.message}")
       end
@@ -35,7 +43,21 @@ module Notifications
         when "webhook" then deliver_webhook(channel)
         when "web_push" then deliver_web_push(channel)
         when "email" then deliver_email(channel)
+        when "sms" then deliver_sms(channel)
+        when "signal" then SignalCli.new(channel).call(phone_text)
         end
+      end
+
+      # A phone is the one place where the payload costs money and is kept
+      # by someone else, so the D22 summary gets a hard length bound before
+      # it leaves — two GSM segments, never four.
+      def phone_text = summary.truncate(NotificationChannel::TEXT_LIMIT)
+
+      def deliver_sms(channel)
+        transport = Sms.for(channel)
+        raise DeliveryError, "unknown SMS provider #{channel.sms_provider.inspect}" if transport.nil?
+
+        transport.call(phone_text)
       end
 
       def deliver_webhook(channel)

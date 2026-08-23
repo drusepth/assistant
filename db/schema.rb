@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_081250) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_171613) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -307,6 +307,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_081250) do
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
     t.string "kind", null: false
+    t.text "secrets", default: "{}", null: false
+    t.integer "sent_count", default: 0, null: false
+    t.date "sent_on"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "kind"], name: "index_notification_channels_on_user_id_and_kind"

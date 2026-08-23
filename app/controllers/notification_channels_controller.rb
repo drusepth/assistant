@@ -24,11 +24,52 @@ class NotificationChannelsController < ApplicationController
       when "webhook" then { kind: :webhook, config: { "url" => params[:url].to_s.strip } }
       when "email" then { kind: :email, config: { "address" => params[:address].to_s.strip } }
       when "web_push" then { kind: :web_push, config: { "subscription" => subscription_params } }
+      when "sms" then sms_attributes
+      when "signal" then signal_attributes
       else raise ActionController::BadRequest, "unknown channel kind"
       end
     end
 
     def subscription_params
       params.expect(subscription: [ :endpoint, keys: %i[ p256dh auth ] ]).to_h
+    end
+
+    # The registry decides which fields exist and which of them are secret
+    # (D-sms-channels), so adding a provider never touches this controller.
+    # Every provider's fields are submitted together; only the selected
+    # one's are read, which is also what keeps an abandoned auth token from
+    # being stored.
+    def sms_attributes
+      provider = params[:provider].to_s
+      settings = NotificationChannel::SMS_PROVIDERS[provider]
+      raise ActionController::BadRequest, "unknown SMS provider" if settings.nil?
+
+      config = { "provider" => provider, "to" => params[:to].to_s.strip }
+      config["daily_limit"] = params[:daily_limit].to_i if params[:daily_limit].present?
+      secrets = {}
+
+      settings[:fields].each do |field|
+        value = params.dig(:provider_fields, provider, field[:key]).to_s.strip
+        next if value.blank?
+
+        (field[:secret] ? secrets : config)[field[:key]] = value
+      end
+
+      { kind: :sms, config: config, secrets: secrets }
+    end
+
+    def signal_attributes
+      config = {
+        "url" => params[:url].to_s.strip,
+        "from" => params[:from].to_s.strip,
+        "to" => params[:to].to_s.strip
+      }
+      config["daily_limit"] = params[:daily_limit].to_i if params[:daily_limit].present?
+
+      secrets = {}
+      secrets["username"] = params[:username].to_s.strip if params[:username].present?
+      secrets["password"] = params[:password].to_s if params[:password].present?
+
+      { kind: :signal, config: config, secrets: secrets }
     end
 end
