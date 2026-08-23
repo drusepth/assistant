@@ -69,6 +69,26 @@ class RecipesParseTest < ActiveSupport::TestCase
     assert_equal [ 0, 1 ], lines.map { |line| line[:position] }
   end
 
+  test "component dividers are headings, not pseudo-ingredients" do
+    [ "For the sauce:", "For the topping", "Topping:", "FOR THE DOUGH" ].each do |line|
+      parsed = Recipes::Parse.line_attributes(line)
+      assert parsed[:heading], line
+      assert_equal "", parsed[:item_key], "a divider must carry no match key #{line.inspect}"
+      assert_nil parsed[:quantity], line
+    end
+  end
+
+  test "an ingredient that merely ends in a colon is still an ingredient" do
+    parsed = Recipes::Parse.line_attributes("2 onions, chopped:")
+
+    assert_not parsed[:heading]
+    assert_in_delta 2.0, parsed[:quantity]
+  end
+
+  test "the divider keeps its text without the colon" do
+    assert_equal "For the sauce", Recipes::Parse.line_attributes("For the sauce:")[:item]
+  end
+
   test "quantities format back into kitchen fractions" do
     assert_equal "1½", Recipes::Quantity.format(1.5)
     assert_equal "¾", Recipes::Quantity.format(0.75)

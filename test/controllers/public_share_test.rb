@@ -50,6 +50,32 @@ class PublicShareTest < ActionDispatch::IntegrationTest
     assert_match "400 g red lentils", response.body
   end
 
+  test "the same token, asked for as JSON, is a recipe another instance can import" do
+    get shared_path(@link.token, format: :json)
+
+    assert_response :success
+    payload = JSON.parse(response.body)
+    assert_equal "assistant-recipe", payload["format"]
+    assert_equal "Lentil soup", payload.dig("recipe", "title")
+    assert_equal [ "200 g red lentils" ], payload.dig("recipe", "ingredients")
+    assert_not payload.to_s.include?("one@example.com"), "the envelope carries the recipe, not the household"
+  end
+
+  test "a book link exports the whole book, and a dead token exports nothing" do
+    book = @alice.recipe_books.create!(title: "Soups")
+    book.recipe_book_entries.create!(recipe: @recipe)
+    link = @alice.share_links.create!(subject: book)
+
+    get shared_path(link.token, format: :json)
+    payload = JSON.parse(response.body)
+
+    assert_equal "Soups", payload.dig("book", "title")
+    assert_equal [ "Lentil soup" ], payload["recipes"].map { |row| row["title"] }
+
+    get shared_path("nope", format: :json)
+    assert_response :not_found
+  end
+
   test "an unknown, revoked, or expired token gives nothing away" do
     get shared_path("not-a-real-token")
     assert_response :not_found

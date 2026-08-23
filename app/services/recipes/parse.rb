@@ -53,7 +53,13 @@ module Recipes
       room-temperature boneless skinless extra plus
     ].freeze
 
-    OPTIONAL_MARKERS = /\(\s*optional\s*\)|,\s*optional\b|\boptional:\s*/i
+    OPTIONAL_MARKERS = /\(\s*optional\s*\)|,\s*optional\b/i
+
+    # "For the sauce:", "Topping:", "FOR THE DOUGH" — a component divider,
+    # not something you buy. Almost every recipe with more than one part
+    # has them, and left unmarked they became pseudo-ingredients whose
+    # item_key would pollute the pantry match.
+    HEADING = /\A(?:for\s+the\b.*|.{0,40}:)\z/i
     BULLET = /\A\s*[-–—*•·]\s*/
 
     module_function
@@ -71,6 +77,8 @@ module Recipes
       raw = line.strip
       rest = raw.sub(BULLET, "")
 
+      return heading_attributes(raw, rest) if heading?(rest)
+
       optional = rest.match?(OPTIONAL_MARKERS)
       rest = rest.gsub(OPTIONAL_MARKERS, " ").squeeze(" ").strip
 
@@ -80,7 +88,24 @@ module Recipes
       item, note = split_note(rest)
 
       { quantity: quantity, unit: unit, item: item.presence || raw, note: note,
-        raw: raw, optional: optional, item_key: key_for(item.presence || raw) }
+        raw: raw, optional: optional, heading: false, item_key: key_for(item.presence || raw) }
+    end
+
+    # A divider carries no quantity of anything: it keeps its text, takes no
+    # item_key the match could see, and passes through scaling untouched.
+    def heading_attributes(raw, text)
+      label = text.sub(/:\s*\z/, "").strip
+      { quantity: nil, unit: nil, item: label.presence || raw, note: nil,
+        raw: raw, optional: false, heading: true, item_key: "" }
+    end
+
+    def heading?(text)
+      return false if text.blank?
+      return false unless text.match?(HEADING)
+
+      # A quantity anywhere at the front means it's an ingredient that
+      # happens to end in a colon, not a divider.
+      Quantity.parse(text).first.nil?
     end
 
     # The pantry/grocery match key: lowercase, no parentheticals, no

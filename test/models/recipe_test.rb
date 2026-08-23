@@ -36,6 +36,15 @@ class RecipeTest < ActiveSupport::TestCase
     assert_equal [ "1 onion" ], recipe.reload.recipe_ingredients.map(&:raw)
   end
 
+  test "headings ride along in the list but never in what you shop for" do
+    recipe = @alice.recipes.create!(title: "Lasagne", ingredients_text: "For the sauce:\n2 onions\nFor the pasta:\n300 g flour")
+
+    assert_equal 4, recipe.recipe_ingredients.count
+    assert_equal [ "For the sauce", "For the pasta" ], recipe.recipe_ingredients.select(&:heading?).map(&:item)
+    assert_equal [ "onion", "flour" ], recipe.shoppable_ingredients.map(&:item_key)
+    assert_equal "For the sauce:\n2 onions\nFor the pasta:\n300 g flour", recipe.reload.ingredients_text
+  end
+
   test "steps split on blank lines when there are any, otherwise on newlines" do
     single = @alice.recipes.create!(title: "A", directions: "Chop.\nFry.\nEat.")
     assert_equal [ "Chop.", "Fry.", "Eat." ], single.steps

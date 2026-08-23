@@ -1,4 +1,5 @@
 <% scale_path = ->(count) { recipe_path(@recipe, servings: count) } %>
+<%= turbo_stream_from Current.user, :recipes if @owned %>
 
 <%= render Ui::PageHeaderComponent.new(title: @recipe.title, subtitle: @recipe.timing.presence) do |header| %>
   <% unless @owned %>
@@ -16,6 +17,32 @@
             data: { turbo_confirm: "Delete this recipe? Any books it's in keep their other recipes." } %>
     <% end %>
   <% end %>
+<% end %>
+
+<% if @owned && @recipe.import_status.present? %>
+  <div class="card mb-6 flex flex-wrap items-center justify-between gap-3 p-4">
+    <% if @recipe.importing? %>
+      <p class="text-sm text-soft">Reading it<span class="animate-pulse">…</span> this page updates itself when it's done.</p>
+    <% elsif @recipe.import_failed? %>
+      <p class="min-w-0 text-sm text-ink">
+        <span class="font-semibold">That import didn't work.</span>
+        <span class="text-soft"><%= @recipe.import_error %></span>
+      </p>
+      <div class="row-actions">
+        <%= button_to "Try again", retry_import_recipe_path(@recipe), method: :post, class: "btn btn-secondary btn-sm" %>
+        <%= link_to "Fill it in myself", edit_recipe_path(@recipe), class: "btn btn-ghost btn-sm" %>
+      </div>
+    <% else %>
+      <p class="min-w-0 text-sm text-ink">
+        <span class="font-semibold">Imported — give it a read.</span>
+        <span class="text-soft">Amounts came from the page; check them before you cook from it.</span>
+      </p>
+      <div class="row-actions">
+        <%= button_to "Looks right", confirm_import_recipe_path(@recipe), method: :post, class: "btn btn-secondary btn-sm" %>
+        <%= link_to "Edit", edit_recipe_path(@recipe), class: "btn btn-ghost btn-sm" %>
+      </div>
+    <% end %>
+  </div>
 <% end %>
 
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">

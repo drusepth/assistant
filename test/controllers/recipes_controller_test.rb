@@ -13,6 +13,102 @@ class RecipesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the import page offers both doors" do
+    get import_recipes_path
+    assert_response :success
+    assert_match "source_url", response.body
+    assert_match "source_text", response.body
+  end
+
+  test "a pasted page lands as a recipe with the import queued" do
+    assert_difference("Recipe.count") do
+      assert_enqueued_with(job: ImportRecipeJob) do
+        post import_recipes_path, params: { source_text: "Ingredients\n1 onion\nMethod\nCook it." }
+      end
+    end
+    recipe = Recipe.last
+
+    assert recipe.import_queued?
+    assert_redirected_to recipe_path(recipe)
+  end
+
+  test "a link is kept for the job to fetch, and a non-link is refused up front" do
+    post import_recipes_path, params: { source_url: "https://example.com/soup" }
+    assert_equal "https://example.com/soup", Recipe.last.source_url
+
+    assert_no_difference("Recipe.count") do
+      post import_recipes_path, params: { source_url: "example dot com" }
+    end
+    assert_redirected_to import_recipes_path
+
+    assert_no_difference("Recipe.count") do
+      post import_recipes_path, params: { source_text: "", source_url: "" }
+    end
+  end
+
+  test "our own envelope imports with no model call at all" do
+    payload = {
+      format: "assistant-recipe", version: 1,
+      recipe: { title: "Lentil soup", servings: 4, ingredients: [ "200 g red lentils" ],
+                directions: "Simmer it.", notes: "Freeze half." }
+    }.to_json
+
+    assert_no_enqueued_jobs(only: ImportRecipeJob) do
+      post import_recipes_path, params: { source_text: payload }
+    end
+    recipe = Recipe.last
+
+    assert_equal "Lentil soup", recipe.title
+    assert_nil recipe.import_status
+    assert_equal [ "200 g red lentils" ], recipe.recipe_ingredients.map(&:raw)
+    assert_equal "red lentil", recipe.recipe_ingredients.first.item_key, "the receiving instance runs its own parser"
+  end
+
+  test "a share link from another assistant is asked for as JSON and comes across whole" do
+    Web::Fetch.resolver = Class.new { def getaddresses(_host) = [ "93.184.216.34" ] }.new
+    payload = {
+      format: "assistant-recipe", version: 1,
+      book: { title: "Grandma's" },
+      recipes: [ { title: "Lentil soup", ingredients: [ "1 onion" ] }, { title: "Rhubarb cake" } ]
+    }
+    stub_request(:get, "https://sister.example/s/AAAAAAAAAAAAAAAAAAAAAAAA.json")
+      .to_return(status: 200, headers: { "content-type" => "application/json" }, body: payload.to_json)
+
+    assert_difference("Recipe.count", 2) do
+      post import_recipes_path, params: { source_url: "https://sister.example/s/AAAAAAAAAAAAAAAAAAAAAAAA" }
+    end
+
+    book = RecipeBook.last
+    assert_equal "Grandma's", book.title
+    assert_equal 2, book.recipes.count
+    assert_redirected_to recipe_book_path(book)
+  ensure
+    Web::Fetch.resolver = Resolv
+  end
+
+  test "a hostile envelope can't smuggle in anything but recipe fields" do
+    payload = {
+      format: "assistant-recipe", version: 1,
+      recipe: { title: "Soup", user_id: users(:two).id, times_cooked: 999,
+                source_url: "javascript:alert(1)", ingredients: [ "1 onion" ] }
+    }.to_json
+
+    post import_recipes_path, params: { source_text: payload }
+    recipe = Recipe.last
+
+    assert_equal users(:one).id, recipe.user_id
+    assert_equal 0, recipe.times_cooked
+    assert_nil recipe.source_url, "only http(s) links survive the envelope"
+  end
+
+  test "editing an imported recipe counts as reviewing it" do
+    recipe = users(:one).recipes.create!(title: "Soup", import_status: :imported)
+
+    patch recipe_path(recipe), params: { recipe: { title: "Lentil soup" } }
+
+    assert_nil recipe.reload.import_status
+  end
+
   test "creates a recipe from one paste, parsing the ingredients" do
     assert_difference("Recipe.count") do
       post recipes_path, params: { recipe: {

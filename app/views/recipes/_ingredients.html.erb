@@ -24,13 +24,17 @@
 <% if recipe.recipe_ingredients.any? %>
   <ul class="space-y-2 text-sm">
     <% recipe.recipe_ingredients.each do |ingredient| %>
-      <li class="flex gap-2 border-b border-edge/60 pb-2 last:border-0">
-        <span class="min-w-0 flex-1 text-ink">
-          <%= ingredient.display(factor) %><%
-            %><% if ingredient.note.present? %><span class="text-soft">, <%= ingredient.note %></span><% end %><%
-            %><% if ingredient.optional? %><span class="text-soft"> (optional)</span><% end %>
-        </span>
-      </li>
+      <% if ingredient.heading? %>
+        <li class="pt-3 text-xs font-bold uppercase tracking-[0.12em] text-soft first:pt-0"><%= ingredient.item %></li>
+      <% else %>
+        <li class="flex gap-2 border-b border-edge/60 pb-2 last:border-0">
+          <span class="min-w-0 flex-1 text-ink">
+            <%= ingredient.display(factor) %><%
+              %><% if ingredient.note.present? %><span class="text-soft">, <%= ingredient.note %></span><% end %><%
+              %><% if ingredient.optional? %><span class="text-soft"> (optional)</span><% end %>
+          </span>
+        </li>
+      <% end %>
     <% end %>
   </ul>
 <% else %>

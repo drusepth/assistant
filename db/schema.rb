@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_040410) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_063801) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -383,6 +383,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_040410) do
 
   create_table "recipe_ingredients", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.boolean "heading", default: false, null: false
     t.string "item", null: false
     t.string "item_key", null: false
     t.string "note"
@@ -404,6 +405,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_040410) do
     t.text "description"
     t.text "directions"
     t.boolean "favorite", default: false, null: false
+    t.string "import_error"
+    t.text "import_source"
+    t.string "import_status"
     t.date "last_cooked_on"
     t.text "notes"
     t.integer "prep_minutes"

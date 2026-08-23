@@ -162,10 +162,17 @@ Rails.application.routes.draw do
   # (D-share-link — /s/:token is the only unauthenticated read path in the
   # app, and ShareLink::SHAREABLE_TYPES is what keeps it that narrow).
   resources :recipes do
+    collection do
+      get :import, action: :new_import
+      post :import, action: :create_import
+    end
     member do
       post :cook
       post :add_to_book
       delete :remove_from_book
+      post :retry_import
+      post :confirm_import
+      post :attach_photo
     end
   end
   resources :recipe_books do

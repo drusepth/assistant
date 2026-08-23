@@ -12,6 +12,11 @@
   <div class="space-y-1.5 p-3">
     <p class="text-sm font-medium text-ink"><%= recipe.title %></p>
     <p class="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-soft">
+      <% if recipe.importing? %>
+        <span class="animate-pulse">reading it…</span>
+      <% elsif recipe.import_failed? %>
+        <span class="text-primary-800">import didn't work</span>
+      <% end %>
       <% if recipe.total_minutes %><span><%= recipe.total_minutes %> min</span><% end %>
       <% if recipe.servings %>
         <% if recipe.total_minutes %><span aria-hidden="true">·</span><% end %>

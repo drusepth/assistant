@@ -8,6 +8,10 @@ class Recipe < ApplicationRecord
   include Sectionable
 
   has_many :recipe_ingredients, -> { order(:position, :id) }, dependent: :destroy, inverse_of: :recipe
+  # What the pantry match, the grocery list, and "how many ingredients is
+  # this" all mean by "ingredients": the dividers are presentation.
+  has_many :shoppable_ingredients, -> { shoppable.order(:position, :id) },
+    class_name: "RecipeIngredient", inverse_of: :recipe, dependent: nil
   has_many :recipe_book_entries, dependent: :destroy
   has_many :recipe_books, through: :recipe_book_entries
   has_many :share_links, as: :subject, dependent: :destroy
@@ -18,6 +22,13 @@ class Recipe < ApplicationRecord
     attachable.variant :hero, resize_to_limit: [ 1600, 1600 ], format: :webp,
       saver: { quality: 85, strip: true }
   end
+
+  # nil import_status = typed by hand, which is most recipes. The rest
+  # follow the photo/document ingestion states so a stuck or failed import
+  # is visible rather than silent.
+  enum :import_status, {
+    queued: "queued", processing: "processing", imported: "imported", failed: "failed"
+  }, prefix: :import
 
   validates :title, presence: true
   validates :servings, :prep_minutes, :cook_minutes,
@@ -95,6 +106,20 @@ class Recipe < ApplicationRecord
 
     factor = for_servings.to_f / servings
     factor.positive? ? factor : 1.0
+  end
+
+  # Import needs a configured model to do its best work, but not to work:
+  # with none, ImportRecipeJob falls back to the deterministic splitter.
+  def importable_profile
+    profile = user.household.model_profile
+    profile if profile&.configured?
+  end
+
+  def importing? = import_queued? || import_processing?
+
+  def enqueue_import!
+    update!(import_status: :queued, import_error: nil)
+    ImportRecipeJob.perform_later(self)
   end
 
   def cooked!(on = Date.current)

@@ -31,7 +31,16 @@ class PublicController < ApplicationController
   end
 
   private
+    # The take-it-with-you format (D-share-link): the same token, asked for
+    # as JSON, is a recipe another instance can import with no model call
+    # and no account anywhere.
+    def render_payload(payload)
+      render json: payload
+    end
+
     def show_recipe(recipe)
+      return render_payload(Recipes::Payload.for_recipe(recipe)) if request.format.json?
+
       @recipe = recipe
       @servings = params[:servings].presence&.to_i&.clamp(1, 100) || @recipe.servings
       @factor = @recipe.scale_factor(@servings)
@@ -48,6 +57,10 @@ class PublicController < ApplicationController
       @recipes = book.recipes.where(user_id: book.user_id)
         .with_attached_image.order(Arel.sql("LOWER(recipes.title)"))
 
+      if request.format.json?
+        return render_payload(Recipes::Payload.for_book(book, @recipes.includes(:recipe_ingredients)))
+      end
+
       if params[:recipe].present?
         recipe = @recipes.find_by(id: params[:recipe])
         return gone if recipe.nil?
@@ -59,6 +72,8 @@ class PublicController < ApplicationController
     end
 
     def gone
+      return head :not_found if request.format.json?
+
       render :gone, status: :not_found
     end
 end

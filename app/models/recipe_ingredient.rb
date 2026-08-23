@@ -4,7 +4,13 @@
 class RecipeIngredient < ApplicationRecord
   belongs_to :recipe
 
-  validates :item, :item_key, :raw, presence: true
+  # A divider ("For the sauce:") is a row so it keeps its place in the
+  # list, but it is not something you buy — so it carries no match key and
+  # every consumer of the list filters it out.
+  scope :shoppable, -> { where(heading: false) }
+
+  validates :item, :raw, presence: true
+  validates :item_key, presence: true, unless: :heading?
 
   # Units that are words rather than abbreviations pluralize with the
   # number in front of them; "3 gs of flour" is not a thing anyone writes.
