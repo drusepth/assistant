@@ -59,9 +59,8 @@
     <span aria-hidden="true">·</span>
     <span>
       From
-      <% if @recipe.source_url.present? %>
-        <%= link_to @recipe.source_name.presence || URI(@recipe.source_url).host.to_s.delete_prefix("www."),
-              @recipe.source_url, class: "text-primary-700 underline",
+      <% if (source = recipe_source_url(@recipe)) %>
+        <%= link_to recipe_source_label(@recipe, source), source, class: "text-primary-700 underline",
               rel: "noopener noreferrer nofollow", target: "_blank" %>
       <% else %>
         <%= @recipe.source_name %>

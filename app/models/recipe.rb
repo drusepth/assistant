@@ -33,6 +33,13 @@ class Recipe < ApplicationRecord
   validates :title, presence: true
   validates :servings, :prep_minutes, :cook_minutes,
     numericality: { only_integer: true, greater_than: 0, less_than: 100_000 }, allow_nil: true
+  # The source link is rendered as an href, and a recipe travels (household
+  # grants, share links, another instance's import) — so a `javascript:` URL
+  # typed into the edit form would be stored XSS against whoever opens it.
+  # The import paths each vetted the scheme already; the model is where every
+  # path meets, so it belongs here.
+  validates :source_url, format: { with: %r{\Ahttps?://\S+\z},
+    message: "needs to start with http:// or https://" }, allow_blank: true
   validate :image_must_be_an_image
 
   scope :favorites, -> { where(favorite: true) }
