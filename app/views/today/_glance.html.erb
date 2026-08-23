@@ -1,0 +1,20 @@
+<%# The shape of the day in one line, above everything else: how much is
+    late, how much is due, how much is on the calendar. Two jobs — you know
+    the size of the day before you read a single title, and each pill jumps
+    to the card that holds it, which is what makes six cards navigable on a
+    phone where the third one is already a screen and a half down.
+    Zero counts don't appear: a strip that says "0 overdue" is furniture. %>
+<% pills = [
+     { count: overdue, label: "overdue", anchor: "overdue", alert: true },
+     { count: due_today, label: "due today", anchor: "due-today" },
+     { count: events, label: "event".pluralize(events), anchor: "todays-events" }
+   ].select { |pill| pill[:count].positive? } %>
+
+<% if pills.any? %>
+  <div class="-mt-2 mb-6 flex flex-wrap items-center gap-2">
+    <% pills.each do |pill| %>
+      <%= link_to "#{pill[:count]} #{pill[:label]}", "##{pill[:anchor]}",
+            class: "btn #{pill[:alert] ? "btn-alert" : "btn-secondary"}" %>
+    <% end %>
+  </div>
+<% end %>

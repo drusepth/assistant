@@ -1,8 +1,13 @@
-<div class="card">
+<div class="<%= card_classes %>" <%= tag.attributes(id: anchor) if anchor %>>
   <% if header? %>
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-edge px-5 py-3.5">
       <div>
-        <h2 class="text-sm font-semibold text-ink"><%= title %></h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-semibold text-ink"><%= title %></h2>
+          <% if count.to_i.positive? %>
+            <span class="chip bg-canvas text-soft tabular-nums"><%= count %></span>
+          <% end %>
+        </div>
         <% if subtitle %>
           <p class="text-xs text-soft"><%= subtitle %></p>
         <% end %>

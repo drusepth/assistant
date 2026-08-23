@@ -141,6 +141,19 @@
   .btn-sm {
     @apply px-3 py-1.5 text-xs;
   }
+  /* The attention register — a count that is *behind*, not a destructive
+     action (that's `btn-danger`). Overdue is emphasis, so it takes the
+     accent tint rather than red. */
+  .btn-alert {
+    @apply bg-primary-200 text-primary-900 hover:bg-primary-300 active:bg-primary-400;
+  }
+  /* A real thumb target on a phone, a compact `btn-sm` pill on a wide
+     screen. The buttons at the end of a list row want both: ~40 points
+     under a finger, quiet furniture beside a title on a laptop. Pair it
+     with `.row-actions`, whose forms it fills. */
+  .btn-touch {
+    @apply w-full py-2.5 sm:w-auto sm:px-3 sm:py-1.5 sm:text-xs;
+  }
 
   /* The collapsible sidebar (design 2a). Collapsing is desktop-only — below
      lg the same <aside> is an off-canvas drawer, and a drawer you opened on
@@ -199,6 +212,31 @@
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* A list of item rows inside a card. A hairline divider is enough between
+     two one-line rows on a laptop; it is not enough between two task rows
+     on a phone, where each is a wrapped title plus a meta line plus its
+     buttons and the whole card reads as one column of text. So a stacked
+     list drops each row back to the canvas colour and puts air between
+     them — the system's own "rows inside a card drop back to the canvas"
+     rule, carried to its end. The tonal step does the separating; nothing
+     needs a border.
+
+     Rows opt in by carrying `item-row` (the primitive row partials do), so
+     a heading *between* groups of rows can sit in the same stack as plain
+     text, and a row rendered into an older `divide-y` list is untouched. */
+  .item-stack {
+    @apply flex flex-col gap-2 p-2 sm:p-2.5;
+  }
+  /* (v4's `hover:` is already gated on a device that can hover, so the tint
+     never sticks to a tapped row on a phone.) */
+  .item-stack .item-row {
+    @apply rounded-xl bg-canvas transition-colors hover:bg-stone-50;
+  }
+  /* A day label between groups of rows in one stack ("Saturday"). */
+  .stack-label {
+    @apply px-2 pt-1 text-xs font-semibold uppercase tracking-wide text-soft;
   }
 
   /* The two shapes that decide whether a page reads on a phone.

@@ -45,11 +45,12 @@ actions.
    stylesheets it processes, and the Tailwind build is passed through
    untouched — a `url()` written there resolves undigested and 404s.
 2. **Atoms** — same file, `@layer components`: `.btn` (+ `-primary`,
-   `-secondary`, `-danger`, `-ghost`, `-sm`), `.input`, `.label`, `.hint`,
-   `.field-error`, `.card`, `.chip`, the two phone-shape atoms
-   `.row-actions` and `.capture-row` (see Narrow screens), and the chat
-   set — `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`,
-   `-send`).
+   `-secondary`, `-danger`, `-ghost`, `-alert`, `-sm`, `-touch`), `.input`,
+   `.label`, `.hint`, `.field-error`, `.card`, `.chip`, the list-shape pair
+   `.item-stack`/`.item-row` (+ `.stack-label`, see Lists), the two
+   phone-shape atoms `.row-actions` and `.capture-row` (see Narrow
+   screens), and the chat set — `.bubble` (+ `-user`, `-assistant`),
+   `.composer` (+ `-input`, `-send`).
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
    `Ui::SectionChip`, `Ui::Avatar` (a member's uploaded photo, falling back
@@ -79,6 +80,31 @@ neighbours in the sidebar never collide: Health `primary-800` · Hobbies
 `primary-500` · Education `sage-500` · Career `sage-700` · People
 `primary-400` · Money `sage-400` · Rights `primary-700`.
 
+## Lists
+
+A card full of item rows has two shapes, and the choice is about how tall
+the rows are rather than about taste:
+
+- **`divide-y divide-edge`** — hairline dividers. Right for one-line rows
+  (a document, a credential, an admin log line).
+- **`.item-stack`** — each row drops back to the canvas colour and sits as
+  its own rounded block with air around it, which is the "rows inside a
+  card drop back to the canvas" rule carried to its end. Right when a row
+  is several lines tall — a wrapped task title plus a meta line plus its
+  buttons — because at that height a hairline stops separating anything and
+  the card reads as one column of text. Today's lists are the reference.
+
+Rows opt in by carrying `item-row` on their outer element (the primitive
+row partials already do), so a `.stack-label` day heading can sit in the
+same stack as plain text, and a row rendered into a `divide-y` list is
+untouched by the stack rules. A card that stacks passes `padded: false` —
+`.item-stack` brings its own padding.
+
+`Ui::Card` also takes `count:` (a badge beside the title; zero doesn't
+draw) and `anchor:` (an id plus the `scroll-mt` the sticky mobile top bar
+needs), which is what lets a summary strip above a long page jump to the
+card it counts.
+
 ## Narrow screens
 
 The app is used on a phone at least as often as on a laptop, and the whole
@@ -98,7 +124,12 @@ page is 320–430 points wide there. Four rules keep it that way, and
   beside the text on a wide screen and take their own full-width line on a
   phone; without it a 150-point cluster of actions squeezes the title it
   belongs to into a four-word column. The row that holds it needs
-  `flex-wrap`.
+  `flex-wrap`. Give each button `.btn-touch` (and its form `flex-1
+  sm:flex-none`) when it is an action people take by thumb: `btn-sm` is a
+  28-point target, which is fine as furniture beside a title on a laptop
+  and too small to hit on a phone. Label such a button with a drawn icon
+  rather than a glyph — "→" inherits the display face at button size and
+  all but disappears.
 - **`.capture-row`** for one-line capture (a field and its submit): side by
   side when there is room, stacked on a phone so neither ends up half a line
   wide. Fixed field widths inside it belong behind `sm:` (`sm:w-32`).
