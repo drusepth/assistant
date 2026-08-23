@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Print the build log in order: docs/STATUS.md (the log through August 2026)
+# followed by docs/status/*.md, sorted by filename. The log lives in two
+# places so that appending to it is always a *new file* — see
+# docs/status/README.md. Pipe it anywhere: `bin/status | tail -20`.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+cat docs/STATUS.md
+
+# LC_ALL=C so the date-prefixed names sort byte-wise everywhere.
+shopt -s nullglob
+entries=(docs/status/*.md)
+for entry in $(printf '%s\n' "${entries[@]}" | grep -v '/README\.md$' | LC_ALL=C sort); do
+  echo
+  cat "$entry"
+done

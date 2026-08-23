@@ -8,11 +8,14 @@ vendor/* linguist-vendored
 config/credentials/*.yml.enc diff=rails_credentials
 config/credentials.yml.enc diff=rails_credentials
 
-# docs/STATUS.md is an append-only log (one entry per line — see its header).
-# Two branches appending different milestone lines is routine, so let git keep
-# both sides automatically instead of raising a conflict. Union merge never
-# shows conflict markers, so only append to this file — don't rewrite existing
-# lines on a branch. Code hub files (routes.rb, fixtures, Tool::SLUGS, …)
-# deliberately stay on the default strategy: their keep-both conflicts
-# deserve eyes.
+# docs/STATUS.md is the closed half of the build log — new entries are their
+# own files under docs/status/ (see docs/status/README.md), which is what
+# actually keeps parallel branches from colliding: GitHub computes PR
+# mergeability without applying this file, so union merging fixed `git merge`
+# and left every PR page still showing a STATUS conflict. The attribute stays
+# for the entries already here — a branch that touches them, or an old branch
+# still appending, merges instead of conflicting. Union merge never shows
+# conflict markers, so never rewrite existing lines there. Code hub files
+# (routes.rb, fixtures, Tool::SLUGS, …) deliberately stay on the default
+# strategy: their keep-both conflicts deserve eyes.
 docs/STATUS.md merge=union

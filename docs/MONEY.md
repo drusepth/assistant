@@ -450,7 +450,7 @@ Original pass plan, for the record:
 
 Each pass ends green (`bin/rails test`, `bin/rubocop`), registries updated
 (`Tool::SLUGS`, watcher registry, routes, fixtures — the keep-both merge
-files), and a `STATUS.md` line appended. Passes are ordered by dependency;
+files), and a `docs/status/` entry added. Passes are ordered by dependency;
 B1/B2 are the meat, B3–B5 are each small.
 
 - **B1 — the ledger.** `households.currency`; `spending_accounts` +
