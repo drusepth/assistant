@@ -6,8 +6,8 @@ The design language and where to change it. The stack is **Tailwind CSS v4**
 ## The look: Organic
 
 Warm, rounded and a little playful — a cream-and-sand ground with a
-terracotta accent and a sage second voice, Caprasimo display headings over
-Figtree, and radii that grow into pills. Two rules carry most of it:
+terracotta accent and a sage second voice, Caprasimo used sparingly over
+Figtree, and radii that grow into pills. Three rules carry most of it:
 
 - **Surface sits *above* the canvas.** Cards are sand (`#ebddc5`) on a cream
   page (`#f5ead8`) — the inverse of a white-card-on-grey app. That tonal
@@ -16,6 +16,10 @@ Figtree, and radii that grow into pills. Two rules carry most of it:
 - **Over-round, and don't crowd.** `rounded-full` for buttons, inputs and
   nav items; `rounded-2xl` for containers. The soft shapes need air to read
   as soft.
+- **The display face is a guest, not the house voice.** Caprasimo carries
+  the brand at *display* size — page titles, the household hero, the
+  wordmark, a recipe monogram — and nothing else. Headings default to
+  Figtree semibold. See **Type** below; this is the rule people break.
 
 Warmth is the point: don't reach for stock Tailwind hues (`rose-`, `sky-`,
 `amber-`), which read as foreign objects next to cream. Everything comes
@@ -38,8 +42,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    Both ramps are generated in OKLCH on one shared lightness scale, so the
    same step of any role carries the same visual weight: 100–300 tint fills
    and hovers, 500 is the base, 700–900 carry text on tinted fills.
-   Headings pick up the display face from an `@layer base` rule, so views
-   keep writing plain `<h1>`–`<h4>`.
+   Headings pick up Figtree semibold from an `@layer base` rule, so views
+   keep writing plain `<h1>`–`<h4>`; the display face is opt-in (see Type).
    **Fonts are self-hosted** (`app/assets/fonts/*.woff2`), so a self-hosted
    app makes no third-party request to render its own text and works
    offline. Their `@font-face` rules live in
@@ -47,14 +51,22 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    Propshaft digests asset filenames and rewrites `url()` only in the
    stylesheets it processes, and the Tailwind build is passed through
    untouched — a `url()` written there resolves undigested and 404s.
-2. **Atoms** — same file, `@layer components`: `.btn` (+ `-primary`,
-   `-secondary`, `-danger`, `-ghost`, `-alert`, `-now`/`-later`, `-sm`,
-   `-touch`), `.input`,
-   `.label`, `.hint`, `.field-error`, `.card`, `.chip`, the list-shape pair
-   `.item-stack`/`.item-row` (+ `.stack-label`, see Lists), the two
-   phone-shape atoms `.row-actions` and `.capture-row` (see Narrow
-   screens), and the chat set — `.bubble` (+ `-user`, `-assistant`),
-   `.composer` (+ `-input`, `-send`).
+2. **Atoms** — same file, `@layer components`. Listed one role per line on
+   purpose: this is a registry every branch appends to, and as one prose
+   paragraph it conflicted on nearly every merge. A line each means two
+   branches adding an atom apiece merge keep-both.
+   - `.display` — the display voice (see Type)
+   - `.btn` — the pill, in three neutral weights: `-primary`, `-secondary`,
+     `-ghost`
+   - `.btn-danger`, `.btn-alert` — destructive, and behind-but-not-destructive
+   - `.btn-now`/`.btn-later` — the go/stop pair (see Narrow screens)
+   - `.btn-sm`, `.btn-touch` — the two sizes off the default
+   - `.input`, `.label`, `.hint`, `.field-error` — the form set
+   - `.card`, `.chip`
+   - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
+   - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
+   - `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`)
+     — the chat surface
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
    `Ui::SectionChip`, `Ui::Avatar` (a member's uploaded photo, falling back
@@ -72,6 +84,38 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    (`tasks/_task`, `events/_event`, …), so a list row is redesigned once and
    updates in every view that renders that primitive (index, section pages,
    Today, Dashboard).
+
+## Type
+
+Two faces, and a clear division of labour.
+
+**Figtree carries the interface.** Body copy, and — via an `@layer base`
+rule — every `<h1>`–`<h4>` by default, at `600` with `-0.01em` tracking and
+`1.3` leading. A card title, a section label, a button: all Figtree. Views
+write plain headings and get this for free.
+
+**Caprasimo carries the brand, via the `.display` atom**, and only where
+there is room for it: the page title in `Ui::PageHeader`, the household
+hero, the sidebar wordmark, a recipe monogram, the public share pages.
+Roughly `text-2xl` and up is the test. Below that it stops being characterful
+and starts being hard to read.
+
+`.display` is an atom rather than the `font-display` utility because it has
+to carry three fixes that kept getting lost at the call site:
+
+- **`font-weight: 400` + `font-synthesis-weight: none`.** Caprasimo ships
+  exactly one weight. A `font-bold` beside it doesn't load a bolder cut —
+  the browser fakes one by smearing the outlines, and on a face this heavy
+  that is what made headings unreadable. The synthesis switch means a stray
+  `font-bold` renders honestly instead of turning to mud. **Never put a
+  weight utility on `.display`.**
+- **`letter-spacing: 0`.** `tracking-tight` is a correction for airy
+  grotesques at large sizes. On a face whose counters are already nearly
+  closed it welds the letters shut.
+- **`1.18` leading**, because soft shapes need air to read as soft.
+
+If a heading needs more presence, give it more *size*, not more weight —
+that's the axis this pairing has.
 
 ## Section colors
 
@@ -132,8 +176,9 @@ page is 320–430 points wide there. Four rules keep it that way, and
   sm:flex-none`) when it is an action people take by thumb: `btn-sm` is a
   28-point target, which is fine as furniture beside a title on a laptop
   and too small to hit on a phone. Label such a button with a drawn icon
-  rather than a glyph — "→" inherits the display face at button size and
-  all but disappears. When the row offers a *choice* rather than an action,
+  rather than a glyph: a "→" is sized and weighted by the label around it,
+  so at `text-xs` it is a hairline, while `icon(:arrow_right)` carries its
+  own size and stroke. When the row offers a *choice* rather than an action,
   colour the sides: `.btn-now`/`.btn-later` are the light tinted pair —
   green for "I'll do this now", red for "not now" — so the two are telling
   apart before either is read.

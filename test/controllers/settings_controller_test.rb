@@ -21,6 +21,19 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", avatar_path
   end
 
+  test "celebrations toggle off and back on without touching sections" do
+    enabled_before = Section.top_level.select { |s| users(:one).section_enabled?(s) }
+    assert enabled_before.any?, "fixture user should start with sections enabled"
+
+    patch settings_path, params: { celebrations: "0" }
+    assert_redirected_to settings_path
+    assert_not users(:one).reload.celebrations?
+    assert enabled_before.all? { |s| users(:one).section_enabled?(s) }
+
+    patch settings_path, params: { celebrations: "1" }
+    assert users(:one).reload.celebrations?
+  end
+
   test "toggling a section off persists" do
     health = sections(:health)
     enabled_ids = Section.top_level.where.not(id: health.id).ids

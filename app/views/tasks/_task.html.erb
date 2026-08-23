@@ -43,8 +43,9 @@
 
   <% if local_assigns[:reschedule] && task.user_id == Current.user.id && !task.completed? %>
     <%# Claiming a task for today or tomorrow is the main move on this page,
-        so it gets drawn arrows and half the row's width each on a phone —
-        the "→" glyph inherits the display face at button size and vanishes.
+        so it gets drawn arrows and half the row's width each on a phone. A
+        "→" in the label would be sized and weighted by the label — a hairline
+        at text-xs — while a drawn icon carries its own size and stroke.
         Indented to the title's left edge, where these sit on their own line
         beneath it rather than beside it. %>
     <div class="row-actions pl-9 sm:pl-0">

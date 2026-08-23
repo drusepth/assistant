@@ -1,0 +1,17 @@
+<%# The party rig (D-task-celebration). Rendered only on the page that comes
+    back from a completion, and empty until the controller fills it — the
+    confetti canvas and the banner are built in JS and torn down when the
+    animation ends.
+
+    The token value is what makes it fire: after a Turbo morph the element is
+    already in the DOM, so `connect()` wouldn't run a second time, but a new
+    token trips `tokenValueChanged` and the next celebration plays. %>
+<% if (party = celebration) %>
+  <div class="pointer-events-none fixed inset-0 z-50 print:hidden"
+       data-controller="celebration"
+       data-celebration-tier-value="<%= party["tier"] %>"
+       data-celebration-headline-value="<%= party["headline"] %>"
+       data-celebration-note-value="<%= party["note"] %>"
+       data-celebration-token-value="<%= party["token"] %>"
+       aria-live="polite"></div>
+<% end %>

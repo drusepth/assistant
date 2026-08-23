@@ -22,8 +22,8 @@ module IconsHelper
     paper_airplane: "M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5",
     arrow_down: "M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3",
     # The claim arrow on a task row. A drawn arrow rather than the "→"
-    # glyph: the glyph inherits the display face at button size and all but
-    # disappears on a phone.
+    # glyph: a glyph is sized and weighted by the label it sits in, so at
+    # button size it is a hairline; this carries its own size and stroke.
     arrow_right: "M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3",
     key: "M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z",
     chevrons_left_right: "M8.25 15L4.5 12l3.75-3M15.75 9l3.75 3-3.75 3",
