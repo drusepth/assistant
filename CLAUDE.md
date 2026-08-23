@@ -68,7 +68,7 @@ Every item is **multi-taggable** by section (e.g., "Mom's cardiology appointment
 
 ### Model integration
 
-Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI (key + model), Chroma Golem (key only; router-style), or a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Remote models first; local models are a custom-endpoint config swap. Security/encryption hardening deliberately deferred until the foundation is built.
+Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI, Anthropic (Claude), and Google (Gemini) — each an API key + model name, the latter two over the providers' own OpenAI-compatibility endpoints — plus Chroma Golem (key only; router-style) and a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Presets may carry per-provider quirks the adapter absorbs (`json_mode:`, `max_tokens:`) but never a second code path (D-provider-presets). Remote models first; local models are a custom-endpoint config swap. Security/encryption hardening deliberately deferred until the foundation is built.
 
 ## Tech stack
 

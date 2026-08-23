@@ -22,23 +22,40 @@ module Llm
       Errno::ENETUNREACH, Errno::EPIPE, SocketError, OpenSSL::SSL::SSLError
     ].freeze
 
+    # Providers that ignore response_format still answer in JSON when asked
+    # plainly — Anthropic's compatibility layer documents the field as ignored,
+    # so this is how json: true reaches Claude. Appended to the last user
+    # message rather than sent as a system message: Anthropic hoists every
+    # system message to the front of the conversation, which is the worst
+    # place for a formatting rule to sit.
+    JSON_INSTRUCTION =
+      "Respond with a single raw JSON object and nothing else — no prose before or after it, " \
+      "and no markdown code fence.".freeze
+
     # model may be nil for router-style providers that pick the model
     # server-side; extra_params are provider-specific body additions
-    # (e.g. Chroma Golem's client_id).
-    def initialize(base_url:, api_key:, model: nil, extra_params: {})
+    # (e.g. Chroma Golem's client_id). json_mode and max_tokens come from the
+    # provider preset — see ModelProfile::PROVIDERS.
+    def initialize(base_url:, api_key:, model: nil, extra_params: {}, json_mode: :response_format, max_tokens: nil)
       @base_url = base_url.chomp("/")
       @api_key = api_key
       @model = model
       @extra_params = extra_params
+      @json_mode = json_mode
+      @max_tokens = max_tokens
     end
 
     # messages: [{role:, content:}, ...]. With json: true, asks the server
     # for a JSON object response and returns the parsed Hash; otherwise
     # returns the raw content String.
     def chat(messages, json: false, temperature: 0.2)
+      prompt_json = json && @json_mode == :prompt
+      messages = with_json_instruction(messages) if prompt_json
+
       body = { messages: messages, temperature: temperature, **@extra_params }
       body[:model] = @model if @model
-      body[:response_format] = { type: "json_object" } if json
+      body[:max_tokens] = @max_tokens if @max_tokens
+      body[:response_format] = { type: "json_object" } if json && !prompt_json
 
       payload = post("/chat/completions", body)
       content = extract_content(payload)
@@ -46,6 +63,27 @@ module Llm
     end
 
     private
+      # Appends the instruction to the last user turn, in place. Content is
+      # either a String or the OpenAI multi-part array (a vision call carries
+      # {type: "text"} and {type: "image_url"} parts) — the instruction has to
+      # land as text either way. With no user turn at all there's nowhere
+      # natural to put it, so add one.
+      def with_json_instruction(messages)
+        index = messages.rindex { |message| (message[:role] || message["role"]).to_s == "user" }
+        return messages + [ { role: "user", content: JSON_INSTRUCTION } ] unless index
+
+        messages = messages.dup
+        message = messages[index]
+        key = message.key?(:content) ? :content : "content"
+        content = message[key]
+
+        messages[index] = message.merge(key =>
+          content.is_a?(Array) ?
+            content + [ { type: "text", text: JSON_INSTRUCTION } ] :
+            "#{content}\n\n#{JSON_INSTRUCTION}")
+        messages
+      end
+
       def post(path, body)
         uri = URI("#{@base_url}#{path}")
         request = Net::HTTP::Post.new(uri)

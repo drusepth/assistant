@@ -30,6 +30,28 @@ class ModelProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "https://api.chromagolem.com/v1", profile.effective_base_url
   end
 
+  test "switching to Anthropic or Google needs only a key and a model name" do
+    sign_in_as users(:one)
+
+    patch model_profile_path, params: {
+      model_profile: { provider: "anthropic", base_url: "", model: "claude-opus-5", api_key: "sk-ant-key" }
+    }
+    assert_redirected_to settings_path
+
+    profile = households(:smith).reload.model_profile
+    assert_equal "anthropic", profile.provider
+    assert profile.configured?
+    assert_equal "https://api.anthropic.com/v1", profile.effective_base_url
+
+    patch model_profile_path, params: {
+      model_profile: { provider: "google", base_url: "", model: "gemini-3.7-flash", api_key: "goog-key" }
+    }
+
+    profile = households(:smith).reload.model_profile
+    assert_equal "google", profile.provider
+    assert_equal "https://generativelanguage.googleapis.com/v1beta/openai", profile.effective_base_url
+  end
+
   test "a blank api key keeps the stored one" do
     sign_in_as users(:one)
 
