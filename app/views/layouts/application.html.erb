@@ -41,7 +41,7 @@
           </button>
           <%= link_to root_path, class: "flex items-center gap-2 px-2 py-2" do %>
             <span class="size-2.5 rounded-full bg-primary-600"></span>
-            <span class="font-display text-lg">Assistant</span>
+            <span class="display text-lg">Assistant</span>
           <% end %>
         </header>
 
@@ -56,7 +56,7 @@
           <div class="flex items-center justify-between gap-1 pr-2 lg:pr-3">
             <%= link_to root_path, class: "flex min-w-0 items-center gap-2 px-6 py-5 lg:px-5" do %>
               <span class="size-2.5 shrink-0 rounded-full bg-primary-600"></span>
-              <span class="nav-label font-display text-lg">Assistant</span>
+              <span class="nav-label display text-lg">Assistant</span>
             <% end %>
             <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink lg:hidden"
                     data-action="nav#close" aria-label="Close menu">
@@ -149,7 +149,7 @@
         <div class="w-full max-w-sm">
           <div class="mb-6 flex items-center justify-center gap-2">
             <span class="size-2.5 rounded-full bg-primary-600"></span>
-            <span class="font-display text-xl">Assistant</span>
+            <span class="display text-xl">Assistant</span>
           </div>
           <%= render Ui::FlashComponent.new(flash: flash) %>
           <%= yield %>
