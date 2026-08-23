@@ -2,10 +2,17 @@
 <html>
   <head>
     <title><%= content_for(:title) || "Assistant" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%# viewport-fit=cover lets the page paint into the notch and home-indicator
+        margins, which is what makes env(safe-area-inset-*) report anything but
+        zero — the nav's bottom toggle offsets by it. %>
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Assistant">
     <meta name="application-name" content="Assistant">
     <meta name="mobile-web-app-capable" content="yes">
+    <%# The surface tone, so the phone's status bar continues the header
+        rather than sitting on a white band above it. %>
+    <meta name="theme-color" content="#ebddc5">
     <%# Turbo page refreshes — a redirect back to the URL you're already on,
         and every broadcast_refresh_to — morph the DOM in place and keep the
         scroll where it was, instead of re-rendering the page and throwing
@@ -23,6 +30,11 @@
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
+    <%# Installable. An installed copy also gets the left screen edge back
+        from the browser's own back gesture, which is what makes the nav's
+        edge swipe work in full — but the button stays regardless, because a
+        tab in a browser is still the common case. %>
+    <%= tag.link rel: "manifest", href: pwa_manifest_path %>
 
     <%# The @font-face rules first (Propshaft digests their url()s), then
         the Tailwind build that consumes the families. %>
