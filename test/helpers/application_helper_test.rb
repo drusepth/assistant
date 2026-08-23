@@ -38,10 +38,10 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes section_picker_choices(@recipe).map(&:slug), "rights"
   end
 
-  test "the collapsed line names who did the filing" do
-    assert_equal "your assistant files this one", section_picker_summary(@recipe)
+  test "the closed Advanced line says who did the filing" do
+    assert_equal "your assistant files this one", section_filing_hint(@recipe)
 
     @recipe.sections << sections(:health)
-    assert_equal "Health", section_picker_summary(@recipe.reload)
+    assert_equal "filed under Health", section_filing_hint(@recipe.reload)
   end
 end

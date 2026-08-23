@@ -137,8 +137,14 @@ class RecipesControllerTest < ActionDispatch::IntegrationTest
       post recipes_path, params: { recipe: { title: "Lentil soup" } }
     end
 
-    get edit_recipe_path(Recipe.last)
+    recipe = Recipe.last
+    recipe.sections << sections(:health)
+
+    get edit_recipe_path(recipe)
+    # Folded away, but the closed line still says how it was filed.
     assert_match "recipe[section_ids]", response.body
+    assert_match "Advanced", response.body
+    assert_match "filed under Health", response.body
   end
 
   test "a recipe the cook tagged by hand is left alone" do

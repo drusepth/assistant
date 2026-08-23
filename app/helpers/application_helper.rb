@@ -16,10 +16,11 @@ module ApplicationHelper
       .order(:parent_id, :position)
   end
 
-  # The line on the collapsed picker: what this item is filed under, or who
-  # is going to file it.
-  def section_picker_summary(item)
-    return item.sections.map(&:qualified_name).to_sentence if item.sections.any?
+  # The state of the filing on the closed Advanced line: what this item is
+  # filed under, or who is going to file it. Folding the picker away should
+  # never mean you can't tell.
+  def section_filing_hint(item)
+    return "filed under #{item.sections.map(&:qualified_name).to_sentence}" if item.sections.any?
     return "your assistant files this one" if item.is_a?(AutoSortable) && auto_sort_enabled?
 
     "not filed yet"

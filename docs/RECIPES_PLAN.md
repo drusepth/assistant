@@ -296,8 +296,12 @@ cook to do work the assistant is better at, and buried the Save button under
 it. `CategorizeRecipeJob` files a new recipe after save, from typed capture,
 paste-import, and a landed share-link payload alike; with no model configured
 the recipe just stays unfiled and nothing is lost. The picker survives on the
-**edit** form only, as the correction path — collapsed behind one line naming
-what it's filed under, and listing only the sections the household turned on.
+**edit** form only, as the correction path, inside a shared **Advanced** drawer
+(`shared/_advanced`) that is closed by default — a layout partial, so the next
+control a cook shouldn't have to think about goes in the block at the call site
+rather than teaching the drawer about a new primitive. Its closed line still
+reports the state of what it hides ("Advanced — filed under Health and People"),
+and the picker inside lists only the sections the household turned on.
 
 ### Books (`/recipe_books`)
 
