@@ -49,12 +49,12 @@
         beneath it rather than beside it. %>
     <div class="row-actions pl-9 sm:pl-0">
       <%= button_to reschedule_task_path(task, to: "today"), method: :patch,
-            class: "btn btn-secondary btn-touch", form_class: "flex-1 sm:flex-none",
+            class: "btn btn-now btn-touch", form_class: "flex-1 sm:flex-none",
             title: "Move due date to today" do %>
         <%= icon(:arrow_right, css_class: "size-4 shrink-0 sm:size-3.5") %>Today
       <% end %>
       <%= button_to reschedule_task_path(task, to: "tomorrow"), method: :patch,
-            class: "btn btn-secondary btn-touch", form_class: "flex-1 sm:flex-none",
+            class: "btn btn-later btn-touch", form_class: "flex-1 sm:flex-none",
             title: "Move due date to tomorrow" do %>
         <%= icon(:arrow_right, css_class: "size-4 shrink-0 sm:size-3.5") %>Tomorrow
       <% end %>

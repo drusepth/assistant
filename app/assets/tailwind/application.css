@@ -147,6 +147,19 @@
   .btn-alert {
     @apply bg-primary-200 text-primary-900 hover:bg-primary-300 active:bg-primary-400;
   }
+  /* The now/later pair. Claiming a task is a choice between two options
+     rather than one action, so each side gets its own light tint and the
+     two are telling apart before you read them: the accent for pulling
+     something into today, the sage second voice — the app's calm register —
+     for letting it wait. Both stay quiet enough to sit inside a list row
+     without competing with the title above them, which is why the tint is
+     the 100 step and only the border reaches 300. */
+  .btn-now {
+    @apply border border-primary-300 bg-primary-100 text-primary-800 hover:bg-primary-200 active:bg-primary-300;
+  }
+  .btn-later {
+    @apply border border-sage-300 bg-sage-100 text-sage-800 hover:bg-sage-200 active:bg-sage-300;
+  }
   /* A real thumb target on a phone, a compact `btn-sm` pill on a wide
      screen. The buttons at the end of a list row want both: ~40 points
      under a finger, quiet furniture beside a title on a laptop. Pair it
