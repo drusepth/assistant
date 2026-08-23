@@ -1,0 +1,1 @@
+**Quick-add is a dropdown**: `Ui::QuickAdd` component — a page-header + button whose capture form opens in a panel anchored beneath it (bottom sheet on small screens; Escape, Cancel, or click-outside closes) instead of an inline card pushing the page down; Dashboard's four buttons and the Notes index's + Note now share it.

@@ -9,10 +9,15 @@ module Ui
       @flash = flash
     end
 
-    def render? = @flash.any?
+    # Flash keys the app uses to carry data rather than a sentence to read —
+    # they travel the same redirect, but they are never banners.
+    SILENT = %w[ celebrate ].freeze
+
+    def render? = messages.any?
 
     def messages
-      @flash.map { |type, message| [ STYLES.fetch(type, STYLES["notice"]), message ] }
+      @messages ||= @flash.to_hash.except(*SILENT)
+        .map { |type, message| [ STYLES.fetch(type, STYLES["notice"]), message ] }
     end
   end
 end
