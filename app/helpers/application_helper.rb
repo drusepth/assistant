@@ -3,6 +3,28 @@ module ApplicationHelper
     Current.user.household.model_profile&.configured?
   end
 
+  # What shared/_section_picker offers: the sections this user actually
+  # switched on (D4) plus their subsections, and anything already applied so
+  # a tag the picker wouldn't otherwise list can't be dropped by saving the
+  # form. A household that turned Rights off shouldn't be asked whether its
+  # dinner is about voting.
+  def section_picker_choices(item)
+    enabled_ids = Current.user.enabled_sections.map(&:id)
+
+    Section.where(id: enabled_ids + item.section_ids)
+      .or(Section.where(parent_id: enabled_ids))
+      .order(:parent_id, :position)
+  end
+
+  # The line on the collapsed picker: what this item is filed under, or who
+  # is going to file it.
+  def section_picker_summary(item)
+    return item.sections.map(&:qualified_name).to_sentence if item.sections.any?
+    return "your assistant files this one" if item.is_a?(AutoSortable) && auto_sort_enabled?
+
+    "not filed yet"
+  end
+
   # Quick-pick chips for date fields (shared/_date_shortcuts_field).
   def date_shortcuts
     today = Date.current

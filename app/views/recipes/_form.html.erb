@@ -37,7 +37,14 @@
     <%= form.check_box :favorite %> One of our favorites
   </label>
 
-  <%= render "shared/section_picker", form: form %>
+  <%# Capture is a paste, not a filing exercise (D16): a new recipe asks for
+      the recipe and nothing else, and CategorizeRecipeJob files it. The
+      picker only appears once there's something to correct. %>
+  <% if recipe.persisted? %>
+    <%= render "shared/section_picker", form: form %>
+  <% elsif auto_sort_enabled? %>
+    <p class="hint">Your assistant files this into sections for you — you can change them afterwards.</p>
+  <% end %>
 
   <div class="flex items-center gap-2 pt-2">
     <%= form.submit %>

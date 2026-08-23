@@ -75,6 +75,7 @@ class RecipesController < ApplicationController
     @recipe = Current.user.recipes.new(recipe_params)
 
     if @recipe.save
+      @recipe.enqueue_auto_sort!
       book = Current.user.recipe_books.find_by(id: params[:recipe_book_id])
       book&.recipe_book_entries&.create(recipe: @recipe)
       redirect_to @recipe, notice: "Recipe saved."
@@ -158,7 +159,9 @@ class RecipesController < ApplicationController
     end
 
     def land_payload(payload)
-      recipes = payload.recipes.map { |attributes| Current.user.recipes.create!(attributes) }
+      recipes = payload.recipes.map do |attributes|
+        Current.user.recipes.create!(attributes).tap(&:enqueue_auto_sort!)
+      end
 
       if payload.book_title.present?
         book = Current.user.recipe_books.create!(title: payload.book_title, description: payload.book_description)
