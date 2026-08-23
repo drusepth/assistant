@@ -46,6 +46,22 @@
     <% end %>
   <% end %>
 
+  <%# D-task-celebration: on by default, and one click from gone. The point
+      of the party is the hit of dopamine, and something you can't switch off
+      stops being a treat. %>
+  <%= render Ui::CardComponent.new(title: "Celebrations",
+        subtitle: "Confetti when you finish a task — bigger when you finish a goal or clear the board") do %>
+    <%= form_with url: settings_path, method: :patch, class: "flex flex-wrap items-center gap-3" do |form| %>
+      <%= hidden_field_tag :celebrations, Current.user.celebrations? ? "0" : "1" %>
+      <%= form.submit Current.user.celebrations? ? "Turn celebrations off" : "Turn celebrations on",
+            class: "btn btn-secondary" %>
+      <span class="text-sm text-soft">
+        Currently <strong class="text-ink"><%= Current.user.celebrations? ? "on" : "off" %></strong>.
+        Reduced-motion settings are respected either way.
+      </span>
+    <% end %>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Section sharing", subtitle: "Share everything you tag with a section — including future items") do %>
     <% if @section_grants.any? %>
       <ul class="mb-4 space-y-2">
