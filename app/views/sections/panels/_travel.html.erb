@@ -1,8 +1,59 @@
-<%# The Travel hub's lead (D-travel-facet): the map of everywhere you've
-    taken a photo. More will live here — trips, documents, packing — as
-    further panels; the map is what the section can show on day one out of
-    what the library already holds. %>
+<%# The Travel hub's lead (D-travel-facet): the trips you took, then the map
+    of everywhere your camera has been. More will live here — documents,
+    packing, the "where next" tools — as further panels. %>
 <% map = panel.map %>
+
+<div class="space-y-4">
+
+<% if panel.trips.any? || panel.suggestions.any? %>
+  <%= render Ui::CardComponent.new(title: "Your trips") do %>
+    <% if panel.trips.any? %>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <% panel.shown_trips.each do |trip| %>
+          <%= link_to trip_path(trip), class: "group block overflow-hidden rounded-xl bg-canvas" do %>
+            <% if trip.cover&.image&.attached? %>
+              <%= image_tag url_for(trip.cover.image.variant(:thumb)), loading: "lazy", alt: "",
+                    class: "aspect-[4/3] w-full object-cover transition-transform duration-150 group-hover:scale-105" %>
+            <% end %>
+            <div class="p-2.5">
+              <p class="truncate font-medium text-ink"><%= trip.name %></p>
+              <p class="truncate text-xs text-soft"><%= trip.period %> · <%= pluralize(trip.days, "day") %></p>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+      <% if panel.more_trips.positive? %>
+        <p class="mt-3 text-sm text-soft"><%= panel.more_trips %> older <%= "trip".pluralize(panel.more_trips) %> not shown.</p>
+      <% end %>
+    <% end %>
+
+    <%# Found, never assumed: the app proposes what looks like a trip and
+        the user decides whether it was one. Nothing is stored until they
+        say so. %>
+    <% if panel.suggestions.any? %>
+      <h3 class="<%= panel.trips.any? ? "mt-5" : "" %> mb-2 text-sm font-medium text-soft">
+        <%= panel.trips.any? ? "Also in your photos" : "Trips in your photos" %>
+      </h3>
+      <div class="divide-y divide-edge rounded-xl bg-canvas">
+        <% panel.suggestions.each do |candidate| %>
+          <div class="capture-row p-3">
+            <div class="min-w-0">
+              <p class="truncate font-medium text-ink"><%= candidate.suggested_name %></p>
+              <p class="truncate text-sm text-soft">
+                <%= candidate.period %> · <%= pluralize(candidate.days, "day") %> · <%= pluralize(candidate.photo_count, "photo") %>
+              </p>
+            </div>
+            <%= form_with url: trips_path, class: "shrink-0" do %>
+              <%= hidden_field_tag "trip[starts_on]", candidate.starts_on.iso8601 %>
+              <%= hidden_field_tag "trip[name]", candidate.suggested_name %>
+              <%= submit_tag "Keep this trip", class: "btn btn-secondary btn-sm" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>
 
 <%= render Ui::CardComponent.new(title: "Where you've been") do |card| %>
   <% card.with_actions do %>
@@ -68,3 +119,4 @@
     <%= panel.unplaced_count == 1 ? "has" : "have" %> no location saved, so <%= panel.unplaced_count == 1 ? "it isn't" : "they aren't" %> on the map.
   </p>
 <% end %>
+</div>

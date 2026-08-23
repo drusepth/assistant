@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_092731) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_171430) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -565,6 +565,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_092731) do
     t.index ["user_id"], name: "index_tool_runs_on_user_id"
   end
 
+  create_table "trips", force: :cascade do |t|
+    t.integer "cover_photo_id"
+    t.datetime "created_at", null: false
+    t.decimal "east", precision: 10, scale: 6, null: false
+    t.date "ends_on", null: false
+    t.string "name", null: false
+    t.decimal "north", precision: 10, scale: 6, null: false
+    t.string "place_label"
+    t.decimal "south", precision: 10, scale: 6, null: false
+    t.date "starts_on", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.decimal "west", precision: 10, scale: 6, null: false
+    t.index ["user_id", "starts_on"], name: "index_trips_on_user_id_and_starts_on"
+    t.index ["user_id"], name: "index_trips_on_user_id"
+  end
+
   create_table "user_sections", force: :cascade do |t|
     t.string "agent_level", default: "quiet", null: false
     t.datetime "created_at", null: false
@@ -666,6 +683,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_092731) do
   add_foreign_key "tool_run_items", "tool_runs"
   add_foreign_key "tool_run_messages", "tool_runs"
   add_foreign_key "tool_runs", "users"
+  add_foreign_key "trips", "users"
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"
   add_foreign_key "users", "households"

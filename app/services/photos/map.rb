@@ -9,10 +9,12 @@ module Photos
   #   costs zero requests to anybody. A tile host would see every place its
   #   owner has ever photographed, which is exactly the kind of thing this
   #   app exists not to hand over.
-  # * **It never geocodes.** Pins carry coordinates, counts and dates — not
-  #   place names, because naming a coordinate means a lookup service (see
-  #   above) or a model guessing, and a confidently wrong "Paris" is worse
-  #   than an honest dot.
+  # * **It never geocodes over the network, and never asks a model.** Pin
+  #   names come from a gazetteer that ships in the repo (Datasets::Places),
+  #   which is why a pin says "Near Cody" when that is all anyone can
+  #   honestly say, and says nothing at all out at sea. A lookup service
+  #   would leak the same itinerary as a tile host; a model would invent a
+  #   confident "Paris", which is worse than an honest dot.
   # * **It only ever plots the viewer's own photos.** Coordinates are
   #   owner-only (Q14), and a shared photo's location is not the grantee's
   #   to see — a map is exactly the surface that would leak it.
@@ -32,12 +34,23 @@ module Photos
     DEFAULT_BOTTOM_LAT = -58.0
     WINDOW_PADDING = 20.0
 
+    # Zoomed views (a trip, a country) are built from a requested box rather
+    # than the whole world. It is padded so nothing sits on the edge, never
+    # narrower than MIN_SPAN — a day in one city is a box a few hundred
+    # metres across, and blown up to fill a card that is a meaningless smear
+    # of coastline — and kept between these aspect ratios by growing the
+    # short side, never by squashing the projection.
+    BOUNDS_PADDING = 0.25
+    MIN_PADDING = 1.5
+    MIN_SPAN = 14.0
+    TARGET_ASPECT = 2.0
+    MIN_ASPECT = 1.1
+
     # Clustering distance in map units (1 unit = 0.36°). At 6 units two pins
     # can still be told apart at the size the map renders, and cities an
     # hour apart stay separate pins — London and Paris are ~9.6 units, and
     # merging them would be a lie about where you'd been.
     CLUSTER_RADIUS = 6.0
-    CELL = CLUSTER_RADIUS * 2
     # The same radius in degrees, for the Photo.near box a pin links to.
     CLUSTER_DEGREES = (CLUSTER_RADIUS / HEIGHT * 180.0).round(4)
 
@@ -49,7 +62,9 @@ module Photos
         @ids = [ id ]
         @latitude = latitude
         @longitude = longitude
+        @days = Set.new
         @first_taken_at = @last_taken_at = taken_at
+        note_time(taken_at)
         recompute
       end
 
@@ -57,12 +72,15 @@ module Photos
         @latitude = ((@latitude * ids.size) + latitude) / (ids.size + 1)
         @longitude = ((@longitude * ids.size) + longitude) / (ids.size + 1)
         @ids << id
-        @first_taken_at = taken_at if taken_at && (@first_taken_at.nil? || taken_at < @first_taken_at)
-        @last_taken_at = taken_at if taken_at && (@last_taken_at.nil? || taken_at > @last_taken_at)
+        note_time(taken_at)
         recompute
       end
 
       def count = ids.size
+
+      # Distinct days, not photo count, is what says where someone actually
+      # *lives*: one wedding can out-shoot a year of ordinary evenings.
+      def day_count = @days.size
 
       # The pin's newest photo, which is also the one the list uses as its
       # thumbnail. Set by Map#pins once, in one query for every pin.
@@ -96,6 +114,14 @@ module Photos
       end
 
       private
+        def note_time(taken_at)
+          return if taken_at.nil?
+
+          @days << taken_at.to_date
+          @first_taken_at = taken_at if @first_taken_at.nil? || taken_at < @first_taken_at
+          @last_taken_at = taken_at if @last_taken_at.nil? || taken_at > @last_taken_at
+        end
+
         def recompute
           @x = (longitude + 180.0) / 360.0 * WIDTH
           @y = (90.0 - latitude) / 180.0 * HEIGHT
@@ -104,13 +130,63 @@ module Photos
 
     # `scope` is any Photo relation the caller has already narrowed (own
     # photos only — see the class comment); Map applies the located filter
-    # itself so no caller can forget it.
-    def initialize(scope)
+    # itself so no caller can forget it. `bounds` zooms the view to a box
+    # (a trip, a country) and narrows the scope to match, so a zoomed map
+    # reads only the photos it is going to draw.
+    def initialize(scope, bounds: nil)
+      @bounds = bounds&.symbolize_keys
       @scope = scope.located
+      @scope = @scope.within(**@bounds) if @bounds
+    end
+
+    attr_reader :bounds
+
+    # The four columns clustering needs — a library with 40,000 located
+    # photos would be 40,000 rows either way, but not 40,000 instantiated
+    # models with their attachments in tow. Public because the trip detector
+    # works off the same pull rather than making its own.
+    def rows
+      @rows ||= @scope.reorder(taken_at: :desc, id: :desc)
+        .pluck(:id, :latitude, :longitude, :taken_at)
+    end
+
+    # Greedy clustering against a spatial hash: each photo joins the first
+    # existing pin whose centre is within `radius`, or starts one. Cells are
+    # 2x the radius and seeds are indexed by their own cell, so a centroid
+    # can drift at most one cell from its seed — which is why scanning the
+    # 3x3 neighbourhood is exhaustive rather than merely likely.
+    #
+    # A class method because a trip is the same question asked of a subset:
+    # which spots did these photos happen in?
+    def self.cluster(rows, radius: CLUSTER_RADIUS)
+      cell_size = radius * 2
+      buckets = Hash.new { |hash, key| hash[key] = [] }
+      pins = []
+
+      rows.each do |id, latitude, longitude, taken_at|
+        latitude = latitude.to_f
+        longitude = longitude.to_f
+        x = (longitude + 180.0) / 360.0 * WIDTH
+        y = (90.0 - latitude) / 180.0 * HEIGHT
+        cell = [ (x / cell_size).floor, (y / cell_size).floor ]
+
+        match = (-1..1).flat_map { |dx| (-1..1).flat_map { |dy| buckets[[ cell.first + dx, cell.second + dy ]] } }
+          .find { |pin| Math.hypot(pin.x - x, pin.y - y) <= radius }
+
+        if match
+          match.add(id, latitude, longitude, taken_at)
+        else
+          pin = Pin.new(id, latitude, longitude, taken_at)
+          pins << pin
+          buckets[cell] << pin
+        end
+      end
+
+      pins
     end
 
     def pins
-      @pins ||= build_pins.tap do |pins|
+      @pins ||= self.class.cluster(rows, radius: cluster_radius).tap do |pins|
         attach_covers(pins)
         attach_places(pins)
       end
@@ -136,86 +212,119 @@ module Photos
     def first_taken_at = pins.filter_map(&:first_taken_at).min
     def last_taken_at = pins.filter_map(&:last_taken_at).max
 
-    # The SVG window, widened from the default crop if any pin falls
-    # outside it. Returned as the viewBox string plus the aspect ratio the
-    # container needs, so the map is never letterboxed or squashed.
+    # The SVG window as a viewBox, plus the aspect ratio its container needs
+    # so the map is never letterboxed or squashed. The world view is
+    # full-width and crops the empty polar bands; a bounded view is whatever
+    # was asked for, padded.
     def view_box
-      top, bottom = window
-      "0 #{round(top)} #{WIDTH.to_i} #{round(bottom - top)}"
+      window.values_at(:x, :y, :width, :height).map { |value| round(value) }.join(" ")
     end
 
-    def aspect_ratio
-      top, bottom = window
-      (WIDTH / (bottom - top)).round(4)
-    end
+    def aspect_ratio = (window[:width] / window[:height]).round(4)
+
+    # Is this a zoomed view? The basemap uses it to decide how much coastline
+    # detail is worth drawing.
+    def zoomed? = window[:width] < WIDTH
 
     # A pin's position inside the current window, as CSS percentages.
     def position(pin)
-      top, bottom = window
-      { left: percent(pin.x / WIDTH), top: percent((pin.y - top) / (bottom - top)) }
+      { left: percent((pin.x - window[:x]) / window[:width]),
+        top: percent((pin.y - window[:y]) / window[:height]) }
+    end
+
+    # The window's own corners, for a caller that wants to hand this view to
+    # someone else as a link.
+    def bbox_param
+      south = 90.0 - ((window[:y] + window[:height]) / HEIGHT * 180.0)
+      north = 90.0 - (window[:y] / HEIGHT * 180.0)
+      west = (window[:x] / WIDTH * 360.0) - 180.0
+      east = ((window[:x] + window[:width]) / WIDTH * 360.0) - 180.0
+      [ south, west, north, east ].map { |value| value.round(4) }.join(",")
     end
 
     private
-      def window
-        @window ||= begin
-          top = (90.0 - DEFAULT_TOP_LAT) / 180.0 * HEIGHT
-          bottom = (90.0 - DEFAULT_BOTTOM_LAT) / 180.0 * HEIGHT
+      # The clustering distance is a distance *on screen*, not on Earth: at
+      # world zoom two pins 6 units apart nearly touch, and zoomed into one
+      # country the same 6 units would swallow it whole. Scaling by the
+      # window keeps a pin the same size in the reader's eye — which is why
+      # zooming in is what finally separates London from Paris.
+      #
+      # Only the bounded window is consulted: the default one is always
+      # full-width, and asking for it here would be circular, since it grows
+      # to fit the pins that clustering hasn't produced yet.
+      def cluster_radius = bounds ? CLUSTER_RADIUS * (window[:width] / WIDTH) : CLUSTER_RADIUS
 
-          pins.each do |pin|
-            top = [ pin.y - WINDOW_PADDING, 0.0 ].max if pin.y < top
-            bottom = [ pin.y + WINDOW_PADDING, HEIGHT ].min if pin.y > bottom
-          end
+      def window = @window ||= bounds ? bounded_window : default_window
 
-          [ top, bottom ]
+      # The whole world, minus the polar bands nobody's holiday snaps live
+      # in — but only as a default: a pin outside the crop pushes it back
+      # out rather than falling off the edge of its own map.
+      def default_window
+        top = (90.0 - DEFAULT_TOP_LAT) / 180.0 * HEIGHT
+        bottom = (90.0 - DEFAULT_BOTTOM_LAT) / 180.0 * HEIGHT
+
+        pins.each do |pin|
+          top = [ pin.y - WINDOW_PADDING, 0.0 ].max if pin.y < top
+          bottom = [ pin.y + WINDOW_PADDING, HEIGHT ].min if pin.y > bottom
         end
+
+        { x: 0.0, y: top, width: WIDTH, height: bottom - top }
+      end
+
+      # A requested box, padded so pins never sit on the edge, grown to a
+      # sane shape, and clamped to the world. It only ever grows: cropping
+      # would drop a photo out of a view that claims to hold it.
+      def bounded_window
+        x1, y1 = project(bounds[:north], bounds[:west])
+        x2, y2 = project(bounds[:south], bounds[:east])
+        left, right = [ x1, x2 ].minmax
+        top, bottom = [ y1, y2 ].minmax
+
+        pad = [ (right - left) * BOUNDS_PADDING, (bottom - top) * BOUNDS_PADDING, MIN_PADDING ].max
+        left -= pad
+        right += pad
+        top -= pad
+        bottom += pad
+
+        width, height = right - left, bottom - top
+        # A day in one city is a box a few hundred metres across; blown up
+        # to fill a card it would be a meaningless smear of coastline.
+        if width < MIN_SPAN
+          left -= (MIN_SPAN - width) / 2
+          width = MIN_SPAN
+        end
+        if height < MIN_SPAN / TARGET_ASPECT
+          top -= ((MIN_SPAN / TARGET_ASPECT) - height) / 2
+          height = MIN_SPAN / TARGET_ASPECT
+        end
+        # Grow the short side rather than squashing: the projection is only
+        # honest at its own aspect ratio.
+        if width / height > TARGET_ASPECT
+          grown = width / TARGET_ASPECT
+          top -= (grown - height) / 2
+          height = grown
+        elsif width / height < MIN_ASPECT
+          grown = height * MIN_ASPECT
+          left -= (grown - width) / 2
+          width = grown
+        end
+
+        width = [ width, WIDTH ].min
+        height = [ height, HEIGHT ].min
+        { x: left.clamp(0.0, WIDTH - width), y: top.clamp(0.0, HEIGHT - height),
+          width: width, height: height }
+      end
+
+      def project(latitude, longitude)
+        [ (longitude + 180.0) / 360.0 * WIDTH, (90.0 - latitude) / 180.0 * HEIGHT ]
       end
 
       def percent(fraction) = "#{(fraction * 100).round(4)}%"
-      def round(value) = value.round(2)
-
-      # Only the four columns clustering needs — a library with 40,000
-      # located photos would be 40,000 rows either way, but not 40,000
-      # instantiated models with their attachments in tow.
-      def rows
-        @rows ||= @scope.reorder(taken_at: :desc, id: :desc)
-          .pluck(:id, :latitude, :longitude, :taken_at)
-      end
-
-      # Greedy clustering against a spatial hash: each photo joins the first
-      # existing pin whose centre is within CLUSTER_RADIUS, or starts one.
-      # Cells are 2×the radius and seeds are indexed by their own cell, so a
-      # centroid can drift at most one cell from its seed — which is why
-      # scanning the 3×3 neighbourhood is exhaustive rather than merely
-      # likely.
-      def build_pins
-        buckets = Hash.new { |hash, key| hash[key] = [] }
-        pins = []
-
-        rows.each do |id, latitude, longitude, taken_at|
-          latitude = latitude.to_f
-          longitude = longitude.to_f
-          x = (longitude + 180.0) / 360.0 * WIDTH
-          y = (90.0 - latitude) / 180.0 * HEIGHT
-          cell = [ (x / CELL).floor, (y / CELL).floor ]
-
-          match = neighbours(buckets, cell).find do |pin|
-            Math.hypot(pin.x - x, pin.y - y) <= CLUSTER_RADIUS
-          end
-
-          if match
-            match.add(id, latitude, longitude, taken_at)
-          else
-            pin = Pin.new(id, latitude, longitude, taken_at)
-            pins << pin
-            buckets[cell] << pin
-          end
-        end
-
-        pins
-      end
-
-      def neighbours(buckets, (column, row))
-        (-1..1).flat_map { |dx| (-1..1).flat_map { |dy| buckets[[ column + dx, row + dy ]] } }
+      # Whole numbers stay whole: "0 22.22 1000 388.89" beats
+      # "0.0 22.22 1000.0 388.89" in a viewBox a person might read.
+      def round(value)
+        rounded = value.round(2)
+        rounded == rounded.to_i ? rounded.to_i : rounded
       end
 
       # One query for every pin's thumbnail rather than one per pin: the

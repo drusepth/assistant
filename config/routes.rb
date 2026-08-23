@@ -152,6 +152,10 @@ Rails.application.routes.draw do
       patch :apply_suggestion
     end
   end
+  # Trips are owner-only (D-travel-facet): a trip is a lens on photo
+  # coordinates, and those are owner-only under Q14.
+  resources :trips, except: :new
+
   resources :albums do
     member do
       post :add_photos
