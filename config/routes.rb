@@ -99,6 +99,7 @@ Rails.application.routes.draw do
     member do
       patch :log_contact
     end
+    resource :avatar, only: %i[ destroy ], module: :people
   end
   resources :goals do
     member do

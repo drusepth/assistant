@@ -132,6 +132,51 @@ class People::ImportTest < ActiveSupport::TestCase
     assert_not @user.people.exists?(phone: "+1 555 030 2000"), "nameless picker entries are skipped"
   end
 
+  # D-contact-photos: an address book arrives with faces, in the three
+  # shapes real exports use.
+  test "attaches vCard photos, base64 and data URI alike" do
+    import("contacts.vcf")
+
+    maria = @user.people.find_by!(name: "Maria Rivera")
+    assert maria.avatar.attached?, "ENCODING=b photo, folded across lines, should ride in"
+    assert_equal "image/png", maria.avatar.blob.content_type
+
+    assert @user.people.find_by!(name: "Folded Note Person").avatar.attached?,
+      "a vCard 4.0 data: URI photo should ride in too"
+  end
+
+  test "a photo that is only a link is left alone — no third-party fetch on import" do
+    import("contacts.vcf")
+
+    assert_not @user.people.find_by!(name: "Linh Nguyen").avatar.attached?
+  end
+
+  test "attaches the icon the phone's contact picker hands over" do
+    import("device_contacts.json")
+
+    nadia = @user.people.find_by!(name: "Nadia Osman")
+    assert nadia.avatar.attached?
+    assert_equal "image/png", nadia.avatar.blob.content_type
+    assert_not @user.people.find_by!(name: "Omar Haddad").avatar.attached?
+  end
+
+  test "a corrupt photo costs the contact its face, not the import" do
+    vcf = <<~VCF
+      BEGIN:VCARD
+      VERSION:3.0
+      FN:Broken Photo
+      PHOTO;ENCODING=b;TYPE=JPEG:not-actually-base64!!
+      END:VCARD
+    VCF
+
+    result = assert_difference("@user.people.count", 1) do
+      People::Import.new(user: @user, content: vcf, filename: "broken.vcf").call
+    end
+
+    assert_equal 1, result.imported
+    assert_not @user.people.find_by!(name: "Broken Photo").avatar.attached?
+  end
+
   test "skips contacts already in the address book by name" do
     @user.people.create!(name: "Maria Rivera", phone: "keep me")
 

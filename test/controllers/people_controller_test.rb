@@ -41,6 +41,56 @@ class PeopleControllerTest < ActionDispatch::IntegrationTest
     assert_match "Who are they?", response.body
   end
 
+  # D-people-auto-filing: the edit form used to open on two dozen section
+  # checkboxes. They're still reachable, just not the first thing you meet.
+  test "the edit form leads with filing, not a wall of checkboxes" do
+    person = users(:one).people.create!(name: "Mom")
+
+    get edit_person_path(person)
+    assert_response :success
+    assert_match "Your assistant files this contact into sections", response.body
+    assert_match "Choose sections yourself", response.body
+  end
+
+  test "unticking every section hands the contact back to the assistant" do
+    person = users(:one).people.create!(name: "Dr. Alvarez")
+    person.sections << sections(:health)
+
+    assert_enqueued_with(job: CategorizePersonJob) do
+      patch person_path(person), params: { person: { name: "Dr. Alvarez", section_ids: [ "" ] } }
+    end
+    assert_empty person.reload.sections
+  end
+
+  test "editing a filed contact leaves their sections alone" do
+    person = users(:one).people.create!(name: "Dr. Alvarez")
+    person.sections << sections(:health)
+
+    assert_no_enqueued_jobs(only: CategorizePersonJob) do
+      patch person_path(person), params: { person: { phone: "+1 555 010 9000", section_ids: [ sections(:health).id ] } }
+    end
+    assert_equal [ sections(:health) ], person.reload.sections.to_a
+  end
+
+  # D-contact-photos: a face for every contact, not only the ones with a login.
+  test "uploads and removes a contact photo" do
+    person = users(:one).people.create!(name: "Mom")
+
+    patch person_path(person), params: { person: { avatar: contact_photo } }
+    assert person.reload.avatar.attached?
+
+    delete person_avatar_path(person)
+    assert_redirected_to edit_person_path(person)
+    assert_not person.reload.avatar.attached?
+  end
+
+  test "a contact photo is only ever your own contact's" do
+    other = users(:two).people.create!(name: "Bob's friend")
+
+    delete person_avatar_path(other)
+    assert_response :not_found
+  end
+
   test "index shows only visible people" do
     users(:one).people.create!(name: "My Doctor")
     users(:two).people.create!(name: "Bob's Dentist")
@@ -50,4 +100,9 @@ class PeopleControllerTest < ActionDispatch::IntegrationTest
     assert_match "My Doctor", response.body
     assert_no_match "Bob&#39;s Dentist", response.body
   end
+
+  private
+    def contact_photo
+      fixture_file_upload("photo.jpg", "image/jpeg")
+    end
 end

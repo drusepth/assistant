@@ -1,5 +1,10 @@
+<%# The section checkbox list. Pass legend: nil to drop the "Sections"
+    heading when the surrounding markup already says so (people/_filing). %>
 <fieldset class="space-y-1">
-  <legend class="label">Sections</legend>
+  <% legend = local_assigns.fetch(:legend, "Sections") %>
+  <% if legend %>
+    <legend class="label"><%= legend %></legend>
+  <% end %>
   <div class="flex flex-wrap gap-1.5">
     <%= form.collection_check_boxes :section_ids, Section.order(:parent_id, :position), :id, :qualified_name do |builder| %>
       <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge px-2.5 py-1 text-xs font-medium text-soft has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 has-[:checked]:text-primary-800">

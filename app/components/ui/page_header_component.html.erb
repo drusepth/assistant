@@ -1,12 +1,15 @@
 <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-  <div>
-    <h1 class="text-2xl font-bold tracking-tight text-ink"><%= title %></h1>
-    <% if subtitle %>
-      <p class="mt-1 text-sm text-soft"><%= subtitle %></p>
-    <% end %>
-    <% if meta? %>
-      <p class="mt-1.5 text-sm text-soft"><%= meta %></p>
-    <% end %>
+  <div class="flex items-center gap-3">
+    <%= avatar if avatar? %>
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-ink"><%= title %></h1>
+      <% if subtitle %>
+        <p class="mt-1 text-sm text-soft"><%= subtitle %></p>
+      <% end %>
+      <% if meta? %>
+        <p class="mt-1.5 text-sm text-soft"><%= meta %></p>
+      <% end %>
+    </div>
   </div>
   <% if actions? %>
     <div class="flex flex-wrap items-center gap-2"><%= actions %></div>

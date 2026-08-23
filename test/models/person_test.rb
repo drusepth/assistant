@@ -6,6 +6,21 @@ require "test_helper"
 class PersonTest < ActiveSupport::TestCase
   setup { @user = users(:one) }
 
+  # D-contact-photos: the same attachment and guardrails a member's photo
+  # gets, on a record that has no login behind it.
+  test "a contact photo has to be an image the app can render" do
+    person = @user.people.new(name: "Mom")
+    person.avatar.attach(io: StringIO.new("not an image"), filename: "notes.txt", content_type: "text/plain")
+
+    assert_not person.valid?
+    assert_match(/PNG, JPEG, WEBP, or GIF/, person.errors.full_messages.to_sentence)
+  end
+
+  test "initials stand in for a contact with no photo" do
+    assert_equal "DR", @user.people.new(name: "dana reed").initials
+    assert_not @user.people.new(name: "Dana Reed").avatar_ready?
+  end
+
   test "circle is the flagged subset, stalest first with never-logged last" do
     fresh = @user.people.create!(name: "Fresh", keep_in_touch: true, last_contacted_on: 1.week.ago.to_date)
     stale = @user.people.create!(name: "Stale", keep_in_touch: true, last_contacted_on: 3.months.ago.to_date)

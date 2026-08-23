@@ -82,6 +82,15 @@ module Users
           zip.write(recipe.image.download)
         end
 
+        # Your address book's faces travel with it (D-contact-photos), by
+        # the same rule as the rest of the archive: originals, not variants.
+        @user.people.includes(avatar_attachment: :blob).find_each do |person|
+          next unless person.avatar.attached?
+
+          zip.put_next_entry(contact_photo_entry_name(person))
+          zip.write(person.avatar.download)
+        end
+
         # Your face is yours too (D-user-avatars) — the original, not the
         # square the app renders.
         if @user.avatar.attached?
@@ -99,7 +108,7 @@ module Users
           user: { name: @user.name, email_address: @user.email_address,
                   avatar: (avatar_entry_name if @user.avatar.attached?) }.compact,
           household: @user.household.name,
-          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/", "recipe_files/" ],
+          contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/", "recipe_files/", "contact_photos/" ],
           credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked"
         }
       end
@@ -112,6 +121,7 @@ module Users
         row["sections"] = record.sections.map(&:slug) if record.respond_to?(:sections)
         row["file"] = file_entry_name(record) if record.is_a?(Document) && record.file.attached?
         row["file"] = photo_entry_name(record) if record.is_a?(Photo) && record.image.attached?
+        row["photo"] = contact_photo_entry_name(record) if record.is_a?(Person) && record.avatar.attached?
         row["photo_ids"] = record.photo_ids if record.is_a?(Album)
         # A recipe without its ingredients isn't a recipe: the rows travel
         # inline, raw line included, so an importer can take either the
@@ -134,6 +144,10 @@ module Users
 
       def recipe_image_entry_name(recipe)
         "recipe_files/#{recipe.id}-#{recipe.image.filename}"
+      end
+
+      def contact_photo_entry_name(person)
+        "contact_photos/#{person.id}-#{person.avatar.filename}"
       end
 
       def avatar_entry_name

@@ -1,0 +1,32 @@
+<%# Sections on a contact are the assistant's job, not a form to fill in
+    (D-people-auto-filing): a picker listing every section and subsection
+    was two dozen checkboxes standing between "Mom" and a saved contact.
+    The tags still exist — they're the lens model — they're just filed for
+    you, with the manual list one click away for when you disagree. %>
+<% model_configured = auto_sort_enabled? %>
+<fieldset class="space-y-1">
+  <legend class="label">Sections</legend>
+  <% if person.sections.any? %>
+    <div class="flex flex-wrap items-center gap-1.5">
+      <% person.sections.each do |section| %>
+        <%= render Ui::SectionChipComponent.new(section: section) %>
+      <% end %>
+    </div>
+  <% elsif model_configured %>
+    <p class="hint">Your assistant files this contact into sections when you save — Health for a doctor, People · Church for someone from church.</p>
+  <% else %>
+    <p class="hint">Nothing files contacts automatically yet — <%= link_to "connect a model in Settings", settings_path, class: "text-primary-700 hover:underline" %>, or choose sections yourself.</p>
+  <% end %>
+
+  <%# Closed even when no model is configured to file them: the ask was to
+      stop meeting a wall of checkboxes, and the line above says where to
+      turn filing on. One click still gets the whole taxonomy. %>
+  <details class="group">
+    <summary class="cursor-pointer list-none pt-1 text-xs font-medium text-primary-700 hover:underline">
+      <span class="group-open:hidden">Choose sections yourself</span>
+      <span class="hidden group-open:inline">Hide sections</span>
+    </summary>
+    <div class="mt-2"><%= render "shared/section_picker", form: form, legend: nil %></div>
+    <p class="hint mt-2">Anything you tick here is yours — the assistant leaves a contact alone once you've filed them. Untick everything to hand them back.</p>
+  </details>
+</fieldset>
