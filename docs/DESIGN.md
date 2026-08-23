@@ -148,6 +148,20 @@ The check that matters is the page's own width: on a phone
 `document.documentElement.scrollWidth` must equal the viewport width. Any
 excess means something in the page is refusing to shrink.
 
+And one rule about *reach* rather than fit:
+
+- **A control every page needs belongs near the bottom.** A phone is ~900
+  points tall and held one-handed; the top corners are the part of the
+  screen a thumb cannot get to without regripping. The nav drawer's opener
+  is the standing example — it exists twice on purpose (the header
+  hamburger where the eye looks for a menu, and a floating one at
+  `bottom-left` where the thumb already is), and the mobile layout test
+  pins the bottom-anchored half. Anything fixed to the foot of the screen
+  offsets by `env(safe-area-inset-bottom)` or it sits under the home
+  indicator. Gestures may *shortcut* such a control but never replace it:
+  both mobile browsers swallow the left-edge drag for their own back
+  gesture, and an invisible affordance is no affordance at all.
+
 ## Conventions
 
 - Views never hand-roll buttons/inputs/cards — use atoms and components.
