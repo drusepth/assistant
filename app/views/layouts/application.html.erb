@@ -33,6 +33,7 @@
 
   <body class="bg-canvas text-ink antialiased">
     <% if authenticated? %>
+      <%= render "shared/celebration" %>
       <div data-controller="nav" data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close">
         <header class="sticky top-0 z-20 flex items-center gap-1 bg-surface px-2 py-1.5 lg:hidden print:hidden">
           <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink"
