@@ -34,16 +34,42 @@ module ChatHelper
   # notice (the app talking, never either side) breaks it from both directions.
   GROUP_WINDOW = 5.minutes
 
-  Turn = Data.define(:message, :continues, :ends_group)
+  # A gap worth marking. Above this — or across a date boundary — the
+  # transcript says when, the way every messaging app does, so a conversation
+  # picked up the next morning doesn't read as one unbroken breath. It is also
+  # the timestamp a phone can actually see: the per-turn ones are small and
+  # quiet by design, and were hover-only until this pass.
+  DIVIDER_GAP = 1.hour
+
+  Turn = Data.define(:message, :continues, :ends_group, :divider)
 
   def chat_turns(messages)
     messages.each_with_index.map do |message, index|
+      previous = index.positive? ? messages[index - 1] : nil
+
       Turn.new(
         message: message,
-        continues: index.positive? && chat_grouped?(messages[index - 1], message),
-        ends_group: !chat_grouped?(message, messages[index + 1])
+        continues: previous.present? && chat_grouped?(previous, message),
+        ends_group: !chat_grouped?(message, messages[index + 1]),
+        divider: chat_divider(previous, message)
       )
     end
+  end
+
+  # "Today · 2:45 PM", "Yesterday · 9:12 AM", "Tuesday · 8:30 PM",
+  # "12 August · 8:30 PM" — the day only as precisely as it needs to be, which
+  # is how people say it.
+  def chat_moment(time)
+    date = time.to_date
+    day =
+      if date == Date.current then "Today"
+      elsif date == Date.yesterday then "Yesterday"
+      elsif date > 6.days.ago.to_date then time.strftime("%A")
+      elsif date.year == Date.current.year then time.strftime("%-d %B")
+      else time.strftime("%-d %B %Y")
+      end
+
+    "#{day} · #{time.strftime("%-l:%M %p")}"
   end
 
   def chat_body(text)
@@ -94,6 +120,17 @@ module ChatHelper
   end
 
   private
+    # The first turn on screen always carries one: with a windowed transcript
+    # the top of the page is wherever the reader came in, and a conversation
+    # that opens with no date at all is disorienting.
+    def chat_divider(earlier, later)
+      return chat_moment(later.created_at) if earlier.nil?
+      return nil if later.created_at - earlier.created_at < DIVIDER_GAP &&
+        earlier.created_at.to_date == later.created_at.to_date
+
+      chat_moment(later.created_at)
+    end
+
     def chat_grouped?(earlier, later)
       return false if earlier.nil? || later.nil?
       return false if earlier.notice_role? || later.notice_role?

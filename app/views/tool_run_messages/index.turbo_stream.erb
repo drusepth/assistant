@@ -5,8 +5,8 @@
     reader's place once. %>
 <%= turbo_stream.after("chat-earlier") do %>
   <% chat_turns(@messages).each do |turn| %>
-    <%= render "tool_runs/message", message: turn.message,
-          continues: turn.continues, ends_group: turn.ends_group %>
+    <%= render "tool_runs/message", message: turn.message, continues: turn.continues,
+          ends_group: turn.ends_group, divider: turn.divider %>
   <% end %>
 <% end %>
 

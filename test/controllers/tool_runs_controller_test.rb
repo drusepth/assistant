@@ -101,6 +101,33 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#chat-msg-#{message.id}"
   end
 
+  test "the transcript says when, and lets you take an answer with you" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Yesterday's line", created_at: 1.day.ago)
+    run.tool_run_messages.create!(role: :user, content: "Today's line")
+
+    get tool_run_path(run)
+
+    # A divider at the top, and another where the day turned over.
+    assert_select ".chat-divider", count: 2
+    assert_select ".chat-divider", text: /Yesterday · /
+    assert_select ".chat-divider", text: /Today · /
+    # Copy is offered on the assistant's turn and not on the user's own words.
+    assert_select "[data-controller=clipboard][data-clipboard-text-value=?]", "Yesterday's line"
+    assert_select "[data-clipboard-text-value=?]", "Today's line", count: 0
+  end
+
+  test "a failed turn keeps its retry attached to the notice, not orphaned" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :user, content: "Still there?")
+    run.tool_run_messages.create!(role: :notice, content: "Something went wrong — send another message.")
+
+    get tool_run_path(run)
+
+    assert_select "#chat-transcript form[action=?]", retry_reply_tool_run_path(run)
+    assert_select "#chat-transcript span.animate-bounce", count: 0
+  end
+
   test "new 404s for an unknown tool" do
     get new_tool_run_path("nonsense")
     assert_response :not_found

@@ -18,13 +18,16 @@ class MobileLayoutTest < ActiveSupport::TestCase
   # iPhone, which is exactly the kind of regression a pin is for. Source-level
   # again: the rule lives in the stylesheet, and nothing rendered can see it.
   test "fields are at least 16px on a touch device, or iOS zooms and stays zoomed" do
-    css = Rails.root.join("app/assets/tailwind/application.css").read
-    rule = css[/@media \(pointer: coarse\)\s*\{(.+?)\n\}/m, 1]
+    blocks = coarse_pointer_blocks(Rails.root.join("app/assets/tailwind/application.css").read)
+    assert blocks.any?, "no (pointer: coarse) block in application.css — the iOS zoom fix is gone"
 
-    assert rule, "no (pointer: coarse) block in application.css — the iOS zoom fix is gone"
-    assert_match(/\.input\b/, rule, "`.input` no longer gets its touch font size")
-    assert_match(/\.composer-input\b/, rule, "`.composer-input` no longer gets its touch font size")
-    assert_match(/font-size:\s*(1rem|16px)/, rule, "the touch font size is below 16px again")
+    %w[ .input .composer-input ].each do |selector|
+      rule = blocks.find { |block| block.match?(/#{Regexp.escape(selector)}[\s,{]/) }
+
+      assert rule, "`#{selector}` no longer gets a touch font size — iOS will zoom on it and stay zoomed"
+      assert_match(/font-size:\s*(1rem|1[6-9]px|[2-9]\d px)/x, rule,
+        "`#{selector}`'s touch font size dropped below 16px again")
+    end
   end
 
   test "every grid names its base column count" do
@@ -58,6 +61,22 @@ class MobileLayoutTest < ActiveSupport::TestCase
   end
 
   private
+    # Every `@media (pointer: coarse)` block in the sheet, brace-matched.
+    # There is more than one of them now (the chat has its own), so finding
+    # "the" block with a regex quietly checks the wrong one.
+    def coarse_pointer_blocks(css)
+      css.enum_for(:scan, /@media \(pointer: coarse\)\s*\{/).map { Regexp.last_match.end(0) }.map do |start|
+        depth = 1
+        index = start
+        while depth.positive? && index < css.length
+          depth += 1 if css[index] == "{"
+          depth -= 1 if css[index] == "}"
+          index += 1
+        end
+        css[start...(index - 1)]
+      end
+    end
+
     def class_attributes_in(paths)
       paths.flat_map do |path|
         relative = path.relative_path_from(Rails.root)

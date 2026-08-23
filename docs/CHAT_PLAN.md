@@ -337,23 +337,43 @@ browser, invisible to every test.
 Grouping is the one thing the client can't know, so a sent turn always draws
 standing alone and settles into its group when the morph lands.
 
-### W3 — The conversation reads like a conversation
+### W3 — The conversation reads like a conversation — **built**
 
 - **Time dividers**: a centered date/time line when the gap between turns
   exceeds an hour, and a day line across sessions — the native pattern.
   Per-message timestamps stop depending on hover: tap a bubble to reveal its
-  time (and keep the hover reveal on pointer-fine devices).
+  time (and keep the hover reveal on pointer-fine devices). — *Built, with the
+  tap-to-reveal replaced by something simpler and better: on a coarse pointer
+  the group's timestamp is **always** legible, and it stays hover-revealed on a
+  fine one. A tap gesture whose only affordance is "try tapping" is not
+  discoverable, and one line per group of turns is not clutter. The divider
+  says the day only as precisely as it needs to — "Today · 2:45 PM",
+  "Yesterday · 9:12 AM", "Tuesday · 8:30 PM", "12 August 2024 · 8:30 PM" — and
+  the first turn on screen always carries one, because with a windowed
+  transcript the top of the page is wherever the reader came in.*
 - **Copy** on assistant turns — a small button on the bubble, always present
-  on touch, hover-revealed on desktop.
+  on touch, hover-revealed on desktop. — *Built, riding the app's existing
+  `clipboard` controller rather than a new one; it sits in the same footer line
+  as the timestamp and follows the same quiet-on-a-pointer rule.*
 - Failure and notice rows restyled as one system line with the retry attached,
-  rather than a centered orphan button.
+  rather than a centered orphan button. — *Built.*
 - Recap affordance: on `:screen` mobile it lives in the overflow menu; the
-  three-line hint copy shortens.
+  three-line hint copy shortens. — *Built (the menu landed with W1).*
 - Haptic tick on send where `navigator.vibrate` exists (guarded; iOS ignores
-  it and that's fine).
-- `text-size-adjust: 100%` in the base layer.
+  it and that's fine). — *Built.*
+- `text-size-adjust: 100%` in the base layer. — *Built. Worth stating what it
+  is and isn't: the app already sizes everything in `rem`, so it honours the
+  reader's own font setting; this only stops the browser adding a second,
+  uninvited scaling on top. Genuine iOS Dynamic Type is a different and much
+  larger problem, and this is not it.*
 - The jump-to-latest pill gains an unread count ("2 new") and sits above the
-  composer, inside the safe area.
+  composer, inside the safe area. — *Built, and it turned up a cascade trap the
+  rail had already hit once: adding an `inline-flex` utility beside `hidden`
+  put two `display` utilities in the same layer, where the winner is decided by
+  Tailwind's own property sort rather than by the order they are written — so
+  the pill was permanently visible. The layout moved into a `.chat-jump` atom
+  in `@layer components`, which cascades before utilities, and `hidden` wins
+  again. Caught by looking at a screenshot, not by a test.*
 
 ### W4 — Streaming (D-chat-stream)
 
@@ -522,7 +542,8 @@ its fade to nothing and the banner would have vanished before it was read.
   of speaker, on a five-minute silence (yesterday's last word and today's first
   are not one utterance), and on a notice from either side.
 - `.bubble`'s `max-w-[85%]` gets a `ch`-based cap too, so a reply on a wide
-  desktop card isn't a 120-character line.
+  desktop card isn't a 120-character line. — *Built (`min(85%, 46ch)` from `sm`
+  up; measured at 338px of a 704px card).*
 - `chat_input_controller`'s `pointer: coarse` test treats a tablet with a
   keyboard attached as touch, so Enter never sends there. Detect the
   keyboard, not the pointer. — *Built, and the detection is **learned rather
@@ -534,9 +555,14 @@ its fade to nothing and the banner would have vanished before it was read.
   it for good, remembered in `localStorage`.*
 - Focus and announcement when the `:screen` layout mounts; `aria-live` held
   quiet *during* a stream and announced once on completion, so a screen
-  reader isn't read the reply 80 milliseconds at a time.
+  reader isn't read the reply 80 milliseconds at a time. — *Deferred to W4 on
+  purpose: there is no stream yet, and the second half of this is a rule about
+  streaming. The composer already takes focus on a pointer device.*
 - Respect the user's font scale in the transcript rather than pinning
-  `text-sm` — the app's accessibility floor, exposed here first.
+  `text-sm` — the app's accessibility floor, exposed here first. — *Already
+  true, and the bullet was wrong to imply otherwise: `text-sm` is `0.875rem`,
+  which scales with the reader's browser font size. What was missing was the
+  `text-size-adjust` guard above.*
 
 ### What cannot be tested from this machine
 

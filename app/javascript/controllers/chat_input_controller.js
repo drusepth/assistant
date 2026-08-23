@@ -155,6 +155,10 @@ export default class extends Controller {
       transcript.appendChild(this.thinkingTemplateTarget.content.firstElementChild.cloneNode(true))
     }
 
+    // The tick a messaging app gives you when the message leaves. Android and
+    // desktop Chrome have it, iOS does not, and a missing buzz is no loss.
+    navigator.vibrate?.(8)
+
     this.lock()
   }
 

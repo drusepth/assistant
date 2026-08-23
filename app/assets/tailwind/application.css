@@ -100,6 +100,14 @@
    opt-in now, via the `.display` atom below — see docs/DESIGN.md.
    ========================================================================== */
 @layer base {
+  /* Phones rescale text in a rotated page unless told not to. The app already
+     sizes everything in rem, so it honours the reader's own font setting; this
+     stops the *browser* adding a second, uninvited scaling on top. */
+  html {
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
   /* The app's own chrome above the page, as one number rather than a guess
      repeated in two places: the mobile header sets its height from this, and
      `.chat-screen` subtracts it. The rail is beside the content, not above
@@ -335,6 +343,51 @@
   }
   .bubble-assistant-tail {
     @apply rounded-bl-md;
+  }
+  /* On a phone 85% of the page is a sane line; on a wide card it is a
+     120-character one. The reading measure wins wherever there is room. */
+  @media (width >= 40rem) {
+    .bubble {
+      max-width: min(85%, 46ch);
+    }
+  }
+
+  /* When it was said, under the last turn of a run.
+
+     Quiet on a pointer — revealed by hovering the turn, which is where it
+     belongs when a mouse can ask — and *always legible on a touch device*,
+     which had no hover and therefore no way to see it at all: a phone user
+     genuinely could not tell when anything in this app was said. */
+  .chat-time {
+    @apply mt-1 flex items-center gap-2 px-1 text-[0.6875rem] text-soft opacity-0 transition-opacity;
+  }
+  .group:hover .chat-time {
+    opacity: 1;
+  }
+  @media (pointer: coarse) {
+    .chat-time {
+      opacity: 1;
+    }
+  }
+
+  /* The way back down to the newest turn, with a count of what arrived while
+     the reader was up in the history ("2 new" is the difference between a
+     button they might press and one they know they want).
+
+     The layout lives here rather than in the view for a cascade reason the
+     rail already ran into: `@layer components` cascades *before* utilities, so
+     a `hidden` in the markup beats this `display` — while an `inline-flex`
+     utility beside `hidden` is the same layer and the winner is decided by
+     Tailwind's own property sort, not by the order they are written in. Put
+     the display here and `hidden` reliably wins. */
+  .chat-jump {
+    @apply absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-edge bg-surface py-2 pl-2 pr-2 text-xs font-medium text-soft shadow-sm transition-colors hover:text-ink;
+  }
+
+  /* An hour's silence, or a new day. The line every messaging app draws, and
+     the timestamp that needs no hover and no tap to read. */
+  .chat-divider {
+    @apply mt-5 mb-1 text-center text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-soft;
   }
   /* One rounded field holding the growing textarea and its send button, with
      the focus ring on the whole thing — the shape every chat box has. */

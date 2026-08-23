@@ -8,17 +8,21 @@ import { Controller } from "@hotwired/stimulus"
 // bottom, and stop following — offering a way back — the moment they scroll
 // up into history.
 export default class extends Controller {
-  static targets = ["scroller", "jump"]
+  static targets = ["scroller", "jump", "unread"]
   static values = { threshold: { type: Number, default: 64 } }
 
   connect() {
     this.pinned = true
+    this.unread = 0
     requestAnimationFrame(() => this.scrollToBottom("auto"))
 
     // A morphing page refresh (a sent message, an arriving reply) leaves this
     // element in place, so connect() won't run again — the observer is what
     // notices the new turn and follows it down.
-    this.observer = new MutationObserver(() => this.follow())
+    this.observer = new MutationObserver((records) => {
+      if (!this.pinned && !this.anchor) this.countArrivals(records)
+      this.follow()
+    })
     this.observer.observe(this.scrollerTarget, { childList: true, subtree: true, characterData: true })
   }
 
@@ -29,6 +33,10 @@ export default class extends Controller {
   }
 
   track() {
+    // Reaching the bottom by hand is as much "I have seen it" as pressing the
+    // button would be.
+    if (!this.autoScrolling && this.distanceFromBottom <= this.thresholdValue) this.unread = 0
+
     // A smooth scroll of our own fires scroll events the whole way down,
     // every one of them "far from the bottom" — reading those as the user
     // leaving would unpin the transcript mid-follow.
@@ -40,8 +48,23 @@ export default class extends Controller {
 
   jump() {
     this.pinned = true
+    this.unread = 0
     this.scrollToBottom("smooth")
     this.refreshJump()
+  }
+
+  // A turn that arrives while the reader is up in the history is news, and
+  // "3 new" is the difference between a button they might press and one they
+  // know they want. Older turns loaded by the seam are not arrivals, which is
+  // why this is skipped while an anchor is pending.
+  countArrivals(records) {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        // By id rather than by class: a morph matches existing turns to
+        // themselves, so only a genuinely new one is an added node here.
+        if (node.nodeType === Node.ELEMENT_NODE && node.id?.startsWith("chat-msg-")) this.unread += 1
+      }
+    }
   }
 
   // Loading older turns inserts content *above* the reader, which without
@@ -93,6 +116,10 @@ export default class extends Controller {
     if (!this.hasJumpTarget) return
 
     this.jumpTarget.classList.toggle("hidden", this.pinned || !this.scrollable)
+
+    if (!this.hasUnreadTarget) return
+    this.unreadTarget.textContent = this.unread > 0 ? `${this.unread} new` : ""
+    this.unreadTarget.hidden = this.unread === 0
   }
 
   get distanceFromBottom() {
