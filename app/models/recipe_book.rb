@@ -19,8 +19,11 @@ class RecipeBook < ApplicationRecord
   def cover
     return cover_recipe if cover_recipe
 
-    recipes.with_attached_image.order(created_at: :desc)
-      .find { |recipe| recipe.image.attached? } || recipes.order(created_at: :desc).first
+    # Sorted in Ruby on purpose: the index preloads recipes and their
+    # attachments, and re-querying here would be an N+1 per book card.
+    candidates = (recipes.loaded? ? recipes.to_a : recipes.with_attached_image.to_a)
+      .sort_by { |recipe| -recipe.created_at.to_i }
+    candidates.find { |recipe| recipe.image.attached? } || candidates.first
   end
 
   private

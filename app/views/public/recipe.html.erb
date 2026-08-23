@@ -16,7 +16,7 @@
 
 <% if @recipe.image.attached? %>
   <%= image_tag url_for(@recipe.image.variant(:hero)), alt: @recipe.title,
-        class: "mb-6 w-full rounded-2xl object-cover" %>
+        class: "mb-6 max-h-80 w-full rounded-2xl object-cover print:max-h-48" %>
 <% end %>
 
 <% if @recipe.description.present? %>
@@ -57,4 +57,4 @@
   </p>
 <% end %>
 
-<%= render "public/footer" %>
+<%= render "public/footer", portable: true %>

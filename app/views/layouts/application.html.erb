@@ -34,7 +34,7 @@
   <body class="bg-canvas text-ink antialiased">
     <% if authenticated? %>
       <div data-controller="nav" data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close">
-        <header class="sticky top-0 z-20 flex items-center gap-1 bg-surface px-2 py-1.5 lg:hidden">
+        <header class="sticky top-0 z-20 flex items-center gap-1 bg-surface px-2 py-1.5 lg:hidden print:hidden">
           <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink"
                   data-action="nav#toggle" aria-label="Open menu">
             <%= icon(:bars_3, css_class: "size-6") %>
@@ -51,7 +51,7 @@
         <%# The rail. `nav-rail` + data-nav-collapsed drive the desktop
             icon-only mode from one attribute (see application.css) so the
             labels don't each need a class toggled onto them. %>
-        <aside class="nav-rail fixed inset-y-0 left-0 z-40 flex h-dvh w-64 shrink-0 -translate-x-full flex-col bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-[width] lg:duration-200 lg:data-[nav-collapsed=true]:w-[68px]"
+        <aside class="nav-rail print:hidden fixed inset-y-0 left-0 z-40 flex h-dvh w-64 shrink-0 -translate-x-full flex-col bg-surface transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:transition-[width] lg:duration-200 lg:data-[nav-collapsed=true]:w-[68px]"
                data-nav-target="drawer" data-nav-collapsed="false">
           <div class="flex items-center justify-between gap-1 pr-2 lg:pr-3">
             <%= link_to root_path, class: "flex min-w-0 items-center gap-2 px-6 py-5 lg:px-5" do %>

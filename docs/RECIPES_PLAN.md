@@ -75,6 +75,12 @@ one real modelling call here, and it follows from what each half is *for*:
   keeps the editor a textarea, and the show page renders the numbered list by
   splitting it.
 
+**Component dividers are rows, not ingredients.** "For the sauce:" appears
+in almost every recipe with more than one part; unmarked it became a
+pseudo-ingredient whose `item_key` would pollute the column the pantry match
+is built on. A `heading` flag keeps it in the list where the cook expects
+it, out of everything that shops or scales.
+
 **Capture stays a paste** (D16). The ingredients field is one textarea, one
 ingredient per line, parsed by a deterministic parser (`Recipes::Parse`) on
 save — quantities including `1 1/2`, `½`, and `2-3`; a canonical unit table
@@ -114,8 +120,11 @@ share_links: user, subject (polymorphic), token, label, expires_at,
 ```
 
 - **Allowlisted subjects.** `ShareLink::SHAREABLE_TYPES = %w[Recipe
-  RecipeBook]`, enforced by a validation *and* by the controller's lookup
-  table. This is a public, unauthenticated read path; it must never become a
+  RecipeBook Album]`, enforced by a validation *and* by the controller's
+  lookup table. Photo albums joined on exactly the same terms — the
+  container, its own owner's contents, stripped variants only — which is
+  the point of the allowlist: a new type inherits the plumbing instead of
+  growing a second mechanism. This is a public, unauthenticated read path; it must never become a
   generic one that a later feature can accidentally point at a medical
   document. Adding a type to that list is a decision, made once, on purpose.
 - **Unguessable and revocable.** A 24-character `has_secure_token` (~140 bits)
@@ -124,8 +133,17 @@ share_links: user, subject (polymorphic), token, label, expires_at,
 - **Read-only and minimal.** The public page renders on its own bare layout:
   the dish, the ingredients, the method, the notes, the source, and "shared by
   <first name>". No section chips, no email addresses, no other recipes, no
-  app navigation, no way in. `X-Robots-Tag: noindex, nofollow` so a forwarded
-  link doesn't become a search result.
+  app navigation, no way in, and no JavaScript at all. `X-Robots-Tag:
+  noindex, nofollow` so a forwarded link doesn't become a search result. An
+  album link shows the album's photos as the same stripped WEBP variants a
+  household grantee sees — never the originals, never the coordinates.
+- **Take-it-with-you.** The same token asked for as JSON is an
+  `assistant-recipe` envelope: one recipe, or a whole book. A recipient who
+  also runs this app pastes the *link* into their own import and it lands in
+  their box, parsed by their own parser — the only federation this app
+  should ever have. Albums have no envelope (photos aren't text), and the
+  envelope is read as hostile input on arrival: fields allowlisted, types
+  coerced, lengths and counts capped, only http(s) surviving as a link.
 - **Visible, like every other grant (D9).** Links are listed on the item they
   share with their label, view count, and last view, and revoked from there.
   A link is a thing the user made and can see — never an ambient setting.
@@ -255,6 +273,14 @@ quantify are shown unchanged — never invented.
 Owner-only, below: **Sharing** (the standard household card, plus the
 share-link card), Cooked it, Edit, Delete.
 
+### Getting a recipe in
+
+Three doors, in the order people actually use them: **a link** (fetched by
+the app, read by the model, ~15 seconds), **a paste** (same pipeline, no
+fetch), and **typing it in** (the form below, which is also where every
+import lands for review). A share link from someone else's instance is a
+fourth door that skips the model entirely.
+
 ### Capture and edit
 
 One form. Title, an optional photo, servings and times, source, then two
@@ -290,14 +316,19 @@ exists on the two allowlisted types.
 Every one of these degrades to something useful with **no model configured**,
 because the arithmetic half is deterministic:
 
-1. **Paste-import a recipe** (`import_recipe`, draft tool). Input: a blob of
-   pasted text (a blog page, a forwarded email, a photo of an index card when
-   the profile is vision-capable). One call returns the DRAFT-shaped JSON —
-   title, servings, times, ingredient lines, method — which lands as an
-   *unsaved* recipe form for the user to confirm (D6: the model proposes, the
-   human saves). Ingredient lines still go through the deterministic parser.
-   Without a model, the paste box is still there: it just goes straight into
-   the ingredients textarea.
+1. **Import a recipe** — ✅ built. A link or a pasted page. The link is
+   fetched *by the app* through the existing SSRF-guarded `Web::Fetch`, so
+   the model never drives a connection (D-career-web); a deterministic
+   splitter (`Recipes::Split`) finds the Ingredients/Method seams first and
+   hands the model just the recipe, which drops the memoir and the comment
+   mine and leaves the prompt budget for the food. The model's whole job is
+   to re-emit clean ingredient *lines*; the app's own parser then reads the
+   numbers, so an imported recipe and a typed one are the same object with
+   no second, softer parser to keep in step. With no model configured the
+   splitter *is* the import. Imports land on the document-analysis pattern
+   (row first, job fills it, failure visible with a retry) and carry a
+   review banner until the cook has been through them. A photo of an index
+   card is the remaining tier, waiting on the vision toggle.
 2. **What can I make?** (`whats_for_dinner`). SQL ranks the user's visible
    recipes by the fraction of non-optional ingredients whose `item_key` is in
    the pantry, with "missing 1" and "missing 2" tiers. That list *is* the
@@ -337,10 +368,11 @@ shippable.
 | **W1 — the primitive** | `recipes` + `recipe_ingredients`, `Recipes::Parse`, model + `Visible`/`Sectionable`, CRUD, library with search/filters, show page with servings scaling, cook log, sidebar entry | ✅ built |
 | **W2 — books + household sharing** | `recipe_books` + entries, the book-grant visibility clause, book CRUD + covers, add/remove from book, `AccessGrant` type registration, sharing cards | ✅ built |
 | **W3 — links out of the household (D-share-link)** | `share_links`, `/s/:token` public page + bare layout, noindex, expiry, revoke, view counting | ✅ built |
-| **W4 — the pantry (D-pantry)** | `Pantry` + `pantry_items`, the container clause, quick-add UI, the deterministic match query and its "what can I make" surface | planned |
-| **W5 — the AI wave** | `import_recipe`, `whats_for_dinner`, `grocery_list` (no LLM), `meal_plan` + `events.recipe_id`, the three watchers | planned |
+| **W4 — import, and the cook's-eye polish** | Ingredient sub-headings; import by link or paste (`Recipes::Split` + `Recipes::Import` + `ImportRecipeJob`); the `assistant-recipe` envelope both ways; album share links; monogram tiles, dish photos picked from the Photos library, and the show page re-ranked around cooking; print stylesheet and offline QR; library sorts and a book's running order | ✅ built |
+| **W5 — the pantry (D-pantry)** | `Pantry` + `pantry_items`, the container clause, quick-add UI, the deterministic match query and its "what can I make" surface | planned |
+| **W6 — the rest of the AI wave** | `whats_for_dinner`, `grocery_list` (no LLM), `meal_plan` + `events.recipe_id`, the three watchers, vision import of a recipe card | planned |
 
-W1–W3 are the storage-and-sharing foundation the rest hangs off: they are worth
+W1–W4 are the storage-and-sharing foundation the rest hangs off: they are worth
 shipping alone (a recipe box you own, shareable to anyone, is the whole
 Organize mode for food), and they fix the data shapes W4/W5 need.
 

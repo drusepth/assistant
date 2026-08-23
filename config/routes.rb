@@ -179,6 +179,7 @@ Rails.application.routes.draw do
     member do
       post :add_recipes
       delete :remove_recipes
+      patch :reorder
     end
   end
   resources :share_links, only: %i[ create destroy ]

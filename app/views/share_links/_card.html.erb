@@ -15,6 +15,14 @@
             <button type="button" class="btn btn-secondary btn-sm"
                     data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
           </div>
+          <details class="group">
+            <summary class="cursor-pointer text-xs text-primary-700 hover:underline">Show a QR code</summary>
+            <div class="mt-2 w-40 rounded-xl bg-white p-2">
+              <%= share_link_qr(shared_url(link.token)) %>
+            </div>
+            <p class="hint mt-1">Point a phone at it — no typing, no app.</p>
+          </details>
+
           <div class="flex flex-wrap items-center justify-between gap-1.5">
             <p class="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-soft">
               <% if link.label.present? %><span class="font-medium text-ink"><%= link.label %></span><span aria-hidden="true">·</span><% end %>
@@ -40,7 +48,8 @@
     <%= submit_tag "Create a link", class: "btn btn-secondary w-full" %>
   <% end %>
   <p class="hint mt-2">
-    Anyone with the link can read this <%= noun %> — the method, the ingredients, your notes, and
-    your first name. They can't see anything else here, and revoking cuts them off.
+    <%= local_assigns[:detail] ||
+        "Anyone with the link can read this #{noun} and see your first name. They can't see anything "\
+        "else here, and revoking cuts them off." %>
   </p>
 <% end %>

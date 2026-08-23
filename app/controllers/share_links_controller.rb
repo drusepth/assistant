@@ -25,7 +25,7 @@ class ShareLinksController < ApplicationController
     # A fixed lookup, never reflection on params: this is the one public
     # read path in the app and the allowlist is what keeps it narrow.
     def find_subject
-      klass = [ Recipe, RecipeBook ].find { |candidate| candidate.name == params[:subject_type] }
+      klass = [ Recipe, RecipeBook, Album ].find { |candidate| candidate.name == params[:subject_type] }
       raise ActiveRecord::RecordNotFound if klass.nil?
 
       Current.user.public_send(klass.name.underscore.pluralize).find(params[:subject_id])

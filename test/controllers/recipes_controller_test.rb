@@ -165,6 +165,25 @@ class RecipesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Chocolate cake", response.body
   end
 
+  test "the library sorts the four ways a cook asks for" do
+    old = users(:one).recipes.create!(title: "Zucchini soup", created_at: 2.years.ago, prep_minutes: 90)
+    quick = users(:one).recipes.create!(title: "Beans on toast", prep_minutes: 5)
+    quick.cooked!(Date.current)
+
+    get recipes_path(sort: "quick")
+    assert_operator response.body.index("Beans on toast"), :<, response.body.index("Zucchini soup")
+
+    get recipes_path(sort: "recent")
+    assert_operator response.body.index("Beans on toast"), :<, response.body.index("Zucchini soup")
+
+    get recipes_path(sort: "never")
+    assert_match "Zucchini soup", response.body
+    assert_no_match(/Beans on toast/, response.body, "cooked once is not never cooked")
+
+    get recipes_path(sort: "nonsense")
+    assert_response :success, "an unknown sort falls back rather than blowing up"
+  end
+
   test "a recipe shared with me is readable but not editable" do
     bobs = users(:two).recipes.create!(title: "Bob's chilli")
     AccessGrant.create!(grantor: users(:two), grantee: users(:one), subject: bobs)
@@ -183,6 +202,32 @@ class RecipesControllerTest < ActionDispatch::IntegrationTest
 
     get recipe_path(carols)
     assert_response :not_found
+  end
+
+  test "a dish photo can come from the Photos library without copying the bytes" do
+    recipe = users(:one).recipes.create!(title: "Soup")
+    photo = users(:one).photos.create!(image: {
+      io: File.open(file_fixture("photo.jpg")), filename: "photo.jpg", content_type: "image/jpeg"
+    })
+
+    assert_no_difference("ActiveStorage::Blob.count") do
+      post attach_photo_recipe_path(recipe, photo_id: photo.id)
+    end
+
+    assert recipe.reload.image.attached?
+    assert_equal photo.image.blob_id, recipe.image.blob_id, "the same blob, not a copy"
+  end
+
+  test "another member's photo can't be attached to my recipe" do
+    recipe = users(:one).recipes.create!(title: "Soup")
+    bobs = users(:two).photos.create!(image: {
+      io: File.open(file_fixture("photo.jpg")), filename: "photo.jpg", content_type: "image/jpeg"
+    })
+
+    post attach_photo_recipe_path(recipe, photo_id: bobs.id)
+
+    assert_response :not_found
+    assert_not recipe.reload.image.attached?
   end
 
   test "adds to and removes from a book" do

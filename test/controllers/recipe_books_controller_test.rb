@@ -42,6 +42,21 @@ class RecipeBooksControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ mine.id ], book.reload.recipe_ids
   end
 
+  test "a book keeps the running order its owner dragged" do
+    book = users(:one).recipe_books.create!(title: "Spring")
+    first, second, third = %w[ Asparagus Peas Rhubarb ].map { |title| users(:one).recipes.create!(title: title) }
+    post add_recipes_recipe_book_path(book), params: { recipe_ids: [ first.id, second.id, third.id ] }
+
+    assert_equal [ first.id, second.id, third.id ], book.reload.recipe_book_entries.map(&:recipe_id)
+
+    patch reorder_recipe_book_path(book), params: { recipe_ids: [ third.id, first.id, second.id ] }
+
+    assert_equal [ third.id, first.id, second.id ], book.reload.recipe_book_entries.map(&:recipe_id)
+    get recipe_book_path(book)
+    assert_operator response.body.index("Rhubarb"), :<, response.body.index("Asparagus"),
+      "the page reads in the order the owner set, not alphabetically"
+  end
+
   test "a shared book is readable, and its recipes come with it" do
     book = users(:two).recipe_books.create!(title: "Bob's soups")
     recipe = users(:two).recipes.create!(title: "Chilli con carne")

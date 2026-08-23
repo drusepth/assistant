@@ -1,7 +1,7 @@
 <% scale_path = ->(count) { recipe_path(@recipe, servings: count) } %>
 <%= turbo_stream_from Current.user, :recipes if @owned %>
 
-<%= render Ui::PageHeaderComponent.new(title: @recipe.title, subtitle: @recipe.timing.presence) do |header| %>
+<%= render Ui::PageHeaderComponent.new(title: @recipe.title) do |header| %>
   <% unless @owned %>
     <% header.with_meta do %>
       <%= render Ui::UserLabelComponent.new(user: @recipe.user) do %>
@@ -10,6 +10,8 @@
     <% end %>
   <% end %>
   <% header.with_actions do %>
+    <button type="button" class="btn btn-secondary print:hidden"
+            data-controller="print" data-action="print#now">Print</button>
     <% if @owned %>
       <%= button_to "Cooked it", cook_recipe_path(@recipe), method: :post, class: "btn btn-secondary" %>
       <%= link_to "Edit", edit_recipe_path(@recipe), class: "btn btn-secondary" %>
@@ -20,7 +22,7 @@
 <% end %>
 
 <% if @owned && @recipe.import_status.present? %>
-  <div class="card mb-6 flex flex-wrap items-center justify-between gap-3 p-4">
+  <div class="card mb-6 flex flex-wrap items-center justify-between gap-3 p-4 print:hidden">
     <% if @recipe.importing? %>
       <p class="text-sm text-soft">Reading it<span class="animate-pulse">…</span> this page updates itself when it's done.</p>
     <% elsif @recipe.import_failed? %>
@@ -45,11 +47,45 @@
   </div>
 <% end %>
 
+<%# The facts a cook wants before starting, on one line under the title —
+    they used to be a card in the rail, which put the admin furniture above
+    the food. %>
+<div class="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-soft">
+  <% if @recipe.servings %><span>Serves <%= @recipe.servings %></span><% end %>
+  <% if @recipe.timing.present? %>
+    <span aria-hidden="true">·</span><span><%= @recipe.timing %></span>
+  <% end %>
+  <% if @recipe.source_name.present? || @recipe.source_url.present? %>
+    <span aria-hidden="true">·</span>
+    <span>
+      From
+      <% if @recipe.source_url.present? %>
+        <%= link_to @recipe.source_name.presence || URI(@recipe.source_url).host.to_s.delete_prefix("www."),
+              @recipe.source_url, class: "text-primary-700 underline",
+              rel: "noopener noreferrer nofollow", target: "_blank" %>
+      <% else %>
+        <%= @recipe.source_name %>
+      <% end %>
+    </span>
+  <% end %>
+  <% if @recipe.times_cooked.positive? %>
+    <span aria-hidden="true">·</span>
+    <span title="<%= "Last cooked #{l(@recipe.last_cooked_on, format: :long)}" if @recipe.last_cooked_on %>">
+      Cooked <%= pluralize(@recipe.times_cooked, "time") %>
+    </span>
+  <% end %>
+  <% if @recipe.sections.any? %>
+    <span class="flex flex-wrap items-center gap-1.5"><%= render "shared/item_chips", item: @recipe %></span>
+  <% end %>
+</div>
+
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
     <% if @recipe.image.attached? %>
+      <%# Capped: a 4:3 hero at full width pushes the actual recipe below
+          the fold on a laptop, and off the first page in print. %>
       <%= image_tag url_for(@recipe.image.variant(:hero)), alt: @recipe.title,
-            class: "w-full rounded-2xl object-cover" %>
+            class: "max-h-80 w-full rounded-2xl object-cover print:max-h-48" %>
     <% end %>
 
     <% if @recipe.description.present? %>
@@ -77,49 +113,33 @@
     <% end %>
   </div>
 
-  <div class="space-y-6">
-    <%= render Ui::CardComponent.new(title: "Details") do %>
-      <dl class="space-y-3 text-sm">
-        <% if @recipe.servings %>
-          <div class="flex gap-2">
-            <dt class="w-24 shrink-0 text-soft">Serves</dt>
-            <dd class="min-w-0"><%= @recipe.servings %></dd>
-          </div>
+  <%# Everything below is the owner's furniture: it never prints, and it
+      sits after the food on a phone. %>
+  <div class="space-y-6 print:hidden">
+    <% if @owned %>
+      <%= render Ui::CardComponent.new(title: "Photo",
+            subtitle: @recipe.image.attached? ? "Swap it for another" : "What it looks like") do %>
+        <%= form_with model: @recipe, class: "space-y-2" do |form| %>
+          <%= form.file_field :image, accept: "image/*" %>
+          <%= form.submit "Upload", class: "btn btn-secondary btn-sm" %>
         <% end %>
-        <% if @recipe.timing.present? %>
-          <div class="flex gap-2">
-            <dt class="w-24 shrink-0 text-soft">Time</dt>
-            <dd class="min-w-0"><%= @recipe.timing %></dd>
-          </div>
-        <% end %>
-        <% if @recipe.source_name.present? || @recipe.source_url.present? %>
-          <div class="flex gap-2">
-            <dt class="w-24 shrink-0 text-soft">From</dt>
-            <dd class="min-w-0 wrap-anywhere">
-              <% if @recipe.source_url.present? %>
-                <%= link_to @recipe.source_name.presence || @recipe.source_url, @recipe.source_url,
-                      class: "text-primary-700 underline", rel: "noopener noreferrer nofollow", target: "_blank" %>
-              <% else %>
-                <%= @recipe.source_name %>
+
+        <% if @recent_photos&.any? %>
+          <details class="mt-3">
+            <summary class="cursor-pointer text-xs text-primary-700 hover:underline">Use one from Photos</summary>
+            <div class="mt-2 grid grid-cols-4 gap-1.5">
+              <% @recent_photos.each do |photo| %>
+                <%= button_to attach_photo_recipe_path(@recipe, photo_id: photo.id), method: :post,
+                      class: "block aspect-square overflow-hidden rounded-lg", form: { class: "contents" } do %>
+                  <%= image_tag url_for(photo.image.variant(:thumb)), alt: photo.display_title,
+                        class: "size-full cursor-pointer object-cover hover:opacity-80" %>
+                <% end %>
               <% end %>
-            </dd>
-          </div>
+            </div>
+            <p class="hint mt-1">Picks the same file, not a copy of it.</p>
+          </details>
         <% end %>
-        <div class="flex gap-2">
-          <dt class="w-24 shrink-0 text-soft">Cooked</dt>
-          <dd class="min-w-0">
-            <% if @recipe.times_cooked.positive? %>
-              <%= pluralize(@recipe.times_cooked, "time") %><%= " · last on #{l(@recipe.last_cooked_on, format: :long)}" if @recipe.last_cooked_on %>
-            <% else %>
-              Not yet
-            <% end %>
-          </dd>
-        </div>
-        <div class="flex gap-2">
-          <dt class="w-24 shrink-0 text-soft">Sections</dt>
-          <dd class="flex min-w-0 flex-wrap gap-1.5"><%= render "shared/item_chips", item: @recipe %></dd>
-        </div>
-      </dl>
+      <% end %>
     <% end %>
 
     <%= render Ui::CardComponent.new(title: "Books", subtitle: "Where this recipe is filed") do %>
@@ -141,7 +161,7 @@
         <% if @available_books&.any? %>
           <%= form_with url: add_to_book_recipe_path(@recipe), class: "capture-row" do %>
             <%= select_tag :recipe_book_id, options_from_collection_for_select(@available_books, :id, :title),
-                  class: "input min-w-40 flex-1" %>
+                  class: "input min-w-0 flex-1" %>
             <%= submit_tag "Add", class: "btn btn-secondary" %>
           <% end %>
         <% else %>
@@ -155,8 +175,10 @@
 
     <% if @owned %>
       <%= render "shared/share_controls", subject: @recipe %>
-      <%= render "share_links/card", subject: @recipe, links: @share_links,
-            noun: "recipe" %>
+      <%= render "share_links/card", subject: @recipe, links: @share_links, noun: "recipe",
+            detail: "Anyone with the link can read this recipe — the method, the ingredients, "\
+                    "your notes, and your first name. They can't see anything else here, and "\
+                    "revoking cuts them off." %>
     <% end %>
   </div>
 </div>

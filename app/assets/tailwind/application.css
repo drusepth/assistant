@@ -216,6 +216,41 @@
     @apply flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center;
   }
 
+  /* Print. Recipes are the page people actually print (and hand to
+     someone, and splatter), so the app has one honest print face: the
+     chrome goes, the cards flatten onto white, and nothing splits a step
+     across a page break. `print:hidden` in a view drops anything that only
+     makes sense on screen — sharing controls, banners, capture forms. */
+  @media print {
+    /* Utilities win over this layer, and body carries bg-canvas. */
+    body {
+      background: #fff !important;
+      color: #000;
+    }
+    /* Nothing you can press is worth ink. */
+    .btn {
+      display: none !important;
+    }
+    .card {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #d6d3d1;
+      break-inside: avoid;
+    }
+    .card + .card {
+      margin-top: 0.75rem;
+    }
+    li, ol > li, .chip {
+      break-inside: avoid;
+    }
+    h1, h2, h3 {
+      break-after: avoid;
+    }
+    main {
+      padding: 0 !important;
+    }
+  }
+
   /* Chat (D29): the transcript bubble and the composer shell. Retheming the
      conversation surface happens here, not in the chat partials. */
   .bubble {

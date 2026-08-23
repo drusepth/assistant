@@ -9,7 +9,11 @@
 # unguessable; the row is the link, so revoking is deleting; and the link is
 # always a thing the owner made and can see, never an ambient setting (D9).
 class ShareLink < ApplicationRecord
-  SHAREABLE_TYPES = %w[ Recipe RecipeBook ].freeze
+  # Adding a type here is a decision, made once, on purpose — this is a
+  # public read path and it must never become a generic one. Albums joined
+  # on the same terms as recipes: a container of your own images, shared
+  # whole, with the same owner guard on what travels with it.
+  SHAREABLE_TYPES = %w[ Recipe RecipeBook Album ].freeze
 
   # What the create form offers, in days.
   EXPIRY_CHOICES = { "Never expires" => "", "In 7 days" => "7", "In 30 days" => "30", "In 90 days" => "90" }.freeze

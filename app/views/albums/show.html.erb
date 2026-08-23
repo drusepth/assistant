@@ -63,7 +63,14 @@
     </div>
 
     <% if own %>
-      <div><%= render "shared/share_controls", subject: @album %></div>
+      <div class="space-y-6">
+        <%= render "shared/share_controls", subject: @album %>
+        <%= render "share_links/card", subject: @album,
+              links: @album.share_links.order(created_at: :desc), noun: "album",
+              detail: "Anyone with the link can see the photos in this album, at screen size and "\
+                      "with their camera data stripped — never the originals, never where they "\
+                      "were taken, and nothing else here. Revoking cuts them off." %>
+      </div>
     <% end %>
   </div>
 

@@ -15,7 +15,8 @@ class RecipesController < ApplicationController
     end
     scope = scope.favorites if params[:favorites].present?
 
-    @recipes = scope.order(Arel.sql("LOWER(recipes.title)"))
+    @sort = Recipe::SORTS.key?(params[:sort]) ? params[:sort] : "title"
+    @recipes = scope.sorted_by(@sort)
     @books = RecipeBook.visible_to(Current.user).order(:title)
   end
 
@@ -30,6 +31,9 @@ class RecipesController < ApplicationController
     if @owned
       @available_books = Current.user.recipe_books.where.not(id: @recipe.recipe_book_ids).order(:title)
       @share_links = @recipe.share_links.order(created_at: :desc)
+      # The dish photo you already took: attaching re-points the same blob.
+      @recent_photos = Current.user.photos.ingest_ready.with_attached_image
+        .order(taken_at: :desc).limit(8)
     end
   end
 

@@ -1,0 +1,27 @@
+<% content_for :title, "#{@photo.display_title} — #{@album.title}" %>
+
+<p class="mb-4 text-sm">
+  <%= link_to "← #{@album.title}", shared_path(@link.token), class: "text-primary-700 hover:underline" %>
+</p>
+
+<%= image_tag url_for(@photo.image.variant(:large)), alt: @photo.display_title,
+      class: "w-full rounded-2xl object-contain" %>
+
+<div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+  <div class="min-w-0">
+    <p class="text-sm font-medium text-ink"><%= @photo.display_title %></p>
+    <% if @photo.caption.present? %>
+      <p class="mt-1 text-sm text-soft"><%= @photo.caption %></p>
+    <% end %>
+  </div>
+  <div class="row-actions">
+    <% if @previous_photo %>
+      <%= link_to "Previous", shared_path(@link.token, photo: @previous_photo.id), class: "btn btn-secondary btn-sm" %>
+    <% end %>
+    <% if @next_photo %>
+      <%= link_to "Next", shared_path(@link.token, photo: @next_photo.id), class: "btn btn-secondary btn-sm" %>
+    <% end %>
+  </div>
+</div>
+
+<%= render "public/footer" %>

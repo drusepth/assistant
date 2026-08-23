@@ -28,8 +28,17 @@
   <% end %>
 </div>
 
+<div class="mb-4 flex flex-wrap items-center gap-1.5 text-sm">
+  <span class="text-soft">Sort</span>
+  <% Recipe::SORTS.each do |key, label| %>
+    <%= link_to label, recipes_path(request.query_parameters.merge(sort: key)),
+          class: "chip #{@sort == key ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+  <% end %>
+</div>
+
 <% if @books.any? %>
-  <div class="mb-6 flex flex-wrap gap-1.5">
+  <div class="mb-6 flex flex-wrap items-center gap-1.5 text-sm">
+    <span class="text-soft">Books</span>
     <% @books.each do |book| %>
       <%= link_to book.title, recipe_book_path(book), class: "chip bg-sage-100 text-sage-800 hover:bg-sage-200" %>
     <% end %>

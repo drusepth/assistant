@@ -1,7 +1,8 @@
-<footer class="mt-10 space-y-1 border-t border-edge pt-4 text-xs text-soft">
+<footer class="mt-10 space-y-1 border-t border-edge pt-4 text-xs text-soft print:hidden">
   <p>Shared from a self-hosted assistant. This link can be revoked by whoever sent it.</p>
-  <%# The take-it-with-you half of D-share-link: a recipient running the
-      same app pastes this link into their own import and gets the recipe
-      itself, not a copy of a web page. %>
-  <p>Run this app yourself? Paste this link into your own recipe import and it lands in your box.</p>
+  <%# The take-it-with-you half of D-share-link — only where there's an
+      envelope behind the token: a recipe or a book, never an album. %>
+  <% if local_assigns[:portable] %>
+    <p>Run this app yourself? Paste this link into your own recipe import and it lands in your box.</p>
+  <% end %>
 </footer>

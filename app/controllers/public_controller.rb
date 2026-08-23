@@ -26,6 +26,7 @@ class PublicController < ApplicationController
     case @link.subject
     when Recipe then show_recipe(@link.subject)
     when RecipeBook then show_book(@link.subject)
+    when Album then show_album(@link.subject)
     else gone
     end
   end
@@ -68,6 +69,33 @@ class PublicController < ApplicationController
         show_recipe(recipe)
       else
         render :book
+      end
+    end
+
+    # An album travels like a book: the container, and under the same token
+    # its own contents — never a photo its owner doesn't own, and never the
+    # original bytes. The grid and the single view render the same stripped
+    # WEBP variants a household grantee sees, so a shared photo carries no
+    # EXIF and no coordinates out of the house.
+    def show_album(album)
+      # Only recipes have a take-it-with-you envelope; an album's answer to
+      # "as JSON" is nothing.
+      return gone if request.format.json?
+
+      @album = album
+      @photos = album.photos.where(user_id: album.user_id)
+        .with_attached_image.order(taken_at: :desc, id: :desc)
+
+      if params[:photo].present?
+        @photo = @photos.find_by(id: params[:photo])
+        return gone if @photo.nil?
+
+        index = @photos.index(@photo)
+        @previous_photo = index.positive? ? @photos[index - 1] : nil
+        @next_photo = @photos[index + 1]
+        render :photo
+      else
+        render :album
       end
     end
 

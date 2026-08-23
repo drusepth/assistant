@@ -1,0 +1,27 @@
+<% content_for :title, @album.title %>
+
+<header class="mb-6">
+  <h1 class="text-3xl"><%= @album.title %></h1>
+  <p class="mt-2 text-sm text-soft">
+    Shared by <%= @owner.name.split.first %> · <%= pluralize(@photos.size, "photo") %>
+  </p>
+  <% if @album.description.present? %>
+    <p class="mt-3 text-sm text-soft"><%= @album.description %></p>
+  <% end %>
+</header>
+
+<% if @photos.any? %>
+  <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
+    <% @photos.each do |photo| %>
+      <%= link_to shared_path(@link.token, photo: photo.id),
+            class: "group block aspect-square overflow-hidden rounded-lg bg-stone-100" do %>
+        <%= image_tag url_for(photo.image.variant(:thumb)), loading: "lazy", alt: photo.display_title,
+              class: "size-full object-cover transition-transform duration-150 group-hover:scale-105" %>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-sm text-soft">This album is empty so far.</p>
+<% end %>
+
+<%= render "public/footer" %>

@@ -6,7 +6,7 @@
 <% factor = local_assigns[:factor] || 1.0 %>
 
 <% if recipe.servings.present? && scale_path %>
-  <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
+  <div class="mb-4 flex flex-wrap items-center gap-2 text-sm print:hidden">
     <span class="text-soft">Serves</span>
     <div class="flex items-center gap-1">
       <%= link_to "−", scale_path.call([ servings - 1, 1 ].max), class: "btn btn-secondary btn-sm",

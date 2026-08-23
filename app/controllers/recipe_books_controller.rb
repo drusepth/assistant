@@ -1,5 +1,5 @@
 class RecipeBooksController < ApplicationController
-  before_action :set_own_book, only: %i[ edit update destroy add_recipes remove_recipes ]
+  before_action :set_own_book, only: %i[ edit update destroy add_recipes remove_recipes reorder ]
 
   def index
     @books = RecipeBook.visible_to(Current.user).includes(:user, recipes: { image_attachment: :blob })
@@ -9,8 +9,10 @@ class RecipeBooksController < ApplicationController
   def show
     @book = RecipeBook.visible_to(Current.user).find(params[:id])
     @owned = @book.user_id == Current.user.id
+    # A book has a running order the owner chose — a spring book reads
+    # front to back, not alphabetically.
     @recipes = @book.recipes.visible_to(Current.user).includes(:sections, :user)
-      .with_attached_image.order(Arel.sql("LOWER(recipes.title)"))
+      .with_attached_image.merge(RecipeBookEntry.order(:position, :id))
     if @owned
       @available_recipes = Current.user.recipes.where.not(id: @book.recipe_ids).order(:title)
       @share_links = @book.share_links.order(created_at: :desc)
@@ -50,7 +52,8 @@ class RecipeBooksController < ApplicationController
 
   def add_recipes
     recipes = Current.user.recipes.where(id: recipe_id_params).where.not(id: @book.recipe_ids)
-    recipes.each { |recipe| @book.recipe_book_entries.create!(recipe: recipe) }
+    position = @book.recipe_book_entries.maximum(:position) || 0
+    recipes.each { |recipe| @book.recipe_book_entries.create!(recipe: recipe, position: position += 1) }
     @book.touch if recipes.any?
 
     redirect_back fallback_location: @book,
@@ -62,6 +65,15 @@ class RecipeBooksController < ApplicationController
 
     redirect_back fallback_location: @book,
       notice: "#{removed.size} #{"recipe".pluralize(removed.size)} removed from #{@book.title}."
+  end
+
+  # Drag-to-reorder: the rows submit in DOM order, so the order *is* the
+  # persistence (the settings-page convention).
+  def reorder
+    recipe_id_params.each_with_index do |recipe_id, index|
+      @book.recipe_book_entries.where(recipe_id: recipe_id).update_all(position: index + 1)
+    end
+    redirect_to @book, notice: "Order saved."
   end
 
   private

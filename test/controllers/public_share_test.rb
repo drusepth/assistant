@@ -170,3 +170,68 @@ class ShareLinksControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 end
+
+# Albums join the allowlist on the same terms as recipes (D-share-link):
+# the container, its own owner's contents, stripped variants only.
+class PublicAlbumShareTest < ActionDispatch::IntegrationTest
+  setup do
+    @alice = users(:one)
+    @album = @alice.albums.create!(title: "Summer 2026", description: "The good week")
+    @in_album = create_photo(@alice)
+    @album.photos << @in_album
+    @loose = create_photo(@alice, fixture: "photo_no_exif.jpg")
+    @link = @alice.share_links.create!(subject: @album)
+  end
+
+  test "a signed-out stranger with the token sees the album and only its photos" do
+    get shared_path(@link.token)
+
+    assert_response :success
+    assert_match "Summer 2026", response.body
+    assert_equal 1, response.body.scan(/<img/).size, "one tile: the loose photo isn't in this album"
+  end
+
+  test "the token opens the album's own photos and no others" do
+    get shared_path(@link.token, photo: @in_album.id)
+    assert_response :success
+
+    get shared_path(@link.token, photo: @loose.id)
+    assert_response :not_found
+  end
+
+  test "shared photos travel as stripped variants, never the original" do
+    get shared_path(@link.token, photo: @in_album.id)
+
+    assert_match %r{/rails/active_storage/representations/}, response.body
+    assert_no_match %r{/rails/active_storage/blobs/}, response.body,
+      "a viewer gets the stripped variant, never a link to the original bytes"
+  end
+
+  test "an album never publishes a photo its owner doesn't own" do
+    carols = users(:outsider).photos.create!(image: {
+      io: File.open(file_fixture("photo_no_exif.jpg")), filename: "c.jpg", content_type: "image/jpeg"
+    })
+    AlbumPhoto.insert_all([ { album_id: @album.id, photo_id: carols.id,
+      created_at: Time.current, updated_at: Time.current } ])
+
+    get shared_path(@link.token, photo: carols.id)
+    assert_response :not_found
+  end
+
+  test "an album has no take-it-with-you envelope" do
+    get shared_path(@link.token, format: :json)
+    assert_response :not_found
+  end
+
+  test "revoking cuts the link off" do
+    @link.destroy!
+
+    get shared_path(@link.token)
+    assert_response :not_found
+  end
+
+  private
+    def create_photo(user, fixture: "photo.jpg")
+      user.photos.create!(image: { io: File.open(file_fixture(fixture)), filename: fixture, content_type: "image/jpeg" })
+    end
+end

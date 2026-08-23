@@ -37,6 +37,30 @@ class Recipe < ApplicationRecord
 
   scope :favorites, -> { where(favorite: true) }
 
+  # What a cook actually asks a box of recipes: what's new, what do we
+  # really eat, what have I saved and never made, what's quick tonight.
+  SORTS = {
+    "title" => "A to Z",
+    "recent" => "Recently added",
+    "cooked" => "Cooked most recently",
+    "never" => "Never cooked",
+    "quick" => "Quickest first"
+  }.freeze
+
+  scope :sorted_by, ->(key) {
+    case key
+    when "recent" then order(created_at: :desc)
+    # Nulls last by hand: SQLite's NULLS LAST support is newer than the
+    # oldest SQLite an owner might be self-hosting on.
+    when "cooked" then order(Arel.sql("last_cooked_on IS NULL, last_cooked_on DESC"))
+    when "never" then where(times_cooked: 0).order(created_at: :asc)
+    when "quick" then order(Arel.sql(
+      "COALESCE(prep_minutes, 0) + COALESCE(cook_minutes, 0) = 0, " \
+      "COALESCE(prep_minutes, 0) + COALESCE(cook_minutes, 0) ASC"))
+    else order(Arel.sql("LOWER(recipes.title)"))
+    end
+  }
+
   # Title, blurb, or any ingredient — one LIKE, no index ceremony until it
   # hurts.
   scope :search, ->(term) {
