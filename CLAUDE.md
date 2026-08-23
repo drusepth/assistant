@@ -26,6 +26,7 @@ Design implications: local-first, self-hostable, open source; the user owns thei
 5. **People** — friends, family, communities, church, clubs, meetups
 6. **Money** — subsections: Budget, Debt, Taxes, Assets, Bills, Subscriptions, Benefits
 7. **Rights** — subsections: Immigration, Renting, Voting, Disputes
+8. **Travel** — added after the original seven (D-travel-facet); a hub whose first panel is the geotagged-photo world map. `docs/TRAVEL.md`
 
 Sections live in a database taxonomy table (`sections`, self-referential parent for subsections), not code enums.
 
@@ -89,6 +90,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D-photos-primitive, D-storage-seam)
 - `docs/EMAIL_PLAN.md` — email import & monitoring: the mirror layer (D-mirror-layer) in its own database (D-mirror-database), multi-account IMAP sync, triage + sender-rule feedback loop, digest/urgent alerts, the boomerang family (D-email-monitoring), the hostile-input threat model
 - `docs/RECIPES_PLAN.md` — the recipe box: the Recipe primitive and its ingredient parser, recipe books, sharing to the household and to people outside it by link, and the pantry/AI waves (D-recipe-primitive, D-share-link, D-pantry)
+- `docs/TRAVEL.md` — the Travel section: why it's a lens and not a page, the self-drawn world map of geotagged photos (no tiles, no geocoder, owner-only per Q14), and what the hub grows next (D-travel-facet)
 - `docs/PASSWORDS_PLAN.md` — the password vault: per-user envelope encryption, sharing, TOTP, import/export, and the agent-access bridge (D-passwords-vault, D-vault-crypto)
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions

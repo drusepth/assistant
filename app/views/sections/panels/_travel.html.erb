@@ -1,0 +1,68 @@
+<%# The Travel hub's lead (D-travel-facet): the map of everywhere you've
+    taken a photo. More will live here — trips, documents, packing — as
+    further panels; the map is what the section can show on day one out of
+    what the library already holds. %>
+<% map = panel.map %>
+
+<%= render Ui::CardComponent.new(title: "Where you've been") do |card| %>
+  <% card.with_actions do %>
+    <% if map.any? %>
+      <%= link_to "Open the map", map_photos_path, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  <% end %>
+
+  <% if map.any? %>
+    <%= render Ui::PhotoMapComponent.new(map: map) %>
+
+    <div class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-soft">
+      <span><span class="font-semibold text-ink"><%= number_with_delimiter(map.place_count) %></span> <%= "place".pluralize(map.place_count) %></span>
+      <span><span class="font-semibold text-ink"><%= number_with_delimiter(map.photo_count) %></span> <%= "photo".pluralize(map.photo_count) %> placed</span>
+      <% if map.first_taken_at %>
+        <span><span class="font-semibold text-ink"><%= map.first_taken_at.strftime("%b %Y") %></span> to <span class="font-semibold text-ink"><%= map.last_taken_at.strftime("%b %Y") %></span></span>
+      <% end %>
+    </div>
+
+    <% if map.recent_pins(4).any? %>
+      <h3 class="mb-2 mt-5 text-sm font-medium text-soft">Latest places</h3>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <% map.recent_pins(4).each do |pin| %>
+          <%= link_to photos_path(near: pin.near_param),
+                class: "group block overflow-hidden rounded-xl bg-canvas" do %>
+            <% if pin.cover&.image&.attached? %>
+              <%= image_tag url_for(pin.cover.image.variant(:thumb)), loading: "lazy", alt: "",
+                    class: "aspect-square w-full object-cover transition-transform duration-150 group-hover:scale-105" %>
+            <% end %>
+            <div class="p-2">
+              <p class="truncate text-sm font-medium text-ink"><%= pin.period || "Undated" %></p>
+              <p class="text-xs text-soft"><%= pluralize(pin.count, "photo") %></p>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <%# Honest about why it's empty: this reads coordinates the camera
+        saved, and nothing else. No guessing from what's in the picture. %>
+    <p class="text-sm text-soft">
+      <% if panel.photos_count.zero? %>
+        Nothing to place yet. As photos arrive in your library, the ones whose camera recorded a location
+        appear here as pins — one per place, newest first.
+      <% else %>
+        None of your <%= number_with_delimiter(panel.photos_count) %> photos carry coordinates yet.
+        A photo lands on this map only if the camera saved a location into it — phones do that when location
+        services are on, and most chat apps strip it back out when a photo is sent through them.
+        Nothing here guesses a place from what's in the picture.
+      <% end %>
+    </p>
+    <div class="mt-4">
+      <%= link_to "Go to your photos", photos_path, class: "btn btn-secondary btn-sm" %>
+    </div>
+  <% end %>
+<% end %>
+
+<% if map.any? && panel.unplaced_count.positive? %>
+  <p class="mt-3 text-sm text-soft">
+    <%= number_with_delimiter(panel.unplaced_count) %> more <%= "photo".pluralize(panel.unplaced_count) %>
+    <%= panel.unplaced_count == 1 ? "has" : "have" %> no location saved, so <%= panel.unplaced_count == 1 ? "it isn't" : "they aren't" %> on the map.
+  </p>
+<% end %>

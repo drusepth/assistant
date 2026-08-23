@@ -1,10 +1,18 @@
 class PhotosController < ApplicationController
   PER_PAGE = 120
+  # How many places the map page lists under the map. The map itself always
+  # carries every pin.
+  PLACES_LISTED = 24
 
   before_action :set_own_photo, only: %i[ edit update destroy ingest caption apply_suggestion ]
 
   def index
-    base = Photo.visible_to(Current.user)
+    # Following a map pin (D-travel-facet). Locations are owner-only (Q14),
+    # so a place filter starts from your own photos — a shared photo's
+    # whereabouts are not the grantee's to search by.
+    @place = parse_place(params[:near])
+    base = @place ? Current.user.photos.near(*@place) : Photo.visible_to(Current.user)
+
     if params[:section].present?
       @section = Section.find_by!(slug: params[:section])
       base = base.in_section([ @section.id, *@section.children.ids ])
@@ -27,6 +35,23 @@ class PhotosController < ApplicationController
     page = scope.limit(PER_PAGE + 1).to_a
     @more = page.size > PER_PAGE
     @photos = page.first(PER_PAGE)
+  end
+
+  # The world map of everywhere you've taken a photo (D-travel-facet). Own
+  # photos only, always: coordinates are owner-only (Q14) and a map is the
+  # surface that would leak them furthest.
+  def map
+    base = Current.user.photos.located
+    @years = base.distinct.pluck(Arel.sql("strftime('%Y', taken_at)")).sort.reverse
+
+    if params[:year].present?
+      @year = params[:year].to_i
+      base = base.where(taken_at: Time.zone.local(@year)...Time.zone.local(@year + 1))
+    end
+
+    @map = Photos::Map.new(base)
+    @places = @map.recent_pins(PLACES_LISTED)
+    @unplaced = Current.user.photos.where(latitude: nil).count
   end
 
   def show
@@ -115,6 +140,18 @@ class PhotosController < ApplicationController
 
     def photo_params
       params.expect(photo: [ :title, :caption, :taken_at, section_ids: [] ])
+    end
+
+    # "48.8566,2.3522" from a map pin. Anything else — a hand-edited URL,
+    # a value out of range — is no filter rather than an error page.
+    def parse_place(value)
+      return nil if value.blank?
+
+      latitude, longitude = value.to_s.split(",", 2).map { |part| Float(part.strip, exception: false) }
+      return nil unless latitude && longitude
+      return nil unless latitude.abs <= 90 && longitude.abs <= 180
+
+      [ latitude, longitude ]
     end
 
     # Keyset pagination: strictly older than the last photo on the previous

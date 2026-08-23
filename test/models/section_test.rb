@@ -21,7 +21,8 @@ class SectionTest < ActiveSupport::TestCase
   test "seeds build the full locked taxonomy" do
     Rails.application.load_seed
 
-    assert_equal %w[ health hobbies education career people money rights ],
+    # Travel is the eighth, added by request (D-travel-facet).
+    assert_equal %w[ health hobbies education career people money rights travel ],
       Section.top_level.map(&:slug)
     assert_equal %w[ budget debt taxes assets bills subscriptions benefits ],
       Section.find_by(slug: "money").children.map(&:slug)

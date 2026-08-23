@@ -143,6 +143,9 @@ Rails.application.routes.draw do
   resource :user_password, only: :update
 
   resources :photos, except: :new do
+    collection do
+      get :map
+    end
     member do
       post :ingest
       post :caption

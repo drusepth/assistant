@@ -74,3 +74,8 @@ disputes:
   name: Disputes
   parent: rights
   position: 4
+
+travel:
+  slug: travel
+  name: Travel
+  position: 8

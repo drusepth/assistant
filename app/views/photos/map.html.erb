@@ -1,0 +1,82 @@
+<%= render Ui::PageHeaderComponent.new(title: "Photo map", subtitle: "Everywhere your camera has been") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Timeline", photos_path, class: "btn btn-secondary" %>
+    <%= link_to "Travel", section_path("travel"), class: "btn btn-secondary" %>
+  <% end %>
+<% end %>
+
+<% if @years.many? %>
+  <div class="mb-4 flex flex-wrap gap-1.5">
+    <%= link_to "All years", map_photos_path,
+          class: "chip #{@year.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+    <% @years.each do |year| %>
+      <%= link_to year, map_photos_path(year: year),
+            class: "chip #{@year.to_s == year ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @map.any? %>
+  <div class="space-y-6">
+    <%= render Ui::CardComponent.new do %>
+      <%= render Ui::PhotoMapComponent.new(map: @map) %>
+      <p class="mt-3 text-sm text-soft">
+        <%= pluralize(@map.photo_count, "photo") %> across
+        <%= pluralize(@map.place_count, "place") %><%= ", #{@map.first_taken_at.strftime("%b %Y")} – #{@map.last_taken_at.strftime("%b %Y")}" if @map.first_taken_at %>.
+        Pick a pin to see what you took there.
+      </p>
+    <% end %>
+
+    <%# The pins as a list: the same places, reachable without a mouse and
+        readable without eyes. Places nobody can name — there is no
+        geocoder here on purpose — say when instead of where. %>
+    <%= render Ui::CardComponent.new(title: "Places", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <% @places.each do |pin| %>
+          <%= link_to photos_path(near: pin.near_param),
+                class: "flex items-center gap-3 p-3 transition-colors hover:bg-canvas" do %>
+            <% if pin.cover&.image&.attached? %>
+              <%= image_tag url_for(pin.cover.image.variant(:thumb)), loading: "lazy", alt: "",
+                    class: "size-12 shrink-0 rounded-lg object-cover" %>
+            <% end %>
+            <div class="min-w-0">
+              <p class="truncate font-medium text-ink"><%= pin.period || "Undated" %></p>
+              <p class="text-sm text-soft">
+                <%= pluralize(pin.count, "photo") %> · <%= number_with_precision(pin.latitude, precision: 3) %>, <%= number_with_precision(pin.longitude, precision: 3) %>
+              </p>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+
+      <%# The list is the most recent places, not all of them — say so
+          rather than letting a long-travelled library look complete. Every
+          place is still on the map above. %>
+      <% if @map.place_count > @places.size %>
+        <p class="border-t border-edge p-3 text-sm text-soft">
+          Showing your <%= @places.size %> most recent places of
+          <%= number_with_delimiter(@map.place_count) %> — the rest are pins on the map above.
+        </p>
+      <% end %>
+    <% end %>
+
+    <% if @unplaced.positive? %>
+      <p class="text-sm text-soft">
+        <%= pluralize(@unplaced, "photo") %> in your library <%= @unplaced == 1 ? "doesn't" : "don't" %> say where
+        <%= @unplaced == 1 ? "it was" : "they were" %> taken — cameras only record a location when location services
+        were on, and most sharing apps strip it back out on the way through.
+      </p>
+    <% end %>
+  </div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: @year ? "Nothing placed in #{@year}" : "No photos with a location yet",
+        description: @year ?
+          "No photo from #{@year} carries coordinates. Try another year." :
+          "This map is built from the coordinates your camera saved into each photo. Nothing here reads a photo's contents, and nothing is looked up anywhere — so photos that arrived without a location (screenshots, scans, anything that came through a chat app) simply aren't on it."
+      ) do |empty| %>
+    <% empty.with_action do %>
+      <%= link_to "Back to the timeline", photos_path, class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+<% end %>

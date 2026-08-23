@@ -36,6 +36,18 @@ class Photo < ApplicationRecord
     SQL
   end
 
+  # Photos the map can place (D-travel-facet). Most libraries are a mix:
+  # a phone photo usually knows where it was, a scan or a screenshot never
+  # does.
+  scope :located, -> { where.not(latitude: nil).where.not(longitude: nil) }
+
+  # Photos taken around a point — what a map pin links to. The box is the
+  # clustering radius, so following a pin returns that pin's photos.
+  scope :near, ->(latitude, longitude, degrees = Photos::Map::CLUSTER_DEGREES) {
+    located.where(latitude: (latitude - degrees)..(latitude + degrees))
+      .where(longitude: (longitude - degrees)..(longitude + degrees))
+  }
+
   enum :ingest_status, {
     queued: "queued", processing: "processing", ready: "ready", failed: "failed"
   }, prefix: :ingest
