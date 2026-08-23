@@ -193,6 +193,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # The conversation index (D-chat-index) — chat runs listed as conversations,
+  # not as tool runs, which is what they are to the person having them.
+  get "chats" => "chats#index", as: :chats
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
   resources :tool_runs, only: %i[ show destroy ] do

@@ -70,11 +70,39 @@
     <%# A morphing refresh re-renders the send button from the server, which
         knows about the in-flight lock but not about the empty draft in front
         of the user — and connect() won't run again to re-apply it. %>
+    <%# The queue key is the composer URL: stable per conversation, distinct
+        between the run page and a task's panel, and already unique. %>
     <%= form_with url: composer_url, class: "space-y-2.5",
           data: { controller: "chat-input",
-                  action: "turbo:submit-end->chat-input#reset " \
+                  chat_input_queue_key_value: composer_url,
+                  action: "submit->chat-input#beforeSubmit " \
+                          "turbo:submit-end->chat-input#reset " \
                           "turbo:morph@document->chat-input#refreshSend " \
-                          "turbo:render@document->chat-input#refreshSend" } do %>
+                          "turbo:morph@document->chat-input#renderPending " \
+                          "turbo:render@document->chat-input#refreshSend " \
+                          "turbo:render@document->chat-input#renderPending " \
+                          "keydown@window->chat-input#noteKeyboard " \
+                          "online@window->chat-input#flush " \
+                          "offline@window->chat-input#refreshOffline" } do %>
+      <%# A message that couldn't leave, drawn into the transcript by the
+          composer's controller. It lives here rather than in the transcript
+          markup because nothing on the server knows about it. %>
+      <template data-chat-input-target="pendingTemplate">
+        <div class="flex flex-col items-end" data-pending-bubble>
+          <div class="bubble bubble-user opacity-60">
+            <p class="whitespace-pre-wrap" data-pending-text></p>
+          </div>
+          <p class="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-[0.6875rem] text-soft">
+            <span data-pending-status></span>
+            <button type="button" class="cursor-pointer underline underline-offset-2 hover:text-ink"
+                    data-action="chat-input#retry" data-chat-input-id-param="">Retry</button>
+            <button type="button" class="cursor-pointer underline underline-offset-2 hover:text-ink"
+                    data-action="chat-input#discard" data-chat-input-id-param="">Discard</button>
+          </p>
+        </div>
+      </template>
+
+      <p class="px-1 text-xs text-soft" role="status" data-chat-input-target="offline" hidden></p>
       <% if suggestions.any? && !thinking %>
         <div class="flex flex-wrap gap-1.5">
           <% suggestions.each do |reply| %>

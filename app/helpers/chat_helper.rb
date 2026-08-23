@@ -15,6 +15,9 @@ module ChatHelper
   BULLET = /\A[-*•]\s+(.+)\z/
   NUMBERED = /\A\d{1,3}[.)]\s+(.+)\z/
   HEADING = /\A\#{1,6}\s+(.+?)\s*\#*\z/
+  # A fence opens on ``` (with an optional language tag we ignore) and closes
+  # on the next one — or, if the model never closed it, at the end of the turn.
+  FENCE = /\A```/
   # Code spans and URLs are lifted out whole so the emphasis pass can't
   # chew on an underscore inside either one.
   PROTECTED = %r{(`[^`\n]+`|https?://[^\s<]+)}
@@ -30,6 +33,20 @@ module ChatHelper
 
       if line.empty?
         index += 1
+      elsif line.match?(FENCE)
+        # Inside a fence, nothing is markup and nothing is a list: the lines
+        # go through verbatim (escaped), keeping their own leading whitespace,
+        # because indentation is the meaning. A `tutor` asked anything
+        # technical reaches for a fence, and printing the backticks was the
+        # loudest remaining tell that this surface was homemade.
+        index += 1
+        body = []
+        while index < lines.length && !lines[index].match?(FENCE)
+          body << lines[index]
+          index += 1
+        end
+        index += 1 if index < lines.length # the closing fence, if there is one
+        blocks << chat_code_block(body)
       elsif (kind = chat_list_kind(line))
         items = []
         while index < lines.length && chat_list_kind(lines[index].strip) == kind
@@ -56,7 +73,16 @@ module ChatHelper
   private
     def chat_paragraph_line?(line)
       stripped = line.strip
-      stripped.present? && chat_list_kind(stripped).nil? && !stripped.match?(HEADING)
+      stripped.present? && chat_list_kind(stripped).nil? &&
+        !stripped.match?(HEADING) && !stripped.match?(FENCE)
+    end
+
+    # Escaped, never inlined: a code block is the one place a model's text is
+    # shown exactly as written. The `pre` scrolls inside itself (see .bubble
+    # pre) so a wide line can't widen the bubble.
+    def chat_code_block(body)
+      code = ERB::Util.html_escape(body.join("\n")).to_str
+      tag.pre(tag.code(code.html_safe))
     end
 
     def chat_list_kind(line)

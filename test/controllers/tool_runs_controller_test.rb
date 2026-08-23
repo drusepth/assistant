@@ -14,6 +14,27 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Hospital bill", response.body
   end
 
+  test "a chat tool's form offers your own recent sessions to pick back up" do
+    mine = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    bound = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done,
+      subject: users(:one).tasks.create!(title: "Bound elsewhere"))
+    theirs = users(:two).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+
+    get new_tool_run_path("check_in")
+
+    assert_response :success
+    assert_select "a[href=?]", tool_run_path(mine)
+    assert_select "a[href=?]", tool_run_path(bound), count: 0
+    assert_select "a[href=?]", tool_run_path(theirs), count: 0
+  end
+
+  test "a one-shot tool's form offers nothing to pick back up" do
+    get new_tool_run_path("dispute_letter")
+
+    assert_response :success
+    assert_no_match "Pick up where you left off", response.body
+  end
+
   test "new 404s for an unknown tool" do
     get new_tool_run_path("nonsense")
     assert_response :not_found

@@ -325,7 +325,7 @@ someone actually designs offline behavior for a database-backed app.
 
 ---
 
-### W6 — Conversations you can get back to (D-chat-index)
+### W6 — Conversations you can get back to (D-chat-index) — **built**
 
 `config/routes.rb:198` is `resources :tool_runs, only: %i[ show destroy ]`.
 There is **no index**. The only route back into a conversation is a link
@@ -357,7 +357,15 @@ conversations.** Ours doesn't have one.
 One route, one query, one view. It is the highest value-per-line item left in
 this document, and it should probably ship with W1 rather than after it.
 
-### W7 — The turn belongs to the user
+*Built.* Two refinements the design didn't anticipate: the list orders by the
+**newest turn**, not by when the run was created (a correlated `MAX(id)`
+subquery — a conversation you came back to today belongs above one you started
+today and abandoned), and the preview line skips `notice` rows, because the
+app's own "something went wrong, try again" is furniture rather than the last
+thing anybody said. The filter row appears only once there is more than one
+kind of conversation to tell apart.
+
+### W7 — The turn belongs to the user — **offline built, the rest open**
 
 Three places the surface currently takes control away, all of which native
 messaging simply doesn't.
@@ -376,8 +384,22 @@ messaging simply doesn't.
   polish version watches `navigator.onLine`, holds the queue, and sends when
   signal returns — phones lose signal in lifts, on trains, and in basements,
   which is where this app's users are.
+  *Built*, and it landed ahead of W2 rather than after it, because losing what
+  someone wrote is a worse bug than watching it appear slowly. A send with no
+  connection is intercepted before Turbo sees it (Turbo's submit handler runs
+  on the document in the bubble phase, so a `preventDefault` on the form wins),
+  kept in memory and mirrored to `localStorage`, and drawn into the transcript
+  as a dimmed bubble with its own Retry and Discard. It flushes on `online` and
+  on the next `connect()`. The three outcomes are distinguished on purpose: a
+  network failure keeps the message and waits, a 4xx is the server genuinely
+  saying no (the run is gone, or isn't a live conversation) and marks that one
+  bubble "Couldn't send" rather than spinning forever, and a success drops it
+  from the queue — with a single `Turbo.visit` at the end of the flush, not one
+  per message, to bring the delivered turns in and take the placeholders out.
+  The queued text sits in `localStorage` in the clear; that tradeoff is named
+  in the controller rather than left to be discovered.
 
-### Folded into the earlier waves
+### Folded into the earlier waves — **built**
 
 Found on review of the code rather than the screenshot, and each belongs in a
 wave that already exists rather than a wave of its own.
@@ -391,6 +413,16 @@ between usable and unusable, and "the 99%" includes them. A base-layer
 `@media (prefers-reduced-motion: reduce)` block plus `behavior: "auto"` in
 `chat-scroll` when it's set. The chat is where it's worst, not where it's
 only.
+
+*Built.* One wrinkle worth writing down: the blanket rule is deliberately
+**unlayered and last in the file**, because the cascade reverses layer order
+for `!important` declarations — so an unlayered important sits *below* every
+layered one, which is exactly the priority a floor wants. A component that
+means to keep a motion opts out by marking its own rule `!important` inside
+`@layer components`, which is what `.celebrate-banner` (landed on main while
+this plan was being written, and the one place in the app that already handled
+reduced motion) now does: without the opt-out the blanket would have flattened
+its fade to nothing and the banner would have vanished before it was read.
 
 **Three rendering bugs (→ W3).**
 
@@ -406,7 +438,8 @@ only.
 - Long transcripts render whole (`run.tool_run_messages.ordered`, no limit).
   A hundred-turn tutor session is a hundred bubbles of DOM on a phone that may
   be five years old. Render the last ~40 with "load earlier" above, using
-  scroll anchoring so loading doesn't jump the reader.
+  scroll anchoring so loading doesn't jump the reader. — *Still open; the
+  other two shipped.*
 
 **The last five percent of feel (→ W3).**
 
@@ -417,7 +450,13 @@ only.
   desktop card isn't a 120-character line.
 - `chat_input_controller`'s `pointer: coarse` test treats a tablet with a
   keyboard attached as touch, so Enter never sends there. Detect the
-  keyboard, not the pointer.
+  keyboard, not the pointer. — *Built, and the detection is **learned rather
+  than guessed**: every media-query answer is wrong for some real device
+  (`any-pointer: fine` would break newlines on a phone with a stylus), so a
+  coarse-pointer device starts with Enter as newline and the first press of a
+  key no virtual keyboard produces — Tab, Escape, a modifier, Home/End,
+  PageUp/Down; arrows are excluded because some Android IMEs send them — flips
+  it for good, remembered in `localStorage`.*
 - Focus and announcement when the `:screen` layout mounts; `aria-live` held
   quiet *during* a stream and announced once on completion, so a screen
   reader isn't read the reply 80 milliseconds at a time.

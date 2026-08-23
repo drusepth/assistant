@@ -22,6 +22,9 @@ module Tool
 
   def all = SLUGS.map { |slug| find(slug) }
 
+  # The conversational tools (D29) — what /chats lists and filters by.
+  def chat_slugs = all.select { |tool| tool.kind == :chat }.map(&:slug)
+
   def find(slug)
     const_get(slug.to_s.camelize) if SLUGS.include?(slug.to_s)
   end

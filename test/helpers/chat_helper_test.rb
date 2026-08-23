@@ -63,6 +63,36 @@ class ChatHelperTest < ActionView::TestCase
     assert_match "&quot;", html
   end
 
+  test "a fenced block renders as code, not as backticks" do
+    html = chat_body("Try this:\n```ruby\nputs 1\n```\nMake sense?")
+
+    assert_no_match "```", html
+    assert_select_fragment html, "pre code", text: "puts 1"
+    assert_select_fragment html, "p", count: 2
+  end
+
+  test "a code block keeps its indentation and its markdown-ish characters" do
+    html = chat_body("```\n  if x_y **z**\n    return\n```")
+
+    assert_match "  if x_y **z**\n    return", html
+    assert_no_match "<em>", html
+    assert_no_match "<strong>", html
+  end
+
+  test "a code block is escaped like everything else" do
+    html = chat_body("```\n<script>alert(1)</script>\n```")
+
+    assert_no_match "<script", html
+    assert_match "&lt;script&gt;", html
+  end
+
+  test "an unclosed fence takes the rest of the turn rather than dropping it" do
+    html = chat_body("Here:\n```\nputs 1\nputs 2")
+
+    assert_match "puts 1\nputs 2", html
+    assert_select_fragment html, "pre code", count: 1
+  end
+
   private
     def assert_select_fragment(html, selector, **options)
       assert_select Nokogiri::HTML5.fragment(html), selector, **options

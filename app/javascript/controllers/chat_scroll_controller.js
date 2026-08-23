@@ -53,7 +53,14 @@ export default class extends Controller {
     this.autoScrolling = true
     this.autoScrollTimer = setTimeout(() => { this.autoScrolling = false }, 500)
 
-    this.scrollerTarget.scrollTo({ top: this.scrollerTarget.scrollHeight, behavior })
+    // A behavior passed to scrollTo() overrides the CSS scroll-behavior, so
+    // the app-wide reduced-motion rule can't reach this call — the transcript
+    // would still glide on every turn for someone who asked it not to.
+    this.scrollerTarget.scrollTo({ top: this.scrollerTarget.scrollHeight, behavior: this.reducedMotion ? "auto" : behavior })
+  }
+
+  get reducedMotion() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }
 
   // Nothing to jump back to until there's history above the fold.

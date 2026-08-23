@@ -283,8 +283,29 @@
 
   /* Chat (D29): the transcript bubble and the composer shell. Retheming the
      conversation surface happens here, not in the chat partials. */
+  /* `overflow-wrap: anywhere` rather than `break-word`, and it is load-bearing
+     rather than decorative: a bubble is a flex item, so its automatic minimum
+     size is its min-content width, and one unbreakable token — a long URL or
+     an identifier out of a code span — makes that min-content wider than the
+     phone, blowing past max-w and pushing the page sideways. `break-word`
+     wraps the text but does *not* shrink min-content, so only `anywhere`
+     actually fixes it. This is the Narrow-screens rule (docs/DESIGN.md), and
+     chat is the one place the offending string arrives from a model at
+     runtime instead of from a view at build time — which is why the
+     integration test that pins every other page couldn't catch it. */
   .bubble {
-    @apply max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed;
+    @apply min-w-0 max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed;
+    overflow-wrap: anywhere;
+  }
+  /* A fenced code block inside an assistant turn: never wrapped (indentation
+     is meaning), so it scrolls inside its own box rather than widening the
+     bubble — the same containment rule every wide element in the app follows. */
+  .bubble pre {
+    @apply my-2 overflow-x-auto rounded-xl bg-black/5 p-3;
+  }
+  .bubble pre code {
+    @apply block whitespace-pre font-mono text-[0.8125rem] leading-relaxed;
+    overflow-wrap: normal;
   }
   .bubble-user {
     @apply rounded-br-md bg-primary-600 text-white;
@@ -372,8 +393,12 @@
   /* Asked for less motion, given less motion: the banner still says the
      news, it just stops dancing (and the controller skips the confetti). */
   @media (prefers-reduced-motion: reduce) {
+    /* `!important` because the app-wide reduced-motion floor at the foot of
+       this file would otherwise flatten this to nothing and the banner would
+       vanish before it was read. A layered important outranks an unlayered
+       one, which is how a component keeps a motion it means to keep. */
     .celebrate-banner {
-      animation: celebrate-fade 2.4s ease-out forwards;
+      animation: celebrate-fade 2.4s ease-out forwards !important;
     }
     .celebrate-shake {
       animation: none;
@@ -383,5 +408,32 @@
       10%, 80% { opacity: 1; }
       100% { opacity: 0; }
     }
+  }
+}
+
+/* ============================================================================
+   Reduced motion — the app-wide floor.
+
+   Deliberately **unlayered** and at the end of the file. Tailwind's motion
+   utilities (`animate-bounce`, `transition-colors`) live in the utilities
+   layer and would otherwise win, so this needs `!important`; and because the
+   cascade reverses layer order for important declarations, an unlayered
+   `!important` sits *below* every layered one — which is exactly the priority
+   we want. A component that means to keep a motion under this setting opts
+   out by marking its own rule `!important` inside `@layer components`, the
+   way `.celebrate-banner` does.
+
+   Chat is where the absence hurt most (three dots bouncing for as long as a
+   reply takes, a smooth scroll on every turn), but the fix belongs to the
+   whole app, not to chat. The scroll half is only half-done here: a
+   `scrollTo({behavior: "smooth"})` call overrides the CSS property, so
+   chat_scroll_controller checks the same media query itself.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
