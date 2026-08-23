@@ -100,6 +100,19 @@
    opt-in now, via the `.display` atom below — see docs/DESIGN.md.
    ========================================================================== */
 @layer base {
+  /* The app's own chrome above the page, as one number rather than a guess
+     repeated in two places: the mobile header sets its height from this, and
+     `.chat-screen` subtracts it. The rail is beside the content, not above
+     it, so from `lg` up there is nothing to subtract. */
+  :root {
+    --app-header-h: 3.5rem;
+  }
+  @media (width >= 64rem) {
+    :root {
+      --app-header-h: 0rem;
+    }
+  }
+
   h1, h2, h3, h4 {
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -331,6 +344,57 @@
   .composer-input {
     @apply max-h-60 min-w-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-2 text-sm leading-relaxed text-ink placeholder:text-stone-400 focus:outline-none focus:ring-0;
   }
+
+  /* The chat surface has two shapes (D-chat-shell).
+
+     `.chat-screen` owns the viewport: the transcript is the only thing that
+     scrolls and the composer is welded to the bottom, which is what makes the
+     composer reachable without a gesture. Its height is the viewport minus
+     the app's own chrome minus, on iOS, the keyboard — see --app-header-h
+     (defined once, beside the header that uses it) and --keyboard-inset (set
+     by chat_viewport_controller, and 0 everywhere the layout viewport already
+     shrinks by itself).
+
+     `.chat-panel` is the embedded shape — a card in a flowing page, bounded so
+     it can't eat the document. Below `sm` it is never used at all: a card that
+     is itself a scroller inside a scrolling page is the bug this replaces, so
+     the task page links out to the screen instead. */
+  /* The page a chat screen lives on is exactly the viewport minus the app's
+     own chrome, minus (on iOS) the keyboard; everything in it — a desktop page
+     header, then the screen — shares that height. Keeping the arithmetic here
+     rather than on `.chat-screen` is what lets a page header sit above the
+     screen without pushing it out of the viewport. */
+  .chat-page {
+    height: calc(100dvh - var(--app-header-h) - var(--keyboard-inset, 0px));
+    @apply mx-auto flex w-full max-w-3xl flex-col;
+  }
+  .chat-screen {
+    @apply flex min-h-0 flex-1 flex-col;
+  }
+  .chat-panel {
+    @apply flex max-h-[60vh] flex-col;
+  }
+  /* The transcript inside either shape: the flex child allowed to shrink (a
+     min-h-0 a flex column does not give you by default) and the one that
+     scrolls. overscroll-contain stops a flick at the top of the history from
+     chaining into the page and firing the browser's own pull-to-refresh. */
+  .chat-transcript {
+    @apply min-h-0 flex-1 overflow-y-auto;
+    overscroll-behavior: contain;
+  }
+  /* One sideways-scrolling row on a phone: two wrapped rows of chips cost more
+     vertical space than the conversation can spare. From `sm` up there is room
+     to wrap. */
+  .chat-suggestions {
+    @apply flex gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-x-visible;
+    scrollbar-width: none;
+  }
+  .chat-suggestions::-webkit-scrollbar {
+    display: none;
+  }
+  .chat-suggestions > * {
+    @apply shrink-0;
+  }
   .composer-send {
     @apply flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-primary-600 text-white transition-colors hover:bg-primary-700 disabled:cursor-default disabled:bg-stone-200 disabled:text-stone-400;
   }
@@ -418,6 +482,22 @@
       10%, 80% { opacity: 1; }
       100% { opacity: 0; }
     }
+  }
+}
+
+/* ============================================================================
+   Touch text size — the iOS zoom rule.
+
+   Mobile Safari zooms the page in when a field under 16px takes focus, and
+   does not zoom back out: the reader is left on a magnified, sideways-
+   scrolling page with no way back but a pinch. Every field in this app was
+   14px. Scoped to coarse pointers rather than to a breakpoint on purpose — a
+   phone in landscape is wider than `sm` and would have kept the bug.
+   ========================================================================== */
+@media (pointer: coarse) {
+  .input,
+  .composer-input {
+    font-size: 1rem;
   }
 }
 

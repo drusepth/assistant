@@ -26,7 +26,8 @@ class ToolRunMessagesController < ApplicationController
     head :unprocessable_entity and return unless @run.chat? && @run.done?
 
     if params[:content].present?
-      @run.tool_run_messages.create!(role: :user, content: params[:content])
+      @run.tool_run_messages.create!(role: :user, content: params[:content],
+        client_token: params[:client_token].presence)
       ChatTurnJob.perform_later(@run)
     end
     redirect_to @run

@@ -9,6 +9,10 @@
     message rendered on its own (a Turbo Stream append) still looks right. %>
 <% continues = local_assigns.fetch(:continues, false) %>
 <% ends_group = local_assigns.fetch(:ends_group, true) %>
+<%# A turn the client already drew optimistically keeps the id it was drawn
+    with, so the morph after the send matches the two instead of removing one
+    and inserting the other (D-chat-optimistic). %>
+<% dom_id = "chat-msg-#{message.client_token.presence || message.id}" %>
 
 <% if message.notice_role? %>
   <div class="mt-3 flex justify-center">
@@ -18,7 +22,7 @@
   </div>
 <% else %>
   <% user = message.user_role? %>
-  <div class="group flex flex-col <%= user ? "items-end" : "items-start" %> <%= "mt-3" unless continues %>">
+  <div id="<%= dom_id %>" class="group flex flex-col <%= user ? "items-end" : "items-start" %> <%= "mt-3" unless continues %>">
     <div class="bubble <%= user ? "bubble-user" : "bubble-assistant" %> <%= (user ? "bubble-user-tail" : "bubble-assistant-tail") if ends_group %>">
       <% if user %>
         <p class="whitespace-pre-wrap"><%= message.content %></p>

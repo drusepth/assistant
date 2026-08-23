@@ -77,7 +77,7 @@ Rails.application.routes.draw do
   resources :tasks do
     # The task page's embedded chat (D30) — find-or-create the bound run,
     # append the turn.
-    resource :conversation, only: :create, module: :tasks
+    resource :conversation, only: %i[ show create ], module: :tasks
     member do
       patch :complete
       patch :reopen

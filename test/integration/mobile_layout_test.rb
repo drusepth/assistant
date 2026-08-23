@@ -13,6 +13,20 @@ require "test_helper"
 class MobileLayoutTest < ActiveSupport::TestCase
   VIEWS = Rails.root.glob("app/{views,components}/**/*.erb")
 
+  # Mobile Safari zooms the page in when a field under 16px takes focus, and
+  # does not zoom back out. It is invisible on a desktop and ruinous on an
+  # iPhone, which is exactly the kind of regression a pin is for. Source-level
+  # again: the rule lives in the stylesheet, and nothing rendered can see it.
+  test "fields are at least 16px on a touch device, or iOS zooms and stays zoomed" do
+    css = Rails.root.join("app/assets/tailwind/application.css").read
+    rule = css[/@media \(pointer: coarse\)\s*\{(.+?)\n\}/m, 1]
+
+    assert rule, "no (pointer: coarse) block in application.css — the iOS zoom fix is gone"
+    assert_match(/\.input\b/, rule, "`.input` no longer gets its touch font size")
+    assert_match(/\.composer-input\b/, rule, "`.composer-input` no longer gets its touch font size")
+    assert_match(/font-size:\s*(1rem|16px)/, rule, "the touch font size is below 16px again")
+  end
+
   test "every grid names its base column count" do
     offenders = class_attributes_in(VIEWS).filter_map do |path, line, classes|
       tokens = classes.split

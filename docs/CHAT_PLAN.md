@@ -229,7 +229,7 @@ a second pass over the code rather than the screenshot, and W6 in particular
 is not polish — it is a missing floor, and it should probably ship alongside
 W1.
 
-### W1 — The shell (the big one)
+### W1 — The shell (the big one) — **built**
 
 The layout fix, and the mobile platform basics that no amount of layout work
 substitutes for.
@@ -264,7 +264,37 @@ the composer on iOS Safari and Chrome Android; the transcript is the only
 thing that scrolls; and `test/integration/mobile_layout_test.rb` gains a chat
 case.
 
-### W2 — Instant send (D-chat-optimistic)
+*Built*, with four corrections to the plan as written.
+
+- **The height arithmetic belongs to the page, not the screen.** `.chat-page`
+  is the viewport minus `--app-header-h` minus `--keyboard-inset`, and
+  `.chat-screen` is `flex-1 min-h-0` inside it — which is what lets the desktop
+  page header sit above the screen without pushing it out of the viewport. The
+  first attempt sized the screen itself and the laptop page scrolled by the
+  height of its own header.
+- **`min-h-screen` on the layout wrapper had to go for a bleed page.** It
+  stacks a full viewport *under* the mobile header, so the document scrolled by
+  exactly the header's height — the second scroller the whole wave exists to
+  remove. The wrapper is now the viewport minus the header, `overflow-hidden`.
+- **The header height is a token**, `--app-header-h`, set on `:root` and read
+  both by the header that has it and by the page that subtracts it. The
+  `20rem` this replaces was a guess in one place; a second guess would have
+  been no better.
+- **The `chat-scroll` sentinel rewrite was dropped, and that bullet was
+  wrong.** The `autoScrolling` flag is not a workaround for scroll-math: an
+  `IntersectionObserver` on a bottom sentinel cannot tell "the reader scrolled
+  away" from "content grew below them", which is the only thing the flag is
+  for. The controller keeps its scroll-based pinning (and gained the anchor
+  restore in W3 besides). The cheap half — `overscroll-behavior: contain` —
+  shipped.
+
+Two things went further than planned because the bug was app-wide rather than
+chat's: the touch font-size rule covers `.input` as well as `.composer-input`
+(iOS zooms on *any* field under 16px, so every form in the app had it), and it
+is scoped to `(pointer: coarse)` rather than a breakpoint — a phone in
+landscape is wider than `sm` and would have kept the bug.
+
+### W2 — Instant send (D-chat-optimistic) — **built**
 
 - `<template>` bubble + client-side append in `chat_input_controller`.
 - Client token on the form; `ToolRunMessagesController#create` answers
@@ -280,6 +310,32 @@ case.
 
 **Done when:** tapping send paints the bubble in the same frame; no chat
 interaction re-renders the page; killing the network mid-send loses nothing.
+
+*Built* — with the middle clause deliberately unmet, and the plan wrong to have
+asked for it. The server still answers with a redirect and the page still
+morphs, because a turn changes more than the transcript (the composer's lock,
+the quick-reply chips, the recap affordance, the retry button, the thinking
+indicator), and replacing one morph with five targeted streams would have
+traded a large regression surface for nothing the reader can see. What the
+reader *can* see is the gap between the tap and the response, and that is
+closed entirely on the client: the bubble is drawn, the composer cleared and
+locked, and the reply's dots started, all before the fetch leaves.
+
+The reconciliation is the part worth keeping. A `client_token` column carries
+the id the bubble was drawn with; the form posts it, the server stores it, and
+`_message` renders the real turn under the same id — so the morph *matches* the
+two instead of removing one and inserting the other, and nothing flickers.
+
+The ordering around Turbo is subtle enough to state: `submit` is the last point
+at which the form can be stopped (for the offline path) **and** the last point
+at which a field can still change, because Turbo captures the request body when
+it constructs the submission. So the token is stamped on `submit` and the
+composer is cleared on `turbo:submit-start`, after the body is taken. Clearing
+it a moment earlier posted an empty message — found by driving the real
+browser, invisible to every test.
+
+Grouping is the one thing the client can't know, so a sent turn always draws
+standing alone and settles into its group when the morph lands.
 
 ### W3 — The conversation reads like a conversation
 

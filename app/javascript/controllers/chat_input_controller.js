@@ -25,13 +25,17 @@ const KEYBOARD_STORAGE_KEY = "chat:hardware-keyboard"
 const QUEUE_LIMIT = 20
 
 export default class extends Controller {
-  static targets = ["input", "send", "pendingTemplate", "offline"]
+  static targets = [
+    "input", "send", "offline", "suggestions", "token",
+    "optimisticTemplate", "pendingTemplate", "thinkingTemplate"
+  ]
   static values = {
     maxHeight: { type: Number, default: 240 },
     queueKey: String
   }
 
   connect() {
+    this.restoreDraft()
     this.grow()
     this.refreshSend()
     this.refreshOffline()
@@ -76,6 +80,7 @@ export default class extends Controller {
     input.style.height = "auto"
     input.style.height = `${Math.min(input.scrollHeight, this.maxHeightValue)}px`
     this.refreshSend()
+    this.saveDraft()
   }
 
   send() {
@@ -83,9 +88,15 @@ export default class extends Controller {
   }
 
   refreshSend() {
+    const drafting = this.inputTarget.value.trim() !== ""
+
+    // Once you have decided what to say, a row of canned openings is in the
+    // way — and on a phone it is in the way of the conversation itself.
+    if (this.hasSuggestionsTarget) this.suggestionsTarget.hidden = drafting
+
     if (!this.hasSendTarget || this.sendBlocked) return
 
-    this.sendTarget.disabled = this.inputTarget.value.trim() === ""
+    this.sendTarget.disabled = !drafting
   }
 
   get sendBlocked() {
@@ -113,6 +124,88 @@ export default class extends Controller {
     this._hardwareKeyboard = value
   }
 
+  // ── Optimistic send (D-chat-optimistic) ─────────────────────────────────
+  //
+  // The turn is drawn, the composer cleared and locked, and the reply's dots
+  // started — all before the fetch leaves. Everything here is *only* about the
+  // gap between the tap and the response: the server still answers with a
+  // redirect, so the morph that follows is what makes the page true.
+  //
+  // The two are reconciled by a token rather than by luck. The bubble is drawn
+  // with `chat-msg-<token>`, the form posts the token, the server stores it and
+  // renders the real turn under the same id — so the morph matches them and
+  // nothing flickers. Grouping is the one thing the client can't know, so a
+  // sent turn always draws standing alone and settles into its group when the
+  // morph lands.
+  mintToken() {
+    return `c${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`
+  }
+
+  draw(text, token) {
+    const transcript = this.transcript
+    if (!transcript || !this.hasOptimisticTemplateTarget) return
+
+    const bubble = this.optimisticTemplateTarget.content.firstElementChild.cloneNode(true)
+    if (token) bubble.id = `chat-msg-${token}`
+    bubble.querySelector("[data-optimistic-text]").textContent = text
+    transcript.appendChild(bubble)
+
+    // The wait starts now too, not when the server gets back to us.
+    if (this.hasThinkingTemplateTarget && !document.getElementById("chat-thinking")) {
+      transcript.appendChild(this.thinkingTemplateTarget.content.firstElementChild.cloneNode(true))
+    }
+
+    this.lock()
+  }
+
+  // Locking here rather than waiting for the server is what stops a second
+  // send landing in the gap. The morph re-renders the button from the truth a
+  // moment later, so this is never the last word.
+  lock() {
+    if (!this.hasSendTarget) return
+
+    this.sendTarget.setAttribute("data-locked", "true")
+    this.sendTarget.disabled = true
+  }
+
+  get transcript() {
+    return document.getElementById("chat-transcript")
+  }
+
+  // ── Drafts ──────────────────────────────────────────────────────────────
+  //
+  // [data-turbo-permanent] carries a half-typed message across the morph that
+  // delivers a reply, but not across a navigation — walk away mid-sentence and
+  // the sentence was gone. Same store and same key shape as the offline queue.
+
+  saveDraft() {
+    const text = this.inputTarget.value
+    try {
+      if (text.trim()) localStorage.setItem(this.draftKey, text)
+      else localStorage.removeItem(this.draftKey)
+    } catch {}
+  }
+
+  restoreDraft() {
+    if (this.inputTarget.value.trim()) return
+
+    try {
+      const draft = localStorage.getItem(this.draftKey)
+      if (draft) this.inputTarget.value = draft
+    } catch {}
+  }
+
+  clearDraft() {
+    this.inputTarget.value = ""
+    try { localStorage.removeItem(this.draftKey) } catch {}
+    this.grow()
+    this.refreshSend()
+  }
+
+  get draftKey() {
+    return `chat-draft:${this.queueKeyValue}`
+  }
+
   // ── The offline queue ────────────────────────────────────────────────────
   //
   // A phone loses signal in lifts, on trains, and in the basement flat where
@@ -130,14 +223,41 @@ export default class extends Controller {
   // discarded, and the alternative is losing what they wrote. Named here so
   // the tradeoff is a choice rather than an accident.
 
+  // Two moments, and the order is the whole trick.
+  //
+  // `submit` is the last point at which the form can be stopped (Turbo's own
+  // handler runs on the document in the bubble phase, after this one, and
+  // honors defaultPrevented) *and* the last point at which a field can still be
+  // changed — Turbo captures the body when it constructs the submission, which
+  // is after this and before turbo:submit-start. So the token is stamped here.
+  //
+  // Clearing the composer here instead would post an empty message: the
+  // textarea is part of that same body.
   beforeSubmit(event) {
-    if (navigator.onLine || this.flushing) return
-    if (!this.inputTarget.value.trim()) return
+    if (this.flushing) return
 
-    // Preempting Turbo: its submit handler runs on the document in the
-    // bubble phase, after this one, and honors defaultPrevented.
-    event.preventDefault()
-    this.enqueue(this.inputTarget.value)
+    const text = this.inputTarget.value
+    if (!text.trim()) return
+
+    if (!navigator.onLine) {
+      event.preventDefault()
+      this.enqueue(text)
+      this.clearDraft()
+      return
+    }
+
+    if (this.hasTokenTarget) this.tokenTarget.value = this.mintToken()
+  }
+
+  // ...and by here the body is captured, so the composer can be emptied and
+  // the turn drawn under the token that just went out with it.
+  submitStart() {
+    if (this.flushing) return
+
+    const text = this.inputTarget.value
+    if (!text.trim()) return
+
+    this.draw(text, this.hasTokenTarget ? this.tokenTarget.value : null)
     this.clearDraft()
   }
 
@@ -154,8 +274,13 @@ export default class extends Controller {
 
     if (!event.detail.success) return
 
-    this.inputTarget.value = this.stashedDraft || ""
-    this.stashedDraft = null
+    // The composer was cleared when the turn was drawn; all that is left is
+    // giving back a draft a quick-reply chip pushed aside.
+    if (this.stashedDraft) {
+      this.inputTarget.value = this.stashedDraft
+      this.stashedDraft = null
+      this.saveDraft()
+    }
     this.grow()
     this.refreshSend()
     if (this.keyboard) this.inputTarget.focus()
@@ -303,9 +428,4 @@ export default class extends Controller {
     return document.querySelector('meta[name="csrf-token"]')?.content || ""
   }
 
-  clearDraft() {
-    this.inputTarget.value = ""
-    this.grow()
-    this.refreshSend()
-  }
 }

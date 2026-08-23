@@ -1,0 +1,31 @@
+<%# What a conversation produced — a saved recap, and the D28 next steps it
+    proposed. On the screen layout there is nothing below the composer for
+    these to sit in, and they belong to the conversation anyway: a recap is an
+    event in the session, not a separate document that happens to be nearby. %>
+<% notes = run.items.grep(Note) %>
+<% next_steps = run.done? ? run.next_steps : [] %>
+
+<% if notes.any? || next_steps.any? %>
+  <div class="mt-4 space-y-2 border-t border-edge pt-4">
+    <% notes.each do |note| %>
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-canvas px-3 py-2.5">
+        <div class="min-w-0">
+          <p class="truncate text-sm font-medium text-ink"><%= note.title %></p>
+          <p class="text-xs text-soft">Recap — saved to your notes</p>
+        </div>
+        <%= link_to "Open note", note, class: "btn btn-secondary btn-sm shrink-0" %>
+      </div>
+    <% end %>
+
+    <% next_steps.each do |step| %>
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-canvas px-3 py-2.5">
+        <div class="min-w-0">
+          <p class="truncate text-sm font-medium text-ink"><%= step.tool.title %></p>
+          <p class="text-xs text-soft"><%= step.reason.presence || "One click — the form comes prefilled" %></p>
+        </div>
+        <%= link_to "Start →", new_tool_run_path(step.tool.slug, inputs: step.inputs),
+              class: "btn btn-secondary btn-sm shrink-0" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

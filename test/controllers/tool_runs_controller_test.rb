@@ -35,6 +35,72 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Pick up where you left off", response.body
   end
 
+  test "a live chat run is a screen, not a page (D-chat-shell)" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "How has the week been?")
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select ".chat-page .chat-screen"
+    # The composer's row is inside the screen, not somewhere below the page.
+    assert_select ".chat-screen .composer"
+    # Chrome folds into the screen's own bar below lg.
+    assert_select ".chat-screen a[aria-label=?]", "Back to your conversations"
+    assert_select ".chat-screen [data-popover-target=panel] a", text: "New session"
+  end
+
+  test "a chat run that hasn't opened yet still flows in the page" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :running)
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select ".chat-screen", count: 0
+    assert_select "h1", text: "Check in"
+  end
+
+  test "a draft run is untouched by the chat shell" do
+    run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", status: :done,
+      inputs: { document_id: @document.id, intent: "remove the charge" })
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select ".chat-screen", count: 0
+    assert_select "h1", text: "Draft a dispute letter"
+  end
+
+  test "the composer asks the on-screen keyboard for the right shape" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Hi")
+
+    get tool_run_path(run)
+
+    assert_select "#chat-composer[enterkeyhint=send][autocapitalize=sentences][autocorrect=on]"
+  end
+
+  test "a turn keeps the id the client drew it with, so the morph matches them" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { topic: "x" }, status: :done)
+
+    post tool_run_messages_path(run), params: { content: "Drawn already", client_token: "cabc123" }
+
+    assert_equal "cabc123", run.tool_run_messages.sole.client_token
+    get tool_run_path(run)
+    assert_select "#chat-msg-cabc123"
+  end
+
+  test "a turn sent without a token falls back to its own id" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { topic: "x" }, status: :done)
+
+    post tool_run_messages_path(run), params: { content: "Plain form post" }
+    message = run.tool_run_messages.sole
+
+    assert_nil message.client_token
+    get tool_run_path(run)
+    assert_select "#chat-msg-#{message.id}"
+  end
+
   test "new 404s for an unknown tool" do
     get new_tool_run_path("nonsense")
     assert_response :not_found
@@ -235,7 +301,7 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "button[type=submit][disabled][data-locked]"
-    assert_select "span.animate-bounce", count: 3
+    assert_select "#chat-transcript span.animate-bounce", count: 3
   end
 
   test "the composer ships enabled and unlocked when it's the user's turn" do

@@ -4,151 +4,32 @@
       tool         — the chat tool class (quick replies, recap copy)
       composer_url — where the composer posts
       openers      — assistant-styled opening lines shown while run is nil
-      title        — optional card title %>
-<% openers = local_assigns.fetch(:openers, []) %>
+      title        — optional card title (panel only)
+      layout       — :screen (owns the viewport) or :panel (a card in a page)
+
+    D-chat-shell: the two layouts want opposite things, so the shell is one
+    partial and only its wrapper differs. A :screen chat is the page — no card,
+    no page header, chrome folded into its own bar; a :panel is a bounded card
+    that flows with the document around it. %>
+<% layout = local_assigns.fetch(:layout, :panel) %>
+<% screen = layout == :screen %>
 <% title = local_assigns[:title] %>
-<% thinking = run&.awaiting_reply? %>
-<%# A suggestion the user already took is noise, not an offer. %>
-<% suggestions = run ? run.unused_quick_replies : tool.quick_replies %>
-<%# The newest page of turns, and whether there is history above them. %>
-<% messages, earlier = run ? run.tool_run_messages.window : [ [], false ] %>
 
-<%= render Ui::CardComponent.new(title: title, padded: false) do %>
-  <div class="relative" data-controller="chat-scroll">
-    <%# Natural reading order — oldest first — so the transcript copies,
-        reads aloud, and selects the way a conversation should; chat-scroll
-        keeps it pinned to the newest turn and offers a way back down when
-        the user has scrolled off to read history. A live transcript also
-        gets a height floor so the composer stops hopping as it grows; an
-        unstarted conversation is just its openers, and shouldn't open a
-        well of empty space under them. %>
-    <%# The id is what lets a morphing refresh match this element to itself
-        and mutate its children, rather than swapping the scroller out from
-        under its observer and scroll position. %>
-    <%# gap-1 is the spacing *within* a run of turns from one speaker; anything
-        that stands alone adds its own mt-3 on top (see chat_turns and
-        tool_runs/_message). A single uniform gap between every bubble is what
-        made three quick messages read as three separate events. %>
-    <div id="chat-transcript" class="flex max-h-[calc(100dvh-20rem)] flex-col gap-1 overflow-y-auto p-4 sm:p-5 <%= "min-h-72" if run %>"
-         role="log" aria-live="polite" aria-relevant="additions" aria-busy="<%= thinking.present? %>"
-         data-chat-scroll-target="scroller" data-action="scroll->chat-scroll#track">
-      <% if run %>
-        <% if (recap = run.previous_recap) %>
-          <p class="mt-3 text-center text-xs text-soft">
-            Picking up from last time —
-            <%= link_to recap.title, recap, class: "underline decoration-stone-300 underline-offset-2 hover:text-ink" %>
-          </p>
-        <% end %>
-        <%= render "tool_runs/earlier", run: run, before: (messages.first if earlier) %>
-        <% chat_turns(messages).each do |turn| %>
-          <%= render "tool_runs/message", message: turn.message,
-                continues: turn.continues, ends_group: turn.ends_group %>
-        <% end %>
-      <% else %>
-        <% openers.each do |opener| %>
-          <div class="mt-3 flex justify-start">
-            <div class="bubble bubble-assistant bubble-assistant-tail whitespace-pre-wrap"><%= opener %></div>
-          </div>
-        <% end %>
-      <% end %>
+<% if screen %>
+  <%= render "tool_runs/chat_shell", run: run, tool: tool, composer_url: composer_url,
+        openers: local_assigns.fetch(:openers, []), screen: true %>
+<% else %>
+  <%= render Ui::CardComponent.new(title: title, padded: false) do %>
+    <%= render "tool_runs/chat_shell", run: run, tool: tool, composer_url: composer_url,
+          openers: local_assigns.fetch(:openers, []), screen: false %>
+  <% end %>
 
-      <% if thinking %>
-        <div class="mt-3 flex justify-start" role="status">
-          <span class="sr-only">Writing a reply…</span>
-          <div class="bubble bubble-assistant bubble-assistant-tail flex items-center gap-1 py-3.5">
-            <span class="size-1.5 animate-bounce rounded-full bg-stone-400"></span>
-            <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:150ms]"></span>
-            <span class="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:300ms]"></span>
-          </div>
-        </div>
-      <% elsif run&.reply_failed? %>
-        <div class="mt-3 flex justify-center">
-          <%= button_to "Try again", retry_reply_tool_run_path(run), method: :post,
-                class: "btn btn-secondary btn-sm" %>
-        </div>
-      <% end %>
+  <%# On a screen the recap lives in the overflow menu, where the rest of the
+      session's verbs are; a panel has no menu, so it keeps the footer. %>
+  <% if run&.recappable? %>
+    <div class="mt-6 flex items-center justify-between gap-4">
+      <p class="text-xs text-soft"><%= tool.recap_hint %></p>
+      <div class="shrink-0"><%= render "tool_runs/recap_button", tool_run: run %></div>
     </div>
-
-    <button type="button" class="absolute bottom-3 left-1/2 hidden -translate-x-1/2 rounded-full border border-edge bg-surface p-2 text-soft shadow-sm transition-colors hover:text-ink"
-            aria-label="Jump to the latest message"
-            data-chat-scroll-target="jump" data-action="chat-scroll#jump">
-      <%= icon(:arrow_down, css_class: "size-4") %>
-    </button>
-  </div>
-
-  <div class="border-t border-edge p-3 sm:p-4">
-    <%# A morphing refresh re-renders the send button from the server, which
-        knows about the in-flight lock but not about the empty draft in front
-        of the user — and connect() won't run again to re-apply it. %>
-    <%# The queue key is the composer URL: stable per conversation, distinct
-        between the run page and a task's panel, and already unique. %>
-    <%= form_with url: composer_url, class: "space-y-2.5",
-          data: { controller: "chat-input",
-                  chat_input_queue_key_value: composer_url,
-                  action: "submit->chat-input#beforeSubmit " \
-                          "turbo:submit-end->chat-input#reset " \
-                          "turbo:morph@document->chat-input#refreshSend " \
-                          "turbo:morph@document->chat-input#renderPending " \
-                          "turbo:render@document->chat-input#refreshSend " \
-                          "turbo:render@document->chat-input#renderPending " \
-                          "keydown@window->chat-input#noteKeyboard " \
-                          "online@window->chat-input#flush " \
-                          "offline@window->chat-input#refreshOffline" } do %>
-      <%# A message that couldn't leave, drawn into the transcript by the
-          composer's controller. It lives here rather than in the transcript
-          markup because nothing on the server knows about it. %>
-      <template data-chat-input-target="pendingTemplate">
-        <div class="mt-3 flex flex-col items-end" data-pending-bubble>
-          <div class="bubble bubble-user bubble-user-tail opacity-60">
-            <p class="whitespace-pre-wrap" data-pending-text></p>
-          </div>
-          <p class="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-[0.6875rem] text-soft">
-            <span data-pending-status></span>
-            <button type="button" class="cursor-pointer underline underline-offset-2 hover:text-ink"
-                    data-action="chat-input#retry" data-chat-input-id-param="">Retry</button>
-            <button type="button" class="cursor-pointer underline underline-offset-2 hover:text-ink"
-                    data-action="chat-input#discard" data-chat-input-id-param="">Discard</button>
-          </p>
-        </div>
-      </template>
-
-      <p class="px-1 text-xs text-soft" role="status" data-chat-input-target="offline" hidden></p>
-      <% if suggestions.any? && !thinking %>
-        <div class="flex flex-wrap gap-1.5">
-          <% suggestions.each do |reply| %>
-            <button type="button" class="chip cursor-pointer border border-edge bg-surface text-soft transition-colors hover:border-primary-300 hover:text-ink"
-                    data-action="chat-input#quickReply" data-chat-input-text-param="<%= reply %>">
-              <%= reply %>
-            </button>
-          <% end %>
-        </div>
-      <% end %>
-      <div class="composer">
-        <%= label_tag "chat-composer", "Your message", class: "sr-only" %>
-        <%= text_area_tag :content, nil, rows: 1, id: "chat-composer", class: "composer-input",
-              autocomplete: "off", placeholder: "Type a message…",
-              data: { turbo_permanent: true, chat_input_target: "input",
-                      action: "keydown->chat-input#keydown input->chat-input#grow" } %>
-        <%# Two ways to be disabled, and only one of them is the composer's.
-            `data-locked` is the server saying a reply is in flight; the
-            empty-draft dimming is JS, applied on top and never over it — so
-            with JS off the button still sends. %>
-        <%= tag.button type: "submit", class: "composer-send", disabled: thinking,
-              aria: { label: thinking ? "Writing a reply…" : "Send" },
-              data: { chat_input_target: "send", locked: thinking.presence } do %>
-          <%= icon(:paper_airplane, css_class: "size-5") %>
-        <% end %>
-      </div>
-      <p class="hidden px-1 text-right text-xs text-soft sm:block">
-        Enter to send · Shift+Enter for a new line
-      </p>
-    <% end %>
-  </div>
-<% end %>
-
-<% if run&.recappable? %>
-  <div class="flex items-center justify-between gap-4">
-    <p class="text-xs text-soft"><%= tool.recap_hint %></p>
-    <div class="shrink-0"><%= render "tool_runs/recap_button", tool_run: run %></div>
-  </div>
+  <% end %>
 <% end %>
