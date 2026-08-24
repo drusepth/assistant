@@ -308,6 +308,48 @@
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
+  /* Rendered prose from a writer's own Markdown (Diary::Markdown). Preflight
+     strips headings and lists back to plain text, so the tags that renderer
+     emits need dressing somewhere — here, once, rather than as a class on
+     every element it writes. Headings start at h2 because the page already
+     has a title; they are section markers inside an entry, not rivals to it. */
+  .diary-prose {
+    @apply leading-relaxed text-ink;
+  }
+  .diary-prose > * + * {
+    @apply mt-3;
+  }
+  .diary-prose h2 {
+    @apply mt-5 text-lg font-semibold;
+  }
+  .diary-prose h3 {
+    @apply mt-4 font-semibold;
+  }
+  .diary-prose h4 {
+    @apply mt-4 text-sm font-semibold uppercase tracking-wide text-soft;
+  }
+  .diary-prose ul {
+    @apply list-disc space-y-1 pl-5;
+  }
+  .diary-prose ol {
+    @apply list-decimal space-y-1 pl-5;
+  }
+  .diary-prose blockquote {
+    @apply border-l-2 border-edge pl-4 text-soft italic;
+  }
+  .diary-prose a {
+    @apply underline decoration-primary-300 underline-offset-2 hover:decoration-primary-600;
+  }
+  .diary-prose code {
+    @apply rounded bg-stone-100 px-1 py-0.5 font-mono text-[0.85em];
+  }
+  .diary-prose pre {
+    @apply overflow-x-auto rounded-lg bg-stone-100 p-3;
+  }
+  .diary-prose pre code {
+    @apply bg-transparent p-0;
+  }
+
   /* A tinted aside inside a card: a recommendation, a caveat, a "here's why
      this default is the default". Louder than `.hint` and quieter than a
      flash — it belongs to the form it sits in rather than to the request.

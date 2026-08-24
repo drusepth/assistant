@@ -93,6 +93,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/CHAT_PLAN.md` — the chat surface, brought up to native-messaging quality on a phone: the screen/panel split, optimistic send, streaming replies (D-chat-shell, D-chat-optimistic, D-chat-stream)
 - `docs/TRAVEL.md` — the Travel section: why it's a lens and not a page, the self-drawn world map of geotagged photos (no tiles, no geocoder, owner-only per Q14), and what the hub grows next (D-travel-facet)
 - `docs/PASSWORDS_PLAN.md` — the password vault: per-user envelope encryption, sharing, TOTP, import/export, and the agent-access bridge (D-passwords-vault, D-vault-crypto)
+- `docs/DIARY_PLAN.md` — the diary: a second sealed container behind the keyring — everything encrypted but the date, the per-user diary-key tier, the recovery gate, emergency-access exclusion, and the extraction of the vault machinery into `VaultSealed` (D-diary-vault, D-vault-sealed). **Adding a third sealed container?** Include `VaultSealed`, add it to `VaultSealed::CONTAINERS` and to `VaultSession::COOKIES` (a name *and* a path — never widen an existing one), and nothing else.
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions
 
