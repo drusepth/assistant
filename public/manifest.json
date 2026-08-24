@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Assistant",
+  "short_name": "Assistant",
+  "description": "Your own life assistant, running on your own machine.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5ead8",
+  "theme_color": "#ebddc5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ]
+}

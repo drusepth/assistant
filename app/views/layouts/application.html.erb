@@ -12,6 +12,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Assistant">
     <meta name="mobile-web-app-capable" content="yes">
+    <%# Installed, the app has no browser chrome of its own — so the platform
+        borrows these two for the bar above it. theme-color tints Android's
+        status bar and task-switcher header to match the app header directly
+        below it (bg-surface); `default` keeps iOS's status bar *outside* the
+        web view, which is what makes `100dvh` still mean the area the app
+        actually has. (black-translucent would look better and would need a
+        top safe-area inset on every page — a separate change.) %>
+    <meta name="theme-color" content="#ebddc5">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <%# Deliberately not in layouts/public.html.erb: a share link (D-share-link)
+        is one page shown to someone outside the household, and offering them
+        an install of somebody else's assistant would be absurd. %>
+    <link rel="manifest" href="/manifest.json">
     <%# Turbo page refreshes — a redirect back to the URL you're already on,
         and every broadcast_refresh_to — morph the DOM in place and keep the
         scroll where it was, instead of re-rendering the page and throwing
