@@ -1,6 +1,9 @@
 <% own = @person.user_id == Current.user.id %>
 
 <%= render Ui::PageHeaderComponent.new(title: @person.name, subtitle: @person.relationship) do |header| %>
+  <% header.with_avatar do %>
+    <%= render Ui::AvatarComponent.new(person: @person, size: :lg) %>
+  <% end %>
   <% if own %>
     <% header.with_actions do %>
       <% if @person.keep_in_touch? %>

@@ -12,6 +12,15 @@ as-of year.
   and revised annually): `/admin` can fetch it from bls.gov when the
   instance's network allows, or import the downloaded `oesmYYnat` file on
   air-gapped installs.
+- `places.csv` — ~7,300 settlements (Natural Earth 1:10m populated places,
+  public domain), the gazetteer the photo map names its pins from
+  (`docs/TRAVEL.md`). This one has **no fetch and needs none**: settlements
+  aren't revised annually, and the whole point is that naming a photo's
+  location never leaves the box. Regenerate with
+  `ruby script/build_places_dataset.rb`, or import a denser
+  `name,country,latitude,longitude,population` CSV at `/admin` — an instance
+  that wants the villages a 7,000-entry gazetteer misses doesn't have to wait
+  for a release.
 
 ## When the fetch fails
 

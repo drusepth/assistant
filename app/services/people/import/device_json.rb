@@ -32,6 +32,9 @@ class People::Import::DeviceJson
         value = formatted_address(address)
         People::Import::Labeled.new(nil, value) if value.present?
       end
+      # The picker hands icons over as Blobs; the controller serializes the
+      # first one as a data: URL (D-contact-photos).
+      contact.photo = People::Import::Photo.from_data_uri(strings(entry["icon"]).first)
       contact
     end
 

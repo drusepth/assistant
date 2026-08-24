@@ -1,0 +1,15 @@
+<%# Older turns land immediately after the seam, so each batch stacks above
+    the one loaded before it; then the seam itself is replaced, carrying the
+    next cursor or disappearing. Both actions apply in one synchronous pass,
+    so chat-scroll's observer sees the finished height and restores the
+    reader's place once. %>
+<%= turbo_stream.after("chat-earlier") do %>
+  <% chat_turns(@messages).each do |turn| %>
+    <%= render "tool_runs/message", message: turn.message, continues: turn.continues,
+          ends_group: turn.ends_group, divider: turn.divider %>
+  <% end %>
+<% end %>
+
+<%= turbo_stream.replace("chat-earlier") do %>
+  <%= render "tool_runs/earlier", run: @run, before: (@messages.first if @earlier) %>
+<% end %>

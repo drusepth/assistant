@@ -1,3 +1,11 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- The app mark: the terracotta dot the header, the rail, and the sign-in
+       page all carry, on the canvas cream. This file is the source the PNGs
+       beside it are rendered from — `bin/rails icons:render`.
+
+       The dot's diameter is 52% of the canvas, which keeps it inside the
+       maskable safe zone (the centred circle of 80% diameter that Android is
+       allowed to crop to), so one image serves both `any` and `maskable`. -->
+  <rect width="512" height="512" fill="#f5ead8"/>
+  <circle cx="256" cy="256" r="133" fill="#c67139"/>
 </svg>

@@ -8,7 +8,7 @@ module Datasets
   # reading "not loaded" forever and the explanation eleven cards down in the
   # error log. The card now carries its own bad news.
   class Status
-    DATASETS = %i[ cpi wages ].freeze
+    DATASETS = %i[ cpi wages places ].freeze
 
     Entry = Data.define(:key, :label, :summary, :loaded, :refreshed_at, :source, :error) do
       def loaded? = loaded
@@ -34,6 +34,19 @@ module Datasets
         loaded: wages.present?,
         summary: wages.present? ? "loaded (#{wages.as_of})" : "not loaded — fetch or import to light up market numbers")
     end
+
+    # The photo map's gazetteer (docs/TRAVEL.md). Unlike the BLS tables it
+    # ships as a seed and has no fetch — settlements don't get revised
+    # annually — so the card's job is to say it's there and how dense it is,
+    # and to notice when an admin has swapped in a bigger one.
+    def self.places
+      places = Places.current
+      entry(:places, "Place names (photo map)", Places::META_FILENAME,
+        loaded: places.present?,
+        summary: places.present? ? "#{number_with_delimiter(places.size)} settlements" : "not loaded — map pins stay unnamed")
+    end
+
+    def self.number_with_delimiter(number) = ActiveSupport::NumberHelper.number_to_delimited(number)
 
     def self.entry(key, label, meta_filename, loaded:, summary:)
       meta = Datasets.metadata(meta_filename)
@@ -61,6 +74,6 @@ module Datasets
       nil
     end
 
-    private_class_method :entry, :last_failure, :parse_time
+    private_class_method :entry, :last_failure, :parse_time, :number_with_delimiter
   end
 end

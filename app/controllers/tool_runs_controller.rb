@@ -4,6 +4,13 @@ class ToolRunsController < ApplicationController
 
   def new
     @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params)
+    # Continuing beats starting over, so a chat tool offers its own recent
+    # sessions above the blank form (D-chat-index). Subject-bound runs are
+    # left out: those live on their item's page, not here.
+    if @tool.kind == :chat
+      @recent_chats = Current.user.tool_runs.where(tool_slug: @tool.slug, subject: nil)
+        .order(created_at: :desc).limit(3)
+    end
   end
 
   def create

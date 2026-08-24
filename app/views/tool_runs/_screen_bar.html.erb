@@ -1,0 +1,51 @@
+<%# The chat screen's own chrome (D-chat-shell). Below `lg` this replaces the
+    page header entirely: back, who you're talking to, and one menu holding
+    everything the session can do — which buys back the ~120px the header, its
+    date subtitle, its two buttons and the recap footer were spending on a
+    phone. From `lg` up the page header is back and this is redundant. %>
+<% subject = run&.subject %>
+
+<div class="flex shrink-0 items-center gap-1 border-b border-edge px-2 py-2 lg:hidden">
+  <%= link_to(subject || chats_path, class: "flex size-9 shrink-0 items-center justify-center rounded-full text-soft hover:bg-canvas hover:text-ink",
+        aria: { label: subject ? "Back to the task" : "Back to your conversations" }) do %>
+    <%= icon(:chevron_left, css_class: "size-5") %>
+  <% end %>
+
+  <p class="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+    <%= subject&.try(:title).presence || tool.title %>
+  </p>
+
+  <% if run %>
+    <div class="relative shrink-0" data-controller="popover"
+         data-action="keydown.esc@window->popover#close click@window->popover#clickOutside">
+      <button type="button" data-action="popover#toggle" data-popover-target="trigger"
+              aria-haspopup="menu" aria-expanded="false" aria-label="This conversation"
+              class="flex size-9 cursor-pointer items-center justify-center rounded-full text-soft hover:bg-canvas hover:text-ink">
+        <%= icon(:ellipsis_horizontal, css_class: "size-5") %>
+      </button>
+
+      <div class="hidden absolute right-0 top-full z-20 mt-1 w-60 flex-col gap-0.5 rounded-2xl bg-canvas p-1.5 shadow-lg"
+           data-popover-target="panel" role="menu">
+        <% if run.recappable? %>
+          <div class="px-1.5 pb-1 pt-1.5" role="none">
+            <p class="mb-1.5 text-xs leading-snug text-soft"><%= tool.recap_hint %></p>
+            <%= render "tool_runs/recap_button", tool_run: run %>
+          </div>
+        <% end %>
+
+        <% if subject %>
+          <%= link_to "Open the task", subject, role: "menuitem",
+                class: "rounded-full px-3 py-2 text-sm text-ink hover:bg-surface" %>
+        <% else %>
+          <%= link_to "New session", new_tool_run_path(run.tool_slug, inputs: run.inputs), role: "menuitem",
+                class: "rounded-full px-3 py-2 text-sm text-ink hover:bg-surface" %>
+        <% end %>
+        <%= link_to "All conversations", chats_path, role: "menuitem",
+              class: "rounded-full px-3 py-2 text-sm text-ink hover:bg-surface" %>
+        <%= button_to "Delete this conversation", run, method: :delete, role: "menuitem",
+              class: "w-full cursor-pointer rounded-full px-3 py-2 text-left text-sm text-red-700 hover:bg-surface",
+              data: { turbo_confirm: "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." } %>
+      </div>
+    </div>
+  <% end %>
+</div>

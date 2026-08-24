@@ -2,10 +2,33 @@
 <html>
   <head>
     <title><%= content_for(:title) || "Assistant" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%# Two independent hints, both about the bottom of a phone.
+
+        viewport-fit=cover lets the page paint into the notch and
+        home-indicator margins, which is what makes env(safe-area-inset-*)
+        report anything but zero — the nav's bottom toggle offsets by it, and
+        so does the chat composer.
+
+        interactive-widget=resizes-content keeps a bottom-welded composer above
+        the on-screen keyboard on Chrome for Android: the default
+        (resizes-visual) shrinks only the visual viewport, so anything pinned
+        to the bottom of the layout ends up *behind* the keyboard. iOS Safari
+        ignores the hint and needs visualViewport measurement instead — see
+        chat_viewport_controller. %>
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Assistant">
     <meta name="application-name" content="Assistant">
     <meta name="mobile-web-app-capable" content="yes">
+    <%# The surface tone, so the phone's status bar continues the header
+        rather than sitting on a white band above it. %>
+    <meta name="theme-color" content="#ebddc5">
+    <%# `default` keeps iOS's status bar *outside* the web view when installed,
+        which is what makes `100dvh` still mean the area the app actually has —
+        the chat screen (D-chat-shell) sizes itself against exactly that.
+        black-translucent would look better and would need a top safe-area
+        inset on every page: a separate change. %>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <%# Turbo page refreshes — a redirect back to the URL you're already on,
         and every broadcast_refresh_to — morph the DOM in place and keep the
         scroll where it was, instead of re-rendering the page and throwing
@@ -23,6 +46,11 @@
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
+    <%# Installable. An installed copy also gets the left screen edge back
+        from the browser's own back gesture, which is what makes the nav's
+        edge swipe work in full — but the button stays regardless, because a
+        tab in a browser is still the common case. %>
+    <%= tag.link rel: "manifest", href: pwa_manifest_path %>
 
     <%# The @font-face rules first (Propshaft digests their url()s), then
         the Tailwind build that consumes the families. %>
@@ -34,8 +62,13 @@
   <body class="bg-canvas text-ink antialiased">
     <% if authenticated? %>
       <%= render "shared/celebration" %>
-      <div data-controller="nav" data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close">
-        <header class="sticky top-0 z-20 flex items-center gap-1 bg-surface px-2 py-1.5 lg:hidden print:hidden">
+      <div data-controller="nav"
+           data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close
+                        touchstart->nav#swipeStart touchmove->nav#swipeMove touchend->nav#swipeEnd touchcancel->nav#swipeEnd">
+        <%# The height is a token rather than padding because a bleed page has
+            to subtract it — see --app-header-h. 3.5rem is the 56px the
+            py-1.5 around a size-11 button already came to. %>
+        <header class="sticky top-0 z-20 flex h-[var(--app-header-h)] items-center gap-1 bg-surface px-2 lg:hidden print:hidden">
           <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink"
                   data-action="nav#toggle" aria-label="Open menu">
             <%= icon(:bars_3, css_class: "size-6") %>
@@ -48,7 +81,33 @@
 
         <div class="hidden fixed inset-0 z-30 bg-black/40 lg:hidden" data-nav-target="backdrop" data-action="click->nav#close"></div>
 
-        <div class="min-h-screen lg:flex">
+        <%# The same toggle as the header's, in the half of the screen a thumb
+            can actually reach. The header hamburger is where the eye looks
+            for a menu, so it stays; on a 6-inch phone it is also the one
+            corner the hand holding the phone cannot get to without
+            regripping, and that is the whole complaint this answers.
+            Bottom-left because that is the edge the drawer arrives from, and
+            because the bottom-right slot belongs to a primary action.
+            z-20 puts it under the backdrop and the drawer, so an open drawer
+            simply covers it — no second state to keep in sync.
+
+            Not on a bleed page: there the bottom-left corner is the chat
+            composer (D-chat-shell), and a floating button would land on top
+            of it. Those pages carry their own back affordance in the screen
+            bar, and the header hamburger is still where it always was. %>
+        <% unless content_for?(:bleed) %>
+          <button type="button" data-action="nav#toggle" aria-label="Open menu"
+                  class="fixed bottom-[calc(1rem_+_env(safe-area-inset-bottom))] left-4 z-20 flex size-12 cursor-pointer items-center justify-center rounded-full bg-surface/95 text-ink shadow-lg ring-1 ring-black/10 backdrop-blur-sm active:bg-stone-200 lg:hidden print:hidden">
+            <%= icon(:bars_3, css_class: "size-6") %>
+          </button>
+        <% end %>
+
+        <%# A bleed page is exactly the viewport minus the header above it, and
+            hides its own overflow: otherwise `min-h-screen` stacks a full
+            viewport *under* the header and the document scrolls by the height
+            of the header — which is the second scroller the chat screen exists
+            to remove. %>
+        <div class="lg:flex <%= content_for?(:bleed) ? "h-[calc(100dvh-var(--app-header-h))] overflow-hidden" : "min-h-screen" %>">
         <%# The rail. `nav-rail` + data-nav-collapsed drive the desktop
             icon-only mode from one attribute (see application.css) so the
             labels don't each need a class toggled onto them. %>
@@ -77,6 +136,7 @@
               <%= nav_link_to "Today", today_path, :inbox %>
               <%= nav_link_to "Calendar", calendar_path, :calendar %>
               <%= nav_link_to "Tasks", tasks_path, :check_circle %>
+              <%= nav_link_to "Conversations", chats_path, :chat_bubble %>
             </div>
 
             <div>
@@ -137,11 +197,20 @@
           </div>
         </aside>
 
+        <%# A `bleed` page owns the viewport instead of flowing inside it:
+            no page padding, no document scroll, so the one scroller it
+            contains is the only thing that moves. The chat screen
+            (D-chat-shell) is the only page that asks for this. %>
         <main class="min-w-0 flex-1">
-          <div class="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+          <% if content_for?(:bleed) %>
             <%= render Ui::FlashComponent.new(flash: flash) %>
             <%= yield %>
-          </div>
+          <% else %>
+            <div class="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+              <%= render Ui::FlashComponent.new(flash: flash) %>
+              <%= yield %>
+            </div>
+          <% end %>
         </main>
         </div>
       </div>

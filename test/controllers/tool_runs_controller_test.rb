@@ -14,6 +14,120 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Hospital bill", response.body
   end
 
+  test "a chat tool's form offers your own recent sessions to pick back up" do
+    mine = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    bound = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done,
+      subject: users(:one).tasks.create!(title: "Bound elsewhere"))
+    theirs = users(:two).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+
+    get new_tool_run_path("check_in")
+
+    assert_response :success
+    assert_select "a[href=?]", tool_run_path(mine)
+    assert_select "a[href=?]", tool_run_path(bound), count: 0
+    assert_select "a[href=?]", tool_run_path(theirs), count: 0
+  end
+
+  test "a one-shot tool's form offers nothing to pick back up" do
+    get new_tool_run_path("dispute_letter")
+
+    assert_response :success
+    assert_no_match "Pick up where you left off", response.body
+  end
+
+  test "a live chat run is a screen, not a page (D-chat-shell)" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "How has the week been?")
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select ".chat-page .chat-screen"
+    # The composer's row is inside the screen, not somewhere below the page.
+    assert_select ".chat-screen .composer"
+    # Chrome folds into the screen's own bar below lg.
+    assert_select ".chat-screen a[aria-label=?]", "Back to your conversations"
+    assert_select ".chat-screen [data-popover-target=panel] a", text: "New session"
+  end
+
+  test "a chat run that hasn't opened yet still flows in the page" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :running)
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select ".chat-screen", count: 0
+    assert_select "h1", text: "Check in"
+  end
+
+  test "a draft run is untouched by the chat shell" do
+    run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", status: :done,
+      inputs: { document_id: @document.id, intent: "remove the charge" })
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select ".chat-screen", count: 0
+    assert_select "h1", text: "Draft a dispute letter"
+  end
+
+  test "the composer asks the on-screen keyboard for the right shape" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Hi")
+
+    get tool_run_path(run)
+
+    assert_select "#chat-composer[enterkeyhint=send][autocapitalize=sentences][autocorrect=on]"
+  end
+
+  test "a turn keeps the id the client drew it with, so the morph matches them" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { topic: "x" }, status: :done)
+
+    post tool_run_messages_path(run), params: { content: "Drawn already", client_token: "cabc123" }
+
+    assert_equal "cabc123", run.tool_run_messages.sole.client_token
+    get tool_run_path(run)
+    assert_select "#chat-msg-cabc123"
+  end
+
+  test "a turn sent without a token falls back to its own id" do
+    run = users(:one).tool_runs.create!(tool_slug: "tutor", inputs: { topic: "x" }, status: :done)
+
+    post tool_run_messages_path(run), params: { content: "Plain form post" }
+    message = run.tool_run_messages.sole
+
+    assert_nil message.client_token
+    get tool_run_path(run)
+    assert_select "#chat-msg-#{message.id}"
+  end
+
+  test "the transcript says when, and lets you take an answer with you" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :assistant, content: "Yesterday's line", created_at: 1.day.ago)
+    run.tool_run_messages.create!(role: :user, content: "Today's line")
+
+    get tool_run_path(run)
+
+    # A divider at the top, and another where the day turned over.
+    assert_select ".chat-divider", count: 2
+    assert_select ".chat-divider", text: /Yesterday · /
+    assert_select ".chat-divider", text: /Today · /
+    # Copy is offered on the assistant's turn and not on the user's own words.
+    assert_select "[data-controller=clipboard][data-clipboard-text-value=?]", "Yesterday's line"
+    assert_select "[data-clipboard-text-value=?]", "Today's line", count: 0
+  end
+
+  test "a failed turn keeps its retry attached to the notice, not orphaned" do
+    run = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
+    run.tool_run_messages.create!(role: :user, content: "Still there?")
+    run.tool_run_messages.create!(role: :notice, content: "Something went wrong — send another message.")
+
+    get tool_run_path(run)
+
+    assert_select "#chat-transcript form[action=?]", retry_reply_tool_run_path(run)
+    assert_select "#chat-transcript span.animate-bounce", count: 0
+  end
+
   test "new 404s for an unknown tool" do
     get new_tool_run_path("nonsense")
     assert_response :not_found
@@ -214,7 +328,7 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "button[type=submit][disabled][data-locked]"
-    assert_select "span.animate-bounce", count: 3
+    assert_select "#chat-transcript span.animate-bounce", count: 3
   end
 
   test "the composer ships enabled and unlocked when it's the user's turn" do

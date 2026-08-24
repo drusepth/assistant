@@ -5,35 +5,7 @@
         quick_event: @quick_event, quick_goal: @quick_goal %>
 </div>
 
-<% attention_count = @overdue_tasks.size + @due_today_tasks.size %>
-<%# The attention strip: a solid accent disc, the headline count, each kind
-    of pressure as its own tinted badge, then the way through to Today. %>
-<div class="card mb-6 px-5 py-4">
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-    <span class="size-8 shrink-0 rounded-full bg-primary-600"></span>
-    <% if attention_count.positive? %>
-      <p class="font-semibold text-ink">
-        <%= pluralize(attention_count, "thing") %> need<%= "s" if attention_count == 1 %> attention
-      </p>
-      <% if @overdue_tasks.any? %>
-        <span class="chip bg-primary-200 font-bold text-primary-800"><%= @overdue_tasks.size %> overdue</span>
-      <% end %>
-      <% if @due_today_tasks.any? %>
-        <span class="chip bg-sage-200 font-bold text-sage-700"><%= @due_today_tasks.size %> due today</span>
-      <% end %>
-      <%= link_to "Open Today →", today_path,
-            class: "ml-auto text-sm font-semibold text-primary-800 hover:text-primary-900" %>
-    <% else %>
-      <p class="font-semibold text-ink">All clear — nothing overdue, nothing due today.</p>
-    <% end %>
-  </div>
-  <% if Current.user.digest.present? && Current.user.digest_generated_at&.after?(8.days.ago) %>
-    <p class="mt-2 text-sm text-ink/90"><%= Current.user.digest %></p>
-    <p class="mt-1 text-xs text-soft">Your assistant's weekly read — phrased by AI from the locally-computed facts above, refreshed each scan.</p>
-  <% else %>
-    <p class="mt-1 text-xs text-soft">This summary is computed locally; your assistant's phrased weekly digest appears after the first weekly scan.</p>
-  <% end %>
-</div>
+<%= render "attention", overdue: @overdue_tasks, due_today: @due_today_tasks, user: Current.user %>
 
 <% if @suggestions.any? %>
   <div class="mb-6">

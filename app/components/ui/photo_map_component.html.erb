@@ -1,0 +1,35 @@
+<div class="relative w-full overflow-hidden rounded-2xl bg-stone-100"
+     style="aspect-ratio: <%= map.aspect_ratio %>">
+  <%# Land is filled with currentColor — recoloring the map is a text-*
+      class, like everything else in the design system. %>
+  <svg class="absolute inset-0 size-full text-sage-300" viewBox="<%= map.view_box %>"
+       preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="currentColor" fill-rule="evenodd"><%= land %></g>
+  </svg>
+
+  <%# Settlement names from the same gazetteer that names the pins, on
+      zoomed views only: a coastline with nothing written on it is a shape,
+      not a map. Behind the pins and unclickable — this is lettering. %>
+  <% map.context_labels.each do |label| %>
+    <span class="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium text-stone-600/80"
+          style="left: <%= label.left %>; top: <%= label.top %>" aria-hidden="true"><%= label.name %></span>
+  <% end %>
+
+  <%# The pins are ordinary links, so a screen reader gets a list of places
+      rather than a picture it can't see into. %>
+  <p class="sr-only"><%= summary %></p>
+
+  <% ordered_pins.each do |pin| %>
+    <% position = map.position(pin) %>
+    <%= link_to photos_path(near: pin.near_param),
+          # A solid ring rather than a translucent one: two pins an hour apart
+          # overlap at world zoom, and the ring is what keeps them reading as
+          # two places rather than one smudge.
+          class: "absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary-600 ring-2 ring-canvas transition-transform hover:z-10 hover:scale-125 focus-visible:z-10 focus-visible:scale-125 #{pin_classes(pin)}",
+          style: "left: #{position[:left]}; top: #{position[:top]}",
+          title: pin.label do %>
+      <%= pin_count_label(pin) %>
+      <span class="sr-only"><%= pin.label %></span>
+    <% end %>
+  <% end %>
+</div>

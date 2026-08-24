@@ -1,0 +1,3 @@
+<!-- resolved -->
+**Q-vault-breach. The breach check stays offline; no live HIBP, not even as an opt-in.**
+Decided 2026-08: a box whose whole pitch is that it doesn't phone home shouldn't ship a feature whose selling point is phoning home, even under k-anonymity — the honest version of "local-first" is that the default *and* the options stay local. The common-passwords list rides the D-public-datasets layer with a small seed, an admin `.txt` import for a bigger one, and its size displayed so coverage is never overstated. Accepted limit, stated plainly: this catches weak and widely-known passwords, not "your specific password appeared in a named breach." — *Resolved: offline only.*

@@ -78,7 +78,7 @@ Rails.application.routes.draw do
   resources :tasks do
     # The task page's embedded chat (D30) — find-or-create the bound run,
     # append the turn.
-    resource :conversation, only: :create, module: :tasks
+    resource :conversation, only: %i[ show create ], module: :tasks
     member do
       patch :complete
       patch :reopen
@@ -100,6 +100,7 @@ Rails.application.routes.draw do
     member do
       patch :log_contact
     end
+    resource :avatar, only: %i[ destroy ], module: :people
   end
   resources :goals do
     member do
@@ -144,12 +145,19 @@ Rails.application.routes.draw do
   resource :user_password, only: :update
 
   resources :photos, except: :new do
+    collection do
+      get :map
+    end
     member do
       post :ingest
       post :caption
       patch :apply_suggestion
     end
   end
+  # Trips are owner-only (D-travel-facet): a trip is a lens on photo
+  # coordinates, and those are owner-only under Q14.
+  resources :trips, except: :new
+
   resources :albums do
     member do
       post :add_photos
@@ -194,10 +202,13 @@ Rails.application.routes.draw do
     end
   end
 
+  # The conversation index (D-chat-index) — chat runs listed as conversations,
+  # not as tool runs, which is what they are to the person having them.
+  get "chats" => "chats#index", as: :chats
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
   resources :tool_runs, only: %i[ show destroy ] do
-    resources :messages, only: :create, controller: "tool_run_messages"
+    resources :messages, only: %i[ index create ], controller: "tool_run_messages"
     resource :application_email, only: :create
     member do
       post :recap
@@ -222,6 +233,17 @@ Rails.application.routes.draw do
     end
     resource :reset, only: :create
   end
+
+  # The install manifest. Unauthenticated on purpose: the browser fetches it
+  # before anyone signs in, and it says nothing a signed-out visitor can't
+  # already see. The push service worker is a static file under public/ —
+  # `web_push` registers it at /service_worker.js — so only the manifest
+  # needs a route.
+  # The format has to be pinned: a browser fetches a manifest with
+  # `Accept: */*`, which Rails resolves to :html, and the template would
+  # never be found. See config/initializers/mime_types.rb.
+  get "manifest.webmanifest" => "rails/pwa#manifest", as: :pwa_manifest,
+    defaults: { format: :webmanifest }
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

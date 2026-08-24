@@ -1,0 +1,62 @@
+<%= render Ui::PageHeaderComponent.new(title: @trip.name,
+      subtitle: [ @trip.period, pluralize(@trip.days, "day"), @trip.place_label ].compact_blank.join(" · ")) do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Rename", edit_trip_path(@trip), class: "btn btn-secondary" %>
+    <%= link_to "Travel", section_path("travel"), class: "btn btn-secondary" %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <%# The trip's own map, zoomed to where it happened — which is where the
+      world view can't help: two cities an hour apart are one smudge at
+      world zoom and two clear pins here. %>
+  <% if @map.any? %>
+    <%= render Ui::CardComponent.new do %>
+      <%= render Ui::PhotoMapComponent.new(map: @map) %>
+      <p class="mt-3 text-sm text-soft">
+        <%= pluralize(@map.place_count, "place") %> over <%= pluralize(@trip.days, "day") %>.
+        Pick a pin to see what you took there.
+      </p>
+    <% end %>
+  <% end %>
+
+  <% if @photos.any? %>
+    <div data-controller="lightbox">
+      <%= render Ui::CardComponent.new(title: "Photos") do |card| %>
+        <% card.with_actions do %>
+          <span class="text-sm text-soft"><%= number_with_delimiter(@photo_count) %></span>
+        <% end %>
+        <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-6">
+          <%= render partial: "photos/photo_tile", collection: @photos, as: :photo %>
+        </div>
+        <% if @photo_count > @photos.size %>
+          <p class="mt-3 text-sm text-soft">
+            Showing the first <%= @photos.size %> in order — the rest are on the map's pins.
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Events come from the dates alone, which is why a trip needs no link
+      table: anything on the calendar while you were away belongs to the
+      trip by definition. They read through the ordinary visibility path, so
+      a flight your spouse shared with you shows up here. %>
+  <% if @events.any? %>
+    <%= render Ui::CardComponent.new(title: "On the calendar then", padded: false) do %>
+      <div class="divide-y divide-edge"><%= render @events %></div>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "This trip") do %>
+    <p class="text-sm text-soft">
+      A trip is a name, a date range and a box on the map. Its photos are the ones taken inside that box while
+      it ran, so photos you add later join it on their own. Removing a trip removes only the trip.
+    </p>
+    <div class="row-actions mt-4">
+      <%= link_to "Rename or change the dates", edit_trip_path(@trip), class: "btn btn-secondary btn-sm" %>
+      <%= button_to "Remove this trip", trip_path(@trip), method: :delete, class: "btn btn-ghost btn-sm",
+            data: { turbo_confirm: "Remove #{@trip.name}? Your photos stay exactly where they are." } %>
+    </div>
+  <% end %>
+</div>
