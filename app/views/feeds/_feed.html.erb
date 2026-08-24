@@ -1,39 +1,36 @@
-<%# One subscription. The row is honest about the last fetch: a feed that
+<%# One subscription, on one line. Honest about the last fetch: a feed that
     has been failing for a week says so here rather than going quiet, which
     is the failure mode that made people stop trusting readers. Locals:
     feed, unread_counts. %>
 <% unread = unread_counts.fetch(feed.id, 0) %>
-<div class="item-row flex flex-wrap items-start justify-between gap-3">
+<div class="reader-line group">
   <div class="min-w-0 flex-1">
-    <p class="flex flex-wrap items-center gap-2">
-      <%= link_to feed.display_title, reader_path(feed: feed.id), class: "font-medium text-ink hover:underline" %>
-      <% if unread.positive? %>
-        <span class="chip bg-primary-100 text-primary-800 tabular-nums"><%= unread %> unread</span>
-      <% end %>
-      <% unless feed.active? %>
-        <span class="chip bg-stone-200 text-stone-700">Paused</span>
-      <% end %>
+    <%= link_to feed.display_title, reader_path(feed: feed.id),
+          class: "text-sm font-semibold text-ink hover:underline" %>
+    <% if unread.positive? %>
+      <span class="text-xs tabular-nums text-soft">(<%= unread %>)</span>
+    <% end %>
+    <p class="flex flex-wrap items-center gap-x-1.5 text-xs text-soft">
+      <span class="truncate"><%= feed.host || feed.url %></span>
       <% feed.sections.each do |section| %>
         <span class="chip <%= section_chip_classes(section) %>"><%= section.name %></span>
       <% end %>
-    </p>
-    <p class="mt-0.5 truncate text-xs text-soft"><%= feed.host || feed.url %></p>
-    <p class="mt-0.5 text-xs <%= feed.healthy? ? "text-soft" : "text-primary-800" %>">
+      <% unless feed.active? %><span>· paused</span><% end %>
       <% if !feed.healthy? %>
-        Last check failed — <%= feed.last_error %>
+        <span class="text-primary-800">· failing — <%= feed.last_error %></span>
       <% elsif feed.last_fetched_at %>
-        Checked <%= time_ago_in_words(feed.last_fetched_at) %> ago
+        <span>· checked <%= reader_age(feed.last_fetched_at) %> ago</span>
       <% else %>
-        Not checked yet — the first fetch is on its way
+        <span>· first check on its way</span>
       <% end %>
     </p>
   </div>
 
-  <div class="row-actions">
-    <%= button_to "Check", refresh_feed_path(feed), class: "btn btn-ghost btn-touch", form_class: "flex-1 sm:flex-none" %>
-    <%= link_to "Edit", edit_feed_path(feed), class: "btn btn-ghost btn-touch flex-1 sm:flex-none" %>
-    <%= button_to "Unfollow", feed_path(feed), method: :delete,
-          class: "btn btn-ghost btn-touch", form_class: "flex-1 sm:flex-none",
+  <div class="reader-verbs">
+    <%= button_to "Check", refresh_feed_path(feed), class: "reader-verb", form_class: "contents" %>
+    <%= link_to "Edit", edit_feed_path(feed), class: "reader-verb" %>
+    <%= button_to "Unfollow", feed_path(feed), method: :delete, class: "reader-verb",
+          form_class: "contents",
           form: { data: { turbo_confirm: "Unfollow #{feed.display_title}? Its items go too — anything you saved from it as a task or note stays." } } %>
   </div>
 </div>

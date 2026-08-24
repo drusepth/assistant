@@ -1,39 +1,33 @@
 <%# The reader's doorway on the Hobbies page (D-feed-reader). Hobbies is
     the one section with something new in it every day, and this is that
-    something — the three newest unread, or the invitation to follow a
-    first source. Locals: panel. %>
-<%= render Ui::CardComponent.new(
-      title: "From your feeds",
-      subtitle: panel.feeds.any? ?
-        "The newest from the blogs, subreddits and channels you follow." :
-        "Follow the blogs, subreddits and channels behind your hobbies."
-    ) do |card| %>
+    something — the three newest unread, at the reader's own density, or
+    the invitation to follow a first source. Locals: panel. %>
+<%= render Ui::CardComponent.new(title: "From your feeds", padded: false) do |card| %>
   <% card.with_actions do %>
     <%= link_to panel.unread_count.positive? ? "Reader · #{panel.unread_count} unread" : "Open reader",
-          reader_path, class: "btn btn-secondary btn-sm" %>
+          reader_path, class: "reader-filter" %>
   <% end %>
 
   <% if panel.latest_items.any? %>
-    <ul class="divide-y divide-edge text-sm">
+    <div class="divide-y divide-edge py-1">
       <% panel.latest_items.each do |item| %>
-        <li class="py-2 first:pt-0 last:pb-0">
-          <% if (url = reader_safe_url(item.url)) %>
-            <%= link_to item.title, url, class: "font-medium text-ink hover:underline", **ReaderHelper::OUTBOUND %>
-          <% else %>
-            <span class="font-medium text-ink"><%= item.title %></span>
-          <% end %>
-          <p class="text-xs text-soft">
-            <%= item.source_name %><%= " · #{reader_age(item.published_on)}" if reader_age(item.published_on) %>
-          </p>
-        </li>
+        <div class="flex items-baseline gap-2 px-3 py-1.5 text-sm">
+          <span class="min-w-0 flex-1 truncate">
+            <% if (url = reader_safe_url(item.url)) %>
+              <%= link_to item.title, url, class: "font-medium text-ink hover:underline", **ReaderHelper::OUTBOUND %>
+            <% else %>
+              <span class="font-medium text-ink"><%= item.title %></span>
+            <% end %>
+            <span class="text-xs text-soft"><%= item.source_name %></span>
+          </span>
+          <span class="shrink-0 text-xs tabular-nums text-soft"><%= reader_age(item.published_on) %></span>
+        </div>
       <% end %>
-    </ul>
+    </div>
   <% elsif panel.feeds.any? %>
-    <p class="text-sm text-soft">
-      Nothing unread right now — new items arrive on their own.
-    </p>
+    <p class="px-5 py-4 text-sm text-soft">Nothing unread right now — new items arrive on their own.</p>
   <% else %>
-    <div class="space-y-3">
+    <div class="space-y-3 p-5">
       <p class="text-sm text-soft">
         Paste any address and the feed behind it gets found for you. Tag each one with the hobby it
         belongs to, and everything they publish lands in one list, newest first.

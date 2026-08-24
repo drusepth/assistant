@@ -348,6 +348,46 @@
     @apply px-2 pt-1 text-xs font-semibold uppercase tracking-wide text-soft;
   }
 
+  /* The reader's line (D-feed-reader). A third shape beside `.item-stack`
+     and the plain `divide-y` list, and the one that answers a question the
+     other two don't: what a list looks like when there are four hundred
+     rows and you are *scanning* rather than reading. Google Reader's
+     answer, which nothing since has improved on, was one line per item —
+     source, headline, the first few words, the age — at a height where
+     twenty fit on a laptop screen. So: no card per item, no per-row
+     padding beyond a hair, and the divider between rows doing all the
+     separating.
+
+     Unread is the strong state and read is the quiet one, exactly
+     inverting the usual emphasis: in a reader the *pile* is the subject,
+     and what you've dealt with should recede without disappearing. */
+  .reader-line {
+    @apply flex flex-wrap items-baseline gap-x-2 gap-y-1 px-3 py-1.5 transition-colors sm:flex-nowrap sm:gap-x-3 hover:bg-stone-50;
+  }
+  /* The verbs at the end of a reader line. They are furniture, not the
+     content, so on a device that can hover they stay out of the way until
+     the pointer is on the row (opacity rather than display: the row must
+     not change height as it appears, or a list you are scanning twitches).
+     A keyboard tab-through reveals them the same way, and a touch device —
+     which can never hover — always shows them. */
+  .reader-verbs {
+    @apply flex w-full shrink-0 items-baseline gap-2.5 text-xs text-soft sm:w-auto;
+    @apply sm:opacity-0 sm:transition-opacity sm:focus-within:opacity-100 sm:group-hover:opacity-100;
+  }
+  /* One verb: a text button, not a pill. At this density a pill is a
+     boulder. */
+  .reader-verb {
+    @apply cursor-pointer whitespace-nowrap text-xs text-soft underline-offset-2 hover:text-ink hover:underline;
+  }
+  /* The compact filter bar above the list: small text links with a dot
+     between, where a row of pills would outweigh the list it filters. */
+  .reader-filter {
+    @apply cursor-pointer whitespace-nowrap text-xs text-soft underline-offset-2 hover:text-ink hover:underline;
+  }
+  .reader-filter-on {
+    @apply font-semibold text-ink;
+  }
+
   /* The two shapes that decide whether a page reads on a phone.
 
      A row of buttons at the end of a list row rides beside the text on a

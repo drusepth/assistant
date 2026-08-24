@@ -1,17 +1,17 @@
-<%# The river (D-feed-reader) — everything your hobby feeds carried, newest
-    first. Google Reader's shape: sources you chose one at a time, in the
-    order the world published them, and nothing in between. %>
-<%= render Ui::PageHeaderComponent.new(
-      title: "Reader",
-      subtitle: "Everything your feeds carried, newest first"
-    ) do |header| %>
-  <% header.with_actions do %>
-    <%= link_to "Feeds", feeds_path, class: "btn btn-secondary" %>
+<%# The river (D-feed-reader) — Google Reader's shape and Google Reader's
+    density: everything your feeds carried, newest first, one line each.
+    The chrome is deliberately thin. On this page the list *is* the
+    interface, and every pixel spent on furniture above it is a headline
+    somebody doesn't see. %>
+<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+  <h1 class="display text-2xl text-ink">Reader</h1>
+  <div class="flex items-baseline gap-3 text-xs">
+    <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
     <% if @feeds.any? %>
-      <%= button_to "Check now", refresh_all_feeds_path, class: "btn btn-ghost" %>
+      <%= button_to "Check now", refresh_all_feeds_path, class: "reader-verb", form_class: "contents" %>
     <% end %>
-  <% end %>
-<% end %>
+  </div>
+</div>
 
 <% if @feeds.none? %>
   <%= render Ui::EmptyStateComponent.new(
@@ -21,30 +21,35 @@
     <% empty.with_action { link_to "Add your first feed", feeds_path, class: "btn btn-primary" } %>
   <% end %>
 <% else %>
-  <div class="mb-4 space-y-2">
-    <div class="flex flex-wrap items-center gap-1.5">
-      <% ReaderHelper::FILTER_LABELS.each do |key, label| %>
-        <%= reader_chip label, { filter: key }, active: @river.filter == key %>
+  <%# One toolbar line per axis, and only the axes that have more than one
+      answer: a filter row for a household with one feed is furniture. %>
+  <div class="mb-2 space-y-1 border-b border-edge pb-2">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <% ReaderHelper::FILTER_LABELS.each_with_index do |(key, label), index| %>
+        <%= reader_dot if index.positive? %>
+        <%= reader_filter_link label, { filter: key }, active: @river.filter == key %>
       <% end %>
     </div>
 
     <% if @lenses.any? %>
-      <div class="flex flex-wrap items-center gap-1.5 text-sm">
-        <span class="text-soft">Hobby</span>
-        <%= reader_chip "All", { hobby: nil }, active: params[:hobby].blank? %>
+      <div class="flex items-baseline gap-x-2 overflow-x-auto whitespace-nowrap">
+        <span class="text-xs text-stone-500">Hobby</span>
+        <%= reader_filter_link "all", { hobby: nil }, active: params[:hobby].blank? %>
         <% @lenses.each do |lens| %>
-          <%= reader_chip lens.name, { hobby: lens.slug }, active: params[:hobby] == lens.slug %>
+          <%= reader_dot %>
+          <%= reader_filter_link lens.name, { hobby: lens.slug }, active: params[:hobby] == lens.slug %>
         <% end %>
       </div>
     <% end %>
 
     <% if @feeds.many? %>
-      <div class="flex flex-wrap items-center gap-1.5 text-sm">
-        <span class="text-soft">Feed</span>
-        <%= reader_chip "All", { feed: nil }, active: params[:feed].blank? %>
+      <div class="flex items-baseline gap-x-2 overflow-x-auto whitespace-nowrap">
+        <span class="text-xs text-stone-500">Feed</span>
+        <%= reader_filter_link "all", { feed: nil }, active: params[:feed].blank? %>
         <% @feeds.each do |feed| %>
           <% unread = @unread_counts.fetch(feed.id, 0) %>
-          <%= reader_chip "#{feed.display_title}#{" · #{unread}" if unread.positive?}",
+          <%= reader_dot %>
+          <%= reader_filter_link "#{feed.display_title}#{" (#{unread})" if unread.positive?}",
                 { feed: feed.id }, active: params[:feed].to_s == feed.id.to_s %>
         <% end %>
       </div>
@@ -52,40 +57,34 @@
   </div>
 
   <% if @page.any? %>
-    <%= render Ui::CardComponent.new(
-          title: ReaderHelper::FILTER_LABELS.fetch(@river.filter), count: @page.total, padded: false
-        ) do |card| %>
-      <% card.with_actions do %>
-        <% if @river.filter == "unread" %>
-          <%= button_to "Mark all read", reader_read_all_path(request.query_parameters.slice("hobby", "feed")),
-                class: "btn btn-ghost btn-sm",
-                form: { data: { turbo_confirm: "Mark everything in this view as read?" } } %>
-        <% end %>
+    <div class="mb-1 flex items-baseline justify-between gap-3 px-3 text-xs text-soft">
+      <span class="tabular-nums"><%= reader_count_label(@page.total, @river.filter) %></span>
+      <% if @river.filter == "unread" %>
+        <%= button_to "Mark all read", reader_read_all_path(request.query_parameters.slice("hobby", "feed")),
+              class: "reader-verb", form_class: "contents",
+              form: { data: { turbo_confirm: "Mark everything in this view as read?" } } %>
       <% end %>
-      <div class="item-stack">
-        <%= render partial: "reader/item", collection: @page.items, as: :item %>
-      </div>
-    <% end %>
+    </div>
+
+    <div class="card divide-y divide-edge py-1">
+      <%= render partial: "reader/item", collection: @page.items, as: :item %>
+    </div>
 
     <% if @page.more? %>
-      <div class="mt-4 text-center">
-        <%= link_to "Show more", reader_path(request.query_parameters.merge(offset: @page.next_offset)),
-              class: "btn btn-secondary" %>
+      <div class="mt-3 text-center">
+        <%= link_to "Older", reader_path(request.query_parameters.merge(offset: @page.next_offset)),
+              class: "reader-filter" %>
       </div>
     <% end %>
   <% else %>
-    <%= render Ui::EmptyStateComponent.new(
-          title: @river.filter == "unread" ? "You're all caught up" : "Nothing here",
-          description: @river.filter == "unread" ?
-            "Every item in this view has been read. New ones arrive on their own — your feeds are checked in the background." :
-            "Nothing matches these filters yet."
-        ) do |empty| %>
-      <% empty.with_action do %>
-        <div class="flex flex-wrap justify-center gap-2">
-          <%= reader_chip "Everything", { filter: "all" }, active: false %>
-          <%= link_to "Manage feeds", feeds_path, class: "btn btn-secondary" %>
-        </div>
+    <p class="px-3 py-8 text-center text-sm text-soft">
+      <% if @river.filter == "unread" %>
+        You're all caught up. New items arrive on their own.
+        <%= reader_filter_link "See everything", { filter: "all" }, active: false %>
+      <% else %>
+        Nothing matches these filters.
+        <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
       <% end %>
-    <% end %>
+    </p>
   <% end %>
 <% end %>

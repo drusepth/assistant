@@ -131,6 +131,6 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
 
     get reader_path
 
-    assert_match(/Show more/, response.body)
+    assert_match(/Older/, response.body)
   end
 end

@@ -68,6 +68,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a
      recommendation or caveat that belongs to the form, not the request
    - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
+   - `.reader-line` (+ `.reader-verbs`, `.reader-verb`, `.reader-filter`)
+     — the scanning list: one line per item, verbs on hover (see Lists)
    - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
    - `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`)
      — the chat surface
@@ -134,7 +136,7 @@ neighbours in the sidebar never collide: Health `primary-800` · Hobbies
 
 ## Lists
 
-A card full of item rows has two shapes, and the choice is about how tall
+A card full of item rows has three shapes, and the choice is about how tall
 the rows are rather than about taste:
 
 - **`divide-y divide-edge`** — hairline dividers. Right for one-line rows
@@ -145,6 +147,17 @@ the rows are rather than about taste:
   is several lines tall — a wrapped task title plus a meta line plus its
   buttons — because at that height a hairline stops separating anything and
   the card reads as one column of text. Today's lists are the reference.
+
+- **`.reader-line`** — the scanning list: one line per item inside a
+  `divide-y`, with the verbs (`.reader-verbs`/`.reader-verb`) revealed on
+  hover rather than drawn in. Right when the list is *long* and being
+  scanned rather than read — the reader's river is the case, and Google
+  Reader is the reference: source, headline, first few words, age, at a
+  height where twenty fit on a laptop screen. Unread is the emphasised
+  state and read the quiet one, which inverts the usual weighting on
+  purpose: in a pile, what you've dealt with should recede. Don't reach for
+  it for a list of six things — at that length the density reads as
+  cramped rather than efficient, and `.item-stack` is right.
 
 Rows opt in by carrying `item-row` on their outer element (the primitive
 row partials already do), so a `.stack-label` day heading can sit in the

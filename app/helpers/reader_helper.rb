@@ -4,22 +4,45 @@
 module ReaderHelper
   FILTER_LABELS = { "unread" => "Unread", "saved" => "Saved", "all" => "Everything" }.freeze
 
-  # A filter chip that keeps the rest of the river's state — swapping the
-  # filter shouldn't silently drop the hobby you were reading.
-  def reader_chip(label, params_override, active:)
+  # A filter is a small text link with the current one in ink, not a pill:
+  # at the density this page runs at, a row of pills outweighs the list it
+  # filters. Keeps the rest of the river's state — switching the filter
+  # shouldn't silently drop the hobby you were reading.
+  def reader_filter_link(label, params_override, active:)
     link_to label, reader_path(request.query_parameters.except("offset").merge(params_override)),
-      class: "chip #{active ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}"
+      class: "reader-filter #{"reader-filter-on" if active}"
   end
 
-  # "2h ago", "3d ago" — a river is scanned, and a full date is four words
-  # where one belongs.
+  # The separator between filter links. A dot, because a pipe reads as a
+  # table border and a gap alone doesn't group.
+  def reader_dot
+    tag.span("·", class: "text-xs text-stone-400", aria: { hidden: true })
+  end
+
+  # "12m", "3h", "2d", then the date. A river is scanned in a column two
+  # characters wide, so anything longer than that is furniture — the full
+  # timestamp is on the element's title.
   def reader_age(time)
     return nil if time.blank?
 
     seconds = Time.current - time
-    return "just now" if seconds < 2.minutes
+    case seconds
+    when ..0 then "now"
+    when ...1.hour then "#{(seconds / 60).floor}m"
+    when ...1.day then "#{(seconds / 3600).floor}h"
+    when ...7.days then "#{(seconds / 86_400).floor}d"
+    else time.strftime("%b %-d")
+    end
+  end
 
-    "#{time_ago_in_words(time)} ago"
+  # "12 unread", "3 saved", "40 items" — the count says which pile it is
+  # counting, because the filter row above it is small on purpose.
+  def reader_count_label(total, filter)
+    case filter
+    when "unread" then "#{total} unread"
+    when "saved" then "#{total} saved"
+    else pluralize(total, "item")
+    end
   end
 
   # An item's link goes to a stranger's site: new tab, no window handle back

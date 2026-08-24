@@ -124,11 +124,35 @@ threat model is the same one `docs/EMAIL_PLAN.md` names for mail:
 - item links and image sources are refused unless `http(s)` — a
   `javascript:` link in an entry would otherwise be one click from running
   inside the session,
-- images load lazily and with no referrer: a river of forty items doesn't
-  announce itself to forty servers before anybody scrolls,
+- an entry's image is validated and stored but not drawn: the list is text
+  (see Density below), so a river of forty items makes no request to forty
+  strangers' servers at all — when the expanded item lands, that image
+  loads lazily and referrer-free,
 - outbound links carry `rel="noopener noreferrer nofollow"`.
 
 ## The surfaces
+
+### Density is the design (`.reader-line`)
+
+The list *is* the interface here, so the chrome is thin and the rows are
+one line: source column, headline, the opening words, the age — Google
+Reader's row, at a height where twenty fit on a laptop screen. Three
+choices carry it, and they are the reason this page doesn't use the app's
+usual card-per-item shape (`docs/DESIGN.md` → Lists):
+
+- **Unread is the emphasised state, read the quiet one**, which inverts the
+  app's usual weighting on purpose: in a pile, what you have dealt with
+  should recede without disappearing.
+- **The verbs are furniture, so they wait for the pointer.** Save / Read /
+  Task fade in on hover on a device that can hover (and on focus, for a
+  keyboard) — as opacity, never display, so the row can't change height
+  under a reader who is scanning. A touch device shows them always.
+- **The phone drops the preview, not the headline.** Below `lg` the
+  opening words go, the source column folds into the small line that also
+  carries the age, the hobby and the verbs, and a row is a headline plus
+  one line. The filter rows scroll sideways rather than wrapping into four.
+
+### The pages
 
 - **`/reader`** — the river, newest first. Unread / Saved / Everything,
   narrowed by hobby lens or by feed, with **Mark all read** scoped to
@@ -155,3 +179,6 @@ threat model is the same one `docs/EMAIL_PLAN.md` names for mail:
   rows rather than anything new.
 - **Keyboard navigation** (`j`/`k`/`o`), which is the one Reader affordance
   its actual users would notice missing.
+- **The expanded item** — Reader opened an entry in place rather than
+  sending you off-site. Every row already carries an `image_url` and the
+  full summary for the day that lands.
