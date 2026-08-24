@@ -100,14 +100,12 @@ class Feeds::RefreshTest < ActiveSupport::TestCase
     assert_equal 0, @feed.failure_count
   end
 
-  test "items are scored against the user's hobbies at ingest" do
-    Hobbies::Lens.find_or_create!("Woodworking")
-    @feed.sections = [ Hobbies::Lens.named("Woodworking") ]
-    stub_feed(item(title: "A woodworking bench for small shops"))
+  test "the river is in the publisher's order, oldest entry to newest" do
+    stub_feed([ item(title: "Older", date: 3.days.ago), item(title: "Newer", date: 1.hour.ago) ].join)
 
     Feeds::Refresh.call(@feed)
 
-    assert_operator @feed.feed_items.sole.relevance, :>, 0.5
+    assert_equal [ "Newer", "Older" ], @feed.feed_items.newest.map(&:title)
   end
 
   test "an entry's image only survives if it is an http(s) address" do

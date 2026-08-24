@@ -29,23 +29,6 @@ class FeedItemTest < ActiveSupport::TestCase
     assert @item.read?
   end
 
-  test "pressing the same arrow twice clears the vote" do
-    @item.vote!(FeedItem::UP)
-    assert @item.upvoted?
-
-    @item.vote!(FeedItem::UP)
-    assert_equal 0, @item.vote
-
-    @item.vote!(FeedItem::DOWN)
-    assert @item.downvoted?
-  end
-
-  test "a nonsense vote direction is clamped rather than stored" do
-    @item.vote!(99)
-
-    assert_equal FeedItem::UP, @item.vote
-  end
-
   test "the blurb is plain text, squished and capped" do
     @item.update!(summary: "A burnisher   and\nfive minutes. " + ("x" * 500))
 

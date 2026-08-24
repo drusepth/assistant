@@ -1,63 +1,54 @@
 module Feeds
   # The reader's query object (D-feed-reader): one place that turns the
-  # river's filters — hobby, feed, unread/saved, interesting/newest — into
-  # a page of items, so the controller stays a controller and the panel can
-  # ask for the same thing with different numbers.
+  # river's filters — hobby, feed, unread/saved — into a page of items, so
+  # the controller stays a controller and the Hobbies panel can ask for the
+  # same thing with different numbers.
   #
-  # "Interesting" ranks in Ruby over a bounded window rather than in SQL.
-  # That is a deliberate ceiling, not an oversight: the ordering is a decay
-  # curve over a stored score (Rank), a window of a few hundred rows is
-  # everything a household reader has unread at once, and the alternative —
-  # a materialised score column recomputed on a clock — would drift and
-  # would still need this pass to be correct.
+  # The order is chronological, full stop. Newest first, in the order the
+  # world published it, the same for everybody looking at the same feeds.
+  # That is a product decision rather than a missing feature: the sources
+  # are ones the user picked one at a time, so there is nothing to sift —
+  # and an ordering nobody can predict is exactly what the feeds this is an
+  # alternative to are made of.
   class River
-    WINDOW = 400
     PER_PAGE = 25
     FILTERS = %w[ unread saved all ].freeze
-    SORTS = %w[ interesting new ].freeze
 
     Page = Data.define(:items, :next_offset, :total) do
       def more? = next_offset.present?
       def any? = items.any?
     end
 
-    attr_reader :user, :filter, :sort, :section, :feed
+    attr_reader :user, :filter, :section, :feed
 
-    def initialize(user, filter: "unread", sort: "interesting", section: nil, feed: nil)
+    def initialize(user, filter: "unread", section: nil, feed: nil)
       @user = user
       @filter = FILTERS.include?(filter.to_s) ? filter.to_s : "unread"
-      @sort = SORTS.include?(sort.to_s) ? sort.to_s : "interesting"
       @section = section
       @feed = feed
     end
 
+    # Counted and paged in SQL — there is no ranking pass to hold a window
+    # in memory for.
     def page(offset: 0, per_page: PER_PAGE)
-      ranked = ordered
-      Page.new(
-        items: ranked[offset, per_page] || [],
-        next_offset: (offset + per_page if ranked.length > offset + per_page),
-        total: ranked.length
-      )
+      items = scope.offset(offset).limit(per_page + 1).to_a
+      more = items.length > per_page
+      Page.new(items: items.first(per_page), next_offset: (offset + per_page if more), total: scope.count)
     end
 
     def unread_count = base.unread.count
 
-    # Every item the filters admit, newest first, capped at the window.
+    # Every item the filters admit, newest first.
     def scope
       items = base
       items = items.unread if filter == "unread"
       items = items.saved if filter == "saved"
-      items.newest.limit(WINDOW).includes(feed: :sections)
+      items.newest.includes(feed: :sections)
     end
 
     private
-      def ordered
-        @ordered ||= sort == "new" ? scope.to_a : Rank.sort(scope.to_a)
-      end
-
       # The one authorization line in the reader: a river is your own
-      # subscriptions. Read state is personal, so a feed shared into the
-      # household appears in the sharer's river only (Q-feed-sharing).
+      # subscriptions.
       def base = FeedItem.where(feed: feeds)
 
       def feeds

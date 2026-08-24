@@ -38,11 +38,7 @@ class FeedsController < ApplicationController
   end
 
   def update
-    lenses_before = @feed.section_ids.sort
     if @feed.update(feed_params.except(:url))
-      # Filing a feed under a hobby has to change the river now, not after
-      # the next fetch — the lens is most of an item's relevance.
-      Feeds::Interest.for(Current.user).rescore!(@feed) if @feed.reload.section_ids.sort != lenses_before
       redirect_to feeds_path, notice: "#{@feed.display_title} updated."
     else
       render :edit, status: :unprocessable_entity

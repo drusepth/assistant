@@ -6,7 +6,7 @@ module Feeds
   #
   # Existing rows are updated in place rather than replaced: a corrected
   # headline should reach a reader, but the *state* attached to the item —
-  # read, saved, voted — belongs to the reader and is never touched here.
+  # read, saved — belongs to the reader and is never touched here.
   class Refresh
     Result = Data.define(:added, :updated, :error) do
       def ok? = error.nil?
@@ -39,11 +39,10 @@ module Feeds
     private
       def ingest(parsed)
         added = updated = 0
-        interest = Interest.for(@feed.user)
 
         parsed.entries.each do |entry|
           item = @feed.feed_items.find_or_initialize_by(guid: entry.guid.to_s.truncate(500))
-          item.assign_attributes(attributes_for(entry, interest))
+          item.assign_attributes(attributes_for(entry))
           next unless item.changed?
 
           item.new_record? ? added += 1 : updated += 1
@@ -56,7 +55,7 @@ module Feeds
         [ added, updated ]
       end
 
-      def attributes_for(entry, interest)
+      def attributes_for(entry)
         {
           url: entry.url.presence&.truncate(2_000),
           title: entry.title.to_s.squish.truncate(300).presence || "(untitled)",
@@ -65,8 +64,7 @@ module Feeds
           image_url: http_image(entry.image_url),
           # A feed with no dates at all still has to sort: fall back to when
           # we first saw it, which is what "new to me" means anyway.
-          published_at: entry.published_at || Time.current,
-          relevance: interest.score(entry_text(entry), sections: @feed.sections)
+          published_at: entry.published_at || Time.current
         }
       end
 
@@ -76,8 +74,6 @@ module Feeds
       def http_image(url)
         url.to_s.match?(%r{\Ahttps?://\S+\z}i) ? url.to_s.truncate(2_000) : nil
       end
-
-      def entry_text(entry) = [ entry.title, entry.author, entry.summary ].compact.join(" ")
 
       # The feed names itself; the user's own label always wins at display.
       def adopt_metadata(parsed)

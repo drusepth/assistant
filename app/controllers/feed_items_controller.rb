@@ -1,11 +1,11 @@
-# The per-item verbs (D-feed-reader): read, save, vote. Every one of them
-# re-renders just that item's row over Turbo, because a reader is a page you
-# act on twenty times in a sitting and a full reload after each is what made
+# The per-item verbs (D-feed-reader): read, and keep. Each one re-renders
+# just that item's row over Turbo, because a reader is a page you act on
+# twenty times in a sitting and a full reload after each is what made
 # self-hosted readers feel like homework.
 #
-# The vote is the reader's only learning signal, and it is honest about what
-# it does: it re-weights *your* ranking (Feeds::Interest), nothing leaves the
-# instance, and a downvoted item sinks rather than disappearing.
+# That is the whole list. There is no vote and no rating: this is one
+# person's reading list, and the only questions it asks are "have you seen
+# this" and "do you want to keep it".
 class FeedItemsController < ApplicationController
   before_action :set_item
 
@@ -13,11 +13,9 @@ class FeedItemsController < ApplicationController
   def unread = act { @item.mark_unread! }
   def save = act { @item.save_item! }
   def unsave = act { @item.unsave! }
-  def vote = act { @item.vote!(params[:direction]) }
 
   private
-    # Items are reachable only through the user's own feeds — the river
-    # never joins across household members (Q-feed-sharing).
+    # Items are reachable only through the user's own feeds.
     def set_item
       @item = FeedItem.where(feed: Current.user.feeds).find(params[:id])
     end

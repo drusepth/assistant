@@ -1,8 +1,8 @@
 # READER.md
 
 The feed reader (**D-feed-reader**) — Google Reader's shape, rebuilt on a
-box the household owns, with the one thing Reader never had: it knows what
-you're into. Built as the daily surface of the Hobbies section
+box the household owns: the feeds behind your hobbies, in one chronological
+river. Built as the daily surface of the Hobbies section
 (`docs/HOBBIES.md` §3), reachable from the rail as **Reader**.
 
 ## Why this is in an AI life assistant at all
@@ -15,41 +15,54 @@ the reading list was chosen by the reader — and it was switched off, from
 outside, by a company that owed nobody an explanation. That is the feudal
 pattern the whole project exists to answer, in miniature.
 
-So the counter-move is the same as everywhere else here: owned sources,
-owned state, an ordering made of the user's own words, and every path out
-of the river ending in *doing* something rather than in more reading.
+So: owned sources, owned state, the publisher's own order, and a path out of
+the river that ends in *doing* something rather than in more reading.
 
 Three properties, stated as promises the code has to keep:
 
 1. **Every source is one the user chose.** No recommendations from
-   strangers, no discovery feed, no "you might also like" from an index we
-   don't own.
-2. **The ranking is explainable and optional.** It is arithmetic over the
-   user's own hobbies and votes, it says why it lifted something, and
-   *Newest* turns it off in one click.
-3. **Nothing leaves the box.** No model call, no third-party ranking
-   service, no telemetry. The reader works identically on an instance with
-   no API key configured at all — it is Organize-mode infrastructure that
-   happens to be fed from outside.
+   strangers, no discovery feed, no "you might also like".
+2. **Nothing reorders what you follow.** Newest first, across all your
+   feeds. No score, no relevance, no engagement weighting — see below.
+3. **Nothing leaves the box.** No model call, no third-party service, no
+   telemetry. The reader works identically on an instance with no API key
+   configured at all — it is Organize-mode infrastructure that happens to
+   be fed from outside.
+
+### The ranking that isn't there
+
+The first build of this had a hobby-aware relevance score, up/down votes
+that trained it, and a decay curve balancing the two. It was cut, and the
+reasoning is worth keeping because it generalizes to the rest of the app:
+
+- **A curated list needs no sifting.** These sources were added one at a
+  time, by hand, by the person reading them. Ranking is what you reach for
+  when the firehose is somebody else's; here it only makes the order
+  unpredictable, which is the property the feeds this replaces are made of.
+- **A vote is a rating mechanic, and ratings need an audience.** One person
+  reading their own subscriptions has nobody to signal to. "Was this good?"
+  is a question with no consumer — the only honest signals are *did you read
+  it* and *did you keep it*, and both are already buttons.
+- **Chronological is explainable without a paragraph.** Anything that needs
+  a docs section to justify its ordering has already lost an argument with
+  a river.
+
+What survives from that pass is the part that was never about ranking: feeds
+are **filed under hobby lenses**, so the river filters by hobby. That is a
+lens over the same shared pool, exactly as everywhere else in the app.
 
 ## The shape
 
 ```
 Feed  (a subscription: url, title, lenses, health)   Visible + Sectionable
-  └── FeedItem  (an entry + this reader's state: read_at, saved_at, vote, relevance)
+  └── FeedItem  (an entry + this reader's state: read_at, saved_at)
 ```
 
 `Feed` is a primitive like any other — owned by one user, taggable by
-section — and the hobby lenses it carries (D25) are what make the river's
-ranking personal rather than generic. `FeedItem` is deliberately *not*
-Sectionable: an item's tags are its feed's tags, so filing happens once, at
-the subscription, and the hobby filter is a join rather than a per-item
-write. Items are disposable; the ones worth keeping become saves, Tasks or
-Notes.
-
-Subscriptions are per-user. Read state is personal, so a shared row would
-mean sharing whether you'd read something — see **Q-feed-sharing** for what
-would change that.
+section — and the hobby lenses it carries (D25) are what the river's filter
+reads. `FeedItem` is deliberately *not* Sectionable: an item's tags are its
+feed's tags, so filing happens once, at the subscription. Items are
+disposable; the ones worth keeping become saves, Tasks or Notes.
 
 ## The pipeline
 
@@ -57,10 +70,8 @@ would change that.
 |---|---|---|
 | Discover | `Feeds::Discover` | Paste anything → the feed behind it |
 | Parse | `Feeds::Parse` | RSS 2.0 / RDF / Atom / JSON Feed → one `Entry` shape |
-| Refresh | `Feeds::Refresh` | Fetch, fold in by guid, score, prune |
-| Score | `Feeds::Interest` | The user's words → a relevance in -1..1 |
-| Rank | `Feeds::Rank` | relevance + age → the river's order |
-| Read | `Feeds::River` | Filters + paging, the one authorization line |
+| Refresh | `Feeds::Refresh` | Fetch, fold in by guid, prune |
+| Read | `Feeds::River` | Filters + paging + the one authorization line |
 
 ### Discovery: paste anything
 
@@ -83,37 +94,12 @@ redirect cap all apply. `Web::Fetch.raw` was added for pass 3 — finding a
 `<link>` means reading the markup that the text extraction exists to throw
 away. Anything that hands a page to a *model* still goes through `.text`.
 
-### Ranking: half a day of freshness
+### Refresh: idempotent by guid
 
-```
-score = relevance × 12h − hours_old   (+3h if saved)
-```
-
-Everything is in hours, which is what makes the ordering explainable in one
-sentence: **a perfect match is worth half a day of freshness.** A strong
-match leads the river this morning and is behind this afternoon's news by
-tonight. That is the property a reader opened twice a day needs, and the
-reason the ranking isn't a decay curve multiplied by affinity — that shape
-ties "how much does interest matter" to "how fast does news age", and the
-two are separate questions.
-
-`relevance` (-1..1) is `Feeds::Interest`, built from three sources, all of
-them the user's own words:
-
-- **hobby lenses** — the names they chose for what they do (weight 1.0),
-  plus a flat lens bonus for any item from a feed filed under a hobby (an
-  item from the Guitar feed is about guitar whatever its headline says),
-- **what they keep under those lenses** — titles of hobby-tagged notes,
-  goals, tasks and events (0.3), which is the profile-note idea from
-  `docs/HOBBIES.md` §1 read as vocabulary rather than as prose,
-- **votes cast in the reader** (+0.5 / −0.9). Dislike learns faster than
-  like, because a river's failure mode is one loud feed drowning the rest
-  and the user has already told us.
-
-Scores are squashed through `tanh`, so a headline that hits six weak words
-can't outrank one that hits the hobby itself. A downvoted-flavoured item
-**sinks rather than disappearing** — the reader never silently hides a
-source somebody subscribed to.
+A publisher who re-lists the same item every hour (many do) can't flood the
+river, and an item you have read stays read when it comes back. Existing
+rows update in place — a corrected headline should reach you — but the state
+attached to an item is the reader's and a fetch never touches it.
 
 ### Politeness
 
@@ -144,16 +130,17 @@ threat model is the same one `docs/EMAIL_PLAN.md` names for mail:
 
 ## The surfaces
 
-- **`/reader`** — the river. Unread / Saved / Everything × Interesting /
-  Newest, narrowed by hobby lens or by feed. Per item: vote, save, mark
-  read, open at the source, and **Make a task** (prefilled and pre-tagged
-  with the feed's lenses) — the verb that makes this a hobby surface rather
-  than a better-groomed reading list.
+- **`/reader`** — the river, newest first. Unread / Saved / Everything,
+  narrowed by hobby lens or by feed, with **Mark all read** scoped to
+  whatever you are looking at. Per item: save, mark read, open at the
+  source, and **Make a task** (prefilled and pre-tagged with the feed's
+  lenses) — the verb that makes this a hobby surface rather than a
+  better-groomed reading list.
 - **`/feeds`** — subscriptions: one paste field, per-feed unread counts,
   honest health ("Last check failed — the site answered HTTP 500"), and the
-  lens picker that makes the ranking yours.
-- **The Hobbies page** — a "From your feeds" card with the three the
-  ranking would lead with, or the invitation to follow a first source.
+  lens picker that files a feed under its hobby.
+- **The Hobbies page** — a "From your feeds" card with the three newest
+  unread, or the invitation to follow a first source.
 
 ## What it doesn't do yet
 
@@ -161,11 +148,10 @@ threat model is the same one `docs/EMAIL_PLAN.md` names for mail:
   most of the politeness; this is the rest of it, and it needs `Web::Fetch`
   to hand back response headers.
 - **OPML import/export.** The obvious next thing for anybody arriving from
-  another reader, and export belongs in the takeable-copy manifest too.
-- **Full-text extraction / read-here.** Deliberate for now: the article
-  belongs to the site that wrote it, and the reader's job is to get you
-  there.
+  another reader. Subscriptions already ride the JSON export (M4.2).
+- **Full-text extraction / read-here.** Deliberate: the article belongs to
+  the site that wrote it, and the reader's job is to get you there.
 - **A "what did I miss" digest**, which is a watcher (D20) over the same
-  rows rather than anything new — and the natural home for the LLM garnish
-  this feature deliberately does without today.
-- **Sharing a subscription inside the household** — Q-feed-sharing.
+  rows rather than anything new.
+- **Keyboard navigation** (`j`/`k`/`o`), which is the one Reader affordance
+  its actual users would notice missing.

@@ -8,6 +8,11 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     @other_feed = users(:one).feeds.create!(url: "https://example.com/misc.xml", label: "Misc")
   end
 
+  # The titles as the page actually orders them.
+  def body_titles
+    Nokogiri::HTML(response.body).css("article h3").map { |node| node.text.strip }
+  end
+
   def item(feed, title, **attributes)
     feed.feed_items.create!(
       guid: "#{feed.id}-#{title.parameterize}", title: title,
@@ -15,25 +20,26 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "the river leads with what matches your hobbies" do
-    item(@other_feed, "Quarterly earnings", published_at: 30.minutes.ago, relevance: 0.0)
-    item(@feed, "A woodworking bench", published_at: 5.hours.ago, relevance: 0.9)
+  test "the river is chronological across every feed, newest first" do
+    item(@feed, "Five hours old", published_at: 5.hours.ago)
+    item(@other_feed, "Half an hour old", published_at: 30.minutes.ago)
+    item(@feed, "Two days old", published_at: 2.days.ago)
 
     get reader_path
 
     assert_response :success
-    assert_operator response.body.index("A woodworking bench"), :<,
-      response.body.index("Quarterly earnings")
+    assert_equal [ "Half an hour old", "Five hours old", "Two days old" ],
+      body_titles, "no ranking, no scores — the order the world published them"
   end
 
-  test "Newest undoes the ranking in one click" do
-    item(@other_feed, "Quarterly earnings", published_at: 30.minutes.ago, relevance: 0.0)
-    item(@feed, "A woodworking bench", published_at: 5.hours.ago, relevance: 0.9)
+  test "an item with no date at all sorts by when we first saw it" do
+    item(@feed, "Dated", published_at: 3.days.ago)
+    undated = @feed.feed_items.create!(guid: "undated", title: "Undated", published_at: nil)
 
-    get reader_path(sort: "new")
+    get reader_path
 
-    assert_operator response.body.index("Quarterly earnings"), :<,
-      response.body.index("A woodworking bench")
+    assert_equal [ "Undated", "Dated" ], body_titles
+    assert_equal undated.created_at, undated.published_on
   end
 
   test "the hobby filter narrows to that lens's feeds" do

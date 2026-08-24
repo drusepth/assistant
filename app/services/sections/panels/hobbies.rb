@@ -12,14 +12,14 @@ module Sections
       end
 
       def river
-        @river ||= Feeds::River.new(viewer, filter: "unread", sort: "interesting")
+        @river ||= Feeds::River.new(viewer, filter: "unread")
       end
 
       def unread_count = @unread_count ||= river.unread_count
 
-      # The three the ranking would put at the top of the river right now —
-      # a taste of the reader rather than a second reader on this page.
-      def top_items = @top_items ||= river.page(per_page: READER_PREVIEW).items
+      # The three newest unread — a taste of the reader rather than a
+      # second reader on this page.
+      def latest_items = @latest_items ||= river.page(per_page: READER_PREVIEW).items
     end
   end
 end

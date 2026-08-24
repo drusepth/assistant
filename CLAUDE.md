@@ -92,7 +92,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/RECIPES_PLAN.md` — the recipe box: the Recipe primitive and its ingredient parser, recipe books, sharing to the household and to people outside it by link, and the pantry/AI waves (D-recipe-primitive, D-share-link, D-pantry)
 - `docs/CHAT_PLAN.md` — the chat surface, brought up to native-messaging quality on a phone: the screen/panel split, optimistic send, streaming replies (D-chat-shell, D-chat-optimistic, D-chat-stream)
 - `docs/TRAVEL.md` — the Travel section: why it's a lens and not a page, the self-drawn world map of geotagged photos (no tiles, no geocoder, owner-only per Q14), and what the hub grows next (D-travel-facet)
-- `docs/READER.md` — the feed reader: Google Reader's shape over feeds the user chose, the hobby-aware ranking made of their own words (a perfect match is worth half a day of freshness), the politeness rules for the one part of the app that polls strangers' servers, and the hostile-input handling for stranger XML (D-feed-reader)
+- `docs/READER.md` — the feed reader: Google Reader's shape over feeds the user chose, chronological on purpose (why the ranking and votes were built and then cut), the politeness rules for the one part of the app that polls strangers' servers, and the hostile-input handling for stranger XML (D-feed-reader)
 - `docs/PASSWORDS_PLAN.md` — the password vault: per-user envelope encryption, sharing, TOTP, import/export, and the agent-access bridge (D-passwords-vault, D-vault-crypto)
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions

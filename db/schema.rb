@@ -206,13 +206,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_084509) do
     t.string "image_url"
     t.datetime "published_at"
     t.datetime "read_at"
-    t.float "relevance", default: 0.0, null: false
     t.datetime "saved_at"
     t.text "summary"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.string "url"
-    t.integer "vote", default: 0, null: false
     t.index ["feed_id", "guid"], name: "index_feed_items_on_feed_id_and_guid", unique: true
     t.index ["feed_id", "published_at"], name: "index_feed_items_on_feed_id_and_published_at"
     t.index ["feed_id"], name: "index_feed_items_on_feed_id"

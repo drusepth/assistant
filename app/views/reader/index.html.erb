@@ -1,10 +1,9 @@
-<%# The river (D-feed-reader) — Google Reader's shape with the thing it
-    never had: it knows what you're into, from the hobbies you already told
-    the app about. Sources are yours, the ranking is explainable, and
-    "Newest" undoes all of it in one click. %>
+<%# The river (D-feed-reader) — everything your hobby feeds carried, newest
+    first. Google Reader's shape: sources you chose one at a time, in the
+    order the world published them, and nothing in between. %>
 <%= render Ui::PageHeaderComponent.new(
       title: "Reader",
-      subtitle: "What your feeds carried, ordered by what you're into"
+      subtitle: "Everything your feeds carried, newest first"
     ) do |header| %>
   <% header.with_actions do %>
     <%= link_to "Feeds", feeds_path, class: "btn btn-secondary" %>
@@ -17,7 +16,7 @@
 <% if @feeds.none? %>
   <%= render Ui::EmptyStateComponent.new(
         title: "No feeds yet",
-        description: "Follow the sites, blogs, subreddits and channels behind your hobbies. Paste any address — the feed behind it gets found for you — and the river ranks what arrives against what you're actually into. No algorithm you can't turn off, no account with anybody, and every source is one you chose."
+        description: "Follow the sites, blogs, subreddits and channels behind your hobbies. Paste any address — the feed behind it gets found for you — and everything they publish lands here, newest first, with no account anywhere and nobody deciding what you see."
       ) do |empty| %>
     <% empty.with_action { link_to "Add your first feed", feeds_path, class: "btn btn-primary" } %>
   <% end %>
@@ -26,10 +25,6 @@
     <div class="flex flex-wrap items-center gap-1.5">
       <% ReaderHelper::FILTER_LABELS.each do |key, label| %>
         <%= reader_chip label, { filter: key }, active: @river.filter == key %>
-      <% end %>
-      <span class="mx-1 hidden h-4 w-px bg-edge sm:block" aria-hidden="true"></span>
-      <% ReaderHelper::SORT_LABELS.each do |key, label| %>
-        <%= reader_chip label, { sort: key }, active: @river.sort == key %>
       <% end %>
     </div>
 
@@ -68,7 +63,7 @@
         <% end %>
       <% end %>
       <div class="item-stack">
-        <%= render partial: "reader/item", collection: @page.items, as: :item, locals: { interest: @interest } %>
+        <%= render partial: "reader/item", collection: @page.items, as: :item %>
       </div>
     <% end %>
 

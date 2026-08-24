@@ -12,15 +12,11 @@ class CreateFeedItems < ActiveRecord::Migration[8.1]
       t.string :image_url
       t.datetime :published_at
 
-      # The reader's state, which is the whole point of a reader: what you
-      # have seen, what you kept, and what you thought of it. The vote is
-      # -1/0/1 and feeds the ranking's learned interest.
+      # The only state a reader needs: what you've seen, and what you kept.
+      # There is no score and no vote — the river is chronological, and this
+      # is one person's reading list, not a rating system (D-feed-reader).
       t.datetime :read_at
       t.datetime :saved_at
-      t.integer :vote, null: false, default: 0
-      # The deterministic hobby-relevance score computed at ingest, so the
-      # river can rank a window of items without re-reading every note.
-      t.float :relevance, null: false, default: 0.0
 
       t.timestamps
     end

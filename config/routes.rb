@@ -209,7 +209,6 @@ Rails.application.routes.draw do
       patch :unread
       patch :save
       patch :unsave
-      patch :vote
     end
   end
 

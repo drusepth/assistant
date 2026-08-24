@@ -63,14 +63,14 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to section_path("hobbies")
   end
 
-  test "filing a feed under a hobby re-scores what is already in the river" do
+  test "filing a feed under a hobby is what the river's hobby filter reads" do
     lens = Hobbies::Lens.find_or_create!("Woodworking")
     feed = users(:one).feeds.create!(url: "https://example.com/posts.xml")
-    item = feed.feed_items.create!(guid: "1", title: "A woodworking bench", published_at: 1.hour.ago)
 
     patch feed_path(feed), params: { feed: { section_ids: [ lens.id ] } }
 
-    assert_operator item.reload.relevance, :>, 0.5
+    assert_equal [ lens ], feed.reload.sections.to_a
+    assert_equal [ feed ], Feed.in_section(lens).to_a
   end
 
   test "another member's feed is untouchable" do

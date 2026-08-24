@@ -1,35 +1,35 @@
 <!-- decided -->
-**D-feed-reader. The reader: a Google-Reader-shaped feed river over user-chosen feeds, ranked by hobby-aware relevance computed on the user's own words.**
+**D-feed-reader. The reader: a chronological river over the feeds behind the user's hobbies — no ranking, no scores, no votes.**
 Two new tables — `feeds` (a subscription: `Visible` + `Sectionable`, so a
 feed is filed under the hobby lenses it belongs to, D25) and `feed_items`
-(an entry, carrying the reader's own read/saved/vote state). Items are
+(an entry, carrying the reader's own read/saved state). Items are
 deliberately *not* Sectionable: an item's tags are its feed's tags, so
-filing happens once, at the subscription. Paste any address and
-`Feeds::Discover` finds the feed behind it (autodiscovery tags, then the
-conventional paths, with subreddits/YouTube channels/GitHub repos rewritten
-to their documented feed URLs); `Feeds::Parse` normalizes RSS 2.0, RDF,
-Atom and JSON Feed into one shape; `Feeds::Refresh` folds entries in
-idempotently by guid, so a re-listed item stays read.
+filing happens once, at the subscription, and the hobby filter is a join.
+Paste any address and `Feeds::Discover` finds the feed behind it
+(autodiscovery tags, then the conventional paths, with subreddits/YouTube
+channels/GitHub repos rewritten to their documented feed URLs);
+`Feeds::Parse` normalizes RSS 2.0, RDF, Atom and JSON Feed into one shape;
+`Feeds::Refresh` folds entries in idempotently by guid, so a re-listed item
+stays read.
 
-The ranking is the point, and it is deliberately small: `score =
-relevance × 12h − hours_old`, where relevance (-1..1) comes from
-`Feeds::Interest` — the hobby lenses the user created, the titles of what
-they keep under those lenses, and the votes they cast in the reader
-itself. **A perfect match is worth half a day of freshness**: a lift, never
-a permanent seat, which is the failure mode of ranking purely on affinity.
-No model call is involved (the reader has to work on an instance with no
-API key at all), nothing leaves the box, every lift is explainable in the
-user's own nouns ("Because you're into Woodworking"), a downvote sinks an
-item rather than hiding it, and "Newest" turns the whole thing off in one
-click.
+**The order is chronological, and that is the decision.** The first build of
+this had a hobby-aware relevance score, up/down votes that trained it, and a
+decay curve — and it was wrong for what this is. Every source here was
+chosen by hand, one at a time, so there is nothing to sift: ranking a list
+you curated yourself only makes it less predictable, and a vote is a rating
+mechanic that needs an audience. This is one person's reading list. The
+verbs are therefore *seen* and *kept* — read/unread, save — plus filters
+(hobby, feed, unread/saved) and "Make a task", which is the one that matters
+for the section: the river should end in doing something, not in a
+better-groomed reading list.
 
-Why this belongs in Hobbies rather than being a generic app: docs/HOBBIES.md
-§3 split "surface interesting content" on the Q9 line and deferred the live
-half. This is the honest resolution of that half — the user picks the
-sources, so the app needs no crawler, no third-party index and no
-capability it doesn't have. The reader is `Organize`-mode infrastructure
-that happens to be fed from outside, and its per-item verbs end in *doing*
-("Make a task"), which is the section's whole discipline.
+Why this belongs in Hobbies: docs/HOBBIES.md §3 split "surface interesting
+content" on the Q9 line and deferred the live half. This is the honest
+resolution of that half — the user picks the sources, so the app needs no
+crawler, no third-party index and no capability it doesn't have. It is
+`Organize`-mode infrastructure that happens to be fed from outside, and it
+works on an instance with no model configured at all: there is no LLM
+anywhere in this feature.
 
 Politeness is a design constraint, since this is the one part of the app
 that polls strangers' servers on a timer: an hourly floor per feed,

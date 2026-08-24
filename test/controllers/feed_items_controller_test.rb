@@ -23,14 +23,6 @@ class FeedItemsControllerTest < ActionDispatch::IntegrationTest
     assert_not @item.reload.saved?
   end
 
-  test "voting teaches this user's ranking and toggles off" do
-    patch vote_feed_item_path(@item, direction: FeedItem::UP)
-    assert @item.reload.upvoted?
-
-    patch vote_feed_item_path(@item, direction: FeedItem::UP)
-    assert_equal 0, @item.reload.vote
-  end
-
   test "an action re-renders just that row over Turbo" do
     patch read_feed_item_path(@item), as: :turbo_stream
 

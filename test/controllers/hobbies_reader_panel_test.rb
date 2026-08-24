@@ -14,10 +14,10 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     assert_match "reddit.com/r/woodworking", response.body
   end
 
-  test "with feeds the panel leads with what the ranking would lead with" do
+  test "with feeds the panel shows the newest unread" do
     lens = Hobbies::Lens.find_or_create!("Woodworking")
     feed = users(:one).feeds.create!(url: "https://example.com/wood.xml", label: "Wood", sections: [ lens ])
-    feed.feed_items.create!(guid: "1", title: "A woodworking bench", published_at: 2.hours.ago, relevance: 0.9)
+    feed.feed_items.create!(guid: "1", title: "A woodworking bench", published_at: 2.hours.ago)
     feed.feed_items.create!(guid: "2", title: "Old and read", published_at: 3.days.ago, read_at: Time.current)
 
     get section_path("hobbies")
