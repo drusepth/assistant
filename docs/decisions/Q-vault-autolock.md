@@ -1,0 +1,3 @@
+<!-- resolved -->
+**Q-vault-autolock. Unlock rides sign-in; the 12-hour window and the manual Lock button stay.**
+Decided 2026-08 on the product call: a family desktop is not a corporate laptop, and the failure mode of an over-eager lock is that people go back to a browser vault. The expiry surface is already gentle — metadata stays listed and the unlock banner takes a password inline, so nobody is ever bounced to a sign-in page. A per-user idle-timeout dial was considered and deferred rather than rejected; it's the obvious v2 if a household with a shared machine asks. Note the *session* cookie is permanent, so this window — not sign-in — is the gate members actually feel. — *Resolved: keep as built.*

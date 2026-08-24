@@ -409,17 +409,23 @@ the icons' real pixel dimensions. The static manifest and its test were deleted
 in the merge rather than reconciled: two manifests is a bug, and main's wins on
 every axis.
 
-Two pieces survived, because main has neither:
+One piece survived, because main has no equivalent:
 
 - **`apple-mobile-web-app-status-bar-style: default`**, which keeps iOS's status
   bar *outside* the web view once installed. That is what makes `100dvh` still
   mean the area the app actually has, and the chat screen sizes itself against
   exactly that — so `black-translucent` (prettier, and needing a top safe-area
   inset on every page) would have quietly broken D-chat-shell.
-- **The service worker registers on page load**, not only when somebody clicks
-  "Enable browser push" in Settings (D22) — so almost nobody had one. It is
-  idempotent, and scoped for free: `layouts/public.html.erb` ships no JavaScript
-  at all, so a share-link visitor registers nothing.
+
+The page-load **service-worker registration was dropped** on the second merge,
+and the reasoning that justified it turned out to be wrong. It was added on the
+theory that a browser will not offer to install an app whose worker it has never
+seen; D-installable shows that is not the blocker — main's install is reachable
+and tested with no global registration at all, and Chrome's prompt still will
+not fire for either of us without a `fetch` handler. So it bought nothing, while
+registering a push-only worker for every user on every page is a behaviour
+change nobody asked for and one D-installable explicitly reasoned past ("the
+existing `public/service_worker.js` stays what it is: web push, nothing else").
 
 Also worth recording, because the two waves met in the layout: main's
 `viewport-fit=cover` and this branch's `interactive-widget=resizes-content` are

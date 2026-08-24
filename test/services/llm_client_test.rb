@@ -45,6 +45,58 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_equal "Hi!", client.chat([ { role: "user", content: "Hi" } ])
   end
 
+  test "json_mode: :prompt asks for JSON in the last user turn instead of response_format" do
+    client = Llm::Client.new(base_url: "https://api.anthropic.com/v1", api_key: "sk-ant",
+      model: "claude-opus-5", json_mode: :prompt, max_tokens: 8192)
+
+    stub_request(:post, "https://api.anthropic.com/v1/chat/completions") { |request|
+      body = JSON.parse(request.body)
+      !body.key?("response_format") && body["max_tokens"] == 8192 &&
+        body["messages"] == [
+          { "role" => "system", "content" => "Be helpful." },
+          { "role" => "user", "content" => "Hi\n\n#{Llm::Client::JSON_INSTRUCTION}" }
+        ]
+    }.to_return(status: 200, body: { choices: [ { message: { content: '{"answer":42}' } } ] }.to_json)
+
+    assert_equal({ "answer" => 42 }, client.chat([
+      { role: "system", content: "Be helpful." },
+      { role: "user", content: "Hi" }
+    ], json: true))
+  end
+
+  test "json_mode: :prompt leaves non-JSON calls and the caller's messages alone" do
+    client = Llm::Client.new(base_url: "https://api.anthropic.com/v1", api_key: "sk-ant",
+      model: "claude-opus-5", json_mode: :prompt)
+    messages = [ { role: "user", content: "Hi" } ].freeze
+
+    stub_request(:post, "https://api.anthropic.com/v1/chat/completions") { |request|
+      body = JSON.parse(request.body)
+      !body.key?("response_format") && !body.key?("max_tokens") &&
+        body["messages"] == [ { "role" => "user", "content" => "Hi" } ]
+    }.to_return(status: 200, body: { choices: [ { message: { content: "Hello!" } } ] }.to_json)
+
+    assert_equal "Hello!", client.chat(messages)
+    assert_equal [ { role: "user", content: "Hi" } ], messages, "the caller's array is not mutated"
+  end
+
+  test "json_mode: :prompt appends a text part to a multi-part vision message" do
+    client = Llm::Client.new(base_url: "https://api.anthropic.com/v1", api_key: "sk-ant",
+      model: "claude-opus-5", json_mode: :prompt)
+
+    stub_request(:post, "https://api.anthropic.com/v1/chat/completions") { |request|
+      parts = JSON.parse(request.body).dig("messages", 0, "content")
+      parts.length == 3 && parts.last == { "type" => "text", "text" => Llm::Client::JSON_INSTRUCTION } &&
+        parts[1]["type"] == "image_url"
+    }.to_return(status: 200, body: { choices: [ { message: { content: '{"caption":"a dog"}' } } ] }.to_json)
+
+    assert_equal({ "caption" => "a dog" }, client.chat([
+      { role: "user", content: [
+        { type: "text", text: "Describe this." },
+        { type: "image_url", image_url: { url: "data:image/webp;base64,AAAA" } }
+      ] }
+    ], json: true))
+  end
+
   test "classifies failures the retry policy can act on" do
     # Permanent: the request itself is wrong and will be wrong next time too.
     { 400 => "Bad request", 401 => "Incorrect API key", 403 => "Forbidden", 404 => "No such model" }.each do |status, message|

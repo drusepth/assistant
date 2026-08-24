@@ -3,6 +3,7 @@
     "name": ["Nadia Osman"],
     "tel": ["+1 555 030 1000", "+1 555 030 1001"],
     "email": ["nadia@example.com"],
+    "icon": ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="],
     "address": [
       {
         "addressLine": ["12 Elm Court", "Apt 4"],
