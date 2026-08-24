@@ -2,6 +2,7 @@ class Task < ApplicationRecord
   include Visible
   include Sectionable
   include AutoSortable
+  include Remindable
 
   AUTO_SORT_JOB = CategorizeTaskJob
 
@@ -41,6 +42,13 @@ class Task < ApplicationRecord
   # The Today column is bucket ∪ due date: pulled in by hand (or scheduled by
   # a goal breakdown), or surfaced automatically once its due date arrives.
   def for_today? = today? || (due_on.present? && due_on <= Date.current)
+
+  # A due date is a day, not a moment, so a relative reminder counts back
+  # from the start of that day. An undated task can still carry an
+  # absolute reminder — there is just nothing to count back from.
+  def remind_from
+    due_on&.in_time_zone(user.household.zone)&.change(hour: Remindable::DAY_START_HOUR)
+  end
 
   def complete!
     update!(completed_at: Time.current)

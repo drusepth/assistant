@@ -308,6 +308,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
     t.string "kind", null: false
+    t.text "secrets", default: "{}", null: false
+    t.integer "sent_count", default: 0, null: false
+    t.date "sent_on"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "kind"], name: "index_notification_channels_on_user_id_and_kind"
@@ -421,6 +424,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
     t.integer "user_id", null: false
     t.index ["user_id", "title"], name: "index_recipes_on_user_id_and_title"
     t.index ["user_id"], name: "index_recipes_on_user_id"
+  end
+
+  create_table "reminders", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deliver_at", null: false
+    t.datetime "delivered_at"
+    t.integer "lead_minutes"
+    t.integer "subject_id"
+    t.string "subject_type"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["delivered_at", "deliver_at"], name: "index_reminders_on_delivered_at_and_deliver_at"
+    t.index ["subject_type", "subject_id"], name: "index_reminders_on_subject_type_and_subject_id"
+    t.index ["user_id"], name: "index_reminders_on_user_id"
   end
 
   create_table "section_taggings", force: :cascade do |t|
@@ -672,6 +690,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
   add_foreign_key "recipe_books", "users"
   add_foreign_key "recipe_ingredients", "recipes"
   add_foreign_key "recipes", "users"
+  add_foreign_key "reminders", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"

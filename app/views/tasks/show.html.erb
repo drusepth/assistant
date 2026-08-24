@@ -102,6 +102,9 @@
     <% end %>
   </div>
   <% if own %>
-    <div><%= render "shared/share_controls", subject: @task %></div>
+    <div class="space-y-6">
+      <%= render "shared/share_controls", subject: @task %>
+      <%= render "reminders/controls", subject: @task %>
+    </div>
   <% end %>
 </div>

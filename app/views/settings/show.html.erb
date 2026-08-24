@@ -222,6 +222,96 @@
         <button type="button" class="btn btn-secondary" data-action="web-push#subscribe">Enable browser push on this device</button>
         <span class="text-xs text-soft" data-web-push-target="status"></span>
       </div>
+
+      <%# The phone channels (D-sms-channels) fold away by default: they
+          need real setup, and most people will never open them. %>
+      <details class="rounded-lg border border-edge px-4 py-3">
+        <summary class="cursor-pointer text-sm font-medium text-primary-700">Text me (SMS)</summary>
+        <%= form_with url: notification_channels_path, class: "mt-3 space-y-3", data: { controller: "sms-fields" } do %>
+          <%= hidden_field_tag :kind, "sms" %>
+          <div class="space-y-1">
+            <label class="label" for="sms_provider">How the text gets sent</label>
+            <%= select_tag :provider,
+                  options_for_select(NotificationChannel::SMS_PROVIDERS.map { |key, settings| [ settings[:label], key ] }),
+                  id: "sms_provider", class: "input",
+                  data: { sms_fields_target: "select", action: "sms-fields#refresh" } %>
+          </div>
+
+          <% NotificationChannel::SMS_PROVIDERS.each_with_index do |(key, settings), index| %>
+            <div class="space-y-3" data-sms-fields-target="fields" data-sms-provider="<%= key %>" <%= "hidden" unless index.zero? %>>
+              <p class="text-xs text-soft"><%= settings[:description] %></p>
+              <% settings[:fields].each do |field| %>
+                <% field_id = "sms_#{key}_#{field[:key]}" %>
+                <% field_name = "provider_fields[#{key}][#{field[:key]}]" %>
+                <div class="space-y-1">
+                  <label class="label" for="<%= field_id %>"><%= field[:label] %><%= " (optional)" if field[:optional] %></label>
+                  <% if field[:secret] %>
+                    <%= password_field_tag field_name, nil, id: field_id, class: "input", autocomplete: "off" %>
+                  <% else %>
+                    <%= text_field_tag field_name, nil, id: field_id, class: "input", placeholder: field[:placeholder] %>
+                  <% end %>
+                  <% if field[:hint] %><p class="hint"><%= field[:hint] %></p><% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <div class="flex flex-wrap items-end gap-2">
+            <div class="min-w-56 flex-1 space-y-1">
+              <label class="label" for="sms_to">Text this number</label>
+              <%= telephone_field_tag :to, nil, id: "sms_to", class: "input", placeholder: "+15555550123" %>
+            </div>
+            <div class="space-y-1">
+              <label class="label" for="sms_daily_limit">Max per day</label>
+              <%= number_field_tag :daily_limit, NotificationChannel::DAILY_LIMIT_DEFAULT, id: "sms_daily_limit", class: "input w-24", min: 1 %>
+            </div>
+            <%= submit_tag "Add SMS", class: "btn btn-secondary" %>
+          </div>
+          <p class="text-xs text-soft">
+            A text carries the same counts and titles as every other channel, never the contents of an item —
+            and unlike the others, your carrier keeps a copy of it. The daily cap is what stops a chatty week
+            from becoming a bill.
+          </p>
+        <% end %>
+      </details>
+
+      <details class="rounded-lg border border-edge px-4 py-3">
+        <summary class="cursor-pointer text-sm font-medium text-primary-700">Message me on Signal</summary>
+        <%= form_with url: notification_channels_path, class: "mt-3 space-y-3" do %>
+          <%= hidden_field_tag :kind, "signal" %>
+          <p class="text-xs text-soft">
+            Needs a signal-cli-rest-api container registered to a number you own. Free, end-to-end encrypted,
+            and nobody in the middle keeps a copy — the best of the phone channels if you'll run one more container.
+          </p>
+          <div class="space-y-1">
+            <label class="label" for="signal_url">signal-cli-rest-api URL</label>
+            <%= text_field_tag :url, nil, id: "signal_url", class: "input", placeholder: "http://signal-cli:8080" %>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <div class="min-w-48 flex-1 space-y-1">
+              <label class="label" for="signal_from">Send from</label>
+              <%= telephone_field_tag :from, nil, id: "signal_from", class: "input", placeholder: "+15555550123" %>
+              <p class="hint">The number the container is registered to.</p>
+            </div>
+            <div class="min-w-48 flex-1 space-y-1">
+              <label class="label" for="signal_to">Message this number</label>
+              <%= telephone_field_tag :to, nil, id: "signal_to", class: "input", placeholder: "+15555550124" %>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-end gap-2">
+            <div class="min-w-40 flex-1 space-y-1">
+              <label class="label" for="signal_username">Username (optional)</label>
+              <%= text_field_tag :username, nil, id: "signal_username", class: "input", autocomplete: "off" %>
+            </div>
+            <div class="min-w-40 flex-1 space-y-1">
+              <label class="label" for="signal_password">Password (optional)</label>
+              <%= password_field_tag :password, nil, id: "signal_password", class: "input", autocomplete: "off" %>
+            </div>
+            <%= submit_tag "Add Signal", class: "btn btn-secondary" %>
+          </div>
+          <p class="hint">Only if you put the API behind a reverse proxy with basic auth — it ships with none.</p>
+        <% end %>
+      </details>
     </div>
   <% end %>
 

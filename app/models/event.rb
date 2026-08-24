@@ -2,6 +2,7 @@ class Event < ApplicationRecord
   include Visible
   include Sectionable
   include AutoSortable
+  include Remindable
 
   AUTO_SORT_JOB = CategorizeEventJob
 
@@ -23,6 +24,15 @@ class Event < ApplicationRecord
 
   def early_morning?
     !all_day? && starts_at.hour < 9
+  end
+
+  # All-day events start at midnight, so "an hour before" counted from
+  # starts_at would ping at 11pm the night before. The day starts when the
+  # person being reminded is awake.
+  def remind_from
+    return starts_at unless all_day?
+
+    starts_at.in_time_zone(user.household.zone).change(hour: Remindable::DAY_START_HOUR)
   end
 
   # Virtual date/time parts backing the forms (D16): a day plus optional

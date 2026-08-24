@@ -179,6 +179,8 @@ Delivery policy rides the dials: **only Active sections may notify** (Quiet stay
 
 Schema: `notification_channels` (user, kind, config JSON, enabled) + a `Notify` fan-out job called at the end of `AgentScanJob` for newly created Active-section suggestions.
 
+**The phone channels came later (D-sms-channels).** Two more kinds joined the three above: `sms`, with a provider registry behind it (gammu-smsd on your own modem, Twilio, Amazon SNS), and `signal`, talking to a signal-cli-rest-api container. They carry two things the first three didn't need — an encrypted `secrets` column for provider credentials, and a per-channel daily cap, since SMS is the first channel that costs money per message. Same delivery policy, plus a length bound on the payload.
+
 ### 5.3 D14 leftovers: export and key encryption
 
 **Export** — the mission item: the user's life must be *portable*, not just stored.

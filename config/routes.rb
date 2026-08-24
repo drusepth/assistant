@@ -59,6 +59,7 @@ Rails.application.routes.draw do
 
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]
+  resources :reminders, only: %i[ create destroy ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
   resources :linked_accounts, only: %i[ create update destroy ] do
