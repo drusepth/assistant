@@ -1,18 +1,24 @@
 <%# The month at a glance. Reads only `entry_date`, so it draws identically
     whether the diary is locked or open — it is the one thing a locked diary
-    is allowed to show. %>
+    is allowed to show.
+
+    A real <table> with real headers, because a grid of bare numbers is what
+    a screen reader makes of a <div> full of spans. Each day carries its own
+    date in text, so nothing here depends on a hover title. %>
 <div class="card p-4">
   <div class="mb-2 flex items-center justify-between gap-2">
     <%= link_to diary_entries_path(month: (month - 1.month).strftime("%Y-%m"), q: query.presence),
           class: "rounded p-1 text-soft hover:bg-surface hover:text-ink",
-          "aria-label": "Previous month" do %>
+          "aria-label": "Previous month, #{l(month - 1.month, format: "%B %Y")}" do %>
       <%= icon(:chevron_left, css_class: "size-4") %>
     <% end %>
-    <p class="text-xs font-semibold uppercase tracking-wide text-soft"><%= l(month, format: "%B %Y") %></p>
+    <p class="text-xs font-semibold uppercase tracking-wide text-soft" id="diary-calendar-caption">
+      <%= l(month, format: "%B %Y") %>
+    </p>
     <% if month.next_month.beginning_of_month <= Date.current.beginning_of_month %>
       <%= link_to diary_entries_path(month: (month + 1.month).strftime("%Y-%m"), q: query.presence),
             class: "rotate-180 rounded p-1 text-soft hover:bg-surface hover:text-ink",
-            "aria-label": "Next month" do %>
+            "aria-label": "Next month, #{l(month + 1.month, format: "%B %Y")}" do %>
         <%= icon(:chevron_left, css_class: "size-4") %>
       <% end %>
     <% else %>
@@ -20,26 +26,49 @@
     <% end %>
   </div>
 
-  <div class="grid grid-cols-7 gap-1 text-center">
-    <% %w[ M T W T F S S ].each do |initial| %>
-      <span class="text-[0.65rem] font-medium text-stone-400" aria-hidden="true"><%= initial %></span>
-    <% end %>
-
-    <% blanks = (month.beginning_of_month.wday - 1) % 7 %>
-    <% blanks.times do %><span></span><% end %>
-
-    <% (month.beginning_of_month..month.end_of_month).each do |day| %>
-      <% written = dates.include?(day) %>
-      <% cell_class = "flex size-6 items-center justify-center rounded-full text-xs " \
-                      "#{written ? "bg-primary-600 font-semibold text-white hover:bg-primary-700" : "text-soft"} " \
-                      "#{"ring-1 ring-primary-300" if day == Date.current && !written}" %>
-      <% entry = entries_by_date[day] %>
-      <% if entry %>
-        <%= link_to day.day, diary_entry_path(entry), class: cell_class,
-              title: "#{l(day, format: :long)} — written" %>
-      <% else %>
-        <span class="<%= cell_class %>" title="<%= l(day, format: :long) %>"><%= day.day %></span>
+  <table class="w-full border-separate border-spacing-1 text-center"
+         aria-labelledby="diary-calendar-caption">
+    <thead>
+      <tr>
+        <% Date::DAYNAMES.rotate(1).each do |day_name| %>
+          <th scope="col" class="text-[0.65rem] font-medium text-stone-400">
+            <span aria-hidden="true"><%= day_name.first %></span>
+            <span class="sr-only"><%= day_name %></span>
+          </th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% first = month.beginning_of_month %>
+      <% start = first - ((first.wday - 1) % 7) %>
+      <% (start..month.end_of_month).each_slice(7) do |week| %>
+        <tr>
+          <% week.each do |day| %>
+            <td class="p-0">
+              <% if day.month != month.month %>
+                <span class="block size-6"></span>
+              <% else %>
+                <% written = dates.include?(day) %>
+                <% entry = entries_by_date[day] %>
+                <% cell = "flex size-6 items-center justify-center rounded-full text-xs " \
+                          "#{written ? "bg-primary-600 font-semibold text-white hover:bg-primary-700" : "text-soft"} " \
+                          "#{"ring-1 ring-primary-300" if day == Date.current && !written}" %>
+                <% label = "#{l(day, format: :long)}#{" — written" if written}" %>
+                <% if entry %>
+                  <%= link_to diary_entry_path(entry), class: cell, "aria-label": label do %>
+                    <span aria-hidden="true"><%= day.day %></span>
+                  <% end %>
+                <% else %>
+                  <span class="<%= cell %>">
+                    <span aria-hidden="true"><%= day.day %></span>
+                    <span class="sr-only"><%= label %></span>
+                  </span>
+                <% end %>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
       <% end %>
-    <% end %>
-  </div>
+    </tbody>
+  </table>
 </div>

@@ -124,7 +124,7 @@
     an old journal rather than start fresh. %>
 <% if @on_this_day.present? %>
   <section class="mb-5">
-    <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-soft">On this day</h2>
+    <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-soft">Around this time, other years</h2>
     <div class="card divide-y divide-edge">
       <%= render partial: "entry", collection: @on_this_day, as: :opened %>
     </div>

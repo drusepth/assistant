@@ -34,11 +34,18 @@ class DiaryEntry < ApplicationRecord
   scope :on, ->(date) { where(entry_date: date) }
   scope :in_month, ->(month) { where(entry_date: month.beginning_of_month..month.end_of_month) }
 
-  # The same calendar day in any year — what "on this day" is built from.
-  # Plaintext dates are exactly what makes this a cheap index scan instead
-  # of a decrypt of the whole journal.
-  scope :on_day_of_year, ->(date) {
-    where("strftime('%m-%d', entry_date) = ?", date.strftime("%m-%d"))
+  # The same stretch of the calendar in earlier years — what "on this day"
+  # is built from. Plaintext dates are exactly what makes this a cheap index
+  # scan instead of a decrypt of the whole journal.
+  #
+  # A window rather than the exact day: an exact match only fires for
+  # someone who wrote on precisely this date in a previous year, which for
+  # anyone but a daily writer means the feature almost never appears. A few
+  # days either side turns "rarely" into "often", and "a year ago this week"
+  # is what people mean anyway.
+  scope :around_day_of_year, ->(date, days: 3) {
+    marks = ((date - days)..(date + days)).map { |day| day.strftime("%m-%d") }
+    where("strftime('%m-%d', entry_date) IN (?)", marks)
   }
 
   # Held only for the duration of one seal (see #seal!): present takes the

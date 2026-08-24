@@ -61,8 +61,9 @@ class DiaryEntriesController < ApplicationController
     ).reject(&:lost?)
 
     @on_this_day = @diary.open_all(
-      Current.user.diary_entries.on_day_of_year(Date.current)
-        .where.not(entry_date: Date.current.beginning_of_year..Date.current.end_of_year).newest_first
+      Current.user.diary_entries.around_day_of_year(Date.current)
+        .where.not(entry_date: Date.current.beginning_of_year..Date.current.end_of_year)
+        .newest_first.limit(5)
     ).reject(&:lost?)
   end
 

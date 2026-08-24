@@ -4,8 +4,8 @@ Build plan for the **diary**: a private journal under the Vault sidebar group, s
 household member's most personal writing lives on the box they own instead of in a
 notes app that syncs to someone else's cloud — sealed with the same envelope
 encryption the password vault proved out. **Status: built — waves 0–4 landed** (see
-`STATUS.md`); W5 stays gated on its two open questions, and this document remains
-the design record.
+`STATUS.md`), plus a hardening pass (W6). W5 stays gated on its two open
+questions, and this document remains the design record.
 
 Decisions here are logged as **D-diary-vault** and **D-vault-sealed** in
 `DECISIONS.md`. Open questions are logged as **Q-diary-ai** and
@@ -343,6 +343,7 @@ shippable.
 | **W2 — the habit** ✅ | On this day; writing prompts (first-party strings, `prompts_enabled`); search over decrypted payloads; month navigation. |
 | **W3 — doors** ✅ | Import (Day One JSON, Markdown folder) and export (Markdown+JSON), both in-request; archive-job manifest line (diary carries nothing). |
 | **W4 — the exception** ✅ | Per-entry sharing on the generalized `Vault::Share`: `diary_entry_keys` grantee wraps, `AccessGrant::ITEM_TYPES` append, rotate-on-revoke, shared-with-you strip; `vault_events` subject goes polymorphic and diary share/unshare events land in it; the §7 emergency dial ships here too (it's a sharing question). |
+| **W6 — hardening** ✅ | Autosave extended to new entries (create-then-repoint) with `lock_version` so a second tab is refused rather than silently overwritten; `diary_revisions` — the replaced payload sealed under the entry's own item key, throttled to one per sitting, restorable, itself undoable; list pagination and a search cap that stops decrypting when it's reached; chunked import via a sealed `diary_imports` staging row walked a batch per request; `Diary::Markdown` (escape-first, whitelist-output) rendering bodies; `recovery_verified_at` — the kit checked rather than promised, and the diary's gate moved onto the proof; calendar rebuilt as a real table with per-day labels; "around this time, other years" widened from an exact-day match. |
 | **W5 — deferred by design** | Q-diary-ai (the §8 dial and in-request reflections) and Q-diary-attachments (needs the D-storage-seam encryption story). **Not built** until their gates clear. |
 
 W0 and W1 carry the test weight: the extraction proves itself against the
@@ -382,6 +383,47 @@ Six things the plan didn't anticipate, decided or discovered during the build:
 - **`entry_date` is a leak the archive shouldn't carry either.** The plan said
   the archive exports nothing; the build kept that literally — no `diary.jsonl`
   at all, just a manifest line saying where to get one.
+
+### Build notes, second pass (W6)
+
+The hardening pass found five things the first build had wrong or thin, and
+one thing that only became true because of it:
+
+- **Autosave covered the wrong half.** It attached only to an existing entry,
+  so the single longest stretch anyone writes without saving — the first
+  sitting — was the one stretch unprotected. It now creates on first pause and
+  re-points itself, the form, and the address bar at the entry it made.
+- **Which made concurrency ordinary.** A draft that saves itself makes two
+  tabs on one entry a normal event rather than an exotic one, so entries carry
+  a `lock_version` and a stale tab is refused with a 409. Adding it had a
+  side effect worth knowing: `update_column` becomes a silent no-op on a stale
+  record, because optimistic locking scopes the UPDATE to the in-memory
+  version. That is the right failure mode for the opportunistic re-wrap that
+  uses it, and the wrong one anywhere that matters.
+- **Autosave without undo can eat words.** `diary_revisions` keeps the
+  replaced payload under the entry's *own* item key — no new key management,
+  dies with the entry — throttled to one snapshot per sitting so a burst of
+  autosaves can't bury the version worth having, and a restore snapshots first
+  so undo is itself undoable.
+- **The list had no way past its first page**, and search decrypted whatever
+  it was handed. Both are windowed now; search stops at its cap rather than
+  opening the whole journal, and says "the first 100" rather than "100".
+- **Import couldn't survive a real journal.** A background job is forbidden
+  here and a plaintext tempfile would undo the whole feature, so the parse is
+  staged *sealed* under the diary key and walked a batch per request, with the
+  cursor in the database — which also means a closed tab pauses an import
+  rather than losing one.
+- **The recovery kit was a promise, not a proof.** `recovery_confirmed_at`
+  recorded a click. The code can now be pasted back and checked, and the
+  diary's gate moved onto that proof (`recovery_verified_at`) while the
+  passwords vault still accepts the click — the asymmetry is the point: a
+  mistyped kit costs a round of password resets there and the whole journal
+  here.
+
+Two smaller ones: the body was stored, exported and imported as Markdown but
+rendered as preformatted text under a CSS class that didn't exist, and "on
+this day" matched the exact calendar day, which for anyone but a daily writer
+meant it almost never appeared.
 
 ---
 

@@ -18,7 +18,7 @@ module Vault
 
     def grant(grantees)
       item_key = @record.unwrap_item_key(@owner, @vault_key)
-      return Result.new(0, [], "This entry's secret is lost — re-enter it before sharing.") if item_key.nil?
+      return Result.new(0, [], lost_message) if item_key.nil?
 
       names = []
       grantees.each do |grantee|
@@ -52,6 +52,17 @@ module Vault
     end
 
     private
+      # "Re-enter it" is the right advice for a password and meaningless for
+      # a diary entry: there is nothing to re-enter, because the words were
+      # the thing that was lost.
+      def lost_message
+        if @record.is_a?(Credential)
+          "This entry's secret is lost — re-enter it before sharing."
+        else
+          "This entry can't be opened, so it can't be shared."
+        end
+      end
+
       def record_event(action, grantee)
         VaultEvent.record(action, user: @owner, actor: @owner, subject: @record, subject_user: grantee)
       end
