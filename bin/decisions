@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Read the decision log, or add to it.
+#
+#   bin/decisions               print the whole log, grouped
+#   bin/decisions open          print only the open questions
+#   bin/decisions show D10      print one entry (or anything matching)
+#   bin/decisions new D-my-slug "Title"     create the entry and print its path
+#
+# One file per entry under docs/decisions/, named by its ID, so parallel
+# branches never touch the same file — see docs/DECISIONS.md. The group
+# (decided / resolved / open) is the first line of each file, so advancing an
+# open question to decided is a one-line edit rather than a move between
+# sections two branches were both rewriting.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+DIR="docs/decisions"
+
+# Numbered IDs first in numeric order (D1 before D10 — they're historical and
+# frozen), then the kebab slugs alphabetically.
+ordered() {
+  local group="$1"
+  { grep -lx "<!-- $group -->" "$DIR"/D[0-9]*.md "$DIR"/Q[0-9]*.md 2>/dev/null | sort -V || true
+    grep -lx "<!-- $group -->" "$DIR"/*-*.md 2>/dev/null | sort || true; }
+}
+
+print_group() {
+  local group="$1" heading="$2" files
+  files=$(ordered "$group")
+  [ -z "$files" ] && return 0
+  printf '\n## %s\n\n' "$heading"
+  for entry in $files; do
+    tail -n +2 "$entry"
+    printf '\n'
+  done
+}
+
+case "${1:-show}" in
+  show)
+    if [ -n "${2:-}" ]; then
+      matches=$(ls "$DIR" | grep -i "${2%.md}" || true)
+      [ -z "$matches" ] && { echo "No decision matching '${2}'." >&2; exit 1; }
+      for m in $matches; do tail -n +2 "$DIR/$m"; printf '\n'; done
+      exit 0
+    fi
+    print_group decided "Decided"
+    print_group resolved "Resolved questions"
+    print_group open "Open questions"
+    ;;
+
+  open)
+    print_group open "Open questions"
+    ;;
+
+  new)
+    id="${2:-}"
+    title="${3:-}"
+    if [ -z "$id" ] || [ -z "$title" ]; then
+      echo 'usage: bin/decisions new D-kebab-slug "One-line statement of the decision"' >&2
+      exit 1
+    fi
+    case "$id" in
+      D-*|Q-*) ;;
+      *) echo "IDs for new entries are kebab slugs: D-something or Q-something." >&2
+         echo "(D1-D37 and Q1-Q19 are historical and stay as they are.)" >&2
+         exit 1 ;;
+    esac
+
+    path="$DIR/$id.md"
+    if [ -e "$path" ]; then
+      echo "$id already exists — pick another slug, or edit $path." >&2
+      exit 1
+    fi
+
+    group="decided"
+    case "$id" in Q-*) group="open" ;; esac
+
+    printf '<!-- %s -->\n**%s. %s**\n\n' "$group" "$id" "$title" > "$path"
+    echo "$path"
+    ;;
+
+  *)
+    echo 'usage: bin/decisions [show [id]|open|new D-slug "Title"]' >&2
+    exit 1
+    ;;
+esac

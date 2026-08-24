@@ -1,0 +1,3 @@
+<!-- resolved -->
+**Q-vault-collections. Credential sharing stays item-level; no household folder.**
+Decided 2026-08, on the Q15 pattern: wait for real demand rather than build the org-vault key model speculatively. Item-level sharing is the honest unit for a secret — every share is a deliberate act, and a folder quietly widens blast radius as it fills. The cost is real (each new common login is shared by hand) and bounded; if it bites, a bulk multi-select share fixes most of the tedium without any new crypto, and a keyed collection remains available after that. — *Resolved for now; revisit on demand.*

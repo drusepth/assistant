@@ -14,5 +14,9 @@ config/credentials.yml.enc diff=rails_credentials
 # PR's mergeability without this file, so every branch that touched the log
 # still showed a conflict on its PR page. The log is now one file per entry
 # under docs/status/ — separate files, nothing to merge, no special strategy
-# needed here. Code hub files (routes.rb, fixtures, Tool::SLUGS, …) stay on the
-# default strategy on purpose: their keep-both conflicts deserve eyes.
+# needed here. The decision log followed it to docs/decisions/ for the same
+# reason, and gains one property a merge strategy could never give it: a slug
+# is the filename, so two branches claiming the same ID collide as an add/add
+# conflict instead of merging quietly. Code hub files (routes.rb, fixtures,
+# Tool::SLUGS, …) stay on the default strategy on purpose: their keep-both
+# conflicts deserve eyes.
