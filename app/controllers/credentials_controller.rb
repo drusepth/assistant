@@ -8,6 +8,10 @@ class CredentialsController < ApplicationController
     with: -> { redirect_to credentials_path, alert: "Try again later." }
   rate_limit to: 60, within: 1.minute, only: :reveal,
     with: -> { render json: { error: "slow down" }, status: :too_many_requests }
+  # Guessing a recovery code is hopeless arithmetic, but an endpoint that
+  # answers yes-or-no about key material gets a human pace regardless.
+  rate_limit to: 10, within: 5.minutes, only: :recovery_check,
+    with: -> { redirect_to credentials_path, alert: "Try again in a few minutes." }
 
   before_action :set_own_credential, only: %i[ edit update destroy share unshare ]
 
@@ -31,7 +35,8 @@ class CredentialsController < ApplicationController
 
     @emergency_contacts = Current.user.emergency_contacts.includes(:contact_user)
     @emergency_roles = EmergencyContact.for_contact(Current.user).includes(user: :keyring)
-    @recent_events = Current.user.vault_events.includes(:actor, :subject_user, :credential).newest_first.limit(8)
+    @recent_events = Current.user.vault_events.for_container("Credential")
+      .includes(:actor, :subject_user, :subject).newest_first.limit(8)
   end
 
   def show
@@ -143,6 +148,25 @@ class CredentialsController < ApplicationController
   def recovery_confirm
     Current.user.keyring&.update!(recovery_confirmed_at: Time.current)
     redirect_to credentials_path, notice: "Recovery kit saved — keep it somewhere that isn't this server."
+  end
+
+  # Checks the code the user actually wrote down against the wrap it's meant
+  # to open. Nothing else in the app ever finds out whether a recovery kit
+  # works until the day it has to, which is the wrong day to learn it was
+  # mistyped. Needs no unlocked vault, because not being able to unlock is
+  # precisely when someone reaches for this.
+  def recovery_check
+    keyring = Current.user.keyring
+    back = return_to_path(credentials_path)
+
+    if keyring.nil? || keyring.recovery_wrapped_key.blank?
+      redirect_to back, alert: "Generate a recovery kit first."
+    elsif keyring.verify_recovery(params[:recovery_code].to_s)
+      redirect_to back, notice: "That's the right code — it opens your vault. Keep it somewhere safe."
+    else
+      redirect_to back,
+        alert: "That code doesn't open your vault. Check for a mistyped character, or generate a new kit."
+    end
   end
 
   # In-request only (PASSWORDS_PLAN §4.7): key material never rides the job

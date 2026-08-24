@@ -141,6 +141,63 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
     t.index ["user_id"], name: "index_credentials_on_user_id"
   end
 
+  create_table "diary_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "edited_at"
+    t.date "entry_date", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.binary "owner_wrapped_item_key", null: false
+    t.binary "payload_ciphertext"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "entry_date"], name: "index_diary_entries_on_user_id_and_entry_date"
+    t.index ["user_id"], name: "index_diary_entries_on_user_id"
+  end
+
+  create_table "diary_entry_keys", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "diary_entry_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_item_key", null: false
+    t.index ["diary_entry_id", "user_id"], name: "index_diary_entry_keys_on_diary_entry_id_and_user_id", unique: true
+    t.index ["diary_entry_id"], name: "index_diary_entry_keys_on_diary_entry_id"
+    t.index ["user_id"], name: "index_diary_entry_keys_on_user_id"
+  end
+
+  create_table "diary_imports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "cursor", default: 0, null: false
+    t.integer "imported", default: 0, null: false
+    t.binary "payload_ciphertext", null: false
+    t.integer "skipped", default: 0, null: false
+    t.string "source_label"
+    t.integer "total", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_diary_imports_on_user_id"
+  end
+
+  create_table "diary_revisions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "diary_entry_id", null: false
+    t.binary "payload_ciphertext", null: false
+    t.datetime "updated_at", null: false
+    t.index ["diary_entry_id", "created_at"], name: "index_diary_revisions_on_diary_entry_id_and_created_at"
+    t.index ["diary_entry_id"], name: "index_diary_revisions_on_diary_entry_id"
+  end
+
+  create_table "diary_settings", force: :cascade do |t|
+    t.datetime "content_key_reset_at"
+    t.datetime "created_at", null: false
+    t.boolean "emergency_included", default: false, null: false
+    t.boolean "prompts_enabled", default: true, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_content_key", null: false
+    t.index ["user_id"], name: "index_diary_settings_on_user_id", unique: true
+  end
+
   create_table "documents", force: :cascade do |t|
     t.string "analysis_error"
     t.string "analysis_status"
@@ -297,6 +354,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
     t.text "public_key", null: false
     t.datetime "recovery_confirmed_at"
     t.string "recovery_salt"
+    t.datetime "recovery_verified_at"
     t.binary "recovery_wrapped_key"
     t.datetime "reset_at"
     t.datetime "updated_at", null: false
@@ -683,12 +741,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
     t.string "action", null: false
     t.integer "actor_id", null: false
     t.datetime "created_at", null: false
-    t.integer "credential_id"
+    t.integer "subject_id"
+    t.string "subject_type"
     t.integer "subject_user_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["actor_id"], name: "index_vault_events_on_actor_id"
-    t.index ["credential_id"], name: "index_vault_events_on_credential_id"
+    t.index ["subject_type", "subject_id"], name: "index_vault_events_on_subject_type_and_subject_id"
     t.index ["subject_user_id"], name: "index_vault_events_on_subject_user_id"
     t.index ["user_id", "created_at"], name: "index_vault_events_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_vault_events_on_user_id"
@@ -708,6 +767,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
   add_foreign_key "credential_keys", "credentials"
   add_foreign_key "credential_keys", "users"
   add_foreign_key "credentials", "users"
+  add_foreign_key "diary_entries", "users"
+  add_foreign_key "diary_entry_keys", "diary_entries"
+  add_foreign_key "diary_entry_keys", "users"
+  add_foreign_key "diary_imports", "users"
+  add_foreign_key "diary_revisions", "diary_entries"
+  add_foreign_key "diary_settings", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "email_sender_rules", "users"
   add_foreign_key "emergency_contacts", "users"
@@ -754,7 +819,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"
   add_foreign_key "users", "households"
-  add_foreign_key "vault_events", "credentials"
   add_foreign_key "vault_events", "users"
   add_foreign_key "vault_events", "users", column: "actor_id"
   add_foreign_key "vault_events", "users", column: "subject_user_id"

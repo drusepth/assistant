@@ -67,6 +67,7 @@ class EmergencyContactsController < ApplicationController
 
     @owner = @role.user
     @credentials = @owner.credentials.order(:created_at).sort_by { |c| c.name.downcase }
+    @diary = diary_for(@owner)
     response.headers["Cache-Control"] = "no-store"
   end
 
@@ -92,6 +93,19 @@ class EmergencyContactsController < ApplicationController
   end
 
   private
+    # The escrowed vault key mechanically opens the owner's diary too — the
+    # diary key hangs under it. Only policy draws a different line, and by
+    # default it draws one: emergency access opens passwords and not the
+    # diary unless the owner turned that on (DIARY_PLAN §7). The setup copy
+    # says plainly that this is the app's rule and not the encryption's.
+    def diary_for(owner)
+      return nil unless owner.diary_setting&.emergency_included?
+      return nil if owner.diary_entries.none?
+
+      owner_vault_key = @role.owner_vault_key(vault_key) or return nil
+      Diary::Session.new(owner, owner_vault_key, repair: false)
+    end
+
     def set_own_contact
       @contact = Current.user.emergency_contacts.find(params[:id])
     end

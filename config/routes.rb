@@ -127,6 +127,7 @@ Rails.application.routes.draw do
       post :export
       post :recovery
       post :recovery_confirm
+      post :recovery_check
       get :health
       get :import, action: :new_import
       post :import, action: :create_import
@@ -142,6 +143,28 @@ Rails.application.routes.draw do
       end
     end
   end
+  # The diary (D-diary-vault), the second sealed container. Everything lives
+  # under /diary so the keyring cookie scoped to that prefix covers exactly
+  # this surface — see VaultSession::COOKIES.
+  resources :diary_entries, path: "diary" do
+    member do
+      post :share
+      delete :unshare
+      get :history
+      post :restore
+    end
+    collection do
+      post :unlock
+      post :lock
+      patch :settings
+      post :export
+      get :import, action: :new_import
+      post :import, action: :create_import
+      post :import_step
+      delete :import, action: :cancel_import
+    end
+  end
+
   resource :user_password, only: :update
 
   resources :photos, except: :new do

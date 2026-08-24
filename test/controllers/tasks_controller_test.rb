@@ -212,6 +212,63 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal Date.tomorrow, @task.reload.due_on
   end
 
+  test "rescheduling says where the task went and offers the way back" do
+    @task.update!(due_on: 3.days.ago)
+    was = @task.due_on
+
+    patch reschedule_task_path(@task, to: "tomorrow")
+    assert_match "moved to tomorrow", flash[:notice]
+    assert_match @task.title, flash[:notice]
+
+    # The undo is just a reschedule to where the task was.
+    patch flash[:undo]["url"]
+    assert_equal was, @task.reload.due_on
+    assert_match "moved to #{was.strftime("%b %-d")}", flash[:notice]
+  end
+
+  test "the undo reaches the page as a button in the notice" do
+    @task.update!(due_on: 3.days.ago)
+
+    patch reschedule_task_path(@task, to: "today"), headers: { "HTTP_REFERER" => today_url }
+    follow_redirect!
+    assert_select "[role=status]", /moved to today/
+    assert_select "[role=status] form[action=?]", reschedule_task_path(@task, to: 3.days.ago.to_date.to_fs(:iso8601))
+  end
+
+  test "board cards are named, and a card keeps its name when it changes column" do
+    get tasks_path
+    ids = css_select("[id]").map { |el| el["id"] }
+    assert_empty ids.tally.select { |_id, count| count > 1 }.keys, "ids used more than once"
+    assert_select "##{dom_id(@task)}"
+
+    # No per-column prefix: moving a card is the same card, so morph should
+    # carry the node across rather than build a new one.
+    patch move_task_path(@task, column: "later")
+    get tasks_path
+    assert_select "##{dom_id(@task)}"
+  end
+
+  test "undo puts a task that had no date back to having none" do
+    undated = Current.user.tasks.create!(title: "Someday")
+
+    patch reschedule_task_path(undated, to: "today")
+    assert_equal Date.current, undated.reload.due_on
+
+    patch flash[:undo]["url"]
+    assert_nil undated.reload.due_on
+    assert_match "moved to no date", flash[:notice]
+  end
+
+  test "a to= the buttons never send falls back to today rather than erroring" do
+    @task.update!(due_on: 3.days.ago)
+
+    patch reschedule_task_path(@task, to: "2026-02-30") # parses, doesn't exist
+    assert_equal Date.current, @task.reload.due_on
+
+    patch reschedule_task_path(@task, to: "next tuesday-ish")
+    assert_equal Date.current, @task.reload.due_on
+  end
+
   test "cannot reschedule another user's task" do
     other = users(:two).tasks.create!(title: "Bob's errand", due_on: 3.days.ago)
     patch reschedule_task_path(other, to: "today")

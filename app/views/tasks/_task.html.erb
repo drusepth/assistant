@@ -9,11 +9,24 @@
     below. %>
 <% overdue = task.due_on.present? && task.due_on < Date.current && !task.completed? %>
 <% spine = "border-l-4 border-l-primary-500" if overdue %>
-<div class="item-row flex flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3 <%= spine %>">
+<%# Claiming a task moves it off whatever list it is on, so a row that
+    offers the two buttons also carries the send-off that animates it out
+    (row_dismiss_controller). %>
+<% reschedule = local_assigns[:reschedule] && task.user_id == Current.user.id && !task.completed? %>
+<%# The row and its buttons are named so that morph can match them by
+    identity rather than by position (D-row-identity). `dom_prefix` is for a
+    page that renders the same record in more than one list — Today does —
+    where a bare `dom_id` would put the same id on the page twice. %>
+<% row_id = dom_id(task, local_assigns[:dom_prefix]) %>
+<div id="<%= row_id %>" class="item-row flex flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3 <%= spine %>"
+     <%= tag.attributes(data: { controller: "row-dismiss", action: "submit->row-dismiss#leave" }) if reschedule %>>
   <% if task.user_id == Current.user.id %>
     <%# The one thing on the row you press without reading it first, so it
-        gets a ~40-point target rather than the 20-point circle it draws. %>
+        gets a ~40-point target rather than the 20-point circle it draws.
+        One id across both states — completing a task swaps this button from
+        Complete to Reopen in place, and a keyboard is still on it. %>
     <%= button_to task.completed? ? reopen_task_path(task) : complete_task_path(task), method: :patch,
+          id: "#{row_id}_toggle",
           class: "-m-2 shrink-0 cursor-pointer p-2 text-soft hover:text-primary-600",
           title: task.completed? ? "Reopen" : "Complete" do %>
       <% if task.completed? %>
@@ -41,7 +54,7 @@
     </div>
   </div>
 
-  <% if local_assigns[:reschedule] && task.user_id == Current.user.id && !task.completed? %>
+  <% if reschedule %>
     <%# Claiming a task for today or tomorrow is the main move on this page,
         so it gets drawn arrows and half the row's width each on a phone. A
         "→" in the label would be sized and weighted by the label — a hairline
@@ -50,13 +63,15 @@
         beneath it rather than beside it. %>
     <div class="row-actions pl-9 sm:pl-0">
       <%= button_to reschedule_task_path(task, to: "today"), method: :patch,
+            id: "#{row_id}_today",
             class: "btn btn-now btn-touch", form_class: "flex-1 sm:flex-none",
-            title: "Move due date to today" do %>
+            title: "Move due date to today", data: { row_dismiss_direction: "now" } do %>
         <%= icon(:arrow_right, css_class: "size-4 shrink-0 sm:size-3.5") %>Today
       <% end %>
       <%= button_to reschedule_task_path(task, to: "tomorrow"), method: :patch,
+            id: "#{row_id}_tomorrow",
             class: "btn btn-later btn-touch", form_class: "flex-1 sm:flex-none",
-            title: "Move due date to tomorrow" do %>
+            title: "Move due date to tomorrow", data: { row_dismiss_direction: "later" } do %>
         <%= icon(:arrow_right, css_class: "size-4 shrink-0 sm:size-3.5") %>Tomorrow
       <% end %>
     </div>

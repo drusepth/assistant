@@ -94,6 +94,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/TRAVEL.md` — the Travel section: why it's a lens and not a page, the self-drawn world map of geotagged photos (no tiles, no geocoder, owner-only per Q14), and what the hub grows next (D-travel-facet)
 - `docs/READER.md` — the feed reader: Google Reader's shape over feeds the user chose, chronological on purpose (why the ranking and votes were built and then cut), the politeness rules for the one part of the app that polls strangers' servers, and the hostile-input handling for stranger XML (D-feed-reader)
 - `docs/PASSWORDS_PLAN.md` — the password vault: per-user envelope encryption, sharing, TOTP, import/export, and the agent-access bridge (D-passwords-vault, D-vault-crypto)
+- `docs/DIARY_PLAN.md` — the diary: a second sealed container behind the keyring — everything encrypted but the date, the per-user diary-key tier, the recovery gate, emergency-access exclusion, and the extraction of the vault machinery into `VaultSealed` (D-diary-vault, D-vault-sealed). **Adding a third sealed container?** Include `VaultSealed`, add it to `VaultSealed::CONTAINERS` and to `VaultSession::COOKIES` (a name *and* a path — never widen an existing one), and nothing else.
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions
 

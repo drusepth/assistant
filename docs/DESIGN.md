@@ -70,11 +70,15 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
    - `.reader-line` (+ `.reader-verbs`, `.reader-verb`, `.reader-filter`)
      — the scanning list: one line per item, verbs on hover (see Lists)
+   - `.row-leaving`/`.row-gone` (+ `.btn-chosen`) — a row's send-off off
+     the list its own button just took it off (see Lists)
    - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
    - `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`)
      — the chat surface
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
-   `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
+   `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`,
+   `Ui::Flash` (a `role="status"` banner; carries an Undo button when the
+   action that redirected set `flash[:undo]` — see Lists),
    `Ui::SectionChip`, `Ui::Avatar` (a member's uploaded photo, falling back
    to their initials — every surface that names a person goes through it),
    `Ui::UserLabel` (that avatar plus a name, with the wording around the
@@ -165,10 +169,48 @@ same stack as plain text, and a row rendered into a `divide-y` list is
 untouched by the stack rules. A card that stacks passes `padded: false` —
 `.item-stack` brings its own padding.
 
+**Every row is named, and so is every button on it** (D-row-identity). The
+app morphs on redirect-to-self, and morph with nothing to match on falls
+back to matching by position. Row partials write
+`dom_id(record, local_assigns[:dom_prefix])` and derive their buttons'
+ids from it (`…_toggle`, `…_today`). Pass `dom_prefix:` when a page can
+render the same record in more than one list — Today does, because
+`Event.overlapping` is inclusive at both ends and one meeting can be on
+both today's and tomorrow's list; without it that id lands on the page
+twice. Leave it off where the lists are disjoint *and* an item moving
+between them is the same item moving — the board's three columns — so
+that morph carries the node across instead of destroying one and building
+another. A button that changes its label in place keeps one id across
+both states (Complete/Reopen is one `…_toggle`), or focus is lost exactly
+when it matters.
+
 `Ui::Card` also takes `count:` (a badge beside the title; zero doesn't
 draw) and `anchor:` (an id plus the `scroll-mt` the sticky mobile top bar
 needs), which is what lets a summary strip above a long page jump to the
 card it counts.
+
+**A row that leaves gets a send-off.** When a button on a row takes that
+row *off* the list it is in — Today and Tomorrow on the Today screen —
+the redirect brings back a page the row is simply missing from, and a row
+blinking out under your thumb with nothing acknowledging the press reads
+as the app swallowing the tap. Put `data-controller="row-dismiss"` and
+`submit->row-dismiss#leave` on the row and
+`data-row-dismiss-direction="now"`/`"later"` on the buttons: the tapped
+side takes `.btn-chosen` and holds its pressed state, the row tints to
+that side and slides out, and the list closes the gap. The controller
+holds Turbo's re-render (pausing `turbo:before-render`) until it has
+played — the request is in flight throughout, so on any real network it
+costs nothing. Timings live in `.row-leaving`/`.row-gone`; a row that
+merely *changes* on the page it is on should not use this, because the
+whole point is that this one is going away.
+
+**And it says where it went** (D-undo-flash). The animation is silent to a
+screen reader and mute about the destination, so the action that moves an
+item off a list sets a notice naming what moved and where it landed, plus
+`flash[:undo] = {"label" =>, "url" =>}` — `Ui::FlashComponent` renders
+that as a button inside the notice rather than a banner of its own. The
+url is just the same action pointed back at the previous state; give it
+one and any move in the app can be taken back.
 
 ## Narrow screens
 

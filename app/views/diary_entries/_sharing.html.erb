@@ -1,0 +1,51 @@
+<%# The single exception to private-absolutely (D-diary-vault), and it is
+    per-entry: there is no way to share a diary, only one entry of it. %>
+<details class="mt-4 card p-4 text-sm">
+  <summary class="cursor-pointer font-medium text-ink">
+    <% if @shared_with.any? %>
+      Shared with <%= @shared_with.map(&:name).to_sentence %>
+    <% else %>
+      Share this one entry
+    <% end %>
+  </summary>
+
+  <div class="mt-4 space-y-4">
+    <% if @shared_with.any? %>
+      <div class="space-y-2">
+        <% @shared_with.each do |reader| %>
+          <div class="flex items-center justify-between gap-3">
+            <%= render Ui::UserLabelComponent.new(user: reader, size: :sm) %>
+            <%= button_to "Stop sharing", unshare_diary_entry_path(@entry, grantee_id: reader.id),
+                  method: :delete, class: "btn btn-ghost btn-sm" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @eligible.any? %>
+      <%= form_with url: share_diary_entry_path(@entry),
+            class: "flex flex-wrap items-center gap-2 #{"border-t border-edge pt-3" if @shared_with.any?}" do |form| %>
+        <%= form.select :grantee_id, @eligible.map { |member| [ member.name, member.id ] },
+              {}, class: "input w-auto" %>
+        <%= form.button "Share this entry", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    <% elsif @shared_with.none? %>
+      <p class="text-xs text-soft">
+        Nobody else in your household has set up a vault yet — ask them to sign in once first.
+      </p>
+    <% end %>
+
+    <p class="text-xs text-soft">
+      Sharing is read-only and per-entry. Stopping re-seals the entry under a new key, so it can't be
+      opened again from an old copy of the database — but nothing un-reads what someone already read.
+    </p>
+
+    <% if @events.any? %>
+      <ul class="border-t border-edge pt-3 text-xs text-soft">
+        <% @events.each do |event| %>
+          <li><%= event.describe %> — <%= l(event.created_at, format: :short) %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+</details>
