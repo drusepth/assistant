@@ -1,0 +1,29 @@
+<%# One row in the conversation index (D-chat-index). A subject-bound chat
+    (D30) links to its task's page, which is its home — the run page for one
+    would be a conversation about nothing. %>
+<% path = conversation.subject ? url_for(conversation.subject) : tool_run_path(conversation.run) %>
+
+<%= link_to path, class: "flex items-start gap-3 px-4 py-3 transition-colors hover:bg-canvas" do %>
+  <span class="mt-1.5 size-2.5 shrink-0 rounded-full <%= chat_dot_classes(conversation.tool) %>"></span>
+
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+      <p class="min-w-0 truncate text-sm font-medium text-ink"><%= conversation.title %></p>
+      <time datetime="<%= conversation.last_at.iso8601 %>"
+            title="<%= l(conversation.last_at, format: :long) %>"
+            class="shrink-0 text-xs text-soft">
+        <%= time_ago_in_words(conversation.last_at) %> ago
+      </time>
+    </div>
+
+    <p class="truncate text-sm text-soft"><%= chat_preview(conversation) %></p>
+
+    <p class="mt-0.5 text-xs text-soft">
+      <% if conversation.subject %>
+        <%= conversation.tool.title %> · <%= pluralize(conversation.turns, "message") %>
+      <% else %>
+        <%= pluralize(conversation.turns, "message") %>
+      <% end %>
+    </p>
+  </div>
+<% end %>

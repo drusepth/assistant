@@ -1,0 +1,19 @@
+<%# A task's conversation, full-screen (D30 + D-chat-shell). The task page
+    keeps the panel from `sm` up; this is where a phone goes. %>
+<% content_for :title, task.title %>
+<% content_for :bleed, true %>
+<% if run %><%= turbo_stream_from run %><% end %>
+
+<div class="chat-page lg:px-8 lg:pb-6">
+  <div class="hidden lg:block">
+    <%= render Ui::PageHeaderComponent.new(title: task.title, subtitle: "Talk it through") do |header| %>
+      <% header.with_actions do %>
+        <%= link_to "Back to the task", task, class: "btn btn-secondary" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= render "tool_runs/chat", run: run, tool: Tool::TaskChat, layout: :screen,
+        composer_url: task_conversation_path(task),
+        openers: task.conversation_openers %>
+</div>

@@ -100,6 +100,27 @@
    opt-in now, via the `.display` atom below — see docs/DESIGN.md.
    ========================================================================== */
 @layer base {
+  /* Phones rescale text in a rotated page unless told not to. The app already
+     sizes everything in rem, so it honours the reader's own font setting; this
+     stops the *browser* adding a second, uninvited scaling on top. */
+  html {
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* The app's own chrome above the page, as one number rather than a guess
+     repeated in two places: the mobile header sets its height from this, and
+     `.chat-screen` subtracts it. The rail is beside the content, not above
+     it, so from `lg` up there is nothing to subtract. */
+  :root {
+    --app-header-h: 3.5rem;
+  }
+  @media (width >= 64rem) {
+    :root {
+      --app-header-h: 0rem;
+    }
+  }
+
   h1, h2, h3, h4 {
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -379,14 +400,90 @@
 
   /* Chat (D29): the transcript bubble and the composer shell. Retheming the
      conversation surface happens here, not in the chat partials. */
+  /* `overflow-wrap: anywhere` rather than `break-word`, and it is load-bearing
+     rather than decorative: a bubble is a flex item, so its automatic minimum
+     size is its min-content width, and one unbreakable token — a long URL or
+     an identifier out of a code span — makes that min-content wider than the
+     phone, blowing past max-w and pushing the page sideways. `break-word`
+     wraps the text but does *not* shrink min-content, so only `anywhere`
+     actually fixes it. This is the Narrow-screens rule (docs/DESIGN.md), and
+     chat is the one place the offending string arrives from a model at
+     runtime instead of from a view at build time — which is why the
+     integration test that pins every other page couldn't catch it. */
   .bubble {
-    @apply max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed;
+    @apply min-w-0 max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed;
+    overflow-wrap: anywhere;
+  }
+  /* A fenced code block inside an assistant turn: never wrapped (indentation
+     is meaning), so it scrolls inside its own box rather than widening the
+     bubble — the same containment rule every wide element in the app follows. */
+  .bubble pre {
+    @apply my-2 overflow-x-auto rounded-xl bg-black/5 p-3;
+  }
+  .bubble pre code {
+    @apply block whitespace-pre font-mono text-[0.8125rem] leading-relaxed;
+    overflow-wrap: normal;
   }
   .bubble-user {
-    @apply rounded-br-md bg-primary-600 text-white;
+    @apply bg-primary-600 text-white;
   }
   .bubble-assistant {
-    @apply rounded-bl-md bg-stone-100 text-ink;
+    @apply bg-stone-100 text-ink;
+  }
+  /* The tail — the one squared-off corner that points at the speaker. It
+     belongs to the *last* bubble of a run of turns, not to every one of them
+     (see chat_turns), which is what makes three quick messages read as one
+     utterance rather than three. */
+  .bubble-user-tail {
+    @apply rounded-br-md;
+  }
+  .bubble-assistant-tail {
+    @apply rounded-bl-md;
+  }
+  /* On a phone 85% of the page is a sane line; on a wide card it is a
+     120-character one. The reading measure wins wherever there is room. */
+  @media (width >= 40rem) {
+    .bubble {
+      max-width: min(85%, 46ch);
+    }
+  }
+
+  /* When it was said, under the last turn of a run.
+
+     Quiet on a pointer — revealed by hovering the turn, which is where it
+     belongs when a mouse can ask — and *always legible on a touch device*,
+     which had no hover and therefore no way to see it at all: a phone user
+     genuinely could not tell when anything in this app was said. */
+  .chat-time {
+    @apply mt-1 flex items-center gap-2 px-1 text-[0.6875rem] text-soft opacity-0 transition-opacity;
+  }
+  .group:hover .chat-time {
+    opacity: 1;
+  }
+  @media (pointer: coarse) {
+    .chat-time {
+      opacity: 1;
+    }
+  }
+
+  /* The way back down to the newest turn, with a count of what arrived while
+     the reader was up in the history ("2 new" is the difference between a
+     button they might press and one they know they want).
+
+     The layout lives here rather than in the view for a cascade reason the
+     rail already ran into: `@layer components` cascades *before* utilities, so
+     a `hidden` in the markup beats this `display` — while an `inline-flex`
+     utility beside `hidden` is the same layer and the winner is decided by
+     Tailwind's own property sort, not by the order they are written in. Put
+     the display here and `hidden` reliably wins. */
+  .chat-jump {
+    @apply absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-edge bg-surface py-2 pl-2 pr-2 text-xs font-medium text-soft shadow-sm transition-colors hover:text-ink;
+  }
+
+  /* An hour's silence, or a new day. The line every messaging app draws, and
+     the timestamp that needs no hover and no tap to read. */
+  .chat-divider {
+    @apply mt-5 mb-1 text-center text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-soft;
   }
   /* One rounded field holding the growing textarea and its send button, with
      the focus ring on the whole thing — the shape every chat box has. */
@@ -395,6 +492,57 @@
   }
   .composer-input {
     @apply max-h-60 min-w-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-2 text-sm leading-relaxed text-ink placeholder:text-stone-400 focus:outline-none focus:ring-0;
+  }
+
+  /* The chat surface has two shapes (D-chat-shell).
+
+     `.chat-screen` owns the viewport: the transcript is the only thing that
+     scrolls and the composer is welded to the bottom, which is what makes the
+     composer reachable without a gesture. Its height is the viewport minus
+     the app's own chrome minus, on iOS, the keyboard — see --app-header-h
+     (defined once, beside the header that uses it) and --keyboard-inset (set
+     by chat_viewport_controller, and 0 everywhere the layout viewport already
+     shrinks by itself).
+
+     `.chat-panel` is the embedded shape — a card in a flowing page, bounded so
+     it can't eat the document. Below `sm` it is never used at all: a card that
+     is itself a scroller inside a scrolling page is the bug this replaces, so
+     the task page links out to the screen instead. */
+  /* The page a chat screen lives on is exactly the viewport minus the app's
+     own chrome, minus (on iOS) the keyboard; everything in it — a desktop page
+     header, then the screen — shares that height. Keeping the arithmetic here
+     rather than on `.chat-screen` is what lets a page header sit above the
+     screen without pushing it out of the viewport. */
+  .chat-page {
+    height: calc(100dvh - var(--app-header-h) - var(--keyboard-inset, 0px));
+    @apply mx-auto flex w-full max-w-3xl flex-col;
+  }
+  .chat-screen {
+    @apply flex min-h-0 flex-1 flex-col;
+  }
+  .chat-panel {
+    @apply flex max-h-[60vh] flex-col;
+  }
+  /* The transcript inside either shape: the flex child allowed to shrink (a
+     min-h-0 a flex column does not give you by default) and the one that
+     scrolls. overscroll-contain stops a flick at the top of the history from
+     chaining into the page and firing the browser's own pull-to-refresh. */
+  .chat-transcript {
+    @apply min-h-0 flex-1 overflow-y-auto;
+    overscroll-behavior: contain;
+  }
+  /* One sideways-scrolling row on a phone: two wrapped rows of chips cost more
+     vertical space than the conversation can spare. From `sm` up there is room
+     to wrap. */
+  .chat-suggestions {
+    @apply flex gap-1.5 overflow-x-auto sm:flex-wrap sm:overflow-x-visible;
+    scrollbar-width: none;
+  }
+  .chat-suggestions::-webkit-scrollbar {
+    display: none;
+  }
+  .chat-suggestions > * {
+    @apply shrink-0;
   }
   .composer-send {
     @apply flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-primary-600 text-white transition-colors hover:bg-primary-700 disabled:cursor-default disabled:bg-stone-200 disabled:text-stone-400;
@@ -468,8 +616,12 @@
   /* Asked for less motion, given less motion: the banner still says the
      news, it just stops dancing (and the controller skips the confetti). */
   @media (prefers-reduced-motion: reduce) {
+    /* `!important` because the app-wide reduced-motion floor at the foot of
+       this file would otherwise flatten this to nothing and the banner would
+       vanish before it was read. A layered important outranks an unlayered
+       one, which is how a component keeps a motion it means to keep. */
     .celebrate-banner {
-      animation: celebrate-fade 2.4s ease-out forwards;
+      animation: celebrate-fade 2.4s ease-out forwards !important;
     }
     .celebrate-shake {
       animation: none;
@@ -479,5 +631,48 @@
       10%, 80% { opacity: 1; }
       100% { opacity: 0; }
     }
+  }
+}
+
+/* ============================================================================
+   Touch text size — the iOS zoom rule.
+
+   Mobile Safari zooms the page in when a field under 16px takes focus, and
+   does not zoom back out: the reader is left on a magnified, sideways-
+   scrolling page with no way back but a pinch. Every field in this app was
+   14px. Scoped to coarse pointers rather than to a breakpoint on purpose — a
+   phone in landscape is wider than `sm` and would have kept the bug.
+   ========================================================================== */
+@media (pointer: coarse) {
+  .input,
+  .composer-input {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================================
+   Reduced motion — the app-wide floor.
+
+   Deliberately **unlayered** and at the end of the file. Tailwind's motion
+   utilities (`animate-bounce`, `transition-colors`) live in the utilities
+   layer and would otherwise win, so this needs `!important`; and because the
+   cascade reverses layer order for important declarations, an unlayered
+   `!important` sits *below* every layered one — which is exactly the priority
+   we want. A component that means to keep a motion under this setting opts
+   out by marking its own rule `!important` inside `@layer components`, the
+   way `.celebrate-banner` does.
+
+   Chat is where the absence hurt most (three dots bouncing for as long as a
+   reply takes, a smooth scroll on every turn), but the fix belongs to the
+   whole app, not to chat. The scroll half is only half-done here: a
+   `scrollTo({behavior: "smooth"})` call overrides the CSS property, so
+   chat_scroll_controller checks the same media query itself.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

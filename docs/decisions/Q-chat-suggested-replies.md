@@ -1,0 +1,3 @@
+<!-- open -->
+**Q-chat-suggested-replies. Quick-reply chips drawn from the turn, not from the tool.**
+`ChatBase.quick_replies` is a class attribute, so the tutor offers "Quiz me" and "Show me an example" no matter what was just said. Chips drawn from the actual reply would be markedly better and the cost is real: it conflicts with D-chat-stream's plain-text streaming, so it needs either a second cheap call per turn (latency and tokens on every reply, on a self-hosted model that may be slow) or a trailing sentinel line the app strips before rendering (fragile — a model that forgets it costs nothing, one that emits it mid-stream shows the user the machinery). Leaning sentinel-with-graceful-absence; decide once streaming exists. — *Not started.*

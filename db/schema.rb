@@ -540,6 +540,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
   end
 
   create_table "tool_run_messages", force: :cascade do |t|
+    t.string "client_token"
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.string "role", null: false
