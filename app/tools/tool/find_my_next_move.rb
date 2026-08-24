@@ -53,6 +53,7 @@ module Tool
       def system_prompt
         parts = [ BEHAVIOR ]
         parts << "What's pushing the user: #{inputs[:itch]}"
+        parts << work_line
         parts << "Their stated constraints: #{inputs[:constraints]}" if inputs[:constraints].present?
         context = section_context(CONTEXT_SLUGS)
         unless context.empty?

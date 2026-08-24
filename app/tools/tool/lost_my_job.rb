@@ -54,6 +54,7 @@ module Tool
     private
       def description_text
         [ "Last day: #{inputs[:last_day]}",
+          user.work_summary&.then { |work| "The job that ended: #{work}" },
           inputs[:details].presence ].compact.join("\n")
       end
   end

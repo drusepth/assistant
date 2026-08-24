@@ -14,6 +14,24 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Hospital bill", response.body
   end
 
+  test "a prefillable input seeds from the work profile on new, without overriding what's typed (D-work-profile)" do
+    users(:one).update!(job_title: "Cashier")
+
+    get new_tool_run_path("raise_case")
+    assert_select "input[name=?][value=?]", "inputs[role]", "Cashier"
+
+    # A value already in the query string wins over the profile.
+    get new_tool_run_path("raise_case", inputs: { role: "Shift lead" })
+    assert_select "input[name=?][value=?]", "inputs[role]", "Shift lead"
+  end
+
+  test "a blank profile leaves a prefillable input empty" do
+    get new_tool_run_path("raise_case")
+
+    assert_response :success
+    assert_select "input[name=?][value]", "inputs[role]", count: 0
+  end
+
   test "a chat tool's form offers your own recent sessions to pick back up" do
     mine = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done)
     bound = users(:one).tool_runs.create!(tool_slug: "check_in", inputs: {}, status: :done,

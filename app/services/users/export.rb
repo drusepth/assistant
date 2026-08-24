@@ -106,6 +106,7 @@ module Users
           format: "assistant-export", version: FORMAT_VERSION,
           exported_at: Time.current.iso8601,
           user: { name: @user.name, email_address: @user.email_address,
+                  job_title: @user.job_title, employer: @user.employer,
                   avatar: (avatar_entry_name if @user.avatar.attached?) }.compact,
           household: @user.household.name,
           contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/", "recipe_files/", "contact_photos/" ],

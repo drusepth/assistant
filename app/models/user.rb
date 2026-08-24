@@ -60,9 +60,18 @@ class User < ApplicationRecord
     inverse_of: :inviter, dependent: :destroy
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  normalizes :job_title, :employer, with: ->(value) { value.strip.presence }
 
   validates :name, presence: true
   validates :email_address, presence: true, uniqueness: true
+
+  # The work profile (D-work-profile): two plain fields the user states once
+  # in Settings instead of retyping into every Career tool. Never inferred —
+  # the Q8 discipline — and private to this user, not shown to the household.
+  # "Cashier at Costco", "Cashier", or "at Costco"; nil when neither is set.
+  def work_summary
+    [ job_title, employer&.then { |name| "at #{name}" } ].compact.join(" ").presence
+  end
 
   # Section toggles (D4): sections are enabled unless explicitly disabled,
   # so new sections appear for existing users without backfill.

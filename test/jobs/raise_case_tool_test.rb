@@ -36,6 +36,20 @@ class RaiseCaseToolTest < ActiveJob::TestCase
     end
   end
 
+  test "the stated work profile reaches the prompt without being typed into the form (D-work-profile)" do
+    users(:one).update!(job_title: "Cashier", employer: "Costco")
+    run = users(:one).tool_runs.create!(tool_slug: "raise_case", inputs: {})
+    stub_llm(memo: { title: "t", body: "b" }, research: [], follow_ups: [])
+
+    ToolRunJob.perform_now(run)
+
+    assert run.reload.done?
+    assert_requested(:post, ENDPOINT) do |request|
+      request.body.include?("current work, from their profile") &&
+        request.body.include?("Cashier at Costco")
+    end
+  end
+
   test "with no comp timeline the tenure fact becomes a placeholder instruction" do
     run = users(:one).tool_runs.create!(tool_slug: "raise_case", inputs: {})
     stub_llm(memo: { title: "t", body: "b" }, research: [], follow_ups: [])

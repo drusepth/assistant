@@ -18,6 +18,35 @@
     </div>
   <% end %>
 
+  <%# The work profile (D-work-profile): stated once here, read by every
+      Career tool — the raise case, interview prep, the pay-stub check —
+      instead of each one asking again. Yours alone; not shown to the
+      household. %>
+  <%= render Ui::CardComponent.new(title: "Your work",
+        subtitle: "Told once, used everywhere — Career tools cite your title and employer instead of asking every time") do %>
+    <%= form_with url: settings_path, method: :patch, class: "space-y-4" do |form| %>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="space-y-1">
+          <%= label_tag "work_job_title", "Job title", class: "label" %>
+          <%= text_field_tag "work[job_title]", Current.user.job_title, class: "input", id: "work_job_title",
+                placeholder: "“Cashier”, “Warehouse shift lead”…" %>
+        </div>
+        <div class="space-y-1">
+          <%= label_tag "work_employer", "Where you work", class: "label" %>
+          <%= text_field_tag "work[employer]", Current.user.employer, class: "input", id: "work_employer",
+                placeholder: "“Costco #482”, “self-employed”…" %>
+        </div>
+      </div>
+      <p class="hint">
+        Optional, and never guessed at — the assistant only knows what you put here.
+        It anchors raise cases to the right national wage table, gives interview and
+        offer tools your starting point, and pre-fills the forms that ask.
+        Leave both blank to keep work out of it entirely.
+      </p>
+      <%= form.submit "Save work profile" %>
+    <% end %>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Sections", subtitle: "Choose which sections appear in your sidebar — drag to reorder them") do %>
     <%= form_with url: settings_path, method: :patch, class: "space-y-3", data: { controller: "sortable" } do |form| %>
       <% @sections.each do |section| %>
