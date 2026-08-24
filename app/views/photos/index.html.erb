@@ -45,7 +45,8 @@
 
   <% if @person %>
     <div class="mb-4">
-      <span class="chip inline-flex items-center gap-1.5 bg-ink text-white">
+      <span class="chip inline-flex items-center gap-1.5 bg-ink py-0.5 pl-0.5 text-white">
+        <%= render Ui::AvatarComponent.new(person: @person, size: :xs, tone: :stone) %>
         Photos of <%= @person.name %>
         <%= link_to "✕", photos_path(section: params[:section].presence, year: params[:year].presence),
               class: "text-white/70 hover:text-white", "aria-label": "Clear person filter" %>

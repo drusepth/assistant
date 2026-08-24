@@ -12,6 +12,7 @@ require "test_helper"
 # layout fact no request test can see, and the rule is cheap to state.
 class MobileLayoutTest < ActiveSupport::TestCase
   VIEWS = Rails.root.glob("app/{views,components}/**/*.erb")
+  LAYOUT = Rails.root.join("app/views/layouts/application.html.erb")
 
   test "every grid names its base column count" do
     offenders = class_attributes_in(VIEWS).filter_map do |path, line, classes|
@@ -41,6 +42,30 @@ class MobileLayoutTest < ActiveSupport::TestCase
       "A .btn with whitespace-nowrap overflows its container on a narrow screen."
     assert_includes button_rule.to_s, "max-w-full",
       "A .btn must never be wider than what holds it."
+  end
+
+  # Reach, not just fit. The nav drawer's only opener used to be the header
+  # hamburger, pinned to the top of a page that is ~900 points tall on a
+  # phone — the one corner the hand holding it cannot get to. The swipe
+  # gesture can't be the answer on its own (both mobile browsers eat the
+  # left-edge drag for their back gesture, and an invisible gesture is no
+  # affordance at all), so the layout must keep a *bottom*-anchored toggle.
+  test "the phone layout carries a nav toggle within thumb reach" do
+    layout = LAYOUT.read
+    toggles = layout.scan(/<button\b[^>]*nav#toggle[^>]*>/)
+
+    assert toggles.any? { |button| button.include?("fixed") && button.match?(/\bbottom-/) },
+      "The drawer needs an opener anchored to the bottom of the viewport, not " \
+      "only the one in the sticky header. Found: #{toggles.size} nav#toggle button(s), " \
+      "none of them bottom-anchored."
+  end
+
+  # A fixed control at the foot of the screen lands under the iPhone home
+  # indicator unless it is pushed up by the inset.
+  test "the thumb-reach toggle clears the home indicator" do
+    assert_includes LAYOUT.read, "env(safe-area-inset-bottom)",
+      "A bottom-anchored control needs safe-area-inset-bottom in its offset, " \
+      "or it sits under the home indicator on a notched phone."
   end
 
   private

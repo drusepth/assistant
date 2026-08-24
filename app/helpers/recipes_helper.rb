@@ -22,4 +22,22 @@ module RecipesHelper
     letters = recipe.title.to_s.split(/\s+/).filter_map { |word| word[/[[:alnum:]]/] }
     letters.first(2).join.upcase.presence || "?"
   end
+
+  # The source link, or nil when it isn't one. `Recipe` validates the scheme
+  # now, but a recipe stored before that — or imported by a build that
+  # predates it — can hold anything, and this URL is rendered as an href on
+  # the public share page, where the reader isn't even in the household. So
+  # the check happens again at the point of use, where the data's age
+  # doesn't matter.
+  def recipe_source_url(recipe)
+    url = recipe.source_url.to_s.strip
+    url if url.match?(%r{\Ahttps?://\S+\z})
+  end
+
+  # What the link says: the name the cook gave it, else the bare host.
+  def recipe_source_label(recipe, url)
+    recipe.source_name.presence || URI(url).host.to_s.delete_prefix("www.").presence || url
+  rescue URI::InvalidURIError
+    url
+  end
 end

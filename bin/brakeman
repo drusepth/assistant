@@ -2,6 +2,11 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest")
+# Rails' generated binstub unshifts "--ensure-latest" here, which makes
+# brakeman exit 5 — failing CI — the moment a newer version is *published*,
+# with nothing in this repo changed. That is a build that breaks on someone
+# else's release: main went red on 8.0.6's release day and stayed red for
+# every open PR until the Dependabot bump landed. Upgrades are Dependabot's
+# job; this scan's job is to fail on our code.
 
 load Gem.bin_path("brakeman", "brakeman")

@@ -1,0 +1,21 @@
+<%# A face for the address book (D-contact-photos). Same attachment, same
+    square variant and the same initials fallback as a household member's —
+    the preview is the real component, so what you see here is what every
+    other surface will draw. %>
+<div class="space-y-1">
+  <%= form.label :avatar, "Photo" %>
+  <div class="flex items-start gap-4">
+    <%= render Ui::AvatarComponent.new(person: person, size: :lg) %>
+    <div class="min-w-56 flex-1 space-y-2">
+      <%= form.file_field :avatar, accept: "image/png, image/jpeg, image/webp, image/gif" %>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <p class="hint">Square works best — anything else is cropped to the middle. Up to <%= Person::AVATAR_MAX_BYTES / 1.megabyte %> MB.</p>
+        <% if person.persisted? && person.avatar.attached? %>
+          <%= link_to "Remove photo", person_avatar_path(person), data: { turbo_method: :delete },
+                class: "text-xs font-medium text-primary-700 hover:underline" %>
+        <% end %>
+      </div>
+      <%= form.errors_for :avatar %>
+    </div>
+  </div>
+</div>
