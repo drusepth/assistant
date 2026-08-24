@@ -86,4 +86,3 @@ module NavigationHelper
       request.path == path || request.path.start_with?("#{path}/")
     end
 end
-
