@@ -65,7 +65,7 @@
             <%# Desktop-only: collapsing an off-canvas drawer to unlabelled
                 icons would be a worse drawer, so this is hidden below lg. %>
             <button type="button" class="hidden size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-canvas text-soft hover:bg-stone-200 hover:text-ink lg:flex"
-                    data-action="nav#toggleCollapsed" aria-label="Collapse or expand the sidebar" title="Collapse or expand the sidebar">
+                    data-action="nav#toggleCollapsed" data-controller="tooltip" data-tooltip-title-value="Toggle sidebar" data-tooltip-subtitle-value="Collapse or expand rail" data-tooltip-shortcut-value="⌘[" aria-label="Collapse or expand the sidebar">
               <%= icon(:chevrons_left_right, css_class: "size-4") %>
             </button>
           </div>
