@@ -99,6 +99,7 @@ class People::Import::Vcard
         when "ORG"   then contact.organization = split_fields(value).map { |f| unescape(f).strip }.reject(&:blank?).join(", ")
         when "NOTE"  then contact.notes = [ contact.notes, unescape(value).strip ].compact.join("\n")
         when "BDAY"  then assign_birthday(contact, value)
+        when "PHOTO" then contact.photo ||= photo(params, value)
         end
       end
 
@@ -107,6 +108,25 @@ class People::Import::Vcard
       contact.emails.reject! { |p| p.value.blank? }
       contact.addresses.reject! { |p| p.value.blank? }
       contact
+    end
+
+    # PHOTO comes three ways: base64 with ENCODING=BASE64 (2.1) or
+    # ENCODING=b (3.0), and a data: URI in 4.0. A plain https URI is left
+    # alone — People::Import::Photo explains why.
+    def photo(params, value)
+      raw = value.to_s.strip
+      return People::Import::Photo.from_data_uri(raw) if raw.downcase.start_with?("data:")
+      return unless params["ENCODING"].any? { |encoding| encoding.casecmp?("b") || encoding.casecmp?("base64") }
+
+      People::Import::Photo.decode(raw, photo_content_type(params))
+    end
+
+    def photo_content_type(params)
+      type = params["TYPE"].map(&:downcase).reject { |t| t.in?(%w[ pref ]) }.first
+      return nil if type.blank?
+
+      type = type.delete_prefix("image/")
+      "image/#{type == "jpg" ? "jpeg" : type}"
     end
 
     def structured_name(value)

@@ -1,4 +1,5 @@
 <%= form_with model: person, class: "space-y-4" do |form| %>
+  <%= render "people/photo_field", form: form, person: person %>
   <%= form.field :name %>
   <%= form.field :relationship, placeholder: "Mom, landlord, cardiologist…" %>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">

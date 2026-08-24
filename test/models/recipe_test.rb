@@ -9,6 +9,21 @@ class RecipeTest < ActiveSupport::TestCase
     assert_includes recipe.errors[:title], "can't be blank"
   end
 
+  # The source link is rendered as an href on a page strangers can open
+  # (the share link), so the scheme is checked where every write path meets.
+  test "a source link has to be a link" do
+    recipe = @alice.recipes.new(title: "Soup", source_url: "javascript:alert(document.cookie)")
+
+    assert_not recipe.valid?
+    assert_includes recipe.errors[:source_url], "needs to start with http:// or https://"
+  end
+
+  test "http, https, and no link at all are all fine" do
+    assert @alice.recipes.new(title: "Soup", source_url: "https://example.com/soup").valid?
+    assert @alice.recipes.new(title: "Soup", source_url: "http://example.com/soup").valid?
+    assert @alice.recipes.new(title: "Soup").valid?
+  end
+
   test "assigning ingredients_text parses rows and reading it hands the lines back" do
     recipe = @alice.recipes.create!(title: "Soup", ingredients_text: "200 g red lentils\n2 large onions, finely chopped\nsalt to taste")
 

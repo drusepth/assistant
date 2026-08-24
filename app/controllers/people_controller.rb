@@ -2,7 +2,7 @@ class PeopleController < ApplicationController
   before_action :set_own_person, only: %i[ edit update destroy log_contact ]
 
   def index
-    @people = Person.visible_to(Current.user).order(:name).includes(:sections, :user)
+    @people = Person.visible_to(Current.user).order(:name).includes(:sections, :user).with_attached_avatar
   end
 
   def show
@@ -31,6 +31,10 @@ class PeopleController < ApplicationController
 
   def update
     if @person.update(person_params)
+      # Handing a contact back: unticking every section on the edit form
+      # leaves them unfiled, which is the assistant's cue to file them again
+      # (D-people-auto-filing). enqueue_auto_sort! no-ops when they're tagged.
+      @person.enqueue_auto_sort!
       redirect_to @person, notice: "#{@person.name} updated."
     else
       render :edit, status: :unprocessable_entity
@@ -55,6 +59,6 @@ class PeopleController < ApplicationController
     end
 
     def person_params
-      params.expect(person: [ :name, :relationship, :email, :phone, :address, :birthday, :notes, :linked_user_id, section_ids: [] ])
+      params.expect(person: [ :name, :relationship, :email, :phone, :address, :birthday, :notes, :linked_user_id, :avatar, section_ids: [] ])
     end
 end
