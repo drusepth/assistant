@@ -1,0 +1,69 @@
+<%# The attention strip: how much is pressing, why, and the way through to
+    Today — followed by the assistant's phrased read of the same facts.
+
+    The phone drives the shape here too. The old strip put the headline, the
+    tinted counts and the "Open Today" link on one wrapping line, which at
+    393 points broke into a headline row and an orphaned link row hugging
+    the right edge. Now the status mark and its text are one block (headline
+    over its breakdown, the way the hero's greeting sits over the household
+    name), and the link is a real button on its own full-width line — the
+    card's one call to action, which is what it always was. %>
+<% count = overdue.size + due_today.size %>
+<% pressing = count.positive? %>
+<div class="card mb-6 px-4 py-4 sm:px-5">
+  <div class="flex items-start gap-3">
+    <%# The disc was a blank accent dot doing nothing but taking 32 points.
+        It carries the state now: a warning while something is behind, the
+        sage check when the board is clear. %>
+    <% disc_tone = pressing ? "bg-primary-600 text-primary-50" : "bg-sage-600 text-sage-50" %>
+    <span class="flex size-9 shrink-0 items-center justify-center rounded-full <%= disc_tone %>">
+      <%= icon(pressing ? :warning : :check_circle, css_class: "size-5") %>
+    </span>
+
+    <%# Headline over its breakdown on a phone, side by side once there is a
+        line wide enough to hold both. %>
+    <div class="min-w-0 flex-1 sm:flex sm:flex-wrap sm:items-center sm:gap-x-3">
+      <% if pressing %>
+        <p class="font-semibold text-ink">
+          <%= pluralize(count, "thing") %> need<%= "s" if count == 1 %> attention
+        </p>
+        <div class="mt-1.5 flex flex-wrap gap-1.5 sm:mt-0">
+          <% if overdue.any? %>
+            <span class="chip bg-primary-200 font-bold text-primary-800"><%= overdue.size %> overdue</span>
+          <% end %>
+          <% if due_today.any? %>
+            <span class="chip bg-sage-200 font-bold text-sage-700"><%= due_today.size %> due today</span>
+          <% end %>
+        </div>
+      <% else %>
+        <%# Two short lines rather than one long one: "All clear — nothing
+            overdue, nothing due today" wrapped mid-clause on a phone. %>
+        <p class="font-semibold text-ink">All clear</p>
+        <p class="mt-0.5 text-sm text-soft sm:mt-0">Nothing overdue, nothing due today.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <%# The phrased read, fenced off from the counts above it: this half is
+      the assistant talking, the half above is arithmetic. %>
+  <div class="mt-3 border-t border-edge pt-3">
+    <% if user.digest.present? && user.digest_generated_at&.after?(8.days.ago) %>
+      <p class="text-sm text-ink/90"><%= user.digest %></p>
+      <p class="mt-1 text-xs text-soft">Your assistant's weekly read — phrased by AI from the locally-computed facts above, refreshed each scan.</p>
+    <% else %>
+      <p class="text-xs text-soft">This summary is computed locally; your assistant's phrased weekly digest appears after the first weekly scan.</p>
+    <% end %>
+  </div>
+
+  <% if pressing %>
+    <div class="mt-3 flex">
+      <%# `btn-alert` is the atom for exactly this register: behind, but not
+          destructive. A bordered `btn-secondary` was too faint to read as
+          the card's one action, and a solid `btn-primary` would out-shout
+          the hero's Goal tile a few hundred points above it. %>
+      <%= link_to today_path, class: "btn btn-alert btn-touch sm:ml-auto" do %>
+        Open Today <%= icon(:arrow_right, css_class: "size-4 sm:size-3.5") %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
