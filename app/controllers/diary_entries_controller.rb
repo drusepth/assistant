@@ -13,17 +13,40 @@ class DiaryEntriesController < ApplicationController
 
   before_action :set_diary
   before_action :set_entry, only: %i[ show edit update destroy ]
-  before_action :require_unlocked, only: %i[ show edit update ]
+  before_action :require_unlocked, only: %i[ show edit update settings ]
   before_action :require_writable_vault, only: %i[ new create ]
   after_action :never_store
 
   def index
-    @entries = Current.user.diary_entries.newest_first.limit(200)
-    @opened = @diary.open_all(@entries)
-    @dates_with_entries = Current.user.diary_entries.pluck(:entry_date).map(&:to_date).to_set
-    @streak = Diary::Streak.new(@dates_with_entries).length
-    @today = Current.user.diary_entries.on(Date.current).first
+    # Searching a locked diary is meaningless — there is no plaintext to
+    # match — so the query is dropped rather than echoed back over a list
+    # that can only show dates.
+    @query = @diary.unlocked? ? params[:q].to_s.strip : ""
     @month = month_param
+    @streak = Diary::Streak.new(all_entry_dates).length
+    @dates_with_entries = all_entry_dates.to_set
+    @today = Current.user.diary_entries.on(Date.current).first
+    @entries_by_date = Current.user.diary_entries.in_month(@month).newest_first.index_by(&:entry_date)
+
+    # Search decrypts, so it only exists unlocked — and it reaches the whole
+    # journal rather than the page-sized slice the list shows.
+    scope = Current.user.diary_entries.newest_first
+    @opened = if @query.present?
+      @diary.search(scope, @query)
+    else
+      @diary.open_all(scope.limit(200))
+    end
+
+    @on_this_day = @diary.open_all(
+      Current.user.diary_entries.on_day_of_year(Date.current)
+        .where.not(entry_date: Date.current.beginning_of_year..Date.current.end_of_year).newest_first
+    ).reject(&:lost?)
+  end
+
+  # The one dial the diary owns for itself; the emergency dial lands in W4.
+  def settings
+    @diary.setting_for_update.update!(prompts_enabled: params[:prompts_enabled] == "1")
+    redirect_to diary_entries_path, notice: "Saved."
   end
 
   def show
@@ -33,6 +56,7 @@ class DiaryEntriesController < ApplicationController
   def new
     @entry = Current.user.diary_entries.new(entry_date: entry_date_param(Date.current))
     @opened = Diary::Opened.new(@entry, {})
+    @prompt = Diary::Prompts.for(@entry.entry_date) if @diary.prompts?
   end
 
   def create
@@ -42,6 +66,7 @@ class DiaryEntriesController < ApplicationController
     if payload["body"].blank?
       @entry.errors.add(:base, "Write something first.")
       @opened = Diary::Opened.new(@entry, payload)
+      @prompt = Diary::Prompts.for(@entry.entry_date) if @diary.prompts?
       return render :new, status: :unprocessable_entity
     end
 
@@ -151,6 +176,10 @@ class DiaryEntriesController < ApplicationController
       Date.parse("#{params[:month]}-01")
     rescue Date::Error, TypeError
       Date.current.beginning_of_month
+    end
+
+    def all_entry_dates
+      @all_entry_dates ||= Current.user.diary_entries.pluck(:entry_date).map(&:to_date)
     end
 
     # Everything sealed rides params[:diary], which `filter_parameters`

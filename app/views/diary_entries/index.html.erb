@@ -46,22 +46,58 @@
 <% end %>
 
 <% if @dates_with_entries.any? %>
-  <div class="mb-5 flex flex-wrap items-center gap-4">
-    <%= render "calendar", month: @month, dates: @dates_with_entries %>
+  <div class="mb-5 flex flex-wrap items-start gap-4">
+    <%= render "calendar", month: @month, dates: @dates_with_entries,
+          entries_by_date: @entries_by_date, query: @query %>
     <div class="text-sm text-soft">
       <p><span class="text-2xl font-semibold text-ink"><%= @dates_with_entries.size %></span>
          <%= "entry".pluralize(@dates_with_entries.size) %></p>
       <% if @streak.positive? %>
         <p class="mt-1"><span class="font-medium text-ink"><%= @streak %></span>-day streak</p>
       <% end %>
+      <% if vault_unlocked? %>
+        <%= form_with url: settings_diary_entries_path, method: :patch, class: "mt-3" do |form| %>
+          <%= form.hidden_field :prompts_enabled, value: @diary.prompts? ? "0" : "1" %>
+          <%= form.button @diary.prompts? ? "Turn off writing prompts" : "Turn on writing prompts",
+                class: "text-xs underline hover:text-ink" %>
+        <% end %>
+      <% end %>
     </div>
   </div>
 <% end %>
 
+<%# On this day — the payoff of years of entries, and the reason to import
+    an old journal rather than start fresh. %>
+<% if @on_this_day.present? %>
+  <section class="mb-5">
+    <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-soft">On this day</h2>
+    <div class="card divide-y divide-edge">
+      <%= render partial: "entry", collection: @on_this_day, as: :opened %>
+    </div>
+  </section>
+<% end %>
+
+<% if vault_unlocked? && (@dates_with_entries.any? || @query.present?) %>
+  <%= form_with url: diary_entries_path, method: :get, class: "mb-4" do |form| %>
+    <%= form.search_field :q, value: @query, placeholder: "Search everything you've written…",
+          class: "input w-full" %>
+  <% end %>
+<% end %>
+
 <% if @opened.any? %>
+  <% if @query.present? %>
+    <p class="mb-2 text-sm text-soft">
+      <%= pluralize(@opened.size, "entry") %> matching “<%= @query %>”.
+      <%= link_to "Clear", diary_entries_path, class: "underline" %>
+    </p>
+  <% end %>
   <div class="card divide-y divide-edge">
     <%= render partial: "entry", collection: @opened, as: :opened %>
   </div>
+<% elsif @query.present? %>
+  <p class="py-8 text-center text-sm text-soft">
+    Nothing matches “<%= @query %>”. <%= link_to "Clear", diary_entries_path, class: "underline" %>
+  </p>
 <% else %>
   <%= render Ui::EmptyStateComponent.new(
         title: "Your diary is empty",

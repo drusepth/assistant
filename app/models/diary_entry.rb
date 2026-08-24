@@ -30,6 +30,14 @@ class DiaryEntry < ApplicationRecord
 
   scope :newest_first, -> { order(entry_date: :desc, created_at: :desc) }
   scope :on, ->(date) { where(entry_date: date) }
+  scope :in_month, ->(month) { where(entry_date: month.beginning_of_month..month.end_of_month) }
+
+  # The same calendar day in any year — what "on this day" is built from.
+  # Plaintext dates are exactly what makes this a cheap index scan instead
+  # of a decrypt of the whole journal.
+  scope :on_day_of_year, ->(date) {
+    where("strftime('%m-%d', entry_date) = ?", date.strftime("%m-%d"))
+  }
 
   # Held only for the duration of one seal (see #seal!): present takes the
   # cheap wrap, absent takes the capture-while-locked path. Deliberately not

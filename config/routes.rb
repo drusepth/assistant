@@ -149,6 +149,7 @@ Rails.application.routes.draw do
     collection do
       post :unlock
       post :lock
+      patch :settings
     end
   end
 

@@ -75,6 +75,35 @@ module Diary
 
     def open_all(entries) = entries.map { |entry| open(entry) }
 
+    # Search happens in Ruby over decrypted payloads, because there is
+    # nothing else to search: no plaintext title, no index, no metadata
+    # tier. That is affordable only because of the diary key — every entry
+    # opens with one GCM unwrap, so scanning a whole journal is milliseconds
+    # rather than a 3072-bit unwrap per row.
+    def search(entries, query)
+      needle = query.to_s.downcase
+      return [] if needle.blank?
+
+      open_all(entries).select do |opened|
+        next false if opened.lost?
+
+        [ opened.title, opened.body, opened.mood ].compact.any? { |field| field.downcase.include?(needle) }
+      end
+    end
+
+    def prompts? = setting.nil? || setting.prompts_enabled?
+
+    # Writing a dial goes through the unlocked path so the row is created
+    # with a real diary key. Creating it any other way would leave a
+    # settings row whose content key cannot be unwrapped — indistinguishable
+    # from one a password reset broke, and it would falsely tell the writer
+    # their entries were lost.
+    def setting_for_update
+      return nil unless unlocked?
+
+      load_setting.first
+    end
+
     # Capture never waits on a password: with no diary key the entry seals
     # its item key to the owner's public key instead (DiaryEntry::SCHEME_RSA)
     # and the next unlocked read moves it onto the cheap wrap.
