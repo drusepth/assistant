@@ -75,6 +75,7 @@ module Tool
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "The job: #{inputs[:role]}"
+        parts << work_line
         parts << "What worries the user: #{inputs[:concerns]}" if inputs[:concerns].present?
         parts << "The job listing:\n#{inputs[:listing]}" if inputs[:listing].present?
         if (page = fetched_page)

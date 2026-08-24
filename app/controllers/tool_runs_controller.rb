@@ -3,7 +3,7 @@ class ToolRunsController < ApplicationController
   before_action :load_input_choices, only: %i[ new create ]
 
   def new
-    @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params)
+    @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: prefilled_input_params)
     # Continuing beats starting over, so a chat tool offers its own recent
     # sessions above the blank form (D-chat-index). Subject-bound runs are
     # left out: those live on their item's page, not here.
@@ -110,5 +110,16 @@ class ToolRunsController < ApplicationController
     def input_params
       permitted = @tool.inputs.map { |input| input.checkboxes? ? { input.name => [] } : input.name }
       params.fetch(:inputs, {}).permit(*permitted).to_h
+    end
+
+    # Blank form fields seeded from the user's profile (D-work-profile) —
+    # only on `new`, so an explicitly cleared field on submit stays cleared.
+    def prefilled_input_params
+      @tool.inputs.each_with_object(input_params) do |input, filled|
+        next if input.prefill.nil? || filled[input.name].present?
+
+        value = Current.user.public_send(input.prefill)
+        filled[input.name] = value if value.present?
+      end
     end
 end

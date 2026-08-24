@@ -93,6 +93,9 @@ module Watcher
       def ranking_prompt(postings)
         context = Tool::Context.new(user: user, section_slugs: %w[ career hobbies education ])
         parts = []
+        if (work = user.work_summary)
+          parts << "The user's current work (stated in their profile): #{work}"
+        end
         parts << "The user's tracked record:\n#{context.to_prompt}" unless context.empty?
         parts << "Fresh postings:\n" + postings.each_with_index.map { |posting, index| "#{index}. #{posting.line}" }.join("\n")
         parts.join("\n\n")

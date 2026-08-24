@@ -6,6 +6,15 @@ class UserTest < ActiveSupport::TestCase
     assert_equal("downcased@example.com", user.email_address)
   end
 
+  test "work_summary composes what's stated and is nil when nothing is (D-work-profile)" do
+    assert_equal "Cashier at Costco", User.new(job_title: "Cashier", employer: "Costco").work_summary
+    assert_equal "Cashier", User.new(job_title: "Cashier").work_summary
+    assert_equal "at Costco", User.new(employer: "Costco").work_summary
+    assert_nil User.new.work_summary
+    # Whitespace-only fields normalize to nothing stated.
+    assert_nil User.new(job_title: "  ", employer: " ").work_summary
+  end
+
   test "sections are enabled by default" do
     assert users(:one).section_enabled?(sections(:health))
     assert_includes users(:one).enabled_sections, sections(:health)

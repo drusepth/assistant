@@ -50,12 +50,13 @@ module Tool
 
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
+        parts << work_line
         parts << "The user's question: #{inputs[:question]}" if inputs[:question].present?
         parts << "The pay stub (titled “#{document.title}”):\n#{document_text(document)}"
         if (previous = previous_stub)
           parts << "Extracted facts from the previous stub (#{previous.logged_on.iso8601}), for comparison:\n#{facts_line(previous)}"
         end
-        parts.join("\n\n")
+        parts.compact.join("\n\n")
       end
 
       def document = chosen_document

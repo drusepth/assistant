@@ -80,6 +80,7 @@ module Tool
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "The job: #{inputs[:role]}"
+        parts << work_line
         parts << "The job listing:\n#{inputs[:listing]}" if inputs[:listing].present?
         if (page = fetched_page)
           parts << "The job listing (fetched from #{page.final_url}):\n#{page.text.truncate(MAX_DOCUMENT_CHARS)}"
@@ -94,7 +95,7 @@ module Tool
         unless context.empty?
           parts << "The user's tracked career record — wins, work history:\n#{context.to_prompt}"
         end
-        parts.join("\n\n")
+        parts.compact.join("\n\n")
       end
 
       def filing_sources = [ chosen_document(:listing_document_id), chosen_document(:resume_document_id) ]
