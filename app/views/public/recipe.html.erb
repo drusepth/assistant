@@ -48,8 +48,8 @@
 <% if @recipe.source_name.present? || @recipe.source_url.present? %>
   <p class="mt-6 text-sm text-soft">
     From
-    <% if @recipe.source_url.present? %>
-      <%= link_to @recipe.source_name.presence || @recipe.source_url, @recipe.source_url,
+    <% if (source = recipe_source_url(@recipe)) %>
+      <%= link_to recipe_source_label(@recipe, source), source,
             class: "text-primary-700 underline", rel: "noopener noreferrer nofollow" %>
     <% else %>
       <%= @recipe.source_name %>

@@ -124,6 +124,37 @@ class RecipesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ 200, "g" ], [ recipe.recipe_ingredients.first.quantity.to_i, recipe.recipe_ingredients.first.unit ]
   end
 
+  test "the entry form asks for the recipe and nothing else — the assistant files it" do
+    get new_recipe_path
+
+    assert_response :success
+    assert_no_match "recipe[section_ids]", response.body
+    assert_no_match "Rights · Voting", response.body
+  end
+
+  test "a saved recipe is filed by the model, and the edit form can correct it" do
+    assert_enqueued_with(job: CategorizeRecipeJob) do
+      post recipes_path, params: { recipe: { title: "Lentil soup" } }
+    end
+
+    recipe = Recipe.last
+    recipe.sections << sections(:health)
+
+    get edit_recipe_path(recipe)
+    # Folded away, but the closed line still says how it was filed.
+    assert_match "recipe[section_ids]", response.body
+    assert_match "Advanced", response.body
+    assert_match "filed under Health", response.body
+  end
+
+  test "a recipe the cook tagged by hand is left alone" do
+    assert_no_enqueued_jobs(only: CategorizeRecipeJob) do
+      post recipes_path, params: { recipe: { title: "Lentil soup", section_ids: [ sections(:health).id ] } }
+    end
+
+    assert_equal [ sections(:health) ], Recipe.last.sections.to_a
+  end
+
   test "the show page scales quantities from the servings parameter" do
     recipe = users(:one).recipes.create!(title: "Soup", servings: 4, ingredients_text: "200 g lentils")
 

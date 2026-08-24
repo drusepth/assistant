@@ -2,10 +2,17 @@
 <html>
   <head>
     <title><%= content_for(:title) || "Assistant" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%# viewport-fit=cover lets the page paint into the notch and home-indicator
+        margins, which is what makes env(safe-area-inset-*) report anything but
+        zero — the nav's bottom toggle offsets by it. %>
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Assistant">
     <meta name="application-name" content="Assistant">
     <meta name="mobile-web-app-capable" content="yes">
+    <%# The surface tone, so the phone's status bar continues the header
+        rather than sitting on a white band above it. %>
+    <meta name="theme-color" content="#ebddc5">
     <%# Turbo page refreshes — a redirect back to the URL you're already on,
         and every broadcast_refresh_to — morph the DOM in place and keep the
         scroll where it was, instead of re-rendering the page and throwing
@@ -23,6 +30,11 @@
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
+    <%# Installable. An installed copy also gets the left screen edge back
+        from the browser's own back gesture, which is what makes the nav's
+        edge swipe work in full — but the button stays regardless, because a
+        tab in a browser is still the common case. %>
+    <%= tag.link rel: "manifest", href: pwa_manifest_path %>
 
     <%# The @font-face rules first (Propshaft digests their url()s), then
         the Tailwind build that consumes the families. %>
@@ -34,7 +46,9 @@
   <body class="bg-canvas text-ink antialiased">
     <% if authenticated? %>
       <%= render "shared/celebration" %>
-      <div data-controller="nav" data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close">
+      <div data-controller="nav"
+           data-action="keydown.esc@window->nav#close turbo:before-visit@window->nav#close
+                        touchstart->nav#swipeStart touchmove->nav#swipeMove touchend->nav#swipeEnd touchcancel->nav#swipeEnd">
         <header class="sticky top-0 z-20 flex items-center gap-1 bg-surface px-2 py-1.5 lg:hidden print:hidden">
           <button type="button" class="flex size-11 cursor-pointer items-center justify-center rounded-lg text-soft hover:bg-stone-100 hover:text-ink"
                   data-action="nav#toggle" aria-label="Open menu">
@@ -47,6 +61,20 @@
         </header>
 
         <div class="hidden fixed inset-0 z-30 bg-black/40 lg:hidden" data-nav-target="backdrop" data-action="click->nav#close"></div>
+
+        <%# The same toggle as the header's, in the half of the screen a thumb
+            can actually reach. The header hamburger is where the eye looks
+            for a menu, so it stays; on a 6-inch phone it is also the one
+            corner the hand holding the phone cannot get to without
+            regripping, and that is the whole complaint this answers.
+            Bottom-left because that is the edge the drawer arrives from, and
+            because the bottom-right slot belongs to a primary action.
+            z-20 puts it under the backdrop and the drawer, so an open drawer
+            simply covers it — no second state to keep in sync. %>
+        <button type="button" data-action="nav#toggle" aria-label="Open menu"
+                class="fixed bottom-[calc(1rem_+_env(safe-area-inset-bottom))] left-4 z-20 flex size-12 cursor-pointer items-center justify-center rounded-full bg-surface/95 text-ink shadow-lg ring-1 ring-black/10 backdrop-blur-sm active:bg-stone-200 lg:hidden print:hidden">
+          <%= icon(:bars_3, css_class: "size-6") %>
+        </button>
 
         <div class="min-h-screen lg:flex">
         <%# The rail. `nav-rail` + data-nav-collapsed drive the desktop

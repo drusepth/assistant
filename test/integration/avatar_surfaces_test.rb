@@ -50,6 +50,33 @@ class AvatarSurfacesTest < ActionDispatch::IntegrationTest
     assert_match "DR", response.body
   end
 
+  # D-contact-photos: a contact no longer needs a household login to have a
+  # face, and the one they were given wins over the one they'd inherit.
+  test "a contact with a photo of their own wears it in the address book" do
+    person = @alice.people.create!(name: "Dana Reed")
+    attach_avatar person, "dana.jpg"
+
+    get people_path
+    assert_avatar_of person
+  end
+
+  test "…and on their own page" do
+    person = @alice.people.create!(name: "Dana Reed")
+    attach_avatar person, "dana.jpg"
+
+    get person_path(person)
+    assert_avatar_of person
+  end
+
+  test "a contact's own photo beats the linked member's" do
+    person = @alice.people.create!(name: "Bob Smith", linked_user: @bob)
+    attach_avatar person, "her-own-face.jpg"
+
+    get people_path
+    assert_avatar_of person
+    assert_select "img[src$=?]", @bob.avatar.filename.to_s, count: 0
+  end
+
   test "the sharing controls name the grantee with their photo" do
     note = @alice.notes.create!(body: "Shared")
     AccessGrant.create!(grantor: @alice, grantee: @bob, subject: note)
@@ -133,13 +160,14 @@ class AvatarSurfacesTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def attach_avatar(user, filename)
-      user.avatar.attach(io: file_fixture("photo.jpg").open, filename: filename, content_type: "image/jpeg")
+    # Takes a user or a person — both wear their face through Avatarable.
+    def attach_avatar(record, filename)
+      record.avatar.attach(io: file_fixture("photo.jpg").open, filename: filename, content_type: "image/jpeg")
     end
 
-    def assert_avatar_of(user)
+    def assert_avatar_of(record)
       assert_response :success
-      assert_select "img[src$=?]", user.avatar.filename.to_s,
-        message: "expected #{user.name}'s avatar on this page"
+      assert_select "img[src$=?]", record.avatar.filename.to_s,
+        message: "expected #{record.name}'s avatar on this page"
     end
 end

@@ -12,7 +12,7 @@ module Sections
       def hidden_browse = %i[ events people ]
 
       def circle
-        @circle ||= viewer.people.circle.stalest_first.includes(:sections)
+        @circle ||= viewer.people.circle.stalest_first.includes(:sections).with_attached_avatar
       end
 
       def upcoming_birthdays

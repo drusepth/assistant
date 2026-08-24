@@ -22,6 +22,27 @@ class PublicShareTest < ActionDispatch::IntegrationTest
     assert_match "Better the next day.", response.body
   end
 
+  # The validation guards new writes; a row stored before it existed can
+  # still hold anything, and this is the page a stranger opens — so the
+  # scheme is checked again at render, where the data's age doesn't matter.
+  test "a source link that isn't http(s) is not rendered as one" do
+    @recipe.update_column(:source_url, "javascript:alert(document.cookie)")
+
+    get shared_path(@link.token)
+
+    assert_response :success
+    assert_no_match(/javascript:/, response.body)
+  end
+
+  test "an http source link still shows, labelled by its host" do
+    @recipe.update!(source_url: "https://www.example.com/soup")
+
+    get shared_path(@link.token)
+
+    assert_match %r{href="https://www\.example\.com/soup"}, response.body
+    assert_match "example.com", response.body
+  end
+
   test "the page names the sharer by first name only and carries no way in" do
     get shared_path(@link.token)
 
