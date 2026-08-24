@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_084638) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -139,6 +139,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
     t.integer "user_id", null: false
     t.string "username"
     t.index ["user_id"], name: "index_credentials_on_user_id"
+  end
+
+  create_table "diary_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "edited_at"
+    t.date "entry_date", null: false
+    t.binary "owner_wrapped_item_key", null: false
+    t.binary "payload_ciphertext"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "entry_date"], name: "index_diary_entries_on_user_id_and_entry_date"
+    t.index ["user_id"], name: "index_diary_entries_on_user_id"
+  end
+
+  create_table "diary_entry_keys", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "diary_entry_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_item_key", null: false
+    t.index ["diary_entry_id", "user_id"], name: "index_diary_entry_keys_on_diary_entry_id_and_user_id", unique: true
+    t.index ["diary_entry_id"], name: "index_diary_entry_keys_on_diary_entry_id"
+    t.index ["user_id"], name: "index_diary_entry_keys_on_user_id"
+  end
+
+  create_table "diary_settings", force: :cascade do |t|
+    t.datetime "content_key_reset_at"
+    t.datetime "created_at", null: false
+    t.boolean "emergency_included", default: false, null: false
+    t.boolean "prompts_enabled", default: true, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_content_key", null: false
+    t.index ["user_id"], name: "index_diary_settings_on_user_id", unique: true
   end
 
   create_table "documents", force: :cascade do |t|
@@ -664,6 +698,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
   add_foreign_key "credential_keys", "credentials"
   add_foreign_key "credential_keys", "users"
   add_foreign_key "credentials", "users"
+  add_foreign_key "diary_entries", "users"
+  add_foreign_key "diary_entry_keys", "diary_entries"
+  add_foreign_key "diary_entry_keys", "users"
+  add_foreign_key "diary_settings", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "email_sender_rules", "users"
   add_foreign_key "emergency_contacts", "users"

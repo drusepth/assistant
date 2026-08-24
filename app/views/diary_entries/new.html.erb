@@ -1,0 +1,5 @@
+<%= render Ui::PageHeaderComponent.new(title: "Write",
+      subtitle: vault_unlocked? ? nil : "Your vault is locked — you can write now and read it back after you unlock") %>
+
+<%= render "form", entry: @entry, opened: @opened,
+      placeholder: "What happened today?" %>

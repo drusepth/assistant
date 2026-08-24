@@ -1,0 +1,75 @@
+<%= render Ui::PageHeaderComponent.new(title: "Diary",
+      subtitle: "Yours alone — sealed with your own password, and never read by the assistant") do |header| %>
+  <% header.with_actions do %>
+    <% if vault_unlocked? %>
+      <%= button_to "Lock", lock_diary_entries_path, method: :post, class: "btn btn-ghost" %>
+    <% end %>
+    <%= link_to (@today ? "Add to today" : "Write today"), new_diary_entry_path, class: "btn btn-primary" %>
+  <% end %>
+<% end %>
+
+<% if @keyring.nil? %>
+  <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+    Your vault initializes the next time you sign in — sign out and back in once to get started.
+  </div>
+<% elsif @keyring.recovery_pending? %>
+  <%# The gate, not a nag (DIARY_PLAN §4.5). Nothing can be written until
+      the kit exists, because nothing can recover a diary without it. %>
+  <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
+    <p class="mb-1 text-sm font-medium text-amber-900">Save your recovery kit before you start writing.</p>
+    <p class="mb-3 text-sm text-amber-900">
+      If you forget your password and lose this code, your diary is gone — not resettable, gone.
+      Nobody else holds a key to it, so there is nothing to restore it from.
+    </p>
+    <%# turbo: false — the kit renders in the response body rather than
+        redirecting, and Turbo drops any non-redirect 200 from a form. %>
+    <%= button_to "Generate recovery kit", recovery_credentials_path, method: :post,
+          class: "btn btn-primary btn-sm", form: { data: { turbo: false } } %>
+  </div>
+<% elsif !vault_unlocked? %>
+  <div class="mb-4 rounded-lg border border-edge bg-surface p-4">
+    <p class="mb-2 text-sm font-medium text-ink">Diary locked — you can still write; reading needs your password.</p>
+    <%= form_with url: unlock_diary_entries_path, class: "flex flex-wrap items-center gap-2" do |form| %>
+      <%= form.hidden_field :return_to, value: params[:return_to] %>
+      <%= form.password_field :password, placeholder: "Your account password", autocomplete: "current-password",
+            class: "input max-w-xs", required: true %>
+      <%= form.submit "Unlock" %>
+    <% end %>
+  </div>
+<% elsif @diary.lost_entries? %>
+  <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+    <span class="font-medium">Some entries can't be opened.</span>
+    Your vault was reset without its recovery code on
+    <%= l(@diary.setting.content_key_reset_at.to_date, format: :long) %>, which destroyed the key those
+    entries were sealed with. Their dates are all that's left of them.
+  </div>
+<% end %>
+
+<% if @dates_with_entries.any? %>
+  <div class="mb-5 flex flex-wrap items-center gap-4">
+    <%= render "calendar", month: @month, dates: @dates_with_entries %>
+    <div class="text-sm text-soft">
+      <p><span class="text-2xl font-semibold text-ink"><%= @dates_with_entries.size %></span>
+         <%= "entry".pluralize(@dates_with_entries.size) %></p>
+      <% if @streak.positive? %>
+        <p class="mt-1"><span class="font-medium text-ink"><%= @streak %></span>-day streak</p>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @opened.any? %>
+  <div class="card divide-y divide-edge">
+    <%= render partial: "entry", collection: @opened, as: :opened %>
+  </div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "Your diary is empty",
+        description: "A private place to write, on a box you own. Everything but the date is encrypted with your password — " \
+                     "no other household member can see it, and the assistant is never given it to read."
+      ) do |empty| %>
+    <% empty.with_action do %>
+      <%= link_to "Write today's entry", new_diary_entry_path, class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+<% end %>

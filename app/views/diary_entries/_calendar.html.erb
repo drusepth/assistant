@@ -1,0 +1,26 @@
+<%# The month at a glance. Reads only `entry_date`, so it draws identically
+    whether the diary is locked or open — it is the one thing a locked diary
+    is allowed to show. %>
+<div class="card p-4">
+  <p class="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-soft">
+    <%= l(month, format: "%B %Y") %>
+  </p>
+  <div class="grid grid-cols-7 gap-1 text-center">
+    <% %w[ M T W T F S S ].each_with_index do |initial, index| %>
+      <span class="text-[0.65rem] font-medium text-stone-400" aria-hidden="true"><%= initial %></span>
+    <% end %>
+
+    <% blanks = (month.beginning_of_month.wday - 1) % 7 %>
+    <% blanks.times do %><span></span><% end %>
+
+    <% (month.beginning_of_month..month.end_of_month).each do |day| %>
+      <% written = dates.include?(day) %>
+      <span class="flex size-6 items-center justify-center rounded-full text-xs
+                   <%= written ? "bg-primary-600 font-semibold text-white" : "text-soft" %>
+                   <%= "ring-1 ring-primary-300" if day == Date.current && !written %>"
+            title="<%= l(day, format: :long) %><%= " — written" if written %>">
+        <%= day.day %>
+      </span>
+    <% end %>
+  </div>
+</div>

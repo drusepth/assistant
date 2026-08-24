@@ -1,0 +1,38 @@
+<%# Unlike a credential secret — which only ever leaves as no-store JSON —
+    a diary is *for* reading, so the entry renders into the page. Every
+    response here carries Cache-Control: no-store, and the page is kept out
+    of Turbo's back-button snapshot too. %>
+<div data-turbo-cache="false">
+  <%= render Ui::PageHeaderComponent.new(
+        title: @opened.lost? ? l(@entry.entry_date, format: :long) : @opened.display_title,
+        subtitle: @opened.lost? ? nil : l(@entry.entry_date, format: :long)) do |header| %>
+    <% header.with_actions do %>
+      <%= link_to "Back", diary_entries_path, class: "btn btn-ghost" %>
+      <% unless @opened.lost? %>
+        <%= link_to "Edit", edit_diary_entry_path(@entry), class: "btn btn-secondary" %>
+      <% end %>
+      <%= button_to "Delete", diary_entry_path(@entry), method: :delete, class: "btn btn-ghost text-red-700",
+            form: { data: { turbo_confirm: "Delete this entry? There is no copy of it anywhere else." } } %>
+    <% end %>
+  <% end %>
+
+  <% if @opened.lost? %>
+    <div class="card p-6 text-sm text-soft">
+      <p class="mb-1 font-medium text-ink">This entry can't be opened.</p>
+      <p>It was sealed with a key destroyed by a password reset. The date is all that survived —
+         you can delete the entry if you'd rather not keep the empty shell.</p>
+    </div>
+  <% else %>
+    <article class="card space-y-4 p-6">
+      <% if @opened.mood %>
+        <span class="chip bg-stone-100 text-stone-700"><%= @opened.mood %></span>
+      <% end %>
+      <div class="prose-diary whitespace-pre-wrap text-ink"><%= @opened.body %></div>
+      <% if @entry.edited_at %>
+        <p class="border-t border-edge pt-3 text-xs text-soft">
+          Last written <%= l(@entry.edited_at, format: :short) %>
+        </p>
+      <% end %>
+    </article>
+  <% end %>
+</div>

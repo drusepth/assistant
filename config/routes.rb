@@ -142,6 +142,16 @@ Rails.application.routes.draw do
       end
     end
   end
+  # The diary (D-diary-vault), the second sealed container. Everything lives
+  # under /diary so the keyring cookie scoped to that prefix covers exactly
+  # this surface — see VaultSession::COOKIES.
+  resources :diary_entries, path: "diary" do
+    collection do
+      post :unlock
+      post :lock
+    end
+  end
+
   resource :user_password, only: :update
 
   resources :photos, except: :new do

@@ -24,7 +24,7 @@ module VaultSealed
   # was told is dead. A hub file everyone appends to conflicts trivially;
   # a security hole that opens only in development does not.
   # `VaultSealedTest` fails if a model includes this concern without joining.
-  CONTAINERS = %w[ Credential ].freeze
+  CONTAINERS = %w[ Credential DiaryEntry ].freeze
 
   included do
     class_attribute :sealed_payload_column, :sealed_keys_name, :sealed_aad_prefix, instance_writer: false
@@ -71,10 +71,16 @@ module VaultSealed
     item_key = Vault::Crypto.random_key
     store_sealed_payload(payload, item_key)
 
+    # Holders whose wrap rides the record itself are sealed before the save
+    # — a key row cannot be written for a record that has no id yet, and the
+    # column holding such a wrap is NOT NULL for exactly the reason it must
+    # not be skippable.
+    by_row = holders.uniq.reject { |holder| seal_item_key_on_record(holder, item_key) }
+
     transaction do
       save!
       sealed_keys.destroy_all
-      holders.uniq.each { |holder| wrap_item_key_for!(holder, item_key) }
+      by_row.each { |holder| wrap_item_key_for!(holder, item_key) }
     end
   end
 
@@ -123,6 +129,12 @@ module VaultSealed
   end
 
   private
+    # Hook: a container whose owner reads through something other than a key
+    # row (the diary, whose owner wrap rides the entry under the diary key)
+    # sets that wrap here and returns true, taking the holder out of the
+    # key-row loop. Returning false means "give this holder a key row".
+    def seal_item_key_on_record(holder, item_key) = false
+
     def store_sealed_payload(payload, item_key)
       payload = payload.compact_blank
       self[sealed_payload_column] =
