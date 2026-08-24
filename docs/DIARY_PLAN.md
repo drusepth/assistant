@@ -3,8 +3,9 @@
 Build plan for the **diary**: a private journal under the Vault sidebar group, so a
 household member's most personal writing lives on the box they own instead of in a
 notes app that syncs to someone else's cloud — sealed with the same envelope
-encryption the password vault proved out. **Status: planned** — this document is the
-design record; waves land per §9.
+encryption the password vault proved out. **Status: built — waves 0–4 landed** (see
+`STATUS.md`); W5 stays gated on its two open questions, and this document remains
+the design record.
 
 Decisions here are logged as **D-diary-vault** and **D-vault-sealed** in
 `DECISIONS.md`. Open questions are logged as **Q-diary-ai** and
@@ -91,9 +92,12 @@ passing untouched:
 - **`VaultSession` learns a path list.** The invariant — *the unlocked key
   transits only on vault requests* — is the whole point of the path-scoped
   cookie, and widening the path to `/` would silently gut it. Instead:
-  `COOKIE_PATHS = %w[ /credentials /diary ]`, one cookie per path,
-  written/read/deleted in a loop. Every new sealed surface appends its prefix
-  here (a registry, D-style) and nowhere else.
+  `COOKIES = { "/credentials" => :keyring, "/diary" => :keyring_diary }`, one
+  cookie per path, written/read/expired across the map. Every new sealed
+  surface appends a row here (a registry, D-style) and nowhere else. *The
+  names differ per path because Rails' jar is keyed by name alone — see the
+  build notes in §9; the plan's original "one name, many paths" would have
+  left a surface silently unlocked.*
 - **`Keyring#reset!` consults a registry, not a hand-list.** Today it destroys
   `user.credential_keys` to mark secrets lost; missing a second container there
   would be a *security* bug (orphaned wraps that still decrypt, entries that
@@ -104,7 +108,9 @@ passing untouched:
   lockstep generalizes the same way.
 - **`VaultEvent` stays credential-shaped until W4 needs it** — the diary emits no
   events until sharing exists; the W4 migration makes the subject polymorphic
-  then, not speculatively.
+  then, not speculatively. *Built as planned: W4 swapped `credential_id` for a
+  polymorphic subject and gave each container a `for_container` scope, so the
+  passwords page shows credential and vault-wide events and never a diary one.*
 
 ---
 
@@ -240,9 +246,9 @@ resources :diary_entries, path: "diary" do
     post :unlock                # same banner pattern as credentials
     post :lock
     post :export                # in-request, password-confirmed (W3)
+    patch :settings             # the prompts and emergency dials (W2/W4)
     get  :import, action: :new_import   # W3
     post :import, action: :create_import
-    get  :on_this_day           # W2
   end
 end
 ```
@@ -332,11 +338,11 @@ shippable.
 
 | Wave | Contents |
 |---|---|
-| **W0 — the extraction** | D-vault-sealed, zero password behavior change: `VaultSealed` concern extracted from `Credential`; `VaultSession` cookie-path registry (loop over `COOKIE_PATHS`); `Keyring#reset!` registry hook; `Vault::Share` generalized to sealed records. The existing vault test suite must pass **unmodified** — that's the wave's acceptance test — plus new concern-level tests. |
-| **W1 — the diary** | `diary_entries` / `diary_settings`; diary-key tier (lazy init at first unlocked visit); recovery-kit gate before first entry; editor with autosave, backdating, capture-while-locked (RSA wrap + opportunistic re-wrap); calendar/streak index, locked and unlocked states; `/diary` cookie path; sidebar entry, `filter_parameters` for payload params, `no-store`, rate limits on unlock. |
-| **W2 — the habit** | On this day; writing prompts (first-party strings, `prompts_enabled`); search over decrypted payloads; month navigation. |
-| **W3 — doors** | Import (Day One JSON, Markdown folder) and export (Markdown+JSON), both in-request; archive-job manifest line (diary carries nothing). |
-| **W4 — the exception** | Per-entry sharing on the generalized `Vault::Share`: `diary_entry_keys` grantee wraps, `AccessGrant::ITEM_TYPES` append, rotate-on-revoke, shared-with-you strip; `vault_events` subject goes polymorphic and diary share/unshare events land in it; the §7 emergency dial ships here too (it's a sharing question). |
+| **W0 — the extraction** ✅ | D-vault-sealed, zero password behavior change: `VaultSealed` concern extracted from `Credential`; `VaultSession` cookie-path registry (loop over `COOKIE_PATHS`); `Keyring#reset!` registry hook; `Vault::Share` generalized to sealed records. The existing vault test suite must pass **unmodified** — that's the wave's acceptance test — plus new concern-level tests. |
+| **W1 — the diary** ✅ | `diary_entries` / `diary_settings`; diary-key tier (lazy init at first unlocked visit); recovery-kit gate before first entry; editor with autosave, backdating, capture-while-locked (RSA wrap + opportunistic re-wrap); calendar/streak index, locked and unlocked states; `/diary` cookie path; sidebar entry, `filter_parameters` for payload params, `no-store`, rate limits on unlock. |
+| **W2 — the habit** ✅ | On this day; writing prompts (first-party strings, `prompts_enabled`); search over decrypted payloads; month navigation. |
+| **W3 — doors** ✅ | Import (Day One JSON, Markdown folder) and export (Markdown+JSON), both in-request; archive-job manifest line (diary carries nothing). |
+| **W4 — the exception** ✅ | Per-entry sharing on the generalized `Vault::Share`: `diary_entry_keys` grantee wraps, `AccessGrant::ITEM_TYPES` append, rotate-on-revoke, shared-with-you strip; `vault_events` subject goes polymorphic and diary share/unshare events land in it; the §7 emergency dial ships here too (it's a sharing question). |
 | **W5 — deferred by design** | Q-diary-ai (the §8 dial and in-request reflections) and Q-diary-attachments (needs the D-storage-seam encryption story). **Not built** until their gates clear. |
 
 W0 and W1 carry the test weight: the extraction proves itself against the
@@ -345,6 +351,37 @@ both owner-wrap schemes, capture-while-locked round-trips, the re-wrap
 opportunism, reset-marks-lost via the registry, the recovery gate, and a
 regression asserting no payload field ever renders while locked or appears in a
 log, an `AppError`, or a job argument.
+
+### Build notes (what the build changed about the design)
+
+Six things the plan didn't anticipate, decided or discovered during the build:
+
+- **One cookie name per path, not one name on many paths.** Rails' cookie jar is
+  keyed by name alone, so writing `:keyring` twice in a response leaves *one*
+  cookie — the last write silently wins, and one surface would have been left
+  locked. `VaultSession::COOKIES` is a path→name map for that reason.
+- **`cookies.delete` is a no-op for a cookie the browser didn't send.** A lock
+  posted from `/credentials` never carries the `/diary` cookie, so the delete
+  returned early and left the diary unlocked. Locking now writes an explicit
+  past-dated cookie per path. Both of these were caught by writing the
+  invariant down as a test first, and neither would have shown up in ordinary
+  use until it mattered.
+- **The diary key is passed, never parked on the model.** The first cut hung it
+  on an `attr_accessor` that outlived the call, which let a later read decrypt
+  with a key the caller never proved it had — and hid a real reset from a test.
+  It is now an argument to `unwrap_item_key` and a borrowed value inside
+  `seal!`, cleared in an `ensure`.
+- **Loss is whole-diary, and the crypto decides it.** There is one diary key, so
+  a reset breaks everything at once; `DiarySetting` re-keys itself on the next
+  unlocked visit and stamps when the break happened. The stamp is for the
+  banner only — the read path fails on its own, so no flag can drift.
+- **A settings row can't be created outside the unlocked path.** Writing a dial
+  while locked would have meant a row with no real content key — which is
+  exactly what a password reset leaves behind, so the diary would have told the
+  writer their entries were lost. The dials sit behind the unlock instead.
+- **`entry_date` is a leak the archive shouldn't carry either.** The plan said
+  the archive exports nothing; the build kept that literally — no `diary.jsonl`
+  at all, just a manifest line saying where to get one.
 
 ---
 
