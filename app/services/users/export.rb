@@ -109,7 +109,8 @@ module Users
                   avatar: (avatar_entry_name if @user.avatar.attached?) }.compact,
           household: @user.household.name,
           contents: MODELS.keys.map { |name| "#{name}.jsonl" } + [ "spending.csv", "files/", "photo_files/", "recipe_files/", "contact_photos/" ],
-          credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked"
+          credentials: "metadata only — this job can't hold your vault key (PASSWORDS_PLAN §4.7); export secrets from the Passwords page while unlocked",
+          diary: "not included at all — a diary has no metadata tier worth carrying, and even its dates say more than an archive should (DIARY_PLAN §6); export it from the Diary page while unlocked"
         }
       end
 

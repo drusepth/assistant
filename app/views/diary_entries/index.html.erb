@@ -105,7 +105,32 @@
                      "no other household member can see it, and the assistant is never given it to read."
       ) do |empty| %>
     <% empty.with_action do %>
-      <%= link_to "Write today's entry", new_diary_entry_path, class: "btn btn-primary" %>
+      <div class="flex flex-wrap justify-center gap-2">
+        <% if vault_unlocked? %>
+          <%= link_to "Already keep a diary elsewhere?", import_diary_entries_path, class: "btn btn-secondary" %>
+        <% end %>
+        <%= link_to "Write today's entry", new_diary_entry_path, class: "btn btn-primary" %>
+      </div>
     <% end %>
   <% end %>
+<% end %>
+
+<% if vault_unlocked? && @dates_with_entries.any? %>
+  <%# The portability half of the mission, stated where it can be acted on:
+      arriving is one file, and so is leaving. %>
+  <div class="mt-8 flex flex-wrap items-end justify-between gap-4 border-t border-edge pt-5">
+    <div class="text-xs text-soft">
+      <p class="mb-1 font-medium text-ink">Your diary is yours</p>
+      <p>Take it out as Markdown whenever you like — one file per entry, readable anywhere, forever.</p>
+    </div>
+    <div class="flex flex-wrap items-end gap-2">
+      <%= link_to "Import", import_diary_entries_path, class: "btn btn-ghost btn-sm" %>
+      <%= form_with url: export_diary_entries_path, class: "flex items-end gap-2",
+            data: { turbo: false } do |form| %>
+        <%= form.password_field :password, placeholder: "Your password", autocomplete: "current-password",
+              class: "input input-sm w-40", required: true %>
+        <%= form.button "Export", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    </div>
+  </div>
 <% end %>

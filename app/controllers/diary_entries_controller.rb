@@ -13,7 +13,7 @@ class DiaryEntriesController < ApplicationController
 
   before_action :set_diary
   before_action :set_entry, only: %i[ show edit update destroy ]
-  before_action :require_unlocked, only: %i[ show edit update settings ]
+  before_action :require_unlocked, only: %i[ show edit update settings export new_import create_import ]
   before_action :require_writable_vault, only: %i[ new create ]
   after_action :never_store
 
@@ -129,6 +129,33 @@ class DiaryEntriesController < ApplicationController
   def lock
     lock_vault
     redirect_to diary_entries_path, notice: "Diary locked."
+  end
+
+  # --- doors (W3) ---
+
+  # In-request only, like the passwords export: the archive job runs where
+  # the vault key must never travel, so this button is the only thing that
+  # can produce readable entries.
+  def export
+    unless Current.user.authenticate(params[:password].to_s)
+      return redirect_to diary_entries_path, alert: "Confirm the export with your password."
+    end
+
+    archive = Diary::Export.new(@diary)
+    send_data archive.zip.read, filename: archive.filename, type: "application/zip"
+  end
+
+  def new_import
+  end
+
+  def create_import
+    return redirect_to import_diary_entries_path, alert: "Pick a file first." if params[:file].blank?
+
+    result = Diary::Import.new(@diary, params[:file], filename: params[:file].original_filename).call
+    redirect_to diary_entries_path,
+      notice: "#{result.imported} imported, #{result.skipped} already here."
+  rescue Diary::Import::Error => error
+    redirect_to import_diary_entries_path, alert: error.message
   end
 
   private

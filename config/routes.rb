@@ -150,6 +150,9 @@ Rails.application.routes.draw do
       post :unlock
       post :lock
       patch :settings
+      post :export
+      get :import, action: :new_import
+      post :import, action: :create_import
     end
   end
 
