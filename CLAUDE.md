@@ -68,7 +68,7 @@ Every item is **multi-taggable** by section (e.g., "Mom's cardiology appointment
 
 ### Model integration
 
-Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI (key + model), Chroma Golem (key only; router-style), or a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Remote models first; local models are a custom-endpoint config swap. Security/encryption hardening deliberately deferred until the foundation is built.
+Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI, Anthropic (Claude), and Google (Gemini) — each an API key + model name, the latter two over the providers' own OpenAI-compatibility endpoints — plus Chroma Golem (key only; router-style) and a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Presets may carry per-provider quirks the adapter absorbs (`json_mode:`, `max_tokens:`) but never a second code path (D-provider-presets). **Local models are the recommended answer and the UI argues for them** — an `allow_cloud_models` toggle (default on) gates every `cloud: true` preset, and the picker groups self-run endpoints ahead of hosted ones (D-local-first-models). Local models work today through the self-hosted endpoint (Ollama, llama.cpp, LM Studio); first-class one-click local setup is still to come. Security/encryption hardening deliberately deferred until the foundation is built.
 
 ## Tech stack
 
@@ -83,7 +83,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/STATUS.md` — what is next, and the front door to the build log in `docs/status/` (one file per entry; read it with `bin/status`) (start here)
 - `docs/VISION.md` — full mission background and strategic reasoning
 - `docs/PRODUCT.md` — detailed section-by-section feature brainstorm
-- `docs/DECISIONS.md` — decision log + open questions
+- `docs/DECISIONS.md` — the front door to the decision log in `docs/decisions/` (one file per entry, named by its ID; read it with `bin/decisions`)
 - `docs/ROADMAP.md` — Milestones 2 (Tools) & 3 (Agent) design: section page anatomy, tool pipeline, agent/suggestion architecture (D18–D20)
 - `docs/TOOLS_PLAN.md` — the high-impact tool wave: nine tools in five waves, per-tool specs, the three infra seams (shared draft plumbing, `next_tools` routing (D28), chat tools (D29))
 - `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D-photos-primitive, D-storage-seam)
@@ -111,20 +111,32 @@ Several branches land concurrently, so two rules for the global sequences:
 
 - **New decisions get slug IDs, not sequence numbers.** Two in-flight branches
   can't see each other's claims, so a shared counter guarantees collisions (the
-  D30 photos/task-chat clash cost a ~20-file renumber). New entries in
-  `docs/DECISIONS.md` are `**D-kebab-slug.**` (e.g. `**D-photos-primitive.**`) —
-  self-describing, greppable via the `D-` prefix, collision-proof. D1–D37 keep
-  their numbers; never renumber them. If something truly needs a sequential
-  claim, reserve it by pushing a one-line stub to main *first* (e.g.
-  `**D33. (reserved: topic — see PR #NN.)**`), before any branch references it.
+  D30 photos/task-chat clash cost a ~20-file renumber). New entries are
+  `**D-kebab-slug.**` (e.g. `**D-photos-primitive.**`) — self-describing,
+  greppable via the `D-` prefix, collision-proof. D1–D37 and Q1–Q19 keep their
+  numbers; never renumber them. A slug is also the entry's filename, so the one
+  case that still needs eyes — two branches picking the same slug for different
+  decisions — surfaces as an add/add conflict on that path.
+- **The decision log is one file per entry, so it can't conflict.** Add yours
+  with `bin/decisions new D-kebab-slug "One-line statement"` — never by editing
+  an entry another branch is holding. Entries live in `docs/decisions/<ID>.md`;
+  `docs/DECISIONS.md` is now the front door that explains the layout, and
+  `bin/decisions` reads the log. Each entry's first line is its group
+  (`<!-- decided -->` / `<!-- resolved -->` / `<!-- open -->`), so promoting an
+  open question to a decision is a one-word edit rather than a cut from one
+  section and a paste into another. This replaced a single document where every
+  branch inserted at the same anchor — the end of `## Decided` — and conflicted
+  on a trivial keep-both every time.
 - **Migration timestamps are claimed at generation time**: always create
   migrations with `bin/rails g migration` so they carry real second-resolution
   timestamps — never hand-rounded ones like `…180000`.
 - **Registry hub files conflict by design; that's fine.** Lists everyone
   appends to (`ICON_PATHS`, `routes.rb`, `User` has_many, `Tool::SLUGS`,
   fixture files) merge with a trivial keep-both — resolve, don't redesign.
-  (`docs/DECISIONS.md` stays on the default strategy on purpose: its
-  conflicts are what force the D-number re-check above.)
+  (`docs/DESIGN.md` stays on the default strategy on purpose: unlike the two
+  logs it is *edited* rather than appended to, so a conflict in a design rule
+  is exactly the kind that deserves eyes — its atom registry is one role per
+  line so that additions still merge keep-both.)
   `db/schema.rb` is never hand-merged: run `bin/resolve-schema` during the
   merge — it takes the incoming copy and re-runs `bin/rails db:migrate` so
   the file regenerates with both branches' migrations.

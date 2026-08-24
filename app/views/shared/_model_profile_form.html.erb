@@ -1,27 +1,105 @@
-<%# The provider picker (D10), shared by Settings and the first-run flow.
+<%# The provider picker (D10) and the cloud switch (D-local-first-models),
+    shared by Settings and the first-run flow.
     Locals: profile; optional return_to (local path to land on after save). %>
 <%= form_with url: model_profile_path, method: :patch, scope: :model_profile,
-      class: "space-y-4", data: { controller: "provider-fields" } do |form| %>
+      class: "space-y-4",
+      data: { controller: "provider-fields",
+              provider_fields_suggestions_value: ModelProfile::SUGGESTED_MODELS.to_json,
+              provider_fields_cloud_providers_value: ModelProfile::CLOUD_PROVIDERS.to_json,
+              provider_fields_fallback_provider_value: ModelProfile::SELF_RUN_PROVIDERS.first } do |form| %>
+  <div class="callout">
+    <p class="callout-title">A model on your own machine is the better answer.</p>
+    <p>
+      Everything here works with a model running on your own hardware — Ollama, llama.cpp
+      or LM Studio, pointed at from <strong>Local or self-hosted endpoint</strong> below. It is worth the
+      evening it takes to set up:
+    </p>
+    <ul class="mt-2 list-disc space-y-1 pl-5">
+      <li><strong>Your data stays yours.</strong> Your documents, your calendar, your notes about your
+        family — none of it leaves the house.</li>
+      <li><strong>Nobody is reading over your shoulder.</strong> No company logs your prompts, trains on
+        them, or changes its mind later about what it keeps.</li>
+      <li><strong>You own the means of your own empowerment.</strong> An assistant you rent can be
+        repriced, restricted, or switched off. One you run cannot.</li>
+      <li><strong>No bill per token.</strong> The electricity is the whole cost, and thinking harder
+        about your own life never gets more expensive.</li>
+    </ul>
+    <p class="mt-2 text-xs">
+      One-click local setup is coming. Until then the cloud providers below work fine — they are
+      just someone else's computer.
+    </p>
+  </div>
+  <label class="flex items-start gap-2 text-sm text-ink">
+    <%= form.check_box :allow_cloud_models,
+          { checked: profile.nil? || profile.allow_cloud_models?,
+            data: { provider_fields_target: "allowCloud", action: "provider-fields#refresh" } }, "1", "0" %>
+    <span>
+      Allow cloud LLMs
+      <span class="block text-xs text-soft">
+        On by default, so the app is useful before you've set anything up. Turning it off takes the
+        hosted providers out of the picker below — it can't police a URL you type yourself, so a
+        self-hosted endpoint stays whatever you point it at.
+      </span>
+    </span>
+  </label>
   <div class="space-y-1">
     <%= form.label :provider %>
     <%= form.select :provider,
-          ModelProfile::PROVIDERS.map { |key, settings| [ settings[:label], key ] },
-          { selected: profile&.provider || "openai" },
+          grouped_options_for_select({
+            "Runs where you put it" =>
+              ModelProfile::SELF_RUN_PROVIDERS.map { |key| [ ModelProfile::PROVIDERS[key][:label], key ] },
+            "Cloud providers" =>
+              ModelProfile::CLOUD_PROVIDERS.map { |key| [ ModelProfile::PROVIDERS[key][:label], key ] }
+          }, profile&.provider || "openai"),
+          {},
           { data: { provider_fields_target: "select", action: "provider-fields#refresh" } } %>
   </div>
   <div class="space-y-1" data-provider-fields-target="baseUrl">
     <%= form.label :base_url, "API base URL" %>
-    <%= form.text_field :base_url, value: profile&.base_url %>
-    <p class="hint">Any OpenAI-compatible endpoint: OpenRouter, Groq — or a local Ollama at http://localhost:11434/v1.</p>
+    <%# Only ever show a URL the household actually chose. On a preset the
+        column still holds its default (OpenAI's URL), and rendering that here
+        would put "https://api.openai.com/v1" in the box the moment someone
+        switches to the self-hosted option — the exact opposite of what they
+        just asked for, one Save away from being true. %>
+    <%= form.text_field :base_url, value: (profile&.base_url if profile&.provider == "custom"),
+          placeholder: "http://localhost:11434/v1" %>
+    <p class="hint">
+      A model on this machine or your network — Ollama at <code>http://localhost:11434/v1</code>,
+      llama.cpp, LM Studio. Any other OpenAI-compatible endpoint works too, including hosted ones
+      like OpenRouter or Groq.
+    </p>
   </div>
   <div class="space-y-1" data-provider-fields-target="model">
     <%= form.label :model, "Model" %>
-    <%= form.text_field :model, value: profile&.model || "gpt-4o-mini" %>
+    <%= form.text_field :model, value: profile&.model || ModelProfile::SUGGESTED_MODELS["openai"],
+          data: { provider_fields_target: "modelInput" } %>
+    <p class="hint" data-provider-fields-target="hint" data-provider="anthropic" hidden>
+      Any Claude model name — <code>claude-opus-5</code> is the strongest, <code>claude-haiku-4-5</code> the cheapest.
+    </p>
+    <p class="hint" data-provider-fields-target="hint" data-provider="google" hidden>
+      Any Gemini model name — the Flash models are the cheap everyday ones, Pro the strongest.
+    </p>
+    <p class="hint" data-provider-fields-target="hint" data-provider="custom" hidden>
+      Whatever name your server knows the model by — <code>llama3.2</code>, <code>qwen3</code>,
+      <code>mistral</code>. Ollama lists yours with <code>ollama list</code>.
+    </p>
   </div>
   <div class="space-y-1">
     <%= form.label :api_key, "API key" %>
-    <%= form.password_field :api_key, placeholder: profile&.configured? ? "•••••••• (leave blank to keep)" : "sk-… or cg-…" %>
-    <p class="hint">Chroma Golem uses one key for everything — you pick the model on chromagolem.com.</p>
+    <%= form.password_field :api_key, placeholder: profile&.configured? ? "•••••••• (leave blank to keep)" : "Paste your provider's API key" %>
+    <p class="hint" data-provider-fields-target="hint" data-provider="openai">Create one at platform.openai.com.</p>
+    <p class="hint" data-provider-fields-target="hint" data-provider="anthropic" hidden>
+      A Claude API key from console.anthropic.com — nothing else to set up.
+    </p>
+    <p class="hint" data-provider-fields-target="hint" data-provider="google" hidden>
+      A Gemini API key from aistudio.google.com — nothing else to set up.
+    </p>
+    <p class="hint" data-provider-fields-target="hint" data-provider="chroma_golem" hidden>
+      Chroma Golem uses one key for everything — you pick the model on chromagolem.com.
+    </p>
+    <p class="hint" data-provider-fields-target="hint" data-provider="custom" hidden>
+      Most local servers don't want one — leave this blank unless yours asks for it.
+    </p>
   </div>
   <label class="flex items-start gap-2 text-sm text-ink">
     <%= form.check_box :vision, { checked: profile&.vision? }, "1", "0" %>
@@ -41,8 +119,13 @@
       </span>
     </span>
   </label>
-  <p class="text-xs text-soft">
-    Text from analyzed documents is sent to this provider. Point a custom endpoint at a local model and nothing ever leaves your machine.
+  <p class="text-xs text-soft" data-provider-fields-target="egressNote">
+    Text from analyzed documents is sent to this provider — over the internet, to a company you
+    don't control. Point this at a model on your own machine and nothing ever leaves it.
+  </p>
+  <p class="text-xs text-soft" data-provider-fields-target="localNote" hidden>
+    Text from analyzed documents is sent to whatever this URL points at. If that's a model on your
+    own machine, nothing ever leaves it.
   </p>
   <%= hidden_field_tag :return_to, local_assigns[:return_to] if local_assigns[:return_to].present? %>
   <%= form.submit "Save AI settings" %>
