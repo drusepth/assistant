@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+# Render the app icons from public/icon.svg.
+#
+#   bin/icons
+#
+# The home-screen and tab icons are generated rather than checked in by
+# hand, so changing the mark means editing one SVG and re-running this.
+# The sizes are the ones the manifest and the layout ask for: 512 for the
+# install prompt and the splash screen, 192 for the home screen itself.
+#
+# This is deliberately *not* a rake task. ActiveStorage blocks libvips'
+# SVG loader on boot (`Vips.block`) because SVG is a hostile format when it
+# arrives from a user, and unblocking it inside the app's own environment
+# to render a file we ship ourselves would be trading a real protection for
+# a build convenience. Outside Rails there is nothing to unblock.
+
+require "bundler/setup"
+require "vips"
+
+ROOT = File.expand_path("..", __dir__)
+SOURCE = File.join(ROOT, "public/icon.svg")
+SIZES = { "icon.png" => 512, "icon-192.png" => 192 }.freeze
+# The canvas cream, matching the `--color-canvas` token the SVG paints with.
+GROUND = [ 0xf5, 0xea, 0xd8 ].freeze
+
+svg = File.binread(SOURCE)
+
+SIZES.each do |name, size|
+  # Render at the target size rather than resampling a big one: librsvg is a
+  # vector renderer, so this is sharper. Flattening matters because a
+  # transparent ground goes *black* behind an iOS home-screen icon.
+  image = Vips::Image.new_from_buffer(svg, "", scale: size / 512.0)
+  image = image.flatten(background: GROUND)
+  image.write_to_file(File.join(ROOT, "public", name))
+  puts "public/#{name} — #{image.width}×#{image.height}"
+end

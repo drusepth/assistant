@@ -88,9 +88,9 @@ mom" costs trust the app never earns back.
   flag. Shrinks to an "Add someone" affordance once a circle exists.
 - Later, optional per-person cadence (see §5); not needed for v1.
 - **The contact form asks for a person, not a filing decision**
-  (D-people-auto-filing). Sections are the assistant's output: the form shows
-  the chips it chose with a closed "Choose sections yourself" disclosure
-  beneath, and anything you tick there it never touches again. Same rule as
+  (D-people-auto-filing). Sections are the assistant's output: the picker
+  folds into the shared **Advanced** drawer, whose closed line names what it
+  filed them under, and anything you tick there it never touches again. Same rule as
   the circle flag, pointed the other way — explicit beats inferred where the
   cost of being wrong is trust ("call your mom"), and inferred beats a chore
   where the cost is a mis-filed tag you can fix in one click.

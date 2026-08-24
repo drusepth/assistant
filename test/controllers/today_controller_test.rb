@@ -79,6 +79,40 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "Move due date to tomorrow", response.body
   end
 
+  test "undated tasks offer them too — claiming is the only way they land on a day" do
+    users(:one).tasks.create!(title: "Someday thing")
+
+    get today_path
+    assert_select "#unscheduled form[action=?]", reschedule_task_path(Task.find_by(title: "Someday thing"), to: "today")
+  end
+
+  test "a late task says how late rather than making you subtract" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+
+    get today_path
+    assert_match "3 days late", response.body
+  end
+
+  test "the glance strip sizes the day and jumps to each card" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+    users(:one).tasks.create!(title: "Do today", due_on: Date.current)
+    users(:one).events.create!(title: "Tonight", starts_at: Time.current.end_of_day - 1.hour)
+
+    get today_path
+    assert_select "a[href='#overdue']", text: "1 overdue"
+    assert_select "a[href='#due-today']", text: "1 due today"
+    assert_select "a[href='#todays-events']", text: "1 event"
+    assert_select "#overdue"
+    assert_select "#due-today"
+    assert_select "#todays-events"
+  end
+
+  test "the glance strip stays away on a clear day" do
+    get today_path
+    assert_select "a[href='#overdue']", false
+    assert_select "a[href='#due-today']", false
+  end
+
   test "groups coming-up events by day" do
     users(:one).events.create!(title: "Team offsite", starts_at: Time.zone.local(2026, 8, 9, 10))
 

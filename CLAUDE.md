@@ -146,3 +146,11 @@ Several branches land concurrently, so two rules for the global sequences:
   conflict on its PR page and needed a local merge to clear it. That is the
   general lesson for any file everyone appends to: a merge strategy only
   quiets your own git, while separate files quiet everything.
+  Dropping the attribute has its own trap, which cost one silent bad merge
+  the day the split landed: git resolves a merge using the **merging
+  branch's** `.gitattributes`, not the incoming one, so a branch cut before
+  the attribute was removed still unions — restoring the deleted entry list
+  into `docs/STATUS.md` and reverting the split with no conflict, no
+  markers, and nothing for a reviewer to notice. Whenever a merge strategy
+  changes, read the affected file's diff before committing the merge that
+  brings the change in.

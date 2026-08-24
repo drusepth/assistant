@@ -42,14 +42,23 @@ class PeopleControllerTest < ActionDispatch::IntegrationTest
   end
 
   # D-people-auto-filing: the edit form used to open on two dozen section
-  # checkboxes. They're still reachable, just not the first thing you meet.
-  test "the edit form leads with filing, not a wall of checkboxes" do
+  # checkboxes. They're still reachable — inside the shared Advanced drawer —
+  # just not the first thing you meet, and the closed line says who filed them.
+  test "the edit form folds filing away and says who's doing it" do
     person = users(:one).people.create!(name: "Mom")
 
     get edit_person_path(person)
     assert_response :success
-    assert_match "Your assistant files this contact into sections", response.body
-    assert_match "Choose sections yourself", response.body
+    assert_select "details summary", /Advanced/
+    assert_match "your assistant files this one", response.body
+  end
+
+  test "…and names the sections once they're filed" do
+    person = users(:one).people.create!(name: "Dr. Alvarez")
+    person.sections << sections(:health)
+
+    get edit_person_path(person)
+    assert_match "filed under Health", response.body
   end
 
   test "unticking every section hands the contact back to the assistant" do

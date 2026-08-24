@@ -12,7 +12,9 @@
   <%= form.field :linked_user_id, label_text: "Household account", hint: "Link this contact to a household member's account." do %>
     <%= form.collection_select :linked_user_id, Current.user.household.users.order(:name), :id, :name, include_blank: "Not a household account" %>
   <% end %>
-  <%= render "people/filing", form: form, person: person %>
+  <%= render layout: "shared/advanced", locals: { hint: section_filing_hint(form.object) } do %>
+    <%= render "shared/section_picker", form: form %>
+  <% end %>
   <div class="flex items-center gap-2 pt-2">
     <%= form.submit %>
     <%= link_to "Cancel", people_path, class: "btn btn-ghost" %>
