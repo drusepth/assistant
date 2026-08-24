@@ -79,6 +79,22 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "Move due date to tomorrow", response.body
   end
 
+  test "a row those buttons empty out of the list carries its own send-off" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+
+    get today_path
+    assert_select "#overdue .item-row[data-controller=?]", "row-dismiss"
+    assert_select "#overdue button[data-row-dismiss-direction=?]", "now"
+    assert_select "#overdue button[data-row-dismiss-direction=?]", "later"
+  end
+
+  test "a row with no reschedule buttons has nothing to animate out" do
+    users(:one).tasks.create!(title: "Do today", due_on: Date.current)
+
+    get today_path
+    assert_select "#due-today .item-row[data-controller=row-dismiss]", false
+  end
+
   test "undated tasks offer them too — claiming is the only way they land on a day" do
     users(:one).tasks.create!(title: "Someday thing")
 
