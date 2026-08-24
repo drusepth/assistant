@@ -386,7 +386,7 @@ standing alone and settles into its group when the morph lands.
 - Test with a stubbed SSE body and with a non-streaming endpoint, so both
   paths are pinned.
 
-### W5 — It's an app (optional, cheap) — **partly built**
+### W5 — It's an app (optional, cheap) — **superseded by main's PWA wave**
 
 `public/service_worker.js` already exists for push (D22) and the layout
 already carries `apple-mobile-web-app-capable`. Adding
@@ -399,45 +399,42 @@ the largest single pixel win available.
 Not in scope here: offline caching. The service worker stays push-only until
 someone actually designs offline behavior for a database-backed app.
 
-*Built: the manifest, the platform chrome, and the worker registration.* Two of
-this wave's premises turned out to be wrong, which is why it is only partly
-done:
+*Superseded, mostly.* This wave was built here — a static `public/manifest.json`,
+a `theme-color`, a service-worker registration — and then `origin/main`'s own PWA
+wave landed the same ground and did it better: a Rails-served
+`manifest.webmanifest` with shortcuts, real icons rendered from an SVG source
+whose dot sits inside the maskable safe zone (so one image serves `any` and
+`maskable` honestly), and `pwa_install_test.rb` checking the *served* bytes and
+the icons' real pixel dimensions. The static manifest and its test were deleted
+in the merge rather than reconciled: two manifests is a bug, and main's wins on
+every axis.
 
-- **`public/icon.svg` is a placeholder** — literally
-  `<circle cx="256" cy="256" r="256" fill="red"/>`. A red circle is the icon a
-  browser prefers, and it is what an installed app would wear on a home screen.
-  The manifest names the icons that exist and deliberately claims **no
-  `maskable` purpose**: Android crops a maskable icon to a circle, so claiming
-  it before art is drawn with its own safe area makes the install look broken
-  rather than unfinished. A test pins that.
-- **The service worker was registered only from Settings**, when somebody
-  clicked "Enable browser push" — so almost nobody had one. It now registers on
-  page load, which is free and idempotent (the push flow gets the same
-  registration back). It is scoped for free too: `layouts/public.html.erb`
-  ships no JavaScript at all, so a share-link visitor registers nothing.
+Two pieces survived, because main has neither:
 
-The manifest is linked from the authenticated layout **only**. A share link
-(D-share-link) is one page shown to somebody outside the household, and
-offering them an install of another person's assistant would be absurd.
+- **`apple-mobile-web-app-status-bar-style: default`**, which keeps iOS's status
+  bar *outside* the web view once installed. That is what makes `100dvh` still
+  mean the area the app actually has, and the chat screen sizes itself against
+  exactly that — so `black-translucent` (prettier, and needing a top safe-area
+  inset on every page) would have quietly broken D-chat-shell.
+- **The service worker registers on page load**, not only when somebody clicks
+  "Enable browser push" in Settings (D22) — so almost nobody had one. It is
+  idempotent, and scoped for free: `layouts/public.html.erb` ships no JavaScript
+  at all, so a share-link visitor registers nothing.
 
-`theme-color` is the app header's own `--color-surface`, pinned to it by a test
-so a retheme cannot leave the status bar behind; `apple-mobile-web-app-status-bar-style`
-stays `default`, which keeps iOS's status bar *outside* the web view and is
-what makes `100dvh` still mean the area the app actually has.
-(`black-translucent` would look better and needs a top safe-area inset on every
-page — a separate change.)
+Also worth recording, because the two waves met in the layout: main's
+`viewport-fit=cover` and this branch's `interactive-widget=resizes-content` are
+orthogonal and both needed, and they compose — `viewport-fit=cover` is what
+makes `env(safe-area-inset-bottom)` report anything at all, which is what makes
+the composer's own gesture-bar padding do something. Main's floating
+bottom-left nav toggle is skipped on a bleed page, since that corner is the
+chat composer.
 
-**Still open, and both are decisions rather than plumbing:**
-
-- **Real icons** — a mark at 192 and 512, plus a maskable variant with its own
-  safe area. Design work, not a handful of lines.
-- **A `fetch` handler in the service worker.** Chrome will not raise its
-  install prompt without one, so today the manifest improves iOS
-  Add-to-Home-Screen and does *not* yet make Android installable. Adding one
-  routes every request in the app through the worker, which is a decision about
-  offline behaviour — and this app holds one household member's private data,
-  so it is not a decision to make as a side effect of wanting an install
-  button.
+**Still open, and a decision rather than plumbing:** a `fetch` handler in the
+service worker. Chrome will not raise its install prompt without one, so today
+the manifest improves iOS Add-to-Home-Screen and does *not* make Android
+installable — and adding one routes every request in the app through the
+worker, which is a call about offline behaviour for an app holding one
+household member's private data.
 
 ---
 

@@ -225,6 +225,17 @@ Rails.application.routes.draw do
     resource :reset, only: :create
   end
 
+  # The install manifest. Unauthenticated on purpose: the browser fetches it
+  # before anyone signs in, and it says nothing a signed-out visitor can't
+  # already see. The push service worker is a static file under public/ —
+  # `web_push` registers it at /service_worker.js — so only the manifest
+  # needs a route.
+  # The format has to be pinned: a browser fetches a manifest with
+  # `Accept: */*`, which Rails resolves to :html, and the template would
+  # never be found. See config/initializers/mime_types.rb.
+  get "manifest.webmanifest" => "rails/pwa#manifest", as: :pwa_manifest,
+    defaults: { format: :webmanifest }
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check

@@ -80,7 +80,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 
 ## Docs
 
-- `docs/STATUS.md` — build log: what is built so far, and what is next (start here)
+- `docs/STATUS.md` — what is next, and the front door to the build log in `docs/status/` (one file per entry; read it with `bin/status`) (start here)
 - `docs/VISION.md` — full mission background and strategic reasoning
 - `docs/PRODUCT.md` — detailed section-by-section feature brainstorm
 - `docs/DECISIONS.md` — decision log + open questions
@@ -96,11 +96,15 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 
 ## Where we left off
 
-See `docs/STATUS.md` — the build log: what is built, and what is next.
+Run `bin/status` — the build log, oldest first (`bin/status tail 10` for the
+recent stretch). `docs/STATUS.md` carries what's next.
 
-It lives outside this file on purpose. The log changes on nearly every branch,
-and while it lived here it made CLAUDE.md the most conflict-prone file in the
-repo. Add new milestones there, one entry per line.
+The log lives outside this file, and outside any single file, on purpose: it
+grows on nearly every branch, so while it lived in CLAUDE.md it made this the
+most conflict-prone file in the repo, and while it was one append-only
+document every parallel branch collided on that. It is now one file per entry
+under `docs/status/`. Add yours with `bin/status new "What landed"` — never by
+editing an entry someone else's branch is holding.
 
 ## Parallel branches: conflict hygiene
 
@@ -133,10 +137,21 @@ Several branches land concurrently, so two rules for the global sequences:
   a section feature — those three were the merge hot spot when the
   Hobbies, subsection-tile, and Health buildouts landed in parallel.
   Merge `origin/main` into your branch early and often; small frequent
-  merges beat one big one. `docs/STATUS.md` no longer
-  conflicts at all: it merges with `merge=union` (see `.gitattributes`), so
-  colliding appends keep both lines automatically — the tradeoff is that you
-  must only append to it, never rewrite existing lines. Note GitHub's web UI
-  ignores merge attributes, so a PR may still *show* a STATUS.md conflict —
-  a local `git fetch origin main && git merge origin/main` resolves it
-  hands-free; push the merge and the PR clears.
+  merges beat one big one.
+- **The build log is one file per entry, so it can't conflict.** Add yours
+  with `bin/status new "What landed"` — never by editing an entry another
+  branch is holding. This replaced a single append-only `docs/STATUS.md`
+  carrying `merge=union`: union merge did resolve those appends silently in
+  git, but GitHub computes a PR's mergeability *without* the repo's
+  `.gitattributes`, so every branch that touched the log still showed a
+  conflict on its PR page and needed a local merge to clear it. That is the
+  general lesson for any file everyone appends to: a merge strategy only
+  quiets your own git, while separate files quiet everything.
+  Dropping the attribute has its own trap, which cost one silent bad merge
+  the day the split landed: git resolves a merge using the **merging
+  branch's** `.gitattributes`, not the incoming one, so a branch cut before
+  the attribute was removed still unions — restoring the deleted entry list
+  into `docs/STATUS.md` and reverting the split with no conflict, no
+  markers, and nothing for a reviewer to notice. Whenever a merge strategy
+  changes, read the affected file's diff before committing the merge that
+  brings the change in.

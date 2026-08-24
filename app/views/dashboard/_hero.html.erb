@@ -1,6 +1,16 @@
 <%# The household hero (D-household-profile): the dashboard's welcome mat.
-    Data comes from Households::Hero — this file only decides how it looks. %>
-<section class="card mb-6 overflow-hidden">
+    Data comes from Households::Hero — this file only decides how it looks.
+
+    The phone is the layout this is drawn for. Three things shape it there:
+    the identity block and the faces share one line (the faces were costing
+    a whole row of their own for one avatar), the date joins the facts
+    footnote instead of wrapping the greeting onto two lines, and the four
+    quick-adds become a 4-across keypad rather than a 3-then-1 wrap. From
+    `sm` up it relaxes back into the wider arrangement. %>
+<% members = hero.members.to_a %>
+<% shown_members = members.first(5) %>
+<% hidden_members = members.size - shown_members.size %>
+<section class="card mb-6 overflow-hidden bg-gradient-to-br from-primary-100/70 via-surface to-sage-100/50">
   <% if hero.banner.attached? %>
     <%= image_tag url_for(hero.banner.variant(:cover)), alt: "#{hero.household.name} banner",
           class: "h-28 w-full object-cover sm:h-40" %>
@@ -8,46 +18,63 @@
     <div class="h-1.5 w-full bg-gradient-to-r from-primary-600 via-primary-400 to-sage-400"></div>
   <% end %>
 
-  <div class="px-5 py-5 sm:px-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
+  <div class="px-4 py-4 sm:px-6 sm:py-5">
+    <%# Who you are, and who else is here. %>
+    <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <p class="text-sm text-soft"><%= hero.greeting %>, <%= hero.first_name %> — <%= Date.current.strftime("%A, %B %-d") %></p>
+        <p class="text-sm text-soft"><%= hero.greeting %>, <%= hero.first_name %></p>
         <h1 class="display mt-0.5 text-balance break-words text-2xl text-ink sm:text-3xl"><%= hero.household.name %></h1>
         <% if hero.household.tagline.present? %>
           <p class="mt-1 text-sm italic text-soft"><%= hero.household.tagline %></p>
         <% end %>
+        <%# Date and facts share one line — as two lines they were the tallest
+            thing in the card and said the least. The date is what a person
+            actually reads here, so it carries the weight. %>
+        <p class="mt-1.5 text-xs text-soft">
+          <span class="font-semibold text-stone-700"><%= Date.current.strftime("%A, %B %-d") %></span>
+          <%= " · #{hero.facts.join(" · ")}" if hero.facts.any? %>
+        </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <%= render Ui::QuickAddComponent.new(name: "task", label: "Task", title: "New task") do %>
-          <%= render "tasks/quick_form", task: quick_task, return_to: root_path, autofocus: false %>
-        <% end %>
-        <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note") do %>
-          <%= render "notes/quick_form", note: quick_note, return_to: root_path, autofocus: false %>
-        <% end %>
-        <%= render Ui::QuickAddComponent.new(name: "event", label: "Event", title: "New event") do %>
-          <%= render "events/quick_form", event: quick_event, return_to: root_path, autofocus: false %>
-        <% end %>
-        <%= render Ui::QuickAddComponent.new(name: "goal", label: "Goal", title: "New goal", primary: true) do %>
-          <%= render "goals/quick_form", goal: quick_goal, return_to: root_path, autofocus: false %>
-        <% end %>
-      </div>
-    </div>
-
-    <%# Members, then today's reasons to be glad. A quiet day shows neither
-        an empty state nor a filler line — just the greeting above. %>
-    <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-      <%= link_to household_path, class: "flex items-center -space-x-2", title: "#{hero.members.size} in this household" do %>
-        <% hero.members.each do |member| %>
+      <%= link_to household_path, class: "flex shrink-0 items-center -space-x-2",
+            title: "#{members.size} in this household" do %>
+        <% shown_members.each do |member| %>
           <%= render Ui::AvatarComponent.new(user: member, size: :sm, title: member.name,
                 css_class: "border-2 border-surface") %>
         <% end %>
-      <% end %>
-      <% if hero.facts.any? %>
-        <p class="text-xs text-soft"><%= hero.facts.join(" · ") %></p>
+        <% if hidden_members.positive? %>
+          <span class="flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-surface bg-stone-200 text-xs font-semibold text-soft">
+            +<%= hidden_members %>
+          </span>
+        <% end %>
       <% end %>
     </div>
 
+    <%# Capture, four across. `grid-cols-4` at the base width is the point:
+        equal columns, no ragged wrap, and every tile the same thumb target. %>
+    <div class="mt-4 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-2">
+      <%= render Ui::QuickAddComponent.new(name: "task", label: "Task", title: "New task",
+            icon: :check_circle, tile: true) do %>
+        <%= render "tasks/quick_form", task: quick_task, return_to: root_path, autofocus: false %>
+      <% end %>
+      <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note",
+            icon: :note, tile: true) do %>
+        <%= render "notes/quick_form", note: quick_note, return_to: root_path, autofocus: false %>
+      <% end %>
+      <%= render Ui::QuickAddComponent.new(name: "event", label: "Event", title: "New event",
+            icon: :calendar, tile: true) do %>
+        <%= render "events/quick_form", event: quick_event, return_to: root_path, autofocus: false %>
+      <% end %>
+      <%= render Ui::QuickAddComponent.new(name: "goal", label: "Goal", title: "New goal",
+            icon: :flag, tile: true, primary: true) do %>
+        <%= render "goals/quick_form", goal: quick_goal, return_to: root_path, autofocus: false %>
+      <% end %>
+    </div>
+
+    <%# Today's reasons to be glad. A quiet day shows neither an empty state
+        nor a filler line — just the greeting above. Each highlight takes its
+        own line on a phone: two of them wrapping into ragged half-rows is
+        harder to read than two stacked bars. %>
     <% if hero.highlights.any? %>
       <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-edge pt-4">
         <% if hero.memory_photo&.image&.attached? %>
@@ -59,12 +86,17 @@
         <% hero.highlights.each do |highlight| %>
           <% body = capture do %>
             <%= icon(highlight.icon, css_class: "size-4 shrink-0 text-primary-600") %>
-            <span class="text-sm font-medium text-ink"><%= highlight.text %></span>
-            <% if highlight.detail.present? %>
-              <span class="min-w-0 truncate text-xs text-soft"><%= highlight.detail %></span>
-            <% end %>
+            <%# The detail wraps onto its own line rather than truncating: on a
+                phone there is never room for both beside each other, and half
+                a date is worse than a second line. %>
+            <span class="flex min-w-0 flex-wrap items-baseline gap-x-2">
+              <span class="text-sm font-medium text-ink"><%= highlight.text %></span>
+              <% if highlight.detail.present? %>
+                <span class="text-xs text-soft"><%= highlight.detail %></span>
+              <% end %>
+            </span>
           <% end %>
-          <% classes = "flex items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2" %>
+          <% classes = "flex min-w-0 flex-1 basis-full items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 sm:basis-auto" %>
           <% if highlight.path %>
             <%= link_to body, highlight.path, class: "#{classes} hover:bg-stone-200" %>
           <% else %>

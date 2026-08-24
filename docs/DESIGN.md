@@ -25,7 +25,10 @@ Warmth is the point: don't reach for stock Tailwind hues (`rose-`, `sky-`,
 `amber-`), which read as foreign objects next to cream. Everything comes
 from the two ramps. Overdue/urgent is *emphasis*, not error — it takes the
 deep accent step (`primary-800`), leaving red for genuinely destructive
-actions.
+actions, with one deliberate exception: `.btn-later` is the stop half of a
+go/stop pair (see Narrow screens), where red is read as "not now" rather
+than as danger. It stays at the palest step of the warmed ramp and never
+reaches `btn-danger`'s saturation, so the two can't be confused.
 
 ## The layers (each redesignable in one place)
 
@@ -48,13 +51,24 @@ actions.
    Propshaft digests asset filenames and rewrites `url()` only in the
    stylesheets it processes, and the Tailwind build is passed through
    untouched — a `url()` written there resolves undigested and 404s.
-2. **Atoms** — same file, `@layer components`: `.display` (see Type),
-   `.btn` (+ `-primary`,
-   `-secondary`, `-danger`, `-ghost`, `-sm`), `.input`, `.label`, `.hint`,
-   `.field-error`, `.card`, `.chip`, the two phone-shape atoms
-   `.row-actions` and `.capture-row` (see Narrow screens), and the chat
-   set — `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`,
-   `-send`).
+2. **Atoms** — same file, `@layer components`. Listed one role per line on
+   purpose: this is a registry every branch appends to, and as one prose
+   paragraph it conflicted on nearly every merge. A line each means two
+   branches adding an atom apiece merge keep-both.
+   - `.display` — the display voice (see Type)
+   - `.btn` — the pill, in three neutral weights: `-primary`, `-secondary`,
+     `-ghost`
+   - `.btn-danger`, `.btn-alert` — destructive, and behind-but-not-destructive
+   - `.btn-now`/`.btn-later` — the go/stop pair (see Narrow screens)
+   - `.btn-sm`, `.btn-touch` — the two sizes off the default
+   - `.btn-tile` (+ `.btn-tile-icon`) — the phone's stacked capture tile,
+     folding back into the pill at `sm` (see Narrow screens)
+   - `.input`, `.label`, `.hint`, `.field-error` — the form set
+   - `.card`, `.chip`
+   - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
+   - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
+   - `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`)
+     — the chat surface
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`, `Ui::Flash`,
    `Ui::SectionChip`, `Ui::Avatar` (a member's uploaded photo, falling back
@@ -116,10 +130,35 @@ neighbours in the sidebar never collide: Health `primary-800` · Hobbies
 `primary-500` · Education `sage-500` · Career `sage-700` · People
 `primary-400` · Money `sage-400` · Rights `primary-700`.
 
+## Lists
+
+A card full of item rows has two shapes, and the choice is about how tall
+the rows are rather than about taste:
+
+- **`divide-y divide-edge`** — hairline dividers. Right for one-line rows
+  (a document, a credential, an admin log line).
+- **`.item-stack`** — each row drops back to the canvas colour and sits as
+  its own rounded block with air around it, which is the "rows inside a
+  card drop back to the canvas" rule carried to its end. Right when a row
+  is several lines tall — a wrapped task title plus a meta line plus its
+  buttons — because at that height a hairline stops separating anything and
+  the card reads as one column of text. Today's lists are the reference.
+
+Rows opt in by carrying `item-row` on their outer element (the primitive
+row partials already do), so a `.stack-label` day heading can sit in the
+same stack as plain text, and a row rendered into a `divide-y` list is
+untouched by the stack rules. A card that stacks passes `padded: false` —
+`.item-stack` brings its own padding.
+
+`Ui::Card` also takes `count:` (a badge beside the title; zero doesn't
+draw) and `anchor:` (an id plus the `scroll-mt` the sticky mobile top bar
+needs), which is what lets a summary strip above a long page jump to the
+card it counts.
+
 ## Narrow screens
 
 The app is used on a phone at least as often as on a laptop, and the whole
-page is 320–430 points wide there. Four rules keep it that way, and
+page is 320–430 points wide there. Five rules keep it that way, and
 `test/integration/mobile_layout_test.rb` pins the two that are mechanical:
 
 - **Every `grid` names its base columns.** `class="grid gap-4 sm:grid-cols-2"`
@@ -135,7 +174,24 @@ page is 320–430 points wide there. Four rules keep it that way, and
   beside the text on a wide screen and take their own full-width line on a
   phone; without it a 150-point cluster of actions squeezes the title it
   belongs to into a four-word column. The row that holds it needs
-  `flex-wrap`.
+  `flex-wrap`. Give each button `.btn-touch` (and its form `flex-1
+  sm:flex-none`) when it is an action people take by thumb: `btn-sm` is a
+  28-point target, which is fine as furniture beside a title on a laptop
+  and too small to hit on a phone. Label such a button with a drawn icon
+  rather than a glyph: a "→" is sized and weighted by the label around it,
+  so at `text-xs` it is a hairline, while `icon(:arrow_right)` carries its
+  own size and stroke. When the row offers a *choice* rather than an action,
+  colour the sides: `.btn-now`/`.btn-later` are the light tinted pair —
+  green for "I'll do this now", red for "not now" — so the two are telling
+  apart before either is read.
+- **`.btn-tile`** for a *set* of buttons that has to sit at the top of a
+  phone screen — the dashboard hero's four quick-adds are the case. Four
+  pills at 393 points wrap three-then-one, which reads as a mistake rather
+  than a layout; the tile turns the same buttons into equal columns of
+  icon-over-label in a `grid-cols-4`, and folds back into the plain pill
+  from `sm` up. Style the *one* button responsively rather than rendering a
+  phone copy and a desktop copy: anything anchored to the button (the
+  quick-add dropdown) breaks the moment there are two of it.
 - **`.capture-row`** for one-line capture (a field and its submit): side by
   side when there is room, stacked on a phone so neither ends up half a line
   wide. Fixed field widths inside it belong behind `sm:` (`sm:w-32`).
@@ -147,6 +203,20 @@ page is 320–430 points wide there. Four rules keep it that way, and
 The check that matters is the page's own width: on a phone
 `document.documentElement.scrollWidth` must equal the viewport width. Any
 excess means something in the page is refusing to shrink.
+
+And one rule about *reach* rather than fit:
+
+- **A control every page needs belongs near the bottom.** A phone is ~900
+  points tall and held one-handed; the top corners are the part of the
+  screen a thumb cannot get to without regripping. The nav drawer's opener
+  is the standing example — it exists twice on purpose (the header
+  hamburger where the eye looks for a menu, and a floating one at
+  `bottom-left` where the thumb already is), and the mobile layout test
+  pins the bottom-anchored half. Anything fixed to the foot of the screen
+  offsets by `env(safe-area-inset-bottom)` or it sits under the home
+  indicator. Gestures may *shortcut* such a control but never replace it:
+  both mobile browsers swallow the left-edge drag for their own back
+  gesture, and an invisible affordance is no affordance at all.
 
 ## Conventions
 
