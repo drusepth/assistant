@@ -1,0 +1,23 @@
+<%# Editing a subscription is mostly about its lenses: which hobbies this
+    source belongs to, which is what the river's ranking reads first. %>
+<%= render Ui::PageHeaderComponent.new(title: @feed.display_title, subtitle: @feed.url) %>
+
+<%= render Ui::CardComponent.new(title: "This feed") do %>
+  <%= form_with model: @feed, class: "space-y-4" do |form| %>
+    <%= form.field :label, label_text: "Name",
+          hint: "What you want it called in the reader. Blank uses the feed's own title." %>
+
+    <%= render "shared/section_picker", form: form %>
+
+    <label class="flex items-center gap-2 text-sm text-ink">
+      <%= form.check_box :active, class: "size-4 accent-primary-600" %>
+      Keep checking this feed
+    </label>
+    <p class="hint">Unchecking pauses fetching without losing what's already here.</p>
+
+    <div class="flex flex-wrap gap-2">
+      <%= form.submit "Save", class: "btn btn-primary" %>
+      <%= link_to "Cancel", feeds_path, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+<% end %>

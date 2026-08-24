@@ -23,6 +23,8 @@ class User < ApplicationRecord
   has_many :tool_runs, dependent: :destroy
   has_many :suggestions, dependent: :destroy
   has_many :job_feeds, dependent: :destroy
+  has_many :feeds, dependent: :destroy
+  has_many :feed_items, through: :feeds
   has_many :linked_accounts, dependent: :destroy
   has_many :email_sender_rules, dependent: :destroy
   has_many :notification_channels, dependent: :destroy

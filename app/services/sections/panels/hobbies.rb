@@ -2,9 +2,24 @@ module Sections
   module Panels
     # The Hobbies lead panel (D25/docs/HOBBIES.md): lens cards with
     # engagement signal, or the what-do-you-do-for-fun capture before any
-    # lens exists. All data comes from the subsection summaries the page
-    # already computes, so the panel itself holds nothing.
+    # lens exists — plus the reader's own doorway (D-feed-reader), since a
+    # hobby's feeds are the one thing on this page that changes daily.
     class Hobbies < Panel
+      READER_PREVIEW = 3
+
+      def feeds
+        @feeds ||= viewer.feeds.includes(:sections).order(:created_at)
+      end
+
+      def river
+        @river ||= Feeds::River.new(viewer, filter: "unread")
+      end
+
+      def unread_count = @unread_count ||= river.unread_count
+
+      # The three newest unread — a taste of the reader rather than a
+      # second reader on this page.
+      def latest_items = @latest_items ||= river.page(per_page: READER_PREVIEW).items
     end
   end
 end

@@ -42,6 +42,13 @@ production:
   dispatch_reminders:
     command: "Reminders::DispatchJob.dispatch_due"
     schedule: every 5 minutes
+  # The reader's feeds (D-feed-reader). The sweep runs often; each feed's
+  # own interval (hourly by default, backed off when it fails, longer when
+  # nobody reads it) decides whether it's actually fetched — the politeness
+  # rule for the one part of the app that polls strangers' servers.
+  refresh_feeds:
+    command: "RefreshFeedsJob.refresh_due"
+    schedule: every 15 minutes
   # Chat transcripts are ephemeral; recaps are the record (D33/Q13).
   prune_chat_transcripts:
     command: "PruneChatTranscriptsJob.perform_later"

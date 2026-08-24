@@ -4,6 +4,7 @@ module NavigationHelper
     "Today" => { subtitle: "Current agenda", badge: "Today", shortcut: "⌘2" },
     "Calendar" => { subtitle: "Schedule & events", shortcut: "⌘3" },
     "Tasks" => { subtitle: "To-do items & priorities", shortcut: "⌘4" },
+    "Reader" => { subtitle: "Feeds from your hobbies" },
     "Address Book" => { subtitle: "Contacts & directory", badge: "Vault" },
     "Photos" => { subtitle: "Photo library & memories", badge: "Vault" },
     "Documents" => { subtitle: "Files & attachments", badge: "Vault" },
@@ -12,7 +13,14 @@ module NavigationHelper
     "Passwords" => { subtitle: "Credentials & security", badge: "Vault" }
   }.freeze
 
-  def nav_link_to(name, path, icon_name, subtitle: nil, badge: nil, shortcut: nil)
+  # `count:` is a number that rides at the end of the row — the unread pile
+  # behind a destination, which is the thing that makes anybody open it.
+  # Deliberately not called `badge:`: that word is already taken here for
+  # the tooltip's *kind* label ("Vault", "Today"), and one keyword meaning
+  # two things is how a helper becomes a puzzle. Zero doesn't draw, and the
+  # count carries `nav-label` so it disappears with the labels when the rail
+  # is collapsed rather than sitting alone beside an icon.
+  def nav_link_to(name, path, icon_name, subtitle: nil, badge: nil, shortcut: nil, count: nil)
     active = nav_active?(path)
     classes = active ?
       "bg-primary-600 text-primary-50 font-semibold" :
@@ -32,8 +40,19 @@ module NavigationHelper
     data[:tooltip_shortcut_value] = shortcut_text if shortcut_text.present?
 
     link_to path, class: "flex items-center gap-2.5 rounded-full px-3 py-2 text-sm #{classes}", data: data do
-      icon(icon_name, css_class: "size-4.5 shrink-0") + tag.span(name, class: "nav-label")
+      parts = [ icon(icon_name, css_class: "size-4.5 shrink-0"), tag.span(name, class: "nav-label") ]
+      if count.to_i.positive?
+        count_classes = active ? "bg-primary-50/25 text-primary-50" : "bg-canvas text-soft"
+        parts << tag.span(count, class: "nav-label ml-auto rounded-full px-1.5 text-xs tabular-nums #{count_classes}")
+      end
+      safe_join(parts)
     end
+  end
+
+  # One count per page render, memoized: the rail is on every page, and the
+  # reader's unread pile is not worth a query per link.
+  def reader_unread_count
+    @reader_unread_count ||= FeedItem.where(feed: Current.user.feeds.active).unread.count
   end
 
   def section_nav_link(section)
@@ -67,4 +86,3 @@ module NavigationHelper
       request.path == path || request.path.start_with?("#{path}/")
     end
 end
-

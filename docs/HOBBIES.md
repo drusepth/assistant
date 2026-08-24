@@ -162,6 +162,17 @@ All Tier A unless marked. Ordered roughly by funnel width.
 
 ### Content surfacing, honestly
 
+✅ **The reader shipped the honest half of this (D-feed-reader,
+`docs/READER.md`)**: the user follows the blogs, subreddits and channels
+behind their hobbies, and everything they publish lands in one
+chronological river, filterable by hobby — no crawler, no third-party
+index, no capability the app doesn't have, and no model call. Deliberately
+*not* ranked: these sources were each chosen by hand, so there is nothing
+to sift, and a river you can predict is the whole point. It resolves the
+*sources* half of the split below without waiting on Q9; what still waits
+is anything the app would have to go and find on its own (local meetups,
+classes, listings).
+
 "Surface interesting new content" splits cleanly on the Q9 line:
 
 - **Tier A (ship first):** generated *evergreen* content from model knowledge
@@ -231,4 +242,7 @@ All Tier A unless marked. Ordered roughly by funnel width.
 4. ✅ **Neglected-hobby watcher** — shipped on the D20 suggestions core
    (`suggestions` table, Attend zone, Dashboard feed, accept/snooze/dismiss,
    weekly/daily scans honoring the Settings dials).
-5. **Tier B upgrades** (real meetups/classes/event radar) when Q9 resolves.
+5. ✅ **The reader** (D-feed-reader, `docs/READER.md`) — feeds per hobby,
+   one chronological river, and per-item verbs that end in a task. The
+   daily surface the section was missing.
+6. **Tier B upgrades** (real meetups/classes/event radar) when Q9 resolves.

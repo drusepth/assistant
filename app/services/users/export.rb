@@ -29,7 +29,12 @@ module Users
       "spending_accounts" => ->(user) { user.spending_accounts },
       "budget_categories" => ->(user) { user.budget_categories },
       "spending_rules" => ->(user) { user.spending_rules },
-      "credentials" => ->(user) { user.credentials }
+      "credentials" => ->(user) { user.credentials },
+      # The subscriptions, not the river (D-feed-reader): a reading list is
+      # yours and takes a line each; the items behind it are a cache of
+      # somebody else's site, and are re-fetched by whatever you import
+      # this into.
+      "feeds" => ->(user) { user.feeds }
     }.freeze
 
     OMITTED_COLUMNS = %w[ user_id ].freeze

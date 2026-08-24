@@ -1,0 +1,57 @@
+<%= turbo_stream_from Current.user, :reader %>
+
+<%# Subscriptions (D-feed-reader): the list of what you follow, and the one
+    field that adds to it. Paste a site, a blog, a subreddit, a channel —
+    discovery finds the feed behind it, so nobody has to hunt for an orange
+    icon. Same density as the river: this is a list you scan. %>
+<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+  <h1 class="display text-2xl text-ink">Feeds</h1>
+  <div class="flex items-baseline gap-3 text-xs">
+    <%= link_to "Reader", reader_path, class: "reader-filter" %>
+    <% if @feeds.any? %>
+      <%= button_to "Check all now", refresh_all_feeds_path, class: "reader-verb", form_class: "contents" %>
+      <%= link_to "Export OPML", export_feeds_path, class: "reader-filter" %>
+    <% end %>
+  </div>
+</div>
+
+<%= form_with model: @feed, url: feeds_path, class: "capture-row mb-2" do |form| %>
+  <%= form.url_field :url, class: "input min-w-0 flex-1",
+        placeholder: "example.com/blog · reddit.com/r/woodworking · youtube.com/channel/… · or a feed link" %>
+  <%= form.text_field :label, class: "input sm:w-40", placeholder: "Name it (optional)" %>
+  <%= form.submit "Follow", class: "btn btn-primary" %>
+<% end %>
+<p class="mb-4 text-xs text-soft">
+  Feeds only — the reader subscribes to what publishers offer, and never scrapes a site that
+  doesn't. Items are fetched on a polite schedule and stay on your own box.
+</p>
+
+<%# OPML in and out: a reading list that can't leave isn't yours. %>
+<details class="mb-4 text-xs text-soft">
+  <summary class="reader-filter">Import from another reader (OPML)</summary>
+  <%= form_with url: import_feeds_path, html: { multipart: true }, class: "mt-2 space-y-2" do |form| %>
+    <%= file_field_tag :file, accept: ".opml,.xml,text/xml,application/xml,text/x-opml", class: "text-xs" %>
+    <label class="flex items-center gap-2">
+      <%= check_box_tag :create_lenses, "1", false, class: "size-3.5 accent-primary-600" %>
+      Make a hobby for each folder it uses
+    </label>
+    <%= submit_tag "Import", class: "btn btn-secondary btn-sm" %>
+  <% end %>
+  <p class="mt-2">
+    Nothing is fetched while importing — the feeds it names are checked in the background
+    afterwards. Folders match your hobbies by name.
+  </p>
+</details>
+
+<% if @feeds.any? %>
+  <p class="mb-1 px-3 text-xs text-soft"><%= pluralize(@feeds.size, "feed") %></p>
+  <div class="card divide-y divide-edge py-1">
+    <%= render partial: "feeds/feed", collection: @feeds, as: :feed,
+          locals: { unread_counts: @unread_counts } %>
+  </div>
+<% else %>
+  <p class="px-3 py-8 text-center text-sm text-soft">
+    Nothing followed yet. Start with one source per hobby — the place you already check —
+    and tag each feed with the hobby it belongs to.
+  </p>
+<% end %>

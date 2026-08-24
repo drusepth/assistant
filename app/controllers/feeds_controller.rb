@@ -1,0 +1,98 @@
+# Subscriptions (D-feed-reader): paste any address, get a feed. Discovery
+# does the work of finding the feed behind a site, so the user never has to
+# hunt for the orange icon — the friction that made this format feel like a
+# format for hobbyists.
+#
+# Two fetch postures, and the difference is who is waiting. Adding a feed
+# fetches *now*, on short timeouts, because a subscription that silently
+# fails to exist is worse than a slow form. Everything else — "Check now",
+# "Check all", an OPML import — hands the work to a job: a stranger's server
+# that hangs must never hold a web worker for half a minute.
+class FeedsController < ApplicationController
+  before_action :set_feed, only: %i[ edit update destroy refresh ]
+
+  def index
+    @feeds = Current.user.feeds.includes(:sections).order(:created_at)
+    @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
+    @feed = Current.user.feeds.new
+  end
+
+  def create
+    @feed = Current.user.feeds.new(feed_params.except(:url))
+    found = Feeds::Discover.call(feed_params[:url])
+    @feed.assign_attributes(
+      url: found.url, kind: found.parsed.kind, title: found.parsed.title,
+      description: found.parsed.description, site_url: found.parsed.site_url
+    )
+
+    if @feed.save
+      RefreshFeedJob.perform_later(@feed)
+      redirect_to return_to_path(feeds_path), notice: "Following #{@feed.display_title}."
+    else
+      redirect_to return_to_path(feeds_path), alert: @feed.errors.full_messages.to_sentence
+    end
+  rescue Feeds::Discover::Error => e
+    redirect_to return_to_path(feeds_path), alert: e.message
+  end
+
+  def edit
+  end
+
+  def update
+    if @feed.update(feed_params.except(:url))
+      redirect_to feeds_path, notice: "#{@feed.display_title} updated."
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @feed.destroy!
+    redirect_to feeds_path, notice: "Unfollowed #{@feed.display_title}. Its items are gone too."
+  end
+
+  # Enqueued, not fetched here: the row updates itself over Turbo when the
+  # job lands (RefreshFeedJob broadcasts), so nobody watches a spinner and
+  # no thread is hostage to somebody else's timeout.
+  def refresh
+    RefreshFeedJob.perform_later(@feed)
+    redirect_back fallback_location: feeds_path, notice: "Checking #{@feed.display_title}…"
+  end
+
+  def refresh_all
+    Current.user.feeds.active.find_each { |feed| RefreshFeedJob.perform_later(feed) }
+    redirect_back fallback_location: feeds_path, notice: "Checking your feeds — new items appear as they arrive."
+  end
+
+  # The reading list, in the format every reader since 2000 agrees on.
+  def export
+    send_data Feeds::Opml.export(Current.user),
+      filename: "feeds-#{Date.current.iso8601}.opml", type: "text/x-opml", disposition: "attachment"
+  end
+
+  def import
+    file = params[:file]
+    return redirect_to feeds_path, alert: "Choose an OPML file to import." if file.blank?
+
+    result = Feeds::Opml.import(Current.user, file.read, create_lenses: params[:create_lenses] == "1")
+    return redirect_to feeds_path, alert: result.error unless result.ok?
+
+    redirect_to feeds_path, notice: import_notice(result)
+  end
+
+  private
+    def set_feed
+      @feed = Current.user.feeds.find(params[:id])
+    end
+
+    def import_notice(result)
+      parts = [ "#{helpers.pluralize(result.added, "feed")} added" ]
+      parts << "#{result.skipped} already followed or unreadable" if result.skipped.positive?
+      parts << "filed under #{result.lenses.to_sentence}" if result.lenses.any?
+      "#{parts.join(", ")}. They're being checked now."
+    end
+
+    def feed_params
+      params.expect(feed: [ :url, :label, :active, section_ids: [] ])
+    end
+end

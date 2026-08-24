@@ -1,0 +1,93 @@
+<%= turbo_stream_from Current.user, :reader %>
+
+<%# The river (D-feed-reader) — Google Reader's shape and Google Reader's
+    density: everything your feeds carried, newest first, one line each.
+    The chrome is deliberately thin. On this page the list *is* the
+    interface, and every pixel spent on furniture above it is a headline
+    somebody doesn't see. %>
+<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+  <h1 class="display text-2xl text-ink">Reader</h1>
+  <div class="flex items-baseline gap-3 text-xs">
+    <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
+    <% if @feeds.any? %>
+      <%= button_to "Check now", refresh_all_feeds_path, class: "reader-verb", form_class: "contents" %>
+    <% end %>
+  </div>
+</div>
+
+<% if @feeds.none? %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "No feeds yet",
+        description: "Follow the sites, blogs, subreddits and channels behind your hobbies. Paste any address — the feed behind it gets found for you — and everything they publish lands here, newest first, with no account anywhere and nobody deciding what you see."
+      ) do |empty| %>
+    <% empty.with_action { link_to "Add your first feed", feeds_path, class: "btn btn-primary" } %>
+  <% end %>
+<% else %>
+  <%# One toolbar line per axis, and only the axes that have more than one
+      answer: a filter row for a household with one feed is furniture. %>
+  <div class="mb-2 space-y-1 border-b border-edge pb-2">
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <% ReaderHelper::FILTER_LABELS.each_with_index do |(key, label), index| %>
+        <%= reader_dot if index.positive? %>
+        <%= reader_filter_link label, { filter: key }, active: @river.filter == key %>
+      <% end %>
+    </div>
+
+    <% if @lenses.any? %>
+      <div class="flex items-baseline gap-x-2 overflow-x-auto whitespace-nowrap">
+        <span class="text-xs text-stone-500">Hobby</span>
+        <%= reader_filter_link "all", { hobby: nil }, active: params[:hobby].blank? %>
+        <% @lenses.each do |lens| %>
+          <%= reader_dot %>
+          <%= reader_filter_link lens.name, { hobby: lens.slug }, active: params[:hobby] == lens.slug %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @feeds.many? %>
+      <div class="flex items-baseline gap-x-2 overflow-x-auto whitespace-nowrap">
+        <span class="text-xs text-stone-500">Feed</span>
+        <%= reader_filter_link "all", { feed: nil }, active: params[:feed].blank? %>
+        <% @feeds.each do |feed| %>
+          <% unread = @unread_counts.fetch(feed.id, 0) %>
+          <%= reader_dot %>
+          <%= reader_filter_link "#{feed.display_title}#{" (#{unread})" if unread.positive?}",
+                { feed: feed.id }, active: params[:feed].to_s == feed.id.to_s %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @page.any? %>
+    <div class="mb-1 flex items-baseline justify-between gap-3 px-3 text-xs text-soft">
+      <span class="tabular-nums"><%= reader_count_label(@page.total, @river.filter) %></span>
+      <% if @river.filter == "unread" %>
+        <%= button_to "Mark all read", reader_read_all_path(request.query_parameters.slice("hobby", "feed")),
+              class: "reader-verb", form_class: "contents",
+              form: { data: { turbo_confirm: "Mark everything in this view as read?" } } %>
+      <% end %>
+    </div>
+
+    <div class="card divide-y divide-edge py-1">
+      <%= render partial: "reader/item", collection: @page.items, as: :item,
+            locals: { filter: @river.filter } %>
+    </div>
+
+    <% if @page.more? %>
+      <div class="mt-3 text-center">
+        <%= link_to "Older", reader_path(request.query_parameters.merge(offset: @page.next_offset)),
+              class: "reader-filter" %>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="px-3 py-8 text-center text-sm text-soft">
+      <% if @river.filter == "unread" %>
+        You're all caught up. New items arrive on their own.
+        <%= reader_filter_link "See everything", { filter: "all" }, active: false %>
+      <% else %>
+        Nothing matches these filters.
+        <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
+      <% end %>
+    </p>
+  <% end %>
+<% end %>

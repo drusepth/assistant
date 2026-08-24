@@ -12,3 +12,8 @@
 <% else %>
   <%= render "sections/hobby_capture", hobbies: section %>
 <% end %>
+
+<%# The reader (D-feed-reader): the one thing on this page that is
+    different every day. It sits under the lenses because a hobby is what
+    you do, not what you read about it. %>
+<%= render "sections/hobby_reader", panel: panel %>
