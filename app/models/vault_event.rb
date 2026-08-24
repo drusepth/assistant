@@ -24,7 +24,13 @@ class VaultEvent < ApplicationRecord
   scope :vault_wide, -> { where(credential_id: nil) }
 
   # Recording must never break the thing it observes (the D23 posture).
-  def self.record(action, user:, actor:, credential: nil, subject_user: nil)
+  #
+  # `subject:` takes any sealed container (D-vault-sealed); only credentials
+  # have a column to land in today, so a diary entry records the *act* —
+  # who shared with whom — without an entry-scoped row, which is also the
+  # only shape that could carry a title into a table declared secret-free.
+  def self.record(action, user:, actor:, credential: nil, subject: nil, subject_user: nil)
+    credential ||= subject if subject.is_a?(Credential)
     create!(action: action, user: user, actor: actor, credential: credential, subject_user: subject_user)
   rescue StandardError => error
     AppError.record(error, source: "VaultEvent.record", user: actor)
