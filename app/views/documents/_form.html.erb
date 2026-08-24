@@ -7,7 +7,9 @@
       <p class="hint">Currently: <%= document.file.filename %> — choosing a new file replaces it.</p>
     <% end %>
   <% end %>
-  <%= render "shared/section_picker", form: form %>
+  <%= render layout: "shared/advanced", locals: { hint: section_filing_hint(form.object) } do %>
+    <%= render "shared/section_picker", form: form %>
+  <% end %>
   <div class="flex items-center gap-2 pt-2">
     <%= form.submit %>
     <%= link_to "Cancel", documents_path, class: "btn btn-ghost" %>

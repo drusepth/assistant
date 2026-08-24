@@ -1,0 +1,93 @@
+<%= render Ui::PageHeaderComponent.new(title: @book.title,
+      subtitle: pluralize(@recipes.size, "recipe")) do |header| %>
+  <% unless @owned %>
+    <% header.with_meta do %>
+      <%= render Ui::UserLabelComponent.new(user: @book.user) do %>
+        shared by <%= @book.user.name %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <% header.with_actions do %>
+    <% if @owned %>
+      <%= link_to "Edit", edit_recipe_book_path(@book), class: "btn btn-secondary" %>
+      <%= button_to "Delete", @book, method: :delete, class: "btn btn-danger",
+            data: { turbo_confirm: "Delete this book? The recipes in it stay in your box." } %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if @book.description.present? %>
+  <p class="mb-6 max-w-2xl text-sm text-soft"><%= @book.description %></p>
+<% end %>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <% if @recipes.any? %>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <%= render partial: "recipes/recipe_card", collection: @recipes, as: :recipe %>
+      </div>
+    <% else %>
+      <%= render Ui::EmptyStateComponent.new(
+            title: "Nothing in this book yet",
+            description: @owned ? "Add recipes from the box below — a recipe can be in as many books as fit." : "This book is empty so far.") %>
+    <% end %>
+
+    <% if @owned %>
+      <%= render Ui::CardComponent.new(title: "Arrange this book",
+            subtitle: "Drag to set the running order") do %>
+        <% if @recipes.any? %>
+          <%= form_with url: reorder_recipe_book_path(@book), method: :patch,
+                data: { controller: "sortable" }, class: "space-y-2" do %>
+            <% @recipes.each do |recipe| %>
+              <div class="flex cursor-grab items-center gap-2 rounded-xl bg-canvas px-3 py-2" draggable="true"
+                   data-action="dragstart->sortable#dragStart dragover->sortable#dragOver drop->sortable#drop dragend->sortable#dragEnd">
+                <%= icon(:bars_3, css_class: "size-4 shrink-0 text-soft") %>
+                <span class="min-w-0 flex-1 truncate text-sm text-ink"><%= recipe.title %></span>
+                <%= hidden_field_tag "recipe_ids[]", recipe.id, id: nil %>
+              </div>
+            <% end %>
+            <%= submit_tag "Save order", class: "btn btn-secondary btn-sm" %>
+          <% end %>
+
+          <%= form_with url: remove_recipes_recipe_book_path(@book), method: :delete, class: "mt-4 space-y-2" do %>
+            <p class="label">Take out of this book</p>
+            <div class="flex flex-wrap gap-1.5">
+              <% @recipes.each do |recipe| %>
+                <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge px-2.5 py-1 text-xs font-medium text-soft has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 has-[:checked]:text-primary-800">
+                  <%= check_box_tag "recipe_ids[]", recipe.id, false, class: "size-3.5 accent-primary-600", id: nil %>
+                  <%= recipe.title %>
+                </label>
+              <% end %>
+            </div>
+            <%= submit_tag "Remove", class: "btn btn-ghost btn-sm" %>
+            <p class="hint">Removing takes it out of the book — the recipe stays in your box.</p>
+          <% end %>
+        <% end %>
+
+        <% if @available_recipes&.any? %>
+          <%= form_with url: add_recipes_recipe_book_path(@book), class: "mt-4 space-y-2" do %>
+            <p class="label">Add from your box</p>
+            <div class="flex max-h-56 flex-wrap gap-1.5 overflow-y-auto">
+              <% @available_recipes.each do |recipe| %>
+                <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge px-2.5 py-1 text-xs font-medium text-soft has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 has-[:checked]:text-primary-800">
+                  <%= check_box_tag "recipe_ids[]", recipe.id, false, class: "size-3.5 accent-primary-600", id: nil %>
+                  <%= recipe.title %>
+                </label>
+              <% end %>
+            </div>
+            <%= submit_tag "Add", class: "btn btn-secondary btn-sm" %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @owned %>
+    <div class="space-y-6 print:hidden">
+      <%= render "shared/share_controls", subject: @book %>
+      <%= render "share_links/card", subject: @book, links: @share_links, noun: "book",
+            detail: "Anyone with the link can read every recipe in this book, and see your first "\
+                    "name. They can't see anything else here, and revoking cuts them off." %>
+    </div>
+  <% end %>
+</div>

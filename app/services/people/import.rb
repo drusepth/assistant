@@ -9,7 +9,7 @@ class People::Import
   # notes so nothing is dropped.
   Contact = Struct.new(
     :name, :relationship, :phones, :emails, :addresses,
-    :birthday, :organization, :notes,
+    :birthday, :organization, :notes, :photo,
     keyword_init: true
   ) do
     def initialize(**args)
@@ -21,6 +21,38 @@ class People::Import
   end
 
   Labeled = Struct.new(:label, :value)
+
+  # The face that came with the contact (D-contact-photos). Address books
+  # carry it inline — base64 in a vCard, a data: URL from the phone's
+  # contact picker — and a photo given as an http(s) URI is deliberately
+  # ignored: fetching one would mean a third-party call on every import,
+  # which is the opposite of local-first.
+  Photo = Struct.new(:data, :content_type) do
+    EXTENSIONS = { "image/jpeg" => "jpg", "image/png" => "png",
+                   "image/gif" => "gif", "image/webp" => "webp" }.freeze
+
+    def self.from_data_uri(value)
+      match = value.to_s.strip.match(%r{\Adata:(image/[\w.+-]+)?;base64,(.+)\z}im)
+      match && decode(match[2], match[1])
+    end
+
+    # Bad base64 is a broken contact photo, never a broken import.
+    def self.decode(encoded, content_type)
+      data = Base64.strict_decode64(encoded.to_s.gsub(/\s+/, ""))
+      new(data, (content_type.presence || "image/jpeg").downcase) if data.present?
+    rescue ArgumentError
+      nil
+    end
+
+    # Anything the Person avatar validation would reject is dropped rather
+    # than failing the row it rode in on.
+    def usable?
+      data.present? && Avatarable::AVATAR_CONTENT_TYPES.include?(content_type) &&
+        data.bytesize <= Avatarable::AVATAR_MAX_BYTES
+    end
+
+    def extension = EXTENSIONS.fetch(content_type, "jpg")
+  end
 
   Result = Struct.new(:imported, :skipped, :error, keyword_init: true)
 
@@ -81,11 +113,25 @@ class People::Import
 
           person = @user.people.create!(person_attributes(contact))
           person.sections = [ people_section ].compact
+          attach_photo(person, contact.photo)
           imported += 1
         end
       end
 
       Result.new(imported: imported, skipped: skipped)
+    end
+
+    # An imported address book arrives with faces attached (D-contact-photos)
+    # — the same square variant a hand-uploaded one gets, so a synced
+    # contact and a typed one are indistinguishable afterwards.
+    def attach_photo(person, photo)
+      return unless photo&.usable?
+
+      person.avatar.attach(
+        io: StringIO.new(photo.data),
+        filename: "contact-#{person.id}.#{photo.extension}",
+        content_type: photo.content_type
+      )
     end
 
     def person_attributes(contact)

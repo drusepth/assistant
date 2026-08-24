@@ -2,6 +2,7 @@
      data-action="dragover->photo-upload#dragOver dragleave->photo-upload#dragLeave drop->photo-upload#drop">
   <%= render Ui::PageHeaderComponent.new(title: "Photos", subtitle: "The household album") do |header| %>
     <% header.with_actions do %>
+      <%= link_to "Map", map_photos_path, class: "btn btn-secondary" %>
       <%= link_to "Albums", albums_path, class: "btn btn-secondary" %>
       <% if @photos.any? %>
         <button type="button" class="btn btn-secondary"
@@ -26,9 +27,26 @@
     <div class="mb-4 hidden space-y-1" data-photo-upload-target="progress"></div>
   <% end %>
 
-  <% if @person %>
+  <% if @place %>
+    <%# Following a map pin. The name comes from the local gazetteer and
+        falls back to the coordinates it was actually given — never to a
+        guess. %>
     <div class="mb-4">
       <span class="chip inline-flex items-center gap-1.5 bg-ink text-white">
+        Your photos around <%= @place_name&.qualified ||
+          "#{number_with_precision(@place.first, precision: 3)}, #{number_with_precision(@place.second, precision: 3)}" %>
+        <%= link_to "✕", photos_path(section: params[:section].presence, year: params[:year].presence,
+              person: params[:person].presence),
+              class: "text-white/70 hover:text-white", "aria-label": "Clear place filter" %>
+      </span>
+      <%= link_to "Back to the map", map_photos_path, class: "ml-2 text-sm text-primary-700 hover:underline" %>
+    </div>
+  <% end %>
+
+  <% if @person %>
+    <div class="mb-4">
+      <span class="chip inline-flex items-center gap-1.5 bg-ink py-0.5 pl-0.5 text-white">
+        <%= render Ui::AvatarComponent.new(person: @person, size: :xs, tone: :stone) %>
         Photos of <%= @person.name %>
         <%= link_to "✕", photos_path(section: params[:section].presence, year: params[:year].presence),
               class: "text-white/70 hover:text-white", "aria-label": "Clear person filter" %>
@@ -37,20 +55,20 @@
   <% end %>
 
   <div class="mb-4 flex flex-wrap gap-1.5">
-    <%= link_to "All", photos_path(year: params[:year].presence, person: params[:person].presence),
+    <%= link_to "All", photos_path(year: params[:year].presence, person: params[:person].presence, near: params[:near].presence),
           class: "chip #{@section.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
     <% Section.top_level.each do |section| %>
-      <%= link_to section.name, photos_path(section: section.slug, year: params[:year].presence, person: params[:person].presence),
+      <%= link_to section.name, photos_path(section: section.slug, year: params[:year].presence, person: params[:person].presence, near: params[:near].presence),
             class: "chip #{@section == section ? "bg-ink text-white" : "#{section_chip_classes(section)} hover:opacity-80"}" %>
     <% end %>
   </div>
 
   <% if @years.many? %>
     <div class="mb-4 flex flex-wrap gap-1.5">
-      <%= link_to "All years", photos_path(section: params[:section].presence),
+      <%= link_to "All years", photos_path(section: params[:section].presence, person: params[:person].presence, near: params[:near].presence),
             class: "chip #{@year.nil? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
       <% @years.each do |year| %>
-        <%= link_to year, photos_path(year: year, section: params[:section].presence),
+        <%= link_to year, photos_path(year: year, section: params[:section].presence, person: params[:person].presence, near: params[:near].presence),
               class: "chip #{@year.to_s == year ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
       <% end %>
     </div>
@@ -73,7 +91,7 @@
       <div class="mt-8 text-center">
         <%= link_to "Older photos",
               photos_path(section: params[:section].presence, year: params[:year].presence,
-                person: params[:person].presence,
+                person: params[:person].presence, near: params[:near].presence,
                 before_at: last.taken_at.utc.iso8601(6), before_id: last.id),
               class: "btn btn-secondary" %>
       </div>

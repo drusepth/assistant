@@ -33,6 +33,30 @@ class ExportJobTest < ActiveJob::TestCase
     assert_equal "PDF BYTES", entries["files/#{document.id}-lease.pdf"]
   end
 
+  # A recipe you can't cook from isn't an export: the parsed lines and the
+  # raw text the cook typed both travel (D-recipe-primitive).
+  test "recipes leave with their ingredients and their books" do
+    recipe = users(:one).recipes.create!(title: "Lentil soup", servings: 4,
+      ingredients_text: "200 g red lentils\n2 onions, chopped")
+    book = users(:one).recipe_books.create!(title: "Soups")
+    book.recipe_book_entries.create!(recipe: recipe)
+
+    ExportJob.perform_now(users(:one))
+
+    entries = {}
+    Zip::File.open_buffer(StringIO.new(users(:one).export_archive.download)) do |zip|
+      zip.each { |entry| entries[entry.name] = entry.get_input_stream.read }
+    end
+
+    row = JSON.parse(entries["recipes.jsonl"].lines.first)
+    assert_equal "Lentil soup", row["title"]
+    assert_equal [ "200 g red lentils", "2 onions, chopped" ], row["ingredients"].map { |line| line["raw"] }
+    assert_equal "red lentil", row["ingredients"].first["item_key"]
+
+    book_row = JSON.parse(entries["recipe_books.jsonl"].lines.first)
+    assert_equal [ recipe.id ], book_row["recipe_ids"]
+  end
+
   test "your avatar leaves with you, original bytes and all (D-user-avatars)" do
     users(:one).avatar.attach(io: StringIO.new("JPEG BYTES"), filename: "me.jpg", content_type: "image/jpeg")
 
@@ -45,6 +69,22 @@ class ExportJobTest < ActiveJob::TestCase
 
     assert_equal "JPEG BYTES", entries["avatar-me.jpg"]
     assert_equal "avatar-me.jpg", JSON.parse(entries["manifest.json"]).dig("user", "avatar")
+  end
+
+  test "contact photos leave with the address book (D-contact-photos)" do
+    person = users(:one).people.create!(name: "Maria Rivera")
+    person.avatar.attach(io: StringIO.new("JPEG BYTES"), filename: "maria.jpg", content_type: "image/jpeg")
+
+    ExportJob.perform_now(users(:one))
+
+    entries = {}
+    Zip::File.open_buffer(StringIO.new(users(:one).export_archive.download)) do |zip|
+      zip.each { |entry| entries[entry.name] = entry.get_input_stream.read }
+    end
+
+    entry_name = "contact_photos/#{person.id}-maria.jpg"
+    assert_equal "JPEG BYTES", entries[entry_name]
+    assert_equal entry_name, JSON.parse(entries["people.jsonl"].lines.first)["photo"]
   end
 
   # D-vault-crypto: key material must never ride the job queue, so the

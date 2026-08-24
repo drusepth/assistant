@@ -12,9 +12,9 @@ module Tool
     self.section_slugs = %w[ career ]
     self.kind = :draft
 
-    input :role,
+    input :role, prefill: :job_title,
       label: "Your job title",
-      hint: "Optional — lets the memo cite the closest national wage medians when the dataset is loaded."
+      hint: "Optional — lets the memo cite the closest national wage medians when the dataset is loaded. Filled from your work profile in Settings."
     input :extras, kind: :textarea,
       label: "Anything not tracked here?",
       hint: "Optional — wins you never logged, duties you've taken on, your target number."
@@ -65,6 +65,7 @@ module Tool
 
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
+        parts << work_line
         parts << tenure_line
         parts.concat(public_data_lines)
         parts << "Untracked context from the user: #{inputs[:extras]}" if inputs[:extras].present?
@@ -99,8 +100,11 @@ module Tool
                      "#{last.strftime("%B %Y")} is a real-terms cut of about that size."
           end
         end
-        if inputs[:role].present? && (wages = Datasets::Wages.current).present?
-          matches = wages.search(inputs[:role])
+        # The run's input wins; the profile title (D-work-profile) is the
+        # fallback so the lookup still lands when the field came cleared.
+        role = inputs[:role].presence || user.job_title
+        if role.present? && (wages = Datasets::Wages.current).present?
+          matches = wages.search(role)
           if matches.any?
             rows = matches.map do |occupation|
               median = [ occupation.hourly_median && "$#{occupation.hourly_median}/hr median",
@@ -108,7 +112,7 @@ module Tool
               "- #{occupation.title}: #{median.presence || "median not published"}"
             end
             lines << "Public data on file — national wage medians (BLS OEWS, #{wages.as_of}), closest " \
-                     "title matches to “#{inputs[:role]}”; offer as national reference points, local " \
+                     "title matches to “#{role}”; offer as national reference points, local " \
                      "rates still worth fetching:\n#{rows.join("\n")}"
           end
         end

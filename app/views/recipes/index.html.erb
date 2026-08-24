@@ -1,0 +1,61 @@
+<%= turbo_stream_from Current.user, :recipes %>
+
+<%= render Ui::PageHeaderComponent.new(title: "Recipes", subtitle: "Your recipe box") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Books", recipe_books_path, class: "btn btn-secondary" %>
+    <%= link_to import_recipes_path, class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Recipe
+    <% end %>
+  <% end %>
+<% end %>
+
+<%= form_with url: recipes_path, method: :get, class: "capture-row mb-4" do %>
+  <%= search_field_tag :q, @query, placeholder: "Search titles and ingredients — “lentil”, “Grandma”, “chorizo”",
+        class: "input min-w-0 flex-1" %>
+  <%= hidden_field_tag :section, params[:section].presence %>
+  <%= hidden_field_tag :favorites, params[:favorites].presence %>
+  <%= submit_tag "Search", class: "btn btn-secondary" %>
+<% end %>
+
+<div class="mb-4 flex flex-wrap gap-1.5">
+  <%= link_to "All", recipes_path(q: @query.presence),
+        class: "chip #{@section.nil? && params[:favorites].blank? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+  <%= link_to "Favorites", recipes_path(q: @query.presence, favorites: 1, section: params[:section].presence),
+        class: "chip #{params[:favorites].present? ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+  <% Section.top_level.each do |section| %>
+    <%= link_to section.name, recipes_path(section: section.slug, q: @query.presence, favorites: params[:favorites].presence),
+          class: "chip #{@section == section ? "bg-ink text-white" : "#{section_chip_classes(section)} hover:opacity-80"}" %>
+  <% end %>
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-1.5 text-sm">
+  <span class="text-soft">Sort</span>
+  <% Recipe::SORTS.each do |key, label| %>
+    <%= link_to label, recipes_path(request.query_parameters.merge(sort: key)),
+          class: "chip #{@sort == key ? "bg-ink text-white" : "bg-stone-100 text-stone-700 hover:bg-stone-200"}" %>
+  <% end %>
+</div>
+
+<% if @books.any? %>
+  <div class="mb-6 flex flex-wrap items-center gap-1.5 text-sm">
+    <span class="text-soft">Books</span>
+    <% @books.each do |book| %>
+      <%= link_to book.title, recipe_book_path(book), class: "chip bg-sage-100 text-sage-800 hover:bg-sage-200" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @recipes.any? %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <%= render partial: "recipes/recipe_card", collection: @recipes, as: :recipe %>
+  </div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: @query || @section || params[:favorites] ? "Nothing matches" : "No recipes yet",
+        description: @query || @section || params[:favorites] ?
+          "Try a different search, or clear the filters." :
+          "Give it a link or paste a page and the recipe gets read out of it — ingredients, method, times. Then curate them into books: a spring book, a soup book, Grandma's book."
+      ) do |empty| %>
+    <% empty.with_action { link_to "Add a recipe", import_recipes_path, class: "btn btn-primary" } %>
+  <% end %>
+<% end %>

@@ -1,61 +1,56 @@
 require "test_helper"
 
-# The task page's embedded chat (D30): the first message lazily creates the
-# bound run seeded with the task's stored openers — no model call until the
-# reply job runs — and later messages reuse the same run.
+# The task page's conversation (D30) and the full-screen door a phone takes to
+# it (D-chat-shell).
 class Tasks::ConversationsControllerTest < ActionDispatch::IntegrationTest
-  include ActiveJob::TestHelper
-
   setup do
-    @task = users(:one).tasks.create!(
-      title: "Brainstorm potential business ideas",
-      guiding_questions: [ "What skills do you enjoy using most?", "Who would you most like to help?" ]
-    )
     sign_in_as users(:one)
+    @task = users(:one).tasks.create!(title: "Decide about the lease")
   end
 
-  test "the first message creates the run seeded with the stored openers, no model call" do
-    assert_difference -> { ToolRun.count } => 1, -> { ToolRunMessage.count } => 3 do
-      post task_conversation_path(@task), params: { content: "Mostly writing and teaching." }
-    end
-    assert_redirected_to @task
+  test "the task page keeps the panel from sm up and offers a door below it" do
+    get task_path(@task)
 
-    run = @task.conversation
-    assert_equal "task_chat", run.tool_slug
-    assert run.done?, "done means live — the composer stays open"
-    assert_equal @task, run.subject
-
-    roles = run.tool_run_messages.ordered.map(&:role)
-    assert_equal %w[ assistant assistant user ], roles
-    assert_equal "What skills do you enjoy using most?", run.tool_run_messages.ordered.first.content
-    assert run.awaiting_reply?
-    assert_enqueued_with(job: ChatTurnJob, args: [ run ])
-    assert_no_enqueued_jobs only: ToolRunJob
+    assert_response :success
+    assert_select "a[href=?].sm\\:hidden", task_conversation_path(@task)
+    assert_select ".hidden.sm\\:block .chat-panel"
   end
 
-  test "later messages land on the same run" do
-    post task_conversation_path(@task), params: { content: "first" }
-    run = @task.conversation
+  test "the conversation opens as a screen before a run exists" do
+    get task_conversation_path(@task)
 
-    assert_no_difference -> { ToolRun.count } do
-      post task_conversation_path(@task), params: { content: "second" }
-    end
-    assert_equal run, @task.reload.conversation
-    assert_equal "second", run.tool_run_messages.ordered.last.content
+    assert_response :success
+    assert_select ".chat-page .chat-screen"
+    assert_select ".chat-screen .composer"
+    # The task's capture-time questions stand in for a transcript, at no
+    # model cost — the run is still not created.
+    assert_select "#chat-transcript .bubble-assistant"
+    assert_nil @task.reload.conversation
   end
 
-  test "a blank message creates nothing" do
-    assert_no_difference -> { ToolRun.count }, -> { ToolRunMessage.count } do
-      post task_conversation_path(@task), params: { content: "" }
-    end
-    assert_redirected_to @task
+  test "an existing conversation renders its transcript and links back to the task" do
+    post task_conversation_path(@task), params: { content: "Where do I start?" }
+
+    get task_conversation_path(@task)
+
+    assert_response :success
+    assert_match "Where do I start?", response.body
+    assert_select ".chat-screen a[aria-label=?]", "Back to the task"
+    assert_select ".chat-screen a[href=?]", task_path(@task)
   end
 
-  test "only the task's owner can talk on it, even when the task is shared" do
-    AccessGrant.create!(grantor: users(:one), grantee: users(:two), subject: @task)
-    sign_in_as users(:two)
+  test "a turn posted from the screen keeps its client token" do
+    post task_conversation_path(@task), params: { content: "Drawn already", client_token: "cxyz789" }
 
-    post task_conversation_path(@task), params: { content: "hello" }
+    turn = @task.reload.conversation.tool_run_messages.user_role.sole
+    assert_equal "cxyz789", turn.client_token
+  end
+
+  test "you can't open someone else's conversation" do
+    theirs = users(:two).tasks.create!(title: "Not yours")
+
+    get task_conversation_path(theirs)
+
     assert_response :not_found
   end
 end

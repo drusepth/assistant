@@ -4,6 +4,9 @@ class Person < ApplicationRecord
   include Visible
   include Sectionable
   include AutoSortable
+  # A face for every contact, not only the ones with a household login
+  # (D-contact-photos): same attachment and same square variant as a member's.
+  include Avatarable
 
   AUTO_SORT_JOB = CategorizePersonJob
 

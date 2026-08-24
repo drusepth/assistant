@@ -58,13 +58,14 @@ module Tool
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
         parts << "The negotiation: #{inputs[:scenario]}"
+        parts << work_line
         parts << "The user's numbers and limits: #{inputs[:constraints]}" if inputs[:constraints].present?
         if (document = chosen_document)
           parts << "The document (titled “#{document.title}”):\n#{document_text(document)}"
         end
         context = section_context
         parts << "Possibly relevant tracked data:\n#{context.to_prompt}" unless context.empty?
-        parts.join("\n\n")
+        parts.compact.join("\n\n")
       end
 
       def filing_sources = [ chosen_document ]

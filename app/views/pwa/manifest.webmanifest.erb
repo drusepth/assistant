@@ -1,0 +1,30 @@
+{
+  "id": "/",
+  "name": "Assistant",
+  "short_name": "Assistant",
+  "description": "Your own life assistant — calendar, tasks, documents, and the people, money, and paperwork around them, on a box you own.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#ebddc5",
+  "background_color": "#f5ead8",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Today", "url": "<%= today_path %>" },
+    { "name": "Calendar", "url": "<%= calendar_path %>" },
+    { "name": "Tasks", "url": "<%= tasks_path %>" }
+  ]
+}

@@ -162,6 +162,46 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_not @task.reload.completed?
   end
 
+  test "finishing a task leaves a celebration in the flash, and reopening one doesn't" do
+    patch complete_task_path(@task)
+    party = JSON.parse(flash[:celebrate])
+    assert_equal "board", party["tier"]  # it was the only thing left
+    assert party["token"].present?
+    follow_redirect!
+
+    patch reopen_task_path(@task)
+    assert_nil flash[:celebrate]
+  end
+
+  test "the board and the answer card celebrate too" do
+    patch move_task_path(@task, column: "done")
+    assert flash[:celebrate].present?
+
+    other = users(:one).tasks.create!(title: "Another")
+    patch task_path(other), params: { task: { resolution: "Answered" }, save_and_complete: "1" }
+    assert flash[:celebrate].present?
+  end
+
+  test "no celebration for a user who turned them off" do
+    users(:one).update!(celebrations: false)
+
+    patch complete_task_path(@task)
+
+    assert @task.reload.completed?
+    assert_nil flash[:celebrate]
+  end
+
+  test "the celebration renders the party rig and never a flash banner" do
+    patch complete_task_path(@task)
+    follow_redirect!
+
+    assert_response :success
+    assert_select "[data-controller='celebration'][data-celebration-token-value]"
+    # The payload rides the flash, but it is data, not a sentence: it must
+    # never turn up as a banner full of JSON.
+    assert_no_match(/\{&quot;tier&quot;|\{"tier"/, response.body)
+  end
+
   test "reschedules own task to today or tomorrow" do
     @task.update!(due_on: 3.days.ago)
 
@@ -170,6 +210,63 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
 
     patch reschedule_task_path(@task, to: "tomorrow")
     assert_equal Date.tomorrow, @task.reload.due_on
+  end
+
+  test "rescheduling says where the task went and offers the way back" do
+    @task.update!(due_on: 3.days.ago)
+    was = @task.due_on
+
+    patch reschedule_task_path(@task, to: "tomorrow")
+    assert_match "moved to tomorrow", flash[:notice]
+    assert_match @task.title, flash[:notice]
+
+    # The undo is just a reschedule to where the task was.
+    patch flash[:undo]["url"]
+    assert_equal was, @task.reload.due_on
+    assert_match "moved to #{was.strftime("%b %-d")}", flash[:notice]
+  end
+
+  test "the undo reaches the page as a button in the notice" do
+    @task.update!(due_on: 3.days.ago)
+
+    patch reschedule_task_path(@task, to: "today"), headers: { "HTTP_REFERER" => today_url }
+    follow_redirect!
+    assert_select "[role=status]", /moved to today/
+    assert_select "[role=status] form[action=?]", reschedule_task_path(@task, to: 3.days.ago.to_date.to_fs(:iso8601))
+  end
+
+  test "board cards are named, and a card keeps its name when it changes column" do
+    get tasks_path
+    ids = css_select("[id]").map { |el| el["id"] }
+    assert_empty ids.tally.select { |_id, count| count > 1 }.keys, "ids used more than once"
+    assert_select "##{dom_id(@task)}"
+
+    # No per-column prefix: moving a card is the same card, so morph should
+    # carry the node across rather than build a new one.
+    patch move_task_path(@task, column: "later")
+    get tasks_path
+    assert_select "##{dom_id(@task)}"
+  end
+
+  test "undo puts a task that had no date back to having none" do
+    undated = Current.user.tasks.create!(title: "Someday")
+
+    patch reschedule_task_path(undated, to: "today")
+    assert_equal Date.current, undated.reload.due_on
+
+    patch flash[:undo]["url"]
+    assert_nil undated.reload.due_on
+    assert_match "moved to no date", flash[:notice]
+  end
+
+  test "a to= the buttons never send falls back to today rather than erroring" do
+    @task.update!(due_on: 3.days.ago)
+
+    patch reschedule_task_path(@task, to: "2026-02-30") # parses, doesn't exist
+    assert_equal Date.current, @task.reload.due_on
+
+    patch reschedule_task_path(@task, to: "next tuesday-ish")
+    assert_equal Date.current, @task.reload.due_on
   end
 
   test "cannot reschedule another user's task" do

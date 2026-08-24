@@ -2,7 +2,7 @@
 # subject = a primitive the grantor owns (share this one item), or
 # subject = a Section (share all my items tagged with this section).
 class AccessGrant < ApplicationRecord
-  ITEM_TYPES = %w[ Event Task Document Person Goal Note Photo Album Credential ].freeze
+  ITEM_TYPES = %w[ Event Task Document Person Goal Note Photo Album Recipe RecipeBook Credential DiaryEntry ].freeze
 
   belongs_to :grantor, class_name: "User"
   belongs_to :grantee, class_name: "User"
@@ -15,16 +15,19 @@ class AccessGrant < ApplicationRecord
   validate :grantor_owns_subject
 
   # Visibility and decryptability stay in lockstep (D-vault-crypto): however
-  # a credential grant dies — Vault::Share's unshare, a cascade, the console —
-  # the grantee's wrapped item key dies with it. (Item-key rotation is the
-  # unshare route's extra step; it needs the owner's unlocked vault.)
-  after_destroy :destroy_credential_key
+  # a grant on a sealed container dies — Vault::Share's unshare, a cascade,
+  # the console — the grantee's wrapped item key dies with it. (Item-key
+  # rotation is the unshare route's extra step; it needs the owner's
+  # unlocked vault.)
+  after_destroy :destroy_sealed_key
 
   private
-    def destroy_credential_key
-      return unless subject_type == "Credential"
+    def destroy_sealed_key
+      return unless VaultSealed::CONTAINERS.include?(subject_type)
 
-      CredentialKey.where(credential_id: subject_id, user_id: grantee_id).destroy_all
+      container = subject_type.constantize
+      container.sealed_key_class
+        .where(container.sealed_key_foreign_key => subject_id, user_id: grantee_id).destroy_all
     end
 
     def grantee_is_not_grantor

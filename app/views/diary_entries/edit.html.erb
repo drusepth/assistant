@@ -1,0 +1,4 @@
+<%= render Ui::PageHeaderComponent.new(title: "Edit entry",
+      subtitle: l(@entry.entry_date, format: :long)) %>
+
+<%= render "form", entry: @entry, opened: @opened, placeholder: "What happened?" %>

@@ -15,10 +15,62 @@ module ChatHelper
   BULLET = /\A[-*•]\s+(.+)\z/
   NUMBERED = /\A\d{1,3}[.)]\s+(.+)\z/
   HEADING = /\A\#{1,6}\s+(.+?)\s*\#*\z/
+  # A fence opens on ``` (with an optional language tag we ignore) and closes
+  # on the next one — or, if the model never closed it, at the end of the turn.
+  FENCE = /\A```/
   # Code spans and URLs are lifted out whole so the emphasis pass can't
   # chew on an underscore inside either one.
   PROTECTED = %r{(`[^`\n]+`|https?://[^\s<]+)}
   TRAILING_PUNCTUATION = /[.,;:!?)\]]+\z/
+
+  # Consecutive turns from the same speaker read as one block in every
+  # messaging app anybody uses: tight spacing between them, one timestamp
+  # under the last, and the bubble's tail only on that last one. Uniform
+  # spacing between every bubble is the most reliable visual tell of a
+  # homemade chat.
+  #
+  # A gap in time breaks a group even when the speaker doesn't change —
+  # yesterday's last word and today's first are not one utterance — and a
+  # notice (the app talking, never either side) breaks it from both directions.
+  GROUP_WINDOW = 5.minutes
+
+  # A gap worth marking. Above this — or across a date boundary — the
+  # transcript says when, the way every messaging app does, so a conversation
+  # picked up the next morning doesn't read as one unbroken breath. It is also
+  # the timestamp a phone can actually see: the per-turn ones are small and
+  # quiet by design, and were hover-only until this pass.
+  DIVIDER_GAP = 1.hour
+
+  Turn = Data.define(:message, :continues, :ends_group, :divider)
+
+  def chat_turns(messages)
+    messages.each_with_index.map do |message, index|
+      previous = index.positive? ? messages[index - 1] : nil
+
+      Turn.new(
+        message: message,
+        continues: previous.present? && chat_grouped?(previous, message),
+        ends_group: !chat_grouped?(message, messages[index + 1]),
+        divider: chat_divider(previous, message)
+      )
+    end
+  end
+
+  # "Today · 2:45 PM", "Yesterday · 9:12 AM", "Tuesday · 8:30 PM",
+  # "12 August · 8:30 PM" — the day only as precisely as it needs to be, which
+  # is how people say it.
+  def chat_moment(time)
+    date = time.to_date
+    day =
+      if date == Date.current then "Today"
+      elsif date == Date.yesterday then "Yesterday"
+      elsif date > 6.days.ago.to_date then time.strftime("%A")
+      elsif date.year == Date.current.year then time.strftime("%-d %B")
+      else time.strftime("%-d %B %Y")
+      end
+
+    "#{day} · #{time.strftime("%-l:%M %p")}"
+  end
 
   def chat_body(text)
     lines = text.to_s.gsub("\r\n", "\n").split("\n")
@@ -30,6 +82,20 @@ module ChatHelper
 
       if line.empty?
         index += 1
+      elsif line.match?(FENCE)
+        # Inside a fence, nothing is markup and nothing is a list: the lines
+        # go through verbatim (escaped), keeping their own leading whitespace,
+        # because indentation is the meaning. A `tutor` asked anything
+        # technical reaches for a fence, and printing the backticks was the
+        # loudest remaining tell that this surface was homemade.
+        index += 1
+        body = []
+        while index < lines.length && !lines[index].match?(FENCE)
+          body << lines[index]
+          index += 1
+        end
+        index += 1 if index < lines.length # the closing fence, if there is one
+        blocks << chat_code_block(body)
       elsif (kind = chat_list_kind(line))
         items = []
         while index < lines.length && chat_list_kind(lines[index].strip) == kind
@@ -54,9 +120,36 @@ module ChatHelper
   end
 
   private
+    # The first turn on screen always carries one: with a windowed transcript
+    # the top of the page is wherever the reader came in, and a conversation
+    # that opens with no date at all is disorienting.
+    def chat_divider(earlier, later)
+      return chat_moment(later.created_at) if earlier.nil?
+      return nil if later.created_at - earlier.created_at < DIVIDER_GAP &&
+        earlier.created_at.to_date == later.created_at.to_date
+
+      chat_moment(later.created_at)
+    end
+
+    def chat_grouped?(earlier, later)
+      return false if earlier.nil? || later.nil?
+      return false if earlier.notice_role? || later.notice_role?
+
+      earlier.role == later.role && later.created_at - earlier.created_at <= GROUP_WINDOW
+    end
+
     def chat_paragraph_line?(line)
       stripped = line.strip
-      stripped.present? && chat_list_kind(stripped).nil? && !stripped.match?(HEADING)
+      stripped.present? && chat_list_kind(stripped).nil? &&
+        !stripped.match?(HEADING) && !stripped.match?(FENCE)
+    end
+
+    # Escaped, never inlined: a code block is the one place a model's text is
+    # shown exactly as written. The `pre` scrolls inside itself (see .bubble
+    # pre) so a wide line can't widen the bubble.
+    def chat_code_block(body)
+      code = ERB::Util.html_escape(body.join("\n")).to_str
+      tag.pre(tag.code(code.html_safe))
     end
 
     def chat_list_kind(line)

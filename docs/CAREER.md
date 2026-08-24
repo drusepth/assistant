@@ -104,6 +104,12 @@ them fully:
   manual-first on purpose — accomplishments live in the user's head before
   they live in any system — though granted sources can *suggest* wins
   ("that praise email from your manager — log it?") once email lands.
+- **The header line is two profile fields (D-work-profile)**: job title and
+  employer, stated once on Settings and read by every Career surface —
+  `Tool::Base#work_line` in the tool prompts, the raise case's BLS
+  wage-table match and pre-filled title field, the job scout's ranking,
+  the plan tools' goal descriptions. Stated, never inferred; blank means
+  tools ask or leave placeholders, exactly the Rung 3 contract.
 - **The rest is ordinary primitives**: resume/CV in the vault (Document),
   a work-history/skills/current-comp Note ("Tell me about your work" — the
   same interview-capture pattern as the hobby profile), certifications and

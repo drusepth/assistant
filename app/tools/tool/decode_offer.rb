@@ -65,9 +65,10 @@ module Tool
 
       def user_prompt
         parts = [ "Today's date: #{Date.current.iso8601}" ]
+        parts << work_line
         parts << "The user's question: #{inputs[:question]}" if inputs[:question].present?
         parts << "The offer (titled “#{document.title}”):\n#{document_text(document)}"
-        parts.join("\n\n")
+        parts.compact.join("\n\n")
       end
 
       def document = chosen_document

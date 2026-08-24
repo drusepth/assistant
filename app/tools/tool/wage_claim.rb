@@ -43,7 +43,7 @@ module Tool
     PROMPT
 
     private
-      def prompt_parts = [ "What the user is owed, in their words: #{inputs[:details]}" ]
+      def prompt_parts = [ work_line, "What the user is owed, in their words: #{inputs[:details]}" ]
 
       # Appended by code, not the model: the escalation path is the whole
       # point and must never depend on sampling.

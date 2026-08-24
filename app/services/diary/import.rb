@@ -1,0 +1,190 @@
+module Diary
+  # Arriving from somewhere else (DIARY_PLAN §6). A diary is the one thing
+  # in this app people are most likely to already have years of, somewhere
+  # they'd rather not keep it — so the import is part of the pitch, not a
+  # nicety.
+  #
+  # Runs in-request, like every other path that touches plaintext: the file
+  # carries the writing in the clear and must never transit the job queue.
+  # Needs an unlocked vault, because deduplicating means reading what's
+  # already there.
+  #
+  # Parsing and deduplicating happen once, here; writing happens a batch at a
+  # time afterwards (DiaryImport, Diary::ImportRun), because a decade of
+  # someone's journal is more seals than one request should hold.
+  class Import
+    class Error < StandardError; end
+
+    Parsed = Struct.new(:date, :title, :body, keyword_init: true)
+
+    FRONT_MATTER = /\A---\s*\n(.*?)\n---\s*\n/m
+    DATE_IN_NAME = /(\d{4})-(\d{2})-(\d{2})/
+
+    def initialize(session, io, filename: nil)
+      @session = session
+      @user = session.user
+      @io = io
+      @filename = filename.to_s
+    end
+
+    # Parse, drop what's already here, and stage the rest sealed. Returns the
+    # DiaryImport to be walked.
+    def stage!
+      raise Error, "Unlock your diary before importing." unless @session.unlocked?
+
+      parsed = parse_upload
+      raise Error, "Nothing in that file looked like diary entries." if parsed.empty?
+
+      if parsed.size > DiaryImport::MAX_ENTRIES
+        raise Error, "That file holds #{number_with_delimiter(parsed.size)} entries — more than this can import at " \
+                     "once. Split it and bring it over in pieces."
+      end
+
+      fresh, skipped = winnow(parsed)
+      raise Error, "Every entry in that file is already in your diary." if fresh.empty?
+
+      DiaryImport.stage!(@user, fresh, @session.diary_key, skipped: skipped,
+        source_label: @filename.presence)
+    end
+
+    private
+      def parse_upload
+        bytes = @io.read.to_s
+
+        if zip?(bytes) then parse_zip(bytes)
+        elsif @filename.end_with?(".json") || bytes.lstrip.start_with?("{") then parse_day_one(bytes)
+        else [ parse_markdown(bytes, @filename) ].compact
+        end
+      end
+
+      def zip?(bytes) = bytes.byteslice(0, 2) == "PK"
+
+      # Day One exports and "a folder of Markdown" both arrive as a zip; the
+      # contents say which, so the writer doesn't have to.
+      def parse_zip(bytes)
+        entries = []
+
+        Zip::File.open_buffer(StringIO.new(bytes)) do |zip|
+          zip.each do |file|
+            next if file.directory? || file.size.zero?
+            next if file.name.split("/").last.to_s.start_with?(".") # __MACOSX and friends
+
+            case File.extname(file.name).downcase
+            when ".json" then entries.concat(parse_day_one(file.get_input_stream.read))
+            when ".md", ".markdown", ".txt"
+              parsed = parse_markdown(file.get_input_stream.read, file.name)
+              entries << parsed if parsed
+            end
+          end
+        end
+
+        entries
+      rescue Zip::Error
+        raise Error, "That zip didn't open — try exporting it again."
+      end
+
+      def parse_day_one(text)
+        payload = JSON.parse(text)
+        rows = payload.is_a?(Hash) ? payload["entries"] : payload
+        return [] unless rows.is_a?(Array)
+
+        rows.filter_map do |row|
+          body = row["text"].presence || row["richText"].presence
+          next if body.blank?
+
+          title, body = split_heading(body)
+          Parsed.new(date: parse_date(row["creationDate"]) || Date.current, title: title, body: body)
+        end
+      rescue JSON::ParserError
+        raise Error, "That JSON didn't parse — export it again from Day One."
+      end
+
+      # A Markdown file: front matter wins on date and title, then the
+      # filename's date, then the file is skipped rather than filed under
+      # today — a wrong date in a diary is worse than a missing entry.
+      def parse_markdown(text, name)
+        text = text.to_s
+        meta = {}
+
+        if (match = text.match(FRONT_MATTER))
+          meta = parse_front_matter(match[1])
+          text = text.sub(FRONT_MATTER, "")
+        end
+
+        date = parse_date(meta["date"]) || date_from_name(name) or return nil
+        return nil if text.strip.blank?
+
+        heading_title, body = split_heading(text)
+        Parsed.new(date: date, title: meta["title"].presence || heading_title, body: body)
+      end
+
+      def parse_front_matter(block)
+        block.each_line.with_object({}) do |line, meta|
+          key, value = line.split(":", 2)
+          next if value.nil?
+
+          meta[key.strip.downcase] = value.strip.delete_prefix('"').delete_suffix('"')
+        end
+      end
+
+      def split_heading(text)
+        text = text.to_s.gsub("\r\n", "\n").strip
+        first, rest = text.split("\n", 2)
+
+        if first.to_s.start_with?("# ")
+          [ first.delete_prefix("# ").strip, rest.to_s.strip ]
+        else
+          [ nil, text ]
+        end
+      end
+
+      def parse_date(value)
+        return nil if value.blank?
+
+        Time.zone.parse(value.to_s)&.to_date || Date.parse(value.to_s)
+      rescue Date::Error, ArgumentError, TypeError
+        nil
+      end
+
+      def date_from_name(name)
+        match = name.to_s.match(DATE_IN_NAME) or return nil
+
+        Date.new(match[1].to_i, match[2].to_i, match[3].to_i)
+      rescue Date::Error
+        nil
+      end
+
+      # Deduplicating up front, once, is what lets the writing phase be a
+      # dumb loop: each batch just writes its slice, with no need to reopen
+      # the growing journal to check itself.
+      def winnow(parsed)
+        seen = existing_fingerprints
+        fresh = []
+        skipped = 0
+
+        parsed.sort_by(&:date).each do |row|
+          mark = fingerprint(row.date, row.body)
+          if seen.include?(mark)
+            skipped += 1
+            next
+          end
+
+          seen << mark
+          fresh << { "date" => row.date.to_s, "title" => row.title, "body" => row.body }
+        end
+
+        [ fresh, skipped ]
+      end
+
+      # Re-importing the same export is the common accident, so dedupe is on
+      # what a reader would call the same entry: same day, same words.
+      def existing_fingerprints
+        @session.open_all(@user.diary_entries).reject(&:lost?)
+          .map { |opened| fingerprint(opened.entry.entry_date, opened.body) }.to_set
+      end
+
+      def fingerprint(date, body) = [ date.to_s, body.to_s.squish ].join(" ")
+
+      def number_with_delimiter(count) = ActiveSupport::NumberHelper.number_to_delimited(count)
+  end
+end

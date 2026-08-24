@@ -77,7 +77,24 @@
         LLM call is the reply to the user's first message. Owner-only, and
         hidden on completed tasks that never had one. %>
     <% if own && (!@task.completed? || @conversation) %>
-      <div class="space-y-6">
+      <%# Below `sm` this is a door, not a panel (D-chat-shell): a card that is
+          itself a scroller inside a scrolling page is the bug the screen
+          layout exists to fix, so a phone gets the conversation full-screen
+          instead of squeezed into a page it has to share. %>
+      <%= link_to task_conversation_path(@task), class: "card flex items-center gap-3 p-4 transition-colors hover:bg-canvas sm:hidden" do %>
+        <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white">
+          <%= icon(:chat_bubble, css_class: "size-5") %>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-sm font-semibold text-ink">Talk it through</span>
+          <span class="block truncate text-xs text-soft">
+            <%= @conversation ? "Pick the conversation back up" : "Think it out loud — nothing is saved until you say so" %>
+          </span>
+        </span>
+        <%= icon(:chevron_left, css_class: "size-4 shrink-0 rotate-180 text-soft") %>
+      <% end %>
+
+      <div class="hidden space-y-6 sm:block">
         <%= render "tool_runs/chat", run: @conversation, tool: Tool::TaskChat,
               composer_url: task_conversation_path(@task),
               openers: @task.conversation_openers, title: "Talk it through" %>
@@ -85,6 +102,9 @@
     <% end %>
   </div>
   <% if own %>
-    <div><%= render "shared/share_controls", subject: @task %></div>
+    <div class="space-y-6">
+      <%= render "shared/share_controls", subject: @task %>
+      <%= render "reminders/controls", subject: @task %>
+    </div>
   <% end %>
 </div>

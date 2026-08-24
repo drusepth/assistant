@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  include Avatarable
+
   belongs_to :household
 
   has_secure_password
@@ -14,12 +16,17 @@ class User < ApplicationRecord
   has_many :notes, dependent: :destroy
   has_many :photos, dependent: :destroy
   has_many :albums, dependent: :destroy
+  has_many :trips, dependent: :destroy
+  has_many :recipes, dependent: :destroy
+  has_many :recipe_books, dependent: :destroy
+  has_many :share_links, dependent: :destroy
   has_many :tool_runs, dependent: :destroy
   has_many :suggestions, dependent: :destroy
   has_many :job_feeds, dependent: :destroy
   has_many :linked_accounts, dependent: :destroy
   has_many :email_sender_rules, dependent: :destroy
   has_many :notification_channels, dependent: :destroy
+  has_many :reminders, dependent: :destroy
   has_many :care_settings, dependent: :destroy
   has_many :spending_accounts, dependent: :destroy
   has_many :budget_categories, dependent: :destroy
@@ -28,6 +35,10 @@ class User < ApplicationRecord
   has_one :keyring, dependent: :destroy
   has_many :credentials, dependent: :destroy
   has_many :credential_keys, dependent: :destroy
+  has_one :diary_setting, dependent: :destroy
+  has_many :diary_entries, dependent: :destroy
+  has_many :diary_entry_keys, dependent: :destroy
+  has_many :diary_imports, dependent: :destroy
   has_many :emergency_contacts, dependent: :destroy
   has_many :emergency_contact_roles, class_name: "EmergencyContact", foreign_key: :contact_user_id,
     inverse_of: :contact_user, dependent: :destroy
@@ -37,16 +48,8 @@ class User < ApplicationRecord
   # newest kept.
   has_one_attached :export_archive
 
-  # Your face on every surface (D-user-avatars). One square variant is all
-  # any surface ever renders — the original is kept but never served, so a
-  # phone-camera JPEG doesn't get shipped to a sidebar 24 pixels wide.
-  has_one_attached :avatar do |attachable|
-    attachable.variant :thumb, resize_to_fill: [ 200, 200 ], format: :webp,
-      saver: { quality: 80, strip: true }
-  end
-
-  AVATAR_CONTENT_TYPES = %w[ image/png image/jpeg image/webp image/gif ].freeze
-  AVATAR_MAX_BYTES = 10.megabytes
+  # Your face on every surface (D-user-avatars) — the attachment, its square
+  # variant and its guardrails live in Avatarable, shared with Person.
 
   has_many :granted_access_grants, class_name: "AccessGrant", foreign_key: :grantor_id,
     inverse_of: :grantor, dependent: :destroy
@@ -61,22 +64,17 @@ class User < ApplicationRecord
     inverse_of: :inviter, dependent: :destroy
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
+  normalizes :job_title, :employer, with: ->(value) { value.strip.presence }
 
   validates :name, presence: true
   validates :email_address, presence: true, uniqueness: true
-  validate :avatar_must_be_a_supported_image
 
-  # What the initials circle falls back to, and what it always was before
-  # avatars existed: the first letter of the first two words of the name.
-  def initials
-    name.to_s.split.map { |word| word.chars.first }.join[0, 2].upcase
-  end
-
-  # An attached avatar isn't necessarily a *renderable* one — a blob whose
-  # bytes libvips can't open would blow up the variant call on every page
-  # that draws this user, so every surface asks this first.
-  def avatar_ready?
-    avatar.attached? && avatar.variable?
+  # The work profile (D-work-profile): two plain fields the user states once
+  # in Settings instead of retyping into every Career tool. Never inferred —
+  # the Q8 discipline — and private to this user, not shown to the household.
+  # "Cashier at Costco", "Cashier", or "at Costco"; nil when neither is set.
+  def work_summary
+    [ job_title, employer&.then { |name| "at #{name}" } ].compact.join(" ").presence
   end
 
   # Section toggles (D4): sections are enabled unless explicitly disabled,
@@ -107,17 +105,4 @@ class User < ApplicationRecord
     disabled_ids = user_sections.where(enabled: false).pluck(:section_id)
     ordered_sections.reject { |section| disabled_ids.include?(section.id) }
   end
-
-  private
-    def avatar_must_be_a_supported_image
-      return unless avatar.attached?
-
-      unless AVATAR_CONTENT_TYPES.include?(avatar.blob.content_type)
-        errors.add(:avatar, "needs to be a PNG, JPEG, WEBP, or GIF image")
-      end
-
-      if avatar.blob.byte_size > AVATAR_MAX_BYTES
-        errors.add(:avatar, "is bigger than #{AVATAR_MAX_BYTES / 1.megabyte} MB")
-      end
-    end
 end

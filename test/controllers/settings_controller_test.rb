@@ -10,6 +10,20 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_match users(:two).name, response.body
   end
 
+  test "the AI card groups self-run providers ahead of cloud ones and recommends running your own" do
+    get settings_path
+    assert_response :success
+
+    assert_select "select[name=?] optgroup", "model_profile[provider]", count: 2
+    assert_select "optgroup[label=?] option[value=?]", "Runs where you put it", "custom"
+    assert_select "optgroup[label=?] option[value=?]", "Cloud providers", "anthropic"
+    assert_select "optgroup[label=?] option[value=?]", "Cloud providers", "google"
+
+    assert_select "input[type=checkbox][name=?]", "model_profile[allow_cloud_models]"
+    assert_match "Allow cloud LLMs", response.body
+    assert_match "own the means of your own empowerment", response.body
+  end
+
   test "the photo card offers an upload, and a remove only once there's something to remove" do
     get settings_path
     assert_select "form[action=?][enctype=?]", avatar_path, "multipart/form-data"
@@ -19,6 +33,37 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     get settings_path
     assert_select "a[href=?]", avatar_path
+  end
+
+  test "the work profile saves, normalizes, and clears without touching sections (D-work-profile)" do
+    enabled_before = Section.top_level.select { |s| users(:one).section_enabled?(s) }
+
+    patch settings_path, params: { work: { job_title: " Cashier ", employer: "Costco" } }
+    assert_redirected_to settings_path
+    assert_equal "Cashier", users(:one).reload.job_title
+    assert_equal "Costco", users(:one).employer
+    assert enabled_before.all? { |s| users(:one).section_enabled?(s) }
+
+    get settings_path
+    assert_select "input[name=?][value=?]", "work[job_title]", "Cashier"
+
+    patch settings_path, params: { work: { job_title: "", employer: "" } }
+    users(:one).reload
+    assert_nil users(:one).job_title
+    assert_nil users(:one).employer
+  end
+
+  test "celebrations toggle off and back on without touching sections" do
+    enabled_before = Section.top_level.select { |s| users(:one).section_enabled?(s) }
+    assert enabled_before.any?, "fixture user should start with sections enabled"
+
+    patch settings_path, params: { celebrations: "0" }
+    assert_redirected_to settings_path
+    assert_not users(:one).reload.celebrations?
+    assert enabled_before.all? { |s| users(:one).section_enabled?(s) }
+
+    patch settings_path, params: { celebrations: "1" }
+    assert users(:one).reload.celebrations?
   end
 
   test "toggling a section off persists" do

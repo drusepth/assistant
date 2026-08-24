@@ -1,0 +1,25 @@
+<%# One row. A locked (or lost) entry renders its date and stops there —
+    there is no metadata tier to fall back on, which is the point. %>
+<% entry = opened.entry %>
+<div class="flex items-baseline gap-4 p-4">
+  <time class="w-24 shrink-0 text-sm text-soft" datetime="<%= entry.entry_date.iso8601 %>">
+    <%= l(entry.entry_date, format: :long) %>
+  </time>
+
+  <% if opened.lost? %>
+    <p class="text-sm italic text-soft">
+      <%= vault_unlocked? ? "Sealed — the key to this entry is gone." : "Locked" %>
+    </p>
+  <% else %>
+    <div class="min-w-0 flex-1">
+      <%= link_to opened.display_title, diary_entry_path(entry),
+            class: "font-medium text-ink hover:text-primary-700" %>
+      <% if opened.preview.present? %>
+        <p class="mt-0.5 truncate text-sm text-soft"><%= opened.preview %></p>
+      <% end %>
+    </div>
+    <% if opened.mood %>
+      <span class="chip shrink-0 bg-stone-100 text-stone-700"><%= opened.mood %></span>
+    <% end %>
+  <% end %>
+</div>

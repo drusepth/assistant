@@ -1,0 +1,60 @@
+<% content_for :title, @recipe.title %>
+<% scale_path = ->(count) { shared_path(@link.token, recipe: (@recipe.id if @book), servings: count) } %>
+
+<% if @book %>
+  <p class="mb-4 text-sm">
+    <%= link_to "← #{@book.title}", shared_path(@link.token), class: "text-primary-700 hover:underline" %>
+  </p>
+<% end %>
+
+<header class="mb-6">
+  <h1 class="display text-3xl"><%= @recipe.title %></h1>
+  <p class="mt-2 text-sm text-soft">
+    Shared by <%= @owner.name.split.first %><%= " · #{@recipe.timing}" if @recipe.timing.present? %>
+  </p>
+</header>
+
+<% if @recipe.image.attached? %>
+  <%= image_tag url_for(@recipe.image.variant(:hero)), alt: @recipe.title,
+        class: "mb-6 max-h-80 w-full rounded-2xl object-cover print:max-h-48" %>
+<% end %>
+
+<% if @recipe.description.present? %>
+  <p class="mb-6 text-sm text-soft"><%= @recipe.description %></p>
+<% end %>
+
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-5">
+  <div class="sm:col-span-2">
+    <%= render Ui::CardComponent.new(title: "Ingredients") do %>
+      <%= render "recipes/ingredients", recipe: @recipe, servings: @servings, factor: @factor,
+            scale_path: scale_path %>
+    <% end %>
+  </div>
+  <div class="sm:col-span-3">
+    <%= render Ui::CardComponent.new(title: "Method") do %>
+      <%= render "recipes/method", recipe: @recipe %>
+    <% end %>
+  </div>
+</div>
+
+<% if @recipe.notes.present? %>
+  <div class="mt-6">
+    <%= render Ui::CardComponent.new(title: "Notes") do %>
+      <p class="whitespace-pre-wrap text-sm text-ink"><%= @recipe.notes %></p>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @recipe.source_name.present? || @recipe.source_url.present? %>
+  <p class="mt-6 text-sm text-soft">
+    From
+    <% if (source = recipe_source_url(@recipe)) %>
+      <%= link_to recipe_source_label(@recipe, source), source,
+            class: "text-primary-700 underline", rel: "noopener noreferrer nofollow" %>
+    <% else %>
+      <%= @recipe.source_name %>
+    <% end %>
+  </p>
+<% end %>
+
+<%= render "public/footer", portable: true %>

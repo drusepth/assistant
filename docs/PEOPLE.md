@@ -87,6 +87,17 @@ mom" costs trust the app never earns back.
   — picks from the Address Book plus quick-add by name — each answer sets the
   flag. Shrinks to an "Add someone" affordance once a circle exists.
 - Later, optional per-person cadence (see §5); not needed for v1.
+- **The contact form asks for a person, not a filing decision**
+  (D-people-auto-filing). Sections are the assistant's output: the picker
+  folds into the shared **Advanced** drawer, whose closed line names what it
+  filed them under, and anything you tick there it never touches again. Same rule as
+  the circle flag, pointed the other way — explicit beats inferred where the
+  cost of being wrong is trust ("call your mom"), and inferred beats a chore
+  where the cost is a mis-filed tag you can fix in one click.
+- **Contacts have faces** (D-contact-photos). `Person` includes `Avatarable`,
+  so a contact carries the same photo attachment a household member does, and
+  imports bring the photos the address book already had. A contact's own
+  photo wins over the linked member's; initials still stand in for both.
 
 ## 3. Page anatomy (D18 zones, People-shaped Browse)
 

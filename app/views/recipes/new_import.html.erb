@@ -1,0 +1,47 @@
+<%= render Ui::PageHeaderComponent.new(title: "Add a recipe",
+      subtitle: "Give it a link, or paste the page — nobody retypes a recipe") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Type it in myself", new_recipe_path, class: "btn btn-secondary" %>
+  <% end %>
+<% end %>
+
+<div class="max-w-3xl space-y-6">
+  <%= form_with url: import_recipes_path, class: "space-y-4" do %>
+    <%= render Ui::CardComponent.new(title: "From a link") do %>
+      <div class="capture-row">
+        <%= url_field_tag :source_url, nil, placeholder: "https://…", class: "input min-w-0 flex-1" %>
+      </div>
+      <p class="hint mt-2">
+        This app fetches the page itself and reads the recipe out of it — the recipe, not the
+        nine hundred words above it. A share link from someone else's assistant lands here too,
+        and comes across whole.
+      </p>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Or paste it") do %>
+      <%= text_area_tag :source_text, nil, rows: 12, class: "input w-full",
+            placeholder: "Paste the whole page — ingredients, method, the lot. Untidy is fine." %>
+      <p class="hint mt-2">
+        Works for anything you can select and copy: a blog, an email from your aunt, a note on
+        your phone.
+      </p>
+    <% end %>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <%= submit_tag "Read it", class: "btn btn-primary" %>
+      <%= link_to "Cancel", recipes_path, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+
+  <p class="text-xs text-soft">
+    <% if @profile&.configured? %>
+      Your configured model (<%= @profile.display_name %>) does the reading, and only the page
+      text is sent to it. Nothing is saved until you've seen it — and the quantities are always
+      read by the app itself, so they can't be reworded.
+    <% else %>
+      No model is configured, so the app splits the paste on its own headings — it finds the
+      ingredients and the method on most pages, and you can fix the rest by hand. Set up a model
+      in <%= link_to "Settings", settings_path, class: "underline" %> for the tidier version.
+    <% end %>
+  </p>
+</div>

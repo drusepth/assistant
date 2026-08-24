@@ -44,3 +44,28 @@
     <% end %>
   </div>
 <% end %>
+
+<%# The diary appears here only because its author deliberately turned it on
+    (DIARY_PLAN §7). Off by default, and off is the state that needs no
+    explaining — so nothing is said when it isn't included. %>
+<% if @diary %>
+  <section class="mt-8" data-turbo-cache="false">
+    <h2 class="mb-1 text-sm font-semibold text-ink"><%= @owner.name %>'s diary</h2>
+    <p class="mb-3 text-xs text-soft">
+      <%= @owner.name %> chose to include their diary in emergency access. Read it as what it is.
+    </p>
+    <div class="card divide-y divide-edge">
+      <% @diary.open_all(@owner.diary_entries.newest_first).each do |opened| %>
+        <div class="p-4">
+          <p class="mb-1 text-xs text-soft"><%= l(opened.entry.entry_date, format: :long) %></p>
+          <% if opened.lost? %>
+            <p class="text-sm italic text-soft">Sealed — the key to this entry is gone.</p>
+          <% else %>
+            <p class="mb-1 font-medium text-ink"><%= opened.display_title %></p>
+            <div class="whitespace-pre-wrap text-sm text-ink"><%= opened.body %></div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>

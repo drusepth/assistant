@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "A shared recipe" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  </head>
+
+  <%# The bare layout the share links render on (D-share-link): no
+      navigation, no session, no way further in — a page that is only ever
+      the one thing it was shared to show. %>
+  <body class="bg-canvas text-ink antialiased">
+    <main class="mx-auto max-w-3xl px-4 py-8 sm:px-8">
+      <%= yield %>
+    </main>
+  </body>
+</html>

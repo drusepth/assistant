@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_163148) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -141,6 +141,63 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.index ["user_id"], name: "index_credentials_on_user_id"
   end
 
+  create_table "diary_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "edited_at"
+    t.date "entry_date", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.binary "owner_wrapped_item_key", null: false
+    t.binary "payload_ciphertext"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "entry_date"], name: "index_diary_entries_on_user_id_and_entry_date"
+    t.index ["user_id"], name: "index_diary_entries_on_user_id"
+  end
+
+  create_table "diary_entry_keys", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "diary_entry_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_item_key", null: false
+    t.index ["diary_entry_id", "user_id"], name: "index_diary_entry_keys_on_diary_entry_id_and_user_id", unique: true
+    t.index ["diary_entry_id"], name: "index_diary_entry_keys_on_diary_entry_id"
+    t.index ["user_id"], name: "index_diary_entry_keys_on_user_id"
+  end
+
+  create_table "diary_imports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "cursor", default: 0, null: false
+    t.integer "imported", default: 0, null: false
+    t.binary "payload_ciphertext", null: false
+    t.integer "skipped", default: 0, null: false
+    t.string "source_label"
+    t.integer "total", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_diary_imports_on_user_id"
+  end
+
+  create_table "diary_revisions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "diary_entry_id", null: false
+    t.binary "payload_ciphertext", null: false
+    t.datetime "updated_at", null: false
+    t.index ["diary_entry_id", "created_at"], name: "index_diary_revisions_on_diary_entry_id_and_created_at"
+    t.index ["diary_entry_id"], name: "index_diary_revisions_on_diary_entry_id"
+  end
+
+  create_table "diary_settings", force: :cascade do |t|
+    t.datetime "content_key_reset_at"
+    t.datetime "created_at", null: false
+    t.boolean "emergency_included", default: false, null: false
+    t.boolean "prompts_enabled", default: true, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.binary "wrapped_content_key", null: false
+    t.index ["user_id"], name: "index_diary_settings_on_user_id", unique: true
+  end
+
   create_table "documents", force: :cascade do |t|
     t.string "analysis_error"
     t.string "analysis_status"
@@ -255,6 +312,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.text "public_key", null: false
     t.datetime "recovery_confirmed_at"
     t.string "recovery_salt"
+    t.datetime "recovery_verified_at"
     t.binary "recovery_wrapped_key"
     t.datetime "reset_at"
     t.datetime "updated_at", null: false
@@ -280,6 +338,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   end
 
   create_table "model_profiles", force: :cascade do |t|
+    t.boolean "allow_cloud_models", default: true, null: false
     t.string "api_key"
     t.string "base_url", default: "https://api.openai.com/v1", null: false
     t.datetime "created_at", null: false
@@ -307,6 +366,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
     t.string "kind", null: false
+    t.text "secrets", default: "{}", null: false
+    t.integer "sent_count", default: 0, null: false
+    t.date "sent_on"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "kind"], name: "index_notification_channels_on_user_id_and_kind"
@@ -359,6 +421,84 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.index ["user_id"], name: "index_photos_on_user_id"
   end
 
+  create_table "recipe_book_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position"
+    t.integer "recipe_book_id", null: false
+    t.integer "recipe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recipe_book_id", "recipe_id"], name: "index_recipe_book_entries_on_recipe_book_id_and_recipe_id", unique: true
+    t.index ["recipe_book_id"], name: "index_recipe_book_entries_on_recipe_book_id"
+    t.index ["recipe_id"], name: "index_recipe_book_entries_on_recipe_id"
+  end
+
+  create_table "recipe_books", force: :cascade do |t|
+    t.integer "cover_recipe_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["cover_recipe_id"], name: "index_recipe_books_on_cover_recipe_id"
+    t.index ["user_id"], name: "index_recipe_books_on_user_id"
+  end
+
+  create_table "recipe_ingredients", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "heading", default: false, null: false
+    t.string "item", null: false
+    t.string "item_key", null: false
+    t.string "note"
+    t.boolean "optional", default: false, null: false
+    t.integer "position", null: false
+    t.decimal "quantity", precision: 10, scale: 3
+    t.string "raw", null: false
+    t.integer "recipe_id", null: false
+    t.string "unit"
+    t.datetime "updated_at", null: false
+    t.index ["item_key"], name: "index_recipe_ingredients_on_item_key"
+    t.index ["recipe_id", "position"], name: "index_recipe_ingredients_on_recipe_id_and_position"
+    t.index ["recipe_id"], name: "index_recipe_ingredients_on_recipe_id"
+  end
+
+  create_table "recipes", force: :cascade do |t|
+    t.integer "cook_minutes"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "directions"
+    t.boolean "favorite", default: false, null: false
+    t.string "import_error"
+    t.text "import_source"
+    t.string "import_status"
+    t.date "last_cooked_on"
+    t.text "notes"
+    t.integer "prep_minutes"
+    t.integer "servings"
+    t.string "source_name"
+    t.string "source_url"
+    t.integer "times_cooked", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "title"], name: "index_recipes_on_user_id_and_title"
+    t.index ["user_id"], name: "index_recipes_on_user_id"
+  end
+
+  create_table "reminders", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deliver_at", null: false
+    t.datetime "delivered_at"
+    t.integer "lead_minutes"
+    t.integer "subject_id"
+    t.string "subject_type"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["delivered_at", "deliver_at"], name: "index_reminders_on_delivered_at_and_deliver_at"
+    t.index ["subject_type", "subject_id"], name: "index_reminders_on_subject_type_and_subject_id"
+    t.index ["user_id"], name: "index_reminders_on_user_id"
+  end
+
   create_table "section_taggings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "section_id", null: false
@@ -389,6 +529,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.string "user_agent"
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "share_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "label"
+    t.datetime "last_viewed_at"
+    t.integer "subject_id", null: false
+    t.string "subject_type", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "views_count", default: 0, null: false
+    t.index ["subject_type", "subject_id"], name: "index_share_links_on_subject"
+    t.index ["token"], name: "index_share_links_on_token", unique: true
+    t.index ["user_id"], name: "index_share_links_on_user_id"
   end
 
   create_table "spending_accounts", force: :cascade do |t|
@@ -460,6 +616,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   end
 
   create_table "tool_run_messages", force: :cascade do |t|
+    t.string "client_token"
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.string "role", null: false
@@ -486,6 +643,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.index ["user_id"], name: "index_tool_runs_on_user_id"
   end
 
+  create_table "trips", force: :cascade do |t|
+    t.integer "cover_photo_id"
+    t.datetime "created_at", null: false
+    t.decimal "east", precision: 10, scale: 6, null: false
+    t.date "ends_on", null: false
+    t.string "name", null: false
+    t.decimal "north", precision: 10, scale: 6, null: false
+    t.string "place_label"
+    t.decimal "south", precision: 10, scale: 6, null: false
+    t.date "starts_on", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.decimal "west", precision: 10, scale: 6, null: false
+    t.index ["user_id", "starts_on"], name: "index_trips_on_user_id_and_starts_on"
+    t.index ["user_id"], name: "index_trips_on_user_id"
+  end
+
   create_table "user_sections", force: :cascade do |t|
     t.string "agent_level", default: "quiet", null: false
     t.datetime "created_at", null: false
@@ -501,11 +675,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
 
   create_table "users", force: :cascade do |t|
     t.boolean "admin", default: false, null: false
+    t.boolean "celebrations", default: true, null: false
     t.datetime "created_at", null: false
     t.text "digest"
     t.datetime "digest_generated_at"
     t.string "email_address", null: false
+    t.string "employer"
     t.integer "household_id", null: false
+    t.string "job_title"
     t.json "mail_digest"
     t.date "mail_digest_generated_on"
     t.integer "mail_digest_hour", default: 8, null: false
@@ -522,12 +699,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
     t.string "action", null: false
     t.integer "actor_id", null: false
     t.datetime "created_at", null: false
-    t.integer "credential_id"
+    t.integer "subject_id"
+    t.string "subject_type"
     t.integer "subject_user_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["actor_id"], name: "index_vault_events_on_actor_id"
-    t.index ["credential_id"], name: "index_vault_events_on_credential_id"
+    t.index ["subject_type", "subject_id"], name: "index_vault_events_on_subject_type_and_subject_id"
     t.index ["subject_user_id"], name: "index_vault_events_on_subject_user_id"
     t.index ["user_id", "created_at"], name: "index_vault_events_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_vault_events_on_user_id"
@@ -547,6 +725,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   add_foreign_key "credential_keys", "credentials"
   add_foreign_key "credential_keys", "users"
   add_foreign_key "credentials", "users"
+  add_foreign_key "diary_entries", "users"
+  add_foreign_key "diary_entry_keys", "diary_entries"
+  add_foreign_key "diary_entry_keys", "users"
+  add_foreign_key "diary_imports", "users"
+  add_foreign_key "diary_revisions", "diary_entries"
+  add_foreign_key "diary_settings", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "email_sender_rules", "users"
   add_foreign_key "emergency_contacts", "users"
@@ -567,9 +751,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   add_foreign_key "photo_people", "people"
   add_foreign_key "photo_people", "photos"
   add_foreign_key "photos", "users"
+  add_foreign_key "recipe_book_entries", "recipe_books"
+  add_foreign_key "recipe_book_entries", "recipes"
+  add_foreign_key "recipe_books", "recipes", column: "cover_recipe_id", on_delete: :nullify
+  add_foreign_key "recipe_books", "users"
+  add_foreign_key "recipe_ingredients", "recipes"
+  add_foreign_key "recipes", "users"
+  add_foreign_key "reminders", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "share_links", "users"
   add_foreign_key "spending_accounts", "users"
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"
@@ -579,10 +771,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_082437) do
   add_foreign_key "tool_run_items", "tool_runs"
   add_foreign_key "tool_run_messages", "tool_runs"
   add_foreign_key "tool_runs", "users"
+  add_foreign_key "trips", "users"
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"
   add_foreign_key "users", "households"
-  add_foreign_key "vault_events", "credentials"
   add_foreign_key "vault_events", "users"
   add_foreign_key "vault_events", "users", column: "actor_id"
   add_foreign_key "vault_events", "users", column: "subject_user_id"

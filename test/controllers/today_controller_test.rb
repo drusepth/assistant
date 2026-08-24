@@ -79,6 +79,75 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "Move due date to tomorrow", response.body
   end
 
+  test "a row those buttons empty out of the list carries its own send-off" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+
+    get today_path
+    assert_select "#overdue .item-row[data-controller=?]", "row-dismiss"
+    assert_select "#overdue button[data-row-dismiss-direction=?]", "now"
+    assert_select "#overdue button[data-row-dismiss-direction=?]", "later"
+  end
+
+  test "every row on the page is named, and no name is used twice" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+    users(:one).tasks.create!(title: "Do today", due_on: Date.current)
+    users(:one).tasks.create!(title: "Pack gym bag", due_on: Date.tomorrow)
+    users(:one).tasks.create!(title: "Someday thing")
+    # Event.overlapping is inclusive at both ends, so this one is genuinely
+    # on today's list *and* tomorrow's — the case a bare dom_id gets wrong.
+    users(:one).events.create!(title: "Conference", starts_at: Time.current.beginning_of_day + 9.hours,
+      ends_at: Date.tomorrow.end_of_day)
+
+    get today_path
+    rows = css_select(".item-row")
+    assert rows.any?
+    assert_empty rows.reject { |row| row["id"].present? }, "an item row with no id"
+
+    ids = css_select("[id]").map { |el| el["id"] }
+    assert_empty ids.tally.select { |_id, count| count > 1 }.keys, "ids used more than once"
+  end
+
+  test "a row with no reschedule buttons has nothing to animate out" do
+    users(:one).tasks.create!(title: "Do today", due_on: Date.current)
+
+    get today_path
+    assert_select "#due-today .item-row[data-controller=row-dismiss]", false
+  end
+
+  test "undated tasks offer them too — claiming is the only way they land on a day" do
+    users(:one).tasks.create!(title: "Someday thing")
+
+    get today_path
+    assert_select "#unscheduled form[action=?]", reschedule_task_path(Task.find_by(title: "Someday thing"), to: "today")
+  end
+
+  test "a late task says how late rather than making you subtract" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+
+    get today_path
+    assert_match "3 days late", response.body
+  end
+
+  test "the glance strip sizes the day and jumps to each card" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+    users(:one).tasks.create!(title: "Do today", due_on: Date.current)
+    users(:one).events.create!(title: "Tonight", starts_at: Time.current.end_of_day - 1.hour)
+
+    get today_path
+    assert_select "a[href='#overdue']", text: "1 overdue"
+    assert_select "a[href='#due-today']", text: "1 due today"
+    assert_select "a[href='#todays-events']", text: "1 event"
+    assert_select "#overdue"
+    assert_select "#due-today"
+    assert_select "#todays-events"
+  end
+
+  test "the glance strip stays away on a clear day" do
+    get today_path
+    assert_select "a[href='#overdue']", false
+    assert_select "a[href='#due-today']", false
+  end
+
   test "groups coming-up events by day" do
     users(:one).events.create!(title: "Team offsite", starts_at: Time.zone.local(2026, 8, 9, 10))
 

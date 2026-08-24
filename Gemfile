@@ -82,6 +82,11 @@ group :development do
   gem "web-console"
 end
 
+# Offline QR rendering for share links (D-share-link): SVG generated in
+# the app, so handing a phone across a kitchen needs no third-party image
+# service and works with no internet at all.
+gem "rqrcode", "~> 3.0"
+
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"

@@ -46,12 +46,13 @@ module Tool
       def system_prompt
         parts = [ BEHAVIOR ]
         parts << "The interview being practiced: #{inputs[:focus]}"
+        parts << work_line
         parts << "Interviewer persona: #{inputs[:persona]}" if inputs[:persona].present?
         context = section_context
         unless context.empty?
           parts << "The user's tracked career record — prep sheets, logged wins, work history, past mock-interview recaps. Coach from it:\n#{context.to_prompt}"
         end
-        parts.join("\n\n")
+        parts.compact.join("\n\n")
       end
 
       def opening_instruction

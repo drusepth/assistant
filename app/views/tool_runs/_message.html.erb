@@ -1,27 +1,57 @@
 <%# One turn in the transcript. User text is printed verbatim — people
     don't write markdown at a chat box, and eating their asterisks would be
     wrong. Assistant text goes through chat_body (light markdown). A notice
-    is the app speaking, so it reads as a system line, not as either side. %>
+    is the app speaking, so it reads as a system line, not as either side.
+
+    `continues`/`ends_group`/`divider` come from chat_turns: a turn that
+    continues the one above it sits tight against it, only the last of a run
+    carries the bubble's tail and its timestamp, and a divider marks an hour's
+    silence or a new day. The defaults make a message rendered on its own (a
+    Turbo Stream append) look right. %>
+<% continues = local_assigns.fetch(:continues, false) %>
+<% ends_group = local_assigns.fetch(:ends_group, true) %>
+<% divider = local_assigns[:divider] %>
+<%# A turn the client already drew optimistically keeps the id it was drawn
+    with, so the morph after the send matches the two instead of removing one
+    and inserting the other (D-chat-optimistic). %>
+<% dom_id = "chat-msg-#{message.client_token.presence || message.id}" %>
+
+<% if divider %>
+  <p class="chat-divider"><%= divider %></p>
+<% end %>
+
 <% if message.notice_role? %>
-  <div class="flex justify-center">
+  <div class="mt-3 flex justify-center">
     <p class="max-w-prose rounded-lg bg-stone-50 px-3 py-2 text-center text-xs leading-relaxed text-soft">
       <%= message.content %>
     </p>
   </div>
 <% else %>
   <% user = message.user_role? %>
-  <div class="group flex flex-col <%= user ? "items-end" : "items-start" %>">
-    <div class="bubble <%= user ? "bubble-user" : "bubble-assistant" %>">
+  <div id="<%= dom_id %>" class="group flex flex-col <%= user ? "items-end" : "items-start" %> <%= "mt-3" unless continues %>">
+    <div class="bubble <%= user ? "bubble-user" : "bubble-assistant" %> <%= (user ? "bubble-user-tail" : "bubble-assistant-tail") if ends_group %>">
       <% if user %>
         <p class="whitespace-pre-wrap"><%= message.content %></p>
       <% else %>
         <div class="space-y-2"><%= chat_body(message.content) %></div>
       <% end %>
     </div>
-    <time datetime="<%= message.created_at.iso8601 %>"
-          title="<%= l(message.created_at, format: :long) %>"
-          class="mt-1 px-1 text-[0.6875rem] text-soft opacity-0 transition-opacity group-hover:opacity-100">
-      <%= message.created_at.strftime("%-l:%M %p") %>
-    </time>
+
+    <%# The footer of a run of turns: what somebody most wants to do with an
+        answer, and when it was said. `.chat-time` is quiet on a pointer and
+        always legible on a touch device, which had no way to see it at all. %>
+    <% if ends_group %>
+      <% footer = user ? {} : { controller: "clipboard", clipboard_text_value: message.content } %>
+      <%= tag.p class: "chat-time", data: footer do %>
+        <% unless user %>
+          <button type="button" class="cursor-pointer underline underline-offset-2 hover:text-ink"
+                  data-clipboard-target="button" data-action="clipboard#copy">Copy</button>
+        <% end %>
+        <time datetime="<%= message.created_at.iso8601 %>"
+              title="<%= l(message.created_at, format: :long) %>">
+          <%= message.created_at.strftime("%-l:%M %p") %>
+        </time>
+      <% end %>
+    <% end %>
   </div>
 <% end %>

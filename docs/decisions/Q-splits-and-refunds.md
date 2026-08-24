@@ -1,0 +1,2 @@
+<!-- open -->
+**Q-splits-and-refunds.** Split transactions (one Costco run, three envelopes) remain unbuilt — v1 is whole-row categorization only. The refund half is **resolved** (B2): a positive row filed to an expense envelope nets against that envelope rather than counting as income, and an over-refunded envelope floors at zero. Revisit splits when meters mislead in practice. See `docs/MONEY.md` §8. — *Half resolved.*

@@ -1,0 +1,22 @@
+<%= render Ui::PageHeaderComponent.new(title: "Recipe books",
+      subtitle: "Sets you curate — a season, a mood, a person") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Recipes", recipes_path, class: "btn btn-secondary" %>
+    <%= link_to new_recipe_book_path, class: "btn btn-primary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Book
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if @books.any? %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <%= render partial: "recipe_books/book_card", collection: @books, as: :book %>
+  </div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "No books yet",
+        description: "A book is a set you choose: spring, soups, weeknights under 30 minutes, the things Grandma made. A recipe can live in as many books as fit — and a book is the natural thing to share, with the household or by a link."
+      ) do |empty| %>
+    <% empty.with_action { link_to "Start a book", new_recipe_book_path, class: "btn btn-primary" } %>
+  <% end %>
+<% end %>

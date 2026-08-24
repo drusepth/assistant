@@ -1,0 +1,22 @@
+<%= link_to recipe_book_path(book), class: "card group block overflow-hidden p-0" do %>
+  <% cover = book.cover %>
+  <% if cover %>
+    <%= render "recipes/thumb", recipe: cover %>
+  <% else %>
+    <div class="flex aspect-[4/3] items-center justify-center bg-stone-100 text-stone-300">
+      <%= icon(:book_open, css_class: "size-10") %>
+    </div>
+  <% end %>
+  <div class="p-3">
+    <p class="text-sm font-medium text-ink"><%= book.title %></p>
+    <p class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-soft">
+      <span class="shrink-0"><%= pluralize(book.recipes.size, "recipe") %></span>
+      <% if book.user_id != Current.user.id %>
+        <span aria-hidden="true">·</span>
+        <%= render Ui::UserLabelComponent.new(user: book.user, truncate: true) do %>
+          by <%= book.user.name %>
+        <% end %>
+      <% end %>
+    </p>
+  </div>
+<% end %>

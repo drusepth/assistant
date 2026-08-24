@@ -1,5 +1,5 @@
 <div class="card flex items-start gap-3 p-4">
-  <%= render Ui::AvatarComponent.new(user: person.linked_user, name: person.name) %>
+  <%= render Ui::AvatarComponent.new(person: person) %>
 
   <div class="min-w-0 flex-1">
     <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>

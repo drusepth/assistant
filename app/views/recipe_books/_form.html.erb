@@ -1,0 +1,14 @@
+<%= form_with model: book, class: "space-y-4" do |form| %>
+  <%= form.field :title, hint: "“Spring”, “Soups”, “Weeknights”, “Grandma's”" %>
+  <%= form.field :description, as: :text_area, hint: "What holds these together?" %>
+  <% if book.persisted? && book.recipes.any? %>
+    <%= form.field :cover_recipe_id, label_text: "Cover" do %>
+      <%= form.collection_select :cover_recipe_id, book.recipes.order(:title), :id, :title,
+            { include_blank: "Pick one automatically" } %>
+    <% end %>
+  <% end %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", book.persisted? ? recipe_book_path(book) : recipe_books_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

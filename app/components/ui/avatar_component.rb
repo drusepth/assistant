@@ -4,11 +4,11 @@ module Ui
   # the initials circle that was always there when there isn't — so an
   # instance where nobody has uploaded anything looks exactly as it did.
   #
-  # Takes a user and/or a name. A Person row passes both (`user:
-  # person.linked_user, name: person.name`): a contact linked to a
-  # household account wears that member's face, and a contact who is just a
-  # contact still gets initials, without either one pretending to be the
-  # other.
+  # Takes a user, a person, and/or a name. A Person row passes the person
+  # (`person: person`) and the component sorts out whose face to draw: the
+  # contact's own photo first (D-contact-photos), the linked household
+  # member's next (D8), the contact's initials when there is neither — so
+  # nothing ever borrows a face it wasn't given.
   class AvatarComponent < ApplicationComponent
     SIZES = {
       # Small enough to sit inside a calendar pill without growing the row.
@@ -27,24 +27,28 @@ module Ui
       stone: "bg-stone-100 text-stone-700"
     }.freeze
 
-    def initialize(user: nil, name: nil, size: :md, tone: :primary, css_class: nil, title: nil)
-      @user = user
-      @name = name.presence || user&.name
+    def initialize(user: nil, person: nil, name: nil, size: :md, tone: :primary, css_class: nil, title: nil)
+      @person = person
+      @user = user || person&.linked_user
+      # Whoever actually has a renderable photo, contact first; failing
+      # that, whoever the circle is *about*, for the initials.
+      @subject = [ person, @user ].compact.find(&:avatar_ready?) || person || @user
+      @name = name.presence || person&.name || @user&.name
       @size = size
       @tone = tone
       @css_class = css_class
       @title = title
     end
 
-    attr_reader :user, :name, :title
+    attr_reader :person, :user, :name, :title
 
-    def image? = user&.avatar_ready?
+    def image? = @subject&.avatar_ready?
 
     # `helpers.` on purpose: variant URLs are polymorphic routes, and the
     # parent view context is the one guaranteed to resolve them.
-    def image_url = helpers.url_for(user.avatar.variant(:thumb))
+    def image_url = helpers.url_for(@subject.avatar.variant(:thumb))
 
-    def initials = user&.initials || name.to_s.split.map { |word| word.chars.first }.join[0, 2].upcase
+    def initials = @subject&.initials.presence || name.to_s.split.map { |word| word.chars.first }.join[0, 2].upcase
 
     def classes
       [ "flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold",

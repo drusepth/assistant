@@ -1,31 +1,50 @@
 <%= turbo_stream_from @tool_run %>
 
-<%= render Ui::PageHeaderComponent.new(
-      title: @tool_run.tool.title,
-      subtitle: "#{@tool_run.chat? ? "Started" : "Run on"} #{@tool_run.created_at.strftime("%B %-d, %Y")}"
-    ) do |header| %>
-  <% if @tool_run.finished? %>
-    <% header.with_actions do %>
-      <%# The recap button lives under the composer, where the conversation
-          it wraps up is — one home, not two. %>
-      <% if @tool_run.chat? && @tool_run.done? %>
-        <% if @tool_run.subject %>
-          <%# A subject-bound conversation (D30) belongs to its item's page —
-              a fresh inputless session here would be about nothing. %>
-          <%= link_to "Open the task", @tool_run.subject, class: "btn btn-secondary" %>
-        <% else %>
-          <%= link_to "New session", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+<%# A live chat run is a screen, not a page (D-chat-shell): it owns the
+    viewport so the composer is welded to the bottom and the transcript is the
+    only thing that scrolls. Everything the page header carried folds into the
+    screen's own bar below `lg`; above it, the header comes back. %>
+<% if @tool_run.chat? && @tool_run.done? %>
+  <% content_for :bleed, true %>
+  <div class="chat-page lg:px-8 lg:pb-6">
+    <div class="hidden lg:block">
+      <%= render Ui::PageHeaderComponent.new(
+            title: @tool_run.tool.title,
+            subtitle: "Started #{@tool_run.created_at.strftime("%B %-d, %Y")}"
+          ) do |header| %>
+        <% header.with_actions do %>
+          <%= link_to "All conversations", chats_path, class: "btn btn-secondary" %>
+          <% if @tool_run.subject %>
+            <%= link_to "Open the task", @tool_run.subject, class: "btn btn-secondary" %>
+          <% else %>
+            <%= link_to "New session", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+          <% end %>
+          <%= button_to "Delete", @tool_run, method: :delete, class: "btn btn-danger",
+                data: { turbo_confirm: "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." } %>
         <% end %>
-      <% else %>
-        <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
       <% end %>
-      <%= button_to "Delete", @tool_run, method: :delete, class: "btn btn-danger",
-            data: { turbo_confirm: @tool_run.chat? ?
-              "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." :
-              "Delete this run? Anything it created (notes, tasks, events) stays." } %>
+    </div>
+
+    <%= render "tool_runs/chat", run: @tool_run, tool: @tool_run.tool, layout: :screen,
+          composer_url: tool_run_messages_path(@tool_run) %>
+  </div>
+<% else %>
+  <%# Everything else: a draft-kind run of any status, and a chat run that
+      hasn't opened yet or failed to. These flow in the page. %>
+  <%= render Ui::PageHeaderComponent.new(
+        title: @tool_run.tool.title,
+        subtitle: "#{@tool_run.chat? ? "Started" : "Run on"} #{@tool_run.created_at.strftime("%B %-d, %Y")}"
+      ) do |header| %>
+    <% if @tool_run.finished? %>
+      <% header.with_actions do %>
+        <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+        <%= button_to "Delete", @tool_run, method: :delete, class: "btn btn-danger",
+              data: { turbo_confirm: @tool_run.chat? ?
+                "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." :
+                "Delete this run? Anything it created (notes, tasks, events) stays." } %>
+      <% end %>
     <% end %>
   <% end %>
-<% end %>
 
 <div class="max-w-3xl space-y-6">
   <% if @tool_run.queued? || @tool_run.running? %>
@@ -35,18 +54,6 @@
   <% elsif @tool_run.failed? %>
     <%= render Ui::CardComponent.new(title: "That didn't work") do %>
       <p class="text-sm text-red-600"><%= @tool_run.error %></p>
-    <% end %>
-  <% elsif @tool_run.chat? %>
-    <%= render "tool_runs/chat", run: @tool_run, tool: @tool_run.tool,
-          composer_url: tool_run_messages_path(@tool_run) %>
-
-    <% @tool_run.items.grep(Note).each do |note| %>
-      <%= render Ui::CardComponent.new(title: note.title, subtitle: "Recap — saved to your notes") do |card| %>
-        <% card.with_actions do %>
-          <%= link_to "Open note", note, class: "btn btn-secondary btn-sm" %>
-        <% end %>
-        <p class="whitespace-pre-wrap text-sm text-ink"><%= note.body %></p>
-      <% end %>
     <% end %>
   <% else %>
     <%# Ask-your-email answers render here rather than landing anything —
@@ -143,3 +150,4 @@
     <% end %>
   <% end %>
 </div>
+<% end %>

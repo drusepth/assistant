@@ -36,7 +36,13 @@ module Tool
     BRIEF
 
     def call
-      plan_goal!(title: "Job search: #{inputs[:target].to_s.strip}", brief: BRIEF, description: inputs[:constraints].presence)
+      plan_goal!(title: "Job search: #{inputs[:target].to_s.strip}", brief: BRIEF, description: description_text)
     end
+
+    private
+      def description_text
+        [ user.work_summary&.then { |work| "Searching from: #{work}" },
+          inputs[:constraints].presence ].compact.join("\n").presence
+      end
   end
 end

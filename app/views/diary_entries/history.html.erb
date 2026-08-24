@@ -1,0 +1,52 @@
+<%# Undo for a diary. Every version here is sealed under the same item key as
+    the entry itself, so this page is exactly as private as the entry — and
+    exactly as unreadable if the vault key is ever lost. %>
+<div data-turbo-cache="false">
+  <%= render Ui::PageHeaderComponent.new(title: "Earlier versions",
+        subtitle: l(@entry.entry_date, format: :long)) do |header| %>
+    <% header.with_actions do %>
+      <%= link_to "Back to the entry", diary_entry_path(@entry), class: "btn btn-ghost" %>
+    <% end %>
+  <% end %>
+
+  <% if @revisions.any? %>
+    <p class="mb-4 text-sm text-soft">
+      Saved automatically before an editing session overwrites what was there. The last
+      <%= DiaryRevision::KEEP %> are kept; restoring one snapshots the current version first,
+      so you can always come back.
+    </p>
+
+    <div class="card divide-y divide-edge">
+      <div class="p-4">
+        <div class="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+          <p class="text-sm font-medium text-ink">Now</p>
+          <p class="text-xs text-soft">
+            <%= @entry.edited_at ? l(@entry.edited_at, format: :short) : "unsaved" %>
+          </p>
+        </div>
+        <p class="whitespace-pre-wrap text-sm text-soft"><%= @opened.preview(400) %></p>
+      </div>
+
+      <% @revisions.each do |revision, version| %>
+        <div class="p-4">
+          <div class="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+            <p class="text-sm font-medium text-ink"><%= version.display_title %></p>
+            <div class="flex items-center gap-3">
+              <p class="text-xs text-soft"><%= l(revision.created_at, format: :short) %></p>
+              <%= button_to "Restore", restore_diary_entry_path(@entry, revision_id: revision.id),
+                    method: :post, class: "btn btn-secondary btn-sm",
+                    form: { data: { turbo_confirm: "Put this version back? The current one is kept in the history." } } %>
+            </div>
+          </div>
+          <p class="whitespace-pre-wrap text-sm text-soft"><%= version.preview(400) %></p>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "No earlier versions yet",
+          description: "A version is kept the first time you edit this entry in a new sitting — " \
+                       "there is nothing to keep until then."
+        ) %>
+  <% end %>
+</div>
