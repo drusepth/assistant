@@ -8,6 +8,12 @@
 # metadata tier here, so a locked diary can render its calendar and its
 # dates and literally nothing else.
 class DiaryEntriesController < ApplicationController
+  # A page of entries is a page of decrypts, so the list is windowed rather
+  # than capped — before this, a journal past its first couple of hundred
+  # entries simply had no way to reach the older ones.
+  PER_PAGE = 50
+  SEARCH_LIMIT = 100
+
   rate_limit to: 10, within: 3.minutes, only: :unlock,
     with: -> { redirect_to diary_entries_path, alert: "Try again later." }
 
@@ -33,10 +39,17 @@ class DiaryEntriesController < ApplicationController
     # Search decrypts, so it only exists unlocked — and it reaches the whole
     # journal rather than the page-sized slice the list shows.
     scope = Current.user.diary_entries.newest_first
-    @opened = if @query.present?
-      @diary.search(scope, @query)
+    if @query.present?
+      results = @diary.search(scope, @query, limit: SEARCH_LIMIT + 1)
+      @more_results = results.size > SEARCH_LIMIT
+      @opened = results.take(SEARCH_LIMIT)
     else
-      @diary.open_all(scope.limit(200))
+      # One page past the end tells the view whether there's an "older" link
+      # without a second count query.
+      @page = [ params[:page].to_i, 1 ].max
+      window = @diary.open_all(scope.offset((@page - 1) * PER_PAGE).limit(PER_PAGE + 1))
+      @older = window.size > PER_PAGE
+      @opened = window.take(PER_PAGE)
     end
 
     # Never interleaved with the writer's own journal — someone else's

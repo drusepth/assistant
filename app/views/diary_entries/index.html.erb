@@ -128,13 +128,33 @@
 <% if @opened.any? %>
   <% if @query.present? %>
     <p class="mb-2 text-sm text-soft">
-      <%= pluralize(@opened.size, "entry") %> matching “<%= @query %>”.
+      <%# Says "the first 100", never "100", when the search stopped early —
+          a count that quietly means "at least this many" is a lie. %>
+      <%= @more_results ? "The first #{@opened.size} entries" : pluralize(@opened.size, "entry") %>
+      matching “<%= @query %>”.
+      <% if @more_results %>Narrow it down to see the rest.<% end %>
       <%= link_to "Clear", diary_entries_path, class: "underline" %>
     </p>
   <% end %>
   <div class="card divide-y divide-edge">
     <%= render partial: "entry", collection: @opened, as: :opened %>
   </div>
+
+  <% if @query.blank? && (@older || @page > 1) %>
+    <div class="mt-4 flex items-center justify-between gap-2">
+      <% if @page > 1 %>
+        <%= link_to "← Newer", diary_entries_path(page: (@page - 1 if @page > 2)), class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <span></span>
+      <% end %>
+      <span class="text-xs text-soft">Page <%= @page %></span>
+      <% if @older %>
+        <%= link_to "Older →", diary_entries_path(page: @page + 1), class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <span></span>
+      <% end %>
+    </div>
+  <% end %>
 <% elsif @query.present? %>
   <p class="py-8 text-center text-sm text-soft">
     Nothing matches “<%= @query %>”. <%= link_to "Clear", diary_entries_path, class: "underline" %>

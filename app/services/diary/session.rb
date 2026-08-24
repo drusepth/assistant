@@ -88,15 +88,24 @@ module Diary
     # tier. That is affordable only because of the diary key — every entry
     # opens with one GCM unwrap, so scanning a whole journal is milliseconds
     # rather than a 3072-bit unwrap per row.
-    def search(entries, query)
+    # `limit:` stops at the first N matches rather than decrypting the whole
+    # journal to build a page nobody scrolls: entries are visited newest
+    # first, so the ones a search is usually after are found early.
+    def search(entries, query, limit: nil)
       needle = query.to_s.downcase
       return [] if needle.blank?
 
-      open_all(entries).select do |opened|
-        next false if opened.lost?
+      found = []
+      each_in_batches(entries) do |entry|
+        opened = open(entry)
+        next if opened.lost?
+        next unless [ opened.title, opened.body, opened.mood ].compact
+          .any? { |field| field.downcase.include?(needle) }
 
-        [ opened.title, opened.body, opened.mood ].compact.any? { |field| field.downcase.include?(needle) }
+        found << opened
+        return found if limit && found.size >= limit
       end
+      found
     end
 
     def prompts? = setting.nil? || setting.prompts_enabled?
@@ -166,7 +175,26 @@ module Diary
       end
     end
 
+    # How many entries are loaded at a time while walking a journal.
+    BATCH = 200
+
     private
+
+      # `find_each` would be the obvious tool and is the wrong one: it
+      # replaces any ordering with the primary key, and a search that walks
+      # a journal oldest-first fills its page with the least useful matches.
+      # Offset paging keeps the caller's newest-first order.
+      def each_in_batches(entries)
+        offset = 0
+        loop do
+          batch = entries.offset(offset).limit(BATCH).to_a
+          break if batch.empty?
+
+          batch.each { |entry| yield entry }
+          offset += BATCH
+        end
+      end
+
       def load_setting
         setting, key = DiarySetting.unlock_for(user, vault_key)
         @setting = setting
