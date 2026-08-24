@@ -1,0 +1,17 @@
+<%= render Ui::PageHeaderComponent.new(title: "Edit trip") %>
+
+<div class="max-w-xl">
+  <%= form_with model: @trip, class: "space-y-4" do |form| %>
+    <%= form.field :name %>
+    <%# The dates are editable because the detector's guess at where a trip
+        started is only as good as when you took your first photo — the
+        flight out often has none. Widening them pulls in more of the trip's
+        own photos; the box on the map doesn't move. %>
+    <%= form.field :starts_on, as: :date_field, hint: "Photos taken between these dates, inside the trip's area, belong to it." %>
+    <%= form.field :ends_on, as: :date_field %>
+    <div class="flex items-center gap-2 pt-2">
+      <%= form.submit %>
+      <%= link_to "Cancel", trip_path(@trip), class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>

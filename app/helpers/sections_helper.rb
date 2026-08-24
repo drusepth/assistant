@@ -14,7 +14,8 @@ module SectionsHelper
     "career" => "bg-sage-200 text-sage-900",
     "people" => "bg-primary-100 text-primary-700",
     "money" => "bg-sage-100 text-sage-700",
-    "rights" => "bg-primary-200 text-primary-800"
+    "rights" => "bg-primary-200 text-primary-800",
+    "travel" => "bg-sage-300 text-sage-900"
   }.freeze
 
   DOT_CLASSES = {
@@ -24,7 +25,8 @@ module SectionsHelper
     "career" => "bg-sage-700",
     "people" => "bg-primary-400",
     "money" => "bg-sage-400",
-    "rights" => "bg-primary-700"
+    "rights" => "bg-primary-700",
+    "travel" => "bg-sage-600"
   }.freeze
 
   def section_chip_classes(section)
