@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_082821) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_084509) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -196,6 +196,48 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_082821) do
     t.index ["goal_id"], name: "index_events_on_goal_id"
     t.index ["starts_at"], name: "index_events_on_starts_at"
     t.index ["user_id"], name: "index_events_on_user_id"
+  end
+
+  create_table "feed_items", force: :cascade do |t|
+    t.string "author"
+    t.datetime "created_at", null: false
+    t.integer "feed_id", null: false
+    t.string "guid", null: false
+    t.string "image_url"
+    t.datetime "published_at"
+    t.datetime "read_at"
+    t.float "relevance", default: 0.0, null: false
+    t.datetime "saved_at"
+    t.text "summary"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.integer "vote", default: 0, null: false
+    t.index ["feed_id", "guid"], name: "index_feed_items_on_feed_id_and_guid", unique: true
+    t.index ["feed_id", "published_at"], name: "index_feed_items_on_feed_id_and_published_at"
+    t.index ["feed_id"], name: "index_feed_items_on_feed_id"
+    t.index ["read_at"], name: "index_feed_items_on_read_at"
+    t.index ["saved_at"], name: "index_feed_items_on_saved_at"
+  end
+
+  create_table "feeds", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "failure_count", default: 0, null: false
+    t.string "kind", default: "rss", null: false
+    t.string "label"
+    t.string "last_error"
+    t.datetime "last_fetched_at"
+    t.datetime "last_item_at"
+    t.string "site_url"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.integer "user_id", null: false
+    t.index ["last_fetched_at"], name: "index_feeds_on_last_fetched_at"
+    t.index ["user_id", "url"], name: "index_feeds_on_user_id_and_url", unique: true
+    t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
   create_table "goals", force: :cascade do |t|
@@ -672,6 +714,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_082821) do
   add_foreign_key "emergency_contacts", "users", column: "contact_user_id"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
+  add_foreign_key "feed_items", "feeds"
+  add_foreign_key "feeds", "users"
   add_foreign_key "goals", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"

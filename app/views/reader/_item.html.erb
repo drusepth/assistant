@@ -1,0 +1,86 @@
+<%# One item in the river (D-feed-reader). Text and a link out — never the
+    publisher's HTML, which is stripped at parse time — because the article
+    belongs to the site that wrote it and the reader's job is to get you
+    there, or to get the interesting ones out of the river and into your
+    own life as a task. Locals: item; optional interest (for the "why this
+    is here" line, absent on a Turbo re-render of one row). %>
+<% interest = local_assigns.fetch(:interest, nil) %>
+<% url = reader_safe_url(item.url) %>
+<article id="<%= dom_id(item) %>" class="item-row <%= "opacity-60" if item.read? %>">
+  <div class="flex items-start gap-3">
+    <div class="min-w-0 flex-1">
+      <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-soft">
+        <span class="font-medium text-ink"><%= item.source_name %></span>
+        <% if (age = reader_age(item.published_on)) %>
+          <span aria-hidden="true">·</span><span><%= age %></span>
+        <% end %>
+        <% item.feed.sections.each do |section| %>
+          <span class="chip <%= section_chip_classes(section) %>"><%= section.name %></span>
+        <% end %>
+        <% if item.saved? %>
+          <span class="chip bg-sage-100 text-sage-800">Saved</span>
+        <% end %>
+      </p>
+
+      <h3 class="mt-1 text-base font-semibold text-ink">
+        <% if url %>
+          <%= link_to item.title, url, class: "hover:text-primary-700 hover:underline", **ReaderHelper::OUTBOUND %>
+        <% else %>
+          <%= item.title %>
+        <% end %>
+      </h3>
+
+      <% if item.blurb.present? %>
+        <p class="mt-1 line-clamp-3 text-sm text-soft"><%= item.blurb %></p>
+      <% end %>
+
+      <% if (reason = reader_reason(item, interest)) %>
+        <p class="mt-1.5 text-xs text-soft italic"><%= reason %></p>
+      <% end %>
+    </div>
+
+    <%# The publisher's own thumbnail. Lazy and referrer-free: a river of
+        forty items shouldn't announce itself to forty servers before the
+        reader has scrolled to any of them. %>
+    <% if (image = reader_safe_url(item.image_url)) %>
+      <%= image_tag image, alt: "", loading: "lazy", referrerpolicy: "no-referrer",
+            class: "hidden size-20 shrink-0 rounded-xl object-cover sm:block" %>
+    <% end %>
+  </div>
+
+  <div class="row-actions mt-2">
+    <%= button_to vote_feed_item_path(item, direction: FeedItem::UP), method: :patch,
+          class: "btn btn-icon #{item.upvoted? ? "btn-now" : "btn-ghost"}", form_class: "shrink-0",
+          aria: { label: item.upvoted? ? "Undo more like this" : "More like this" },
+          title: "More like this — teaches your own ranking, and nothing leaves this box" do %>
+      <%= icon(:arrow_up, css_class: "size-4") %>
+    <% end %>
+    <%= button_to vote_feed_item_path(item, direction: FeedItem::DOWN), method: :patch,
+          class: "btn btn-icon #{item.downvoted? ? "btn-later" : "btn-ghost"}", form_class: "shrink-0",
+          aria: { label: item.downvoted? ? "Undo less like this" : "Less like this" },
+          title: "Less like this — it sinks in your ranking; it is never hidden from you" do %>
+      <%= icon(:arrow_down, css_class: "size-4") %>
+    <% end %>
+
+    <% if item.saved? %>
+      <%= button_to "Unsave", unsave_feed_item_path(item), method: :patch,
+            class: "btn btn-ghost btn-touch whitespace-nowrap", form_class: "flex-1 sm:flex-none" %>
+    <% else %>
+      <%= button_to "Save", save_feed_item_path(item), method: :patch,
+            class: "btn btn-secondary btn-touch whitespace-nowrap", form_class: "flex-1 sm:flex-none" %>
+    <% end %>
+
+    <% if item.read? %>
+      <%= button_to "Unread", unread_feed_item_path(item), method: :patch,
+            class: "btn btn-ghost btn-touch whitespace-nowrap", form_class: "flex-1 sm:flex-none" %>
+    <% else %>
+      <%= button_to "Mark read", read_feed_item_path(item), method: :patch,
+            class: "btn btn-ghost btn-touch whitespace-nowrap", form_class: "flex-1 sm:flex-none" %>
+    <% end %>
+
+    <%# The point of the whole section (docs/HOBBIES.md): a river that ends
+        in doing something, not in a better-groomed reading list. %>
+    <%= link_to "Make a task", new_task_path(title: item.title, section_ids: item.feed.section_ids),
+          class: "btn btn-ghost btn-touch whitespace-nowrap flex-1 sm:flex-none" %>
+  </div>
+</article>

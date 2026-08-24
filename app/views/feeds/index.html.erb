@@ -1,0 +1,50 @@
+<%# Subscriptions (D-feed-reader): the list of what you follow, and the one
+    field that adds to it. Paste a site, a blog, a subreddit, a channel —
+    discovery finds the feed behind it, so nobody has to hunt for an orange
+    icon. Filing a feed under a hobby is what makes the river's ranking
+    yours rather than generic. %>
+<%= render Ui::PageHeaderComponent.new(
+      title: "Feeds",
+      subtitle: "The sources behind your reader — you pick them, nobody else"
+    ) do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Open reader", reader_path, class: "btn btn-secondary" %>
+    <% if @feeds.any? %>
+      <%= button_to "Check all now", refresh_all_feeds_path, class: "btn btn-ghost" %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <%= render Ui::CardComponent.new(
+        title: "Follow something",
+        subtitle: "Any address works — a site, a blog, a subreddit, a YouTube channel, or a feed link itself."
+      ) do %>
+    <div class="space-y-3">
+      <%= form_with model: @feed, url: feeds_path, class: "capture-row" do |form| %>
+        <%= form.url_field :url, class: "input min-w-0 flex-1",
+              placeholder: "example.com/blog · reddit.com/r/woodworking · youtube.com/channel/…" %>
+        <%= form.text_field :label, class: "input sm:w-40", placeholder: "Name it (optional)" %>
+        <%= form.submit "Follow", class: "btn btn-primary" %>
+      <% end %>
+      <p class="text-xs text-soft">
+        Feeds only — the reader subscribes to what publishers offer, and never scrapes a site that
+        doesn't. Items are fetched on a polite schedule and stay on your own box.
+      </p>
+    </div>
+  <% end %>
+
+  <% if @feeds.any? %>
+    <%= render Ui::CardComponent.new(title: "Following", count: @feeds.size, padded: false) do %>
+      <div class="item-stack">
+        <%= render partial: "feeds/feed", collection: @feeds, as: :feed,
+              locals: { unread_counts: @unread_counts } %>
+      </div>
+    <% end %>
+  <% else %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "Nothing followed yet",
+          description: "Start with one source per hobby — the place you already check. Tag each feed with the hobby it belongs to and the river learns the rest from what you read and vote on."
+        ) %>
+  <% end %>
+</div>

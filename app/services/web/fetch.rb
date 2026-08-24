@@ -31,9 +31,17 @@ module Web
 
     def self.text(url, headers: {}) = new(url, headers: headers).call
 
-    def initialize(url, headers: {})
+    # The same fetch with the markup left on. Only the reader's feed
+    # discovery wants this (D-feed-reader): finding a site's <link
+    # rel="alternate"> means reading the tags the text extraction exists to
+    # throw away. Everything that hands a page to a *model* still goes
+    # through .text — raw markup is never prompt material.
+    def self.raw(url, headers: {}) = new(url, headers: headers, raw: true).call
+
+    def initialize(url, headers: {}, raw: false)
       @url = url.to_s.strip
       @headers = headers
+      @raw = raw
     end
 
     def call
@@ -98,7 +106,10 @@ module Web
         raise Error, "the page is too large to read" if body.bytesize > MAX_BYTES
 
         type = response["content-type"].to_s
-        if type.include?("html")
+        if type.include?("html") && @raw
+          Page.new(title: Nokogiri::HTML(body.scrub).title.to_s.squish.presence,
+                   text: body.scrub, final_url: uri.to_s)
+        elsif type.include?("html")
           document = Nokogiri::HTML(body.scrub)
           document.css("script, style, noscript, svg").remove
           Page.new(

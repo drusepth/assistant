@@ -28,6 +28,12 @@ module IconsHelper
     # glyph: a glyph is sized and weighted by the label it sits in, so at
     # button size it is a hairline; this carries its own size and stroke.
     arrow_right: "M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3",
+    # The reader's up/down votes: the same drawn-arrow reasoning as above,
+    # at thumb size on a phone.
+    arrow_up: "M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18",
+    # The reader in the rail. The dot-and-arcs mark every feed reader has
+    # used since the format was named.
+    rss: "M6.75 19.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM3.75 4.5v1.5A14.25 14.25 0 0118 20.25h1.5M3.75 10.5v1.5a8.25 8.25 0 018.25 8.25h1.5",
     key: "M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z",
     chevrons_left_right: "M8.25 15L4.5 12l3.75-3M15.75 9l3.75 3-3.75 3",
     book_open: "M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25",

@@ -61,6 +61,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.btn-danger`, `.btn-alert` — destructive, and behind-but-not-destructive
    - `.btn-now`/`.btn-later` — the go/stop pair (see Narrow screens)
    - `.btn-sm`, `.btn-touch` — the two sizes off the default
+   - `.btn-icon` — `.btn-touch`'s icon-only sibling: a square target that
+     doesn't stretch, for a row carrying icon verbs beside labelled ones
    - `.btn-tile` (+ `.btn-tile-icon`) — the phone's stacked capture tile,
      folding back into the pill at `sm` (see Narrow screens)
    - `.input`, `.label`, `.hint`, `.field-error` — the form set

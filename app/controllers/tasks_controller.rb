@@ -21,7 +21,9 @@ class TasksController < ApplicationController
   end
 
   def new
-    @task = Current.user.tasks.new(params.permit(:due_on, :goal_id, section_ids: []))
+    # `title` is prefilled by the surfaces that already know what the task
+    # is — the reader's "Make a task" on a feed item (D-feed-reader).
+    @task = Current.user.tasks.new(params.permit(:title, :due_on, :goal_id, section_ids: []))
   end
 
   def create

@@ -220,6 +220,13 @@
   .btn-touch {
     @apply w-full py-2.5 sm:w-auto sm:px-3 sm:py-1.5 sm:text-xs;
   }
+  /* `.btn-touch`'s icon-only sibling: a square thumb target that does *not*
+     stretch, so a row can carry a couple of them beside its labelled verbs
+     without squeezing the labels into two-word columns. The reader's
+     up/down votes are the case. */
+  .btn-icon {
+    @apply size-11 shrink-0 justify-center p-0 sm:size-8;
+  }
   /* The capture tile — a `.btn` that is a stacked icon tile on a phone and
      folds back into the pill from `sm` up. The dashboard hero's four
      quick-adds are the reference: four pills wrap 3-then-1 at phone width,

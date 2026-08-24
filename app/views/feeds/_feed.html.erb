@@ -1,0 +1,39 @@
+<%# One subscription. The row is honest about the last fetch: a feed that
+    has been failing for a week says so here rather than going quiet, which
+    is the failure mode that made people stop trusting readers. Locals:
+    feed, unread_counts. %>
+<% unread = unread_counts.fetch(feed.id, 0) %>
+<div class="item-row flex flex-wrap items-start justify-between gap-3">
+  <div class="min-w-0 flex-1">
+    <p class="flex flex-wrap items-center gap-2">
+      <%= link_to feed.display_title, reader_path(feed: feed.id), class: "font-medium text-ink hover:underline" %>
+      <% if unread.positive? %>
+        <span class="chip bg-primary-100 text-primary-800 tabular-nums"><%= unread %> unread</span>
+      <% end %>
+      <% unless feed.active? %>
+        <span class="chip bg-stone-200 text-stone-700">Paused</span>
+      <% end %>
+      <% feed.sections.each do |section| %>
+        <span class="chip <%= section_chip_classes(section) %>"><%= section.name %></span>
+      <% end %>
+    </p>
+    <p class="mt-0.5 truncate text-xs text-soft"><%= feed.host || feed.url %></p>
+    <p class="mt-0.5 text-xs <%= feed.healthy? ? "text-soft" : "text-primary-800" %>">
+      <% if !feed.healthy? %>
+        Last check failed — <%= feed.last_error %>
+      <% elsif feed.last_fetched_at %>
+        Checked <%= time_ago_in_words(feed.last_fetched_at) %> ago
+      <% else %>
+        Not checked yet — the first fetch is on its way
+      <% end %>
+    </p>
+  </div>
+
+  <div class="row-actions">
+    <%= button_to "Check", refresh_feed_path(feed), class: "btn btn-ghost btn-touch", form_class: "flex-1 sm:flex-none" %>
+    <%= link_to "Edit", edit_feed_path(feed), class: "btn btn-ghost btn-touch flex-1 sm:flex-none" %>
+    <%= button_to "Unfollow", feed_path(feed), method: :delete,
+          class: "btn btn-ghost btn-touch", form_class: "flex-1 sm:flex-none",
+          form: { data: { turbo_confirm: "Unfollow #{feed.display_title}? Its items go too — anything you saved from it as a task or note stays." } } %>
+  </div>
+</div>

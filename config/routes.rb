@@ -194,6 +194,25 @@ Rails.application.routes.draw do
   resources :share_links, only: %i[ create destroy ]
   get "s/:token" => "public#show", as: :shared
 
+  # The reader (D-feed-reader): the river of everything your feeds carried,
+  # the subscriptions behind it, and the per-item verbs that make a river a
+  # reader rather than a list.
+  get "reader" => "reader#index", as: :reader
+  post "reader/read_all" => "reader#read_all", as: :reader_read_all
+  resources :feeds, except: %i[ show new ] do
+    member { post :refresh }
+    collection { post :refresh_all }
+  end
+  resources :feed_items, only: [] do
+    member do
+      patch :read
+      patch :unread
+      patch :save
+      patch :unsave
+      patch :vote
+    end
+  end
+
   resources :suggestions, only: [] do
     member do
       patch :accept
