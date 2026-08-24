@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_171430) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_071901) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -280,6 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_171430) do
   end
 
   create_table "model_profiles", force: :cascade do |t|
+    t.boolean "allow_cloud_models", default: true, null: false
     t.string "api_key"
     t.string "base_url", default: "https://api.openai.com/v1", null: false
     t.datetime "created_at", null: false

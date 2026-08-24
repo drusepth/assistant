@@ -9,7 +9,7 @@ Why: if AI assistance is only ever rented from a few large companies, its benefi
 - [docs/VISION.md](docs/VISION.md) — mission and strategy
 - [docs/PRODUCT.md](docs/PRODUCT.md) — product design
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — schema and technical design
-- [docs/DECISIONS.md](docs/DECISIONS.md) — decision log
+- [docs/DECISIONS.md](docs/DECISIONS.md) — decision log (entries in [docs/decisions/](docs/decisions/), read with `bin/decisions`)
 
 ## Development
 
