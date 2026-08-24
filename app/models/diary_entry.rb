@@ -25,6 +25,7 @@ class DiaryEntry < ApplicationRecord
   seals payload: :payload_ciphertext, keys: :diary_entry_keys, aad: PAYLOAD_AAD
 
   has_many :diary_entry_keys, dependent: :destroy
+  has_many :diary_revisions, dependent: :destroy
   has_many :vault_events, as: :subject, dependent: :destroy
 
   validates :entry_date, presence: true
@@ -95,6 +96,13 @@ class DiaryEntry < ApplicationRecord
   # read moves it onto the diary key so later reads are cheap. Opportunistic
   # by design — it is a performance repair, never a correctness one, so a
   # failure here must leave the entry readable.
+  #
+  # `update_column` deliberately: it skips validations, callbacks and
+  # `updated_at`, because nothing about the entry has changed for the reader.
+  # Note that optimistic locking scopes it to this record's in-memory
+  # `lock_version`, so on a stale record it quietly does nothing — which is
+  # the right failure mode here (the next read tries again) and the wrong one
+  # anywhere that matters.
   def rewrap_to_diary_key!(item_key, diary_key)
     return false unless wrapped_while_locked? && diary_key.present?
 

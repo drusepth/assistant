@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_090646) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_161419) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -145,6 +145,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_090646) do
     t.datetime "created_at", null: false
     t.datetime "edited_at"
     t.date "entry_date", null: false
+    t.integer "lock_version", default: 0, null: false
     t.binary "owner_wrapped_item_key", null: false
     t.binary "payload_ciphertext"
     t.datetime "updated_at", null: false
@@ -162,6 +163,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_090646) do
     t.index ["diary_entry_id", "user_id"], name: "index_diary_entry_keys_on_diary_entry_id_and_user_id", unique: true
     t.index ["diary_entry_id"], name: "index_diary_entry_keys_on_diary_entry_id"
     t.index ["user_id"], name: "index_diary_entry_keys_on_user_id"
+  end
+
+  create_table "diary_revisions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "diary_entry_id", null: false
+    t.binary "payload_ciphertext", null: false
+    t.datetime "updated_at", null: false
+    t.index ["diary_entry_id", "created_at"], name: "index_diary_revisions_on_diary_entry_id_and_created_at"
+    t.index ["diary_entry_id"], name: "index_diary_revisions_on_diary_entry_id"
   end
 
   create_table "diary_settings", force: :cascade do |t|
@@ -702,6 +712,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_090646) do
   add_foreign_key "diary_entries", "users"
   add_foreign_key "diary_entry_keys", "diary_entries"
   add_foreign_key "diary_entry_keys", "users"
+  add_foreign_key "diary_revisions", "diary_entries"
   add_foreign_key "diary_settings", "users"
   add_foreign_key "documents", "users"
   add_foreign_key "email_sender_rules", "users"

@@ -13,9 +13,9 @@ class DiaryEntriesController < ApplicationController
 
   before_action :set_diary
   before_action :set_readable_entry, only: %i[ show ]
-  before_action :set_own_entry, only: %i[ edit update destroy share unshare ]
+  before_action :set_own_entry, only: %i[ edit update destroy share unshare history restore ]
   before_action :require_unlocked,
-    only: %i[ show edit update settings export new_import create_import share unshare ]
+    only: %i[ show edit update settings export new_import create_import share unshare history restore ]
   before_action :require_writable_vault, only: %i[ new create ]
   after_action :never_store
 
@@ -76,19 +76,32 @@ class DiaryEntriesController < ApplicationController
     @prompt = Diary::Prompts.for(@entry.entry_date) if @diary.prompts?
   end
 
+  # Reached by the visible Save *and* by the first autosave of a new entry —
+  # same sealing path either way, only the response differs.
   def create
     @entry = Current.user.diary_entries.new(entry_date: entry_date_param(Date.current))
     payload = payload_params
 
     if payload["body"].blank?
-      @entry.errors.add(:base, "Write something first.")
-      @opened = Diary::Opened.new(@entry, payload)
-      @prompt = Diary::Prompts.for(@entry.entry_date) if @diary.prompts?
-      return render :new, status: :unprocessable_entity
+      return respond_to do |format|
+        format.json { render json: { error: "empty" }, status: :unprocessable_entity }
+        format.html do
+          @entry.errors.add(:base, "Write something first.")
+          @opened = Diary::Opened.new(@entry, payload)
+          @prompt = Diary::Prompts.for(@entry.entry_date) if @diary.prompts?
+          render :new, status: :unprocessable_entity
+        end
+      end
     end
 
     @diary.write!(@entry, payload)
-    redirect_to diary_entry_path(@entry), notice: "Saved to your diary."
+
+    respond_to do |format|
+      # The url comes back so the editor can re-point itself at the entry it
+      # just created; without it the visible Save would post a second copy.
+      format.json { render json: saved_payload(@entry).merge(url: diary_entry_path(@entry)) }
+      format.html { redirect_to diary_entry_path(@entry), notice: "Saved to your diary." }
+    end
   end
 
   def edit
@@ -100,6 +113,7 @@ class DiaryEntriesController < ApplicationController
 
   def update
     @entry.entry_date = entry_date_param(@entry.entry_date)
+    @entry.lock_version = params[:diary_entry][:lock_version] if params.dig(:diary_entry, :lock_version)
     saved = @entry.save && @diary.update!(@entry, payload_params)
 
     respond_to do |format|
@@ -107,7 +121,7 @@ class DiaryEntriesController < ApplicationController
       # writer while they're still typing.
       format.json do
         if saved
-          render json: { saved_at: l(Time.current, format: :short) }
+          render json: saved_payload(@entry)
         else
           render json: { error: "unsaved" }, status: :unprocessable_entity
         end
@@ -121,11 +135,35 @@ class DiaryEntriesController < ApplicationController
         end
       end
     end
+  rescue ActiveRecord::StaleObjectError
+    # Another tab (or another device) saved this entry since this form was
+    # rendered. Refusing is the only safe answer: the two versions differ by
+    # whatever the writer typed in the other window, and silently keeping
+    # one would throw the other away without ever saying so.
+    stale_entry_response
   end
 
   def destroy
     @entry.destroy!
     redirect_to diary_entries_path, notice: "Entry deleted."
+  end
+
+  # --- undo ---
+
+  def history
+    @revisions = @diary.revisions(@entry)
+    @opened = @diary.open(@entry)
+  end
+
+  def restore
+    revision = @entry.diary_revisions.find(params[:revision_id])
+
+    if @diary.restore!(@entry, revision)
+      redirect_to diary_entry_path(@entry),
+        notice: "Restored the version from #{l(revision.created_at, format: :short)}. The version you replaced is in the history."
+    else
+      redirect_to history_diary_entry_path(@entry), alert: "That version couldn't be opened."
+    end
   end
 
   # --- vault lifecycle ---
@@ -240,6 +278,19 @@ class DiaryEntriesController < ApplicationController
         redirect_to diary_entries_path, alert: "Sign in again to set up your vault first."
       elsif @keyring.recovery_pending?
         redirect_to diary_entries_path, alert: "Save your recovery kit before you start writing."
+      end
+    end
+
+    def saved_payload(entry)
+      { saved_at: l(Time.current, format: :short), lock_version: entry.reload.lock_version }
+    end
+
+    STALE_MESSAGE = "This entry was saved somewhere else — reload to see that version before editing here.".freeze
+
+    def stale_entry_response
+      respond_to do |format|
+        format.json { render json: { error: "stale", message: STALE_MESSAGE }, status: :conflict }
+        format.html { redirect_to diary_entry_path(@entry), alert: STALE_MESSAGE }
       end
     end
 

@@ -149,6 +149,8 @@ Rails.application.routes.draw do
     member do
       post :share
       delete :unshare
+      get :history
+      post :restore
     end
     collection do
       post :unlock

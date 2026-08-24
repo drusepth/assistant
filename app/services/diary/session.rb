@@ -129,9 +129,41 @@ module Diary
       item_key = entry.unwrap_item_key(user, vault_key, diary_key: diary_key) or return false
 
       existing = entry.read_secrets_with_item_key(item_key) || {}
-      entry.update_secrets!(existing.merge(payload), item_key)
+      merged = existing.merge(payload)
+
+      # Snapshot what was there before overwriting it — under the same item
+      # key, so this costs no new key and is exactly as readable as the
+      # entry. Throttled inside DiaryRevision so autosave doesn't bury the
+      # one version worth going back to.
+      DiaryRevision.seal!(entry, existing, item_key) if merged != existing
+
+      entry.update_secrets!(merged, item_key)
       repair(entry, item_key)
       true
+    end
+
+    # Put a previous version back. It becomes the live payload through the
+    # ordinary edit path, so the version being replaced is itself snapshotted
+    # first — restoring is never the thing that loses words.
+    def restore!(entry, revision)
+      item_key = entry.unwrap_item_key(user, vault_key, diary_key: diary_key) or return false
+      payload = revision.open(item_key) or return false
+
+      # A full replace, not a merge: a field the old version didn't have is
+      # one the writer deleted since, and restoring means restoring.
+      DiaryRevision.seal!(entry, entry.read_secrets_with_item_key(item_key) || {}, item_key, force: true)
+      entry.update_secrets!(payload, item_key)
+      true
+    end
+
+    def revisions(entry, limit: DiaryRevision::KEEP)
+      item_key = entry.unwrap_item_key(user, vault_key, diary_key: diary_key) or return []
+
+      entry.diary_revisions.newest_first.limit(limit).filter_map do |revision|
+        payload = revision.open(item_key) or next
+
+        [ revision, Opened.new(entry, payload) ]
+      end
     end
 
     private
