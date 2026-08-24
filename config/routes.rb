@@ -159,6 +159,8 @@ Rails.application.routes.draw do
       post :export
       get :import, action: :new_import
       post :import, action: :create_import
+      post :import_step
+      delete :import, action: :cancel_import
     end
   end
 

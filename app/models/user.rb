@@ -38,6 +38,7 @@ class User < ApplicationRecord
   has_one :diary_setting, dependent: :destroy
   has_many :diary_entries, dependent: :destroy
   has_many :diary_entry_keys, dependent: :destroy
+  has_many :diary_imports, dependent: :destroy
   has_many :emergency_contacts, dependent: :destroy
   has_many :emergency_contact_roles, class_name: "EmergencyContact", foreign_key: :contact_user_id,
     inverse_of: :contact_user, dependent: :destroy

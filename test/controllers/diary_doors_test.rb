@@ -26,6 +26,21 @@ class DiaryDoorsTest < ActionDispatch::IntegrationTest
     buffer.read
   end
 
+  # Importing is staged and then walked a batch at a time, so a test that
+  # wants entries has to drive it the way the page does.
+  def import_file(content, name)
+    post import_diary_entries_url, params: { file: upload(content, name) }
+    drive_import
+  end
+
+  def drive_import(limit: 50)
+    limit.times do
+      post import_step_diary_entries_url, as: :json
+      return JSON.parse(response.body) if JSON.parse(response.body)["done"]
+    end
+    flunk "import did not finish"
+  end
+
   def bodies
     diary = Diary::Session.new(@user.reload, nil)
     @user.diary_entries.order(:entry_date).map { |entry| [ entry.entry_date, entry ] }
@@ -37,8 +52,7 @@ class DiaryDoorsTest < ActionDispatch::IntegrationTest
       { "creationDate" => "2021-03-06T21:00:00Z", "text" => "Quiet day. Unpacked the kitchen." }
     ] }.to_json
 
-    post import_diary_entries_url, params: { file: upload(payload, "Journal.json") }
-    assert_redirected_to diary_entries_path
+    import_file(payload, "Journal.json")
     assert_equal 2, @user.diary_entries.count
 
     get diary_entries_url
@@ -56,7 +70,7 @@ class DiaryDoorsTest < ActionDispatch::IntegrationTest
       "__MACOSX/._2022-07-01-first.md" => "junk"
     )
 
-    post import_diary_entries_url, params: { file: upload(archive, "journal.zip") }
+    import_file(archive, "journal.zip")
     assert_equal 2, @user.diary_entries.count
 
     get diary_entries_url
@@ -67,18 +81,20 @@ class DiaryDoorsTest < ActionDispatch::IntegrationTest
   test "re-importing the same file adds nothing" do
     payload = { "entries" => [ { "creationDate" => "2021-03-04T09:30:00Z", "text" => "Once." } ] }.to_json
 
-    post import_diary_entries_url, params: { file: upload(payload, "Journal.json") }
+    import_file(payload, "Journal.json")
     assert_equal 1, @user.diary_entries.count
 
+    # Nothing to stage at all, so it never gets as far as a progress bar.
     post import_diary_entries_url, params: { file: upload(payload, "Journal.json") }
+    assert_redirected_to import_diary_entries_path
+    assert_match(/already in your diary/i, flash[:alert])
     assert_equal 1, @user.diary_entries.count, "the same entry must not land twice"
-    assert_match "1 already here", flash[:notice]
   end
 
   test "imported entries are sealed, not stored in the clear" do
     payload = { "entries" => [ { "creationDate" => "2021-03-04T09:30:00Z",
                                  "text" => "Unmistakable-imported-text-88." } ] }.to_json
-    post import_diary_entries_url, params: { file: upload(payload, "Journal.json") }
+    import_file(payload, "Journal.json")
 
     row = DiaryEntry.connection.select_one("SELECT * FROM diary_entries")
     assert_no_match(/Unmistakable-imported-text-88/, row.values.map(&:to_s).join(" "))
@@ -106,7 +122,7 @@ class DiaryDoorsTest < ActionDispatch::IntegrationTest
 
     # The real test of an export: it comes back in.
     @user.diary_entries.destroy_all
-    post import_diary_entries_url, params: { file: upload(response.body, "diary.zip") }
+    import_file(response.body, "diary.zip")
 
     restored = @user.diary_entries.reload.sole
     assert_equal Date.new(2023, 1, 9), restored.entry_date

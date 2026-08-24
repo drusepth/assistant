@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_161419) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_162233) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -163,6 +163,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_161419) do
     t.index ["diary_entry_id", "user_id"], name: "index_diary_entry_keys_on_diary_entry_id_and_user_id", unique: true
     t.index ["diary_entry_id"], name: "index_diary_entry_keys_on_diary_entry_id"
     t.index ["user_id"], name: "index_diary_entry_keys_on_user_id"
+  end
+
+  create_table "diary_imports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "cursor", default: 0, null: false
+    t.integer "imported", default: 0, null: false
+    t.binary "payload_ciphertext", null: false
+    t.integer "skipped", default: 0, null: false
+    t.string "source_label"
+    t.integer "total", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_diary_imports_on_user_id"
   end
 
   create_table "diary_revisions", force: :cascade do |t|
@@ -712,6 +725,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_161419) do
   add_foreign_key "diary_entries", "users"
   add_foreign_key "diary_entry_keys", "diary_entries"
   add_foreign_key "diary_entry_keys", "users"
+  add_foreign_key "diary_imports", "users"
   add_foreign_key "diary_revisions", "diary_entries"
   add_foreign_key "diary_settings", "users"
   add_foreign_key "documents", "users"

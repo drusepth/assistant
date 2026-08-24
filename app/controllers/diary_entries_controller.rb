@@ -21,7 +21,8 @@ class DiaryEntriesController < ApplicationController
   before_action :set_readable_entry, only: %i[ show ]
   before_action :set_own_entry, only: %i[ edit update destroy share unshare history restore ]
   before_action :require_unlocked,
-    only: %i[ show edit update settings export new_import create_import share unshare history restore ]
+    only: %i[ show edit update settings export new_import create_import import_step cancel_import
+              share unshare history restore ]
   before_action :require_writable_vault, only: %i[ new create ]
   after_action :never_store
 
@@ -241,16 +242,35 @@ class DiaryEntriesController < ApplicationController
   end
 
   def new_import
+    @import = Current.user.diary_imports.first
   end
 
+  # Parses and deduplicates once, then hands off to the batch walker. A
+  # decade of someone's journal is thousands of seals and thousands of
+  # inserts — more than one request should hold, and a background job is
+  # exactly what this container may not use.
   def create_import
     return redirect_to import_diary_entries_path, alert: "Pick a file first." if params[:file].blank?
 
-    result = Diary::Import.new(@diary, params[:file], filename: params[:file].original_filename).call
-    redirect_to diary_entries_path,
-      notice: "#{result.imported} imported, #{result.skipped} already here."
+    Current.user.diary_imports.destroy_all # one import at a time; a new file replaces an abandoned one
+    @import = Diary::Import.new(@diary, params[:file], filename: params[:file].original_filename).stage!
+    redirect_to import_diary_entries_path
   rescue Diary::Import::Error => error
     redirect_to import_diary_entries_path, alert: error.message
+  end
+
+  # One batch per call, driven by the page until it reports done.
+  def import_step
+    import = Current.user.diary_imports.first
+    return render json: { done: true, percent: 100 }, status: :ok if import.nil?
+
+    progress = Diary::ImportRun.new(@diary, import).step!
+    render json: progress.to_h
+  end
+
+  def cancel_import
+    Current.user.diary_imports.destroy_all
+    redirect_to import_diary_entries_path, notice: "Import cancelled — nothing more will be added."
   end
 
   private
