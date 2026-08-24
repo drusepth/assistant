@@ -34,9 +34,13 @@ module Diary
   class Session
     attr_reader :user, :vault_key
 
-    def initialize(user, vault_key)
+    # `repair: false` for reads that aren't the writer's own visit — an
+    # emergency contact opening a diary shouldn't quietly rewrite the wraps
+    # on someone else's entries.
+    def initialize(user, vault_key, repair: true)
       @user = user
       @vault_key = vault_key.presence
+      @repair = repair
     end
 
     def unlocked? = vault_key.present?
@@ -65,7 +69,11 @@ module Diary
     def read(entry)
       return nil unless unlocked?
 
-      item_key = entry.unwrap_item_key(user, vault_key, diary_key: diary_key) or return nil
+      # Only the author's own entries hang off the diary key; a shared entry
+      # opens through its key row, and asking for the key here would create
+      # a diary for a reader who may not keep one.
+      own = entry.user_id == user.id
+      item_key = entry.unwrap_item_key(user, vault_key, diary_key: own ? diary_key : nil) or return nil
       payload = entry.read_secrets_with_item_key(item_key)
       repair(entry, item_key)
       payload
@@ -92,6 +100,8 @@ module Diary
     end
 
     def prompts? = setting.nil? || setting.prompts_enabled?
+
+    def emergency_included? = setting&.emergency_included? || false
 
     # Writing a dial goes through the unlocked path so the row is created
     # with a real diary key. Creating it any other way would leave a
@@ -136,7 +146,7 @@ module Diary
       # to re-wrap must still be readable, so this swallows rather than
       # raises (the D23 posture).
       def repair(entry, item_key)
-        return unless entry.user_id == user.id && entry.wrapped_while_locked?
+        return unless @repair && entry.user_id == user.id && entry.wrapped_while_locked?
 
         entry.rewrap_to_diary_key!(item_key, diary_key)
       rescue StandardError => error

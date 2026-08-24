@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_084638) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_090646) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -673,12 +673,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_084638) do
     t.string "action", null: false
     t.integer "actor_id", null: false
     t.datetime "created_at", null: false
-    t.integer "credential_id"
+    t.integer "subject_id"
+    t.string "subject_type"
     t.integer "subject_user_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["actor_id"], name: "index_vault_events_on_actor_id"
-    t.index ["credential_id"], name: "index_vault_events_on_credential_id"
+    t.index ["subject_type", "subject_id"], name: "index_vault_events_on_subject_type_and_subject_id"
     t.index ["subject_user_id"], name: "index_vault_events_on_subject_user_id"
     t.index ["user_id", "created_at"], name: "index_vault_events_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_vault_events_on_user_id"
@@ -746,7 +747,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_084638) do
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"
   add_foreign_key "users", "households"
-  add_foreign_key "vault_events", "credentials"
   add_foreign_key "vault_events", "users"
   add_foreign_key "vault_events", "users", column: "actor_id"
   add_foreign_key "vault_events", "users", column: "subject_user_id"

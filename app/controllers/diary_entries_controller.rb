@@ -12,8 +12,10 @@ class DiaryEntriesController < ApplicationController
     with: -> { redirect_to diary_entries_path, alert: "Try again later." }
 
   before_action :set_diary
-  before_action :set_entry, only: %i[ show edit update destroy ]
-  before_action :require_unlocked, only: %i[ show edit update settings export new_import create_import ]
+  before_action :set_readable_entry, only: %i[ show ]
+  before_action :set_own_entry, only: %i[ edit update destroy share unshare ]
+  before_action :require_unlocked,
+    only: %i[ show edit update settings export new_import create_import share unshare ]
   before_action :require_writable_vault, only: %i[ new create ]
   after_action :never_store
 
@@ -37,20 +39,35 @@ class DiaryEntriesController < ApplicationController
       @diary.open_all(scope.limit(200))
     end
 
+    # Never interleaved with the writer's own journal — someone else's
+    # entry is a different kind of thing, and it belongs in its own place.
+    @shared_with_me = @diary.open_all(
+      DiaryEntry.visible_to(Current.user).where.not(user_id: Current.user.id)
+        .includes(:user).newest_first
+    ).reject(&:lost?)
+
     @on_this_day = @diary.open_all(
       Current.user.diary_entries.on_day_of_year(Date.current)
         .where.not(entry_date: Date.current.beginning_of_year..Date.current.end_of_year).newest_first
     ).reject(&:lost?)
   end
 
-  # The one dial the diary owns for itself; the emergency dial lands in W4.
   def settings
-    @diary.setting_for_update.update!(prompts_enabled: params[:prompts_enabled] == "1")
+    setting = @diary.setting_for_update
+    setting.update!(prompts_enabled: params[:prompts_enabled] == "1") if params.key?(:prompts_enabled)
+    setting.update!(emergency_included: params[:emergency_included] == "1") if params.key?(:emergency_included)
     redirect_to diary_entries_path, notice: "Saved."
   end
 
   def show
     @opened = @diary.open(@entry)
+    @own = @entry.user_id == Current.user.id
+    return unless @own
+
+    @shared_with = @entry.shared_with
+    @eligible = Current.user.household.users.where.not(id: [ Current.user.id, *@shared_with.map(&:id) ])
+      .select { |member| member.keyring.present? }
+    @events = @entry.vault_events.includes(:actor, :subject_user).newest_first.limit(10)
   end
 
   def new
@@ -131,6 +148,33 @@ class DiaryEntriesController < ApplicationController
     redirect_to diary_entries_path, notice: "Diary locked."
   end
 
+  # --- sharing (W4) ---
+
+  # The one exception to private-absolutely, and it is per-entry on purpose:
+  # there is no "share my diary" grant, and because entries carry no
+  # taggings there is no section grant that could ever amount to one.
+  def share
+    grantees = Current.user.household.users.where(id: params[:grantee_id])
+    result = Vault::Share.new(@entry, Current.user, vault_key).grant(grantees)
+
+    if result.shared.positive?
+      redirect_to diary_entry_path(@entry), notice: "Shared with #{result.names.to_sentence}."
+    else
+      redirect_to diary_entry_path(@entry), alert: result.error || "Nobody new to share with."
+    end
+  end
+
+  def unshare
+    grantee = Current.user.household.users.find(params[:grantee_id])
+
+    if Vault::Share.new(@entry, Current.user, vault_key).revoke(grantee)
+      redirect_to diary_entry_path(@entry),
+        notice: "#{grantee.name} can't open this any more — though nothing un-reads what they already read."
+    else
+      redirect_to diary_entry_path(@entry), alert: "Couldn't revoke — try again."
+    end
+  end
+
   # --- doors (W3) ---
 
   # In-request only, like the passwords export: the archive job runs where
@@ -164,8 +208,14 @@ class DiaryEntriesController < ApplicationController
       @keyring = Current.user.keyring
     end
 
-    # Owner-only for now; W4's sharing widens this to `visible_to`.
-    def set_entry
+    # Reading widens to whoever holds a grant; everything that *changes* an
+    # entry stays the author's alone. A shared diary entry is read-only for
+    # the reader, exactly as a shared credential is.
+    def set_readable_entry
+      @entry = DiaryEntry.visible_to(Current.user).find(params[:id])
+    end
+
+    def set_own_entry
       @entry = Current.user.diary_entries.find(params[:id])
     end
 

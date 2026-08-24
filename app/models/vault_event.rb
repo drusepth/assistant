@@ -15,23 +15,25 @@ class VaultEvent < ApplicationRecord
 
   belongs_to :user
   belongs_to :actor, class_name: "User"
-  belongs_to :credential, optional: true
+  belongs_to :subject, polymorphic: true, optional: true
   belongs_to :subject_user, class_name: "User", optional: true
 
   validates :action, inclusion: { in: ACTIONS }
 
   scope :newest_first, -> { order(created_at: :desc, id: :desc) }
-  scope :vault_wide, -> { where(credential_id: nil) }
+  scope :vault_wide, -> { where(subject_id: nil) }
+
+  # Each container shows its own history plus the vault-wide events, which
+  # belong to the keyring rather than to any one container — an emergency
+  # contact opens *the vault*, not a password.
+  scope :for_container, ->(type) { where(subject_type: [ nil, type ]) }
 
   # Recording must never break the thing it observes (the D23 posture).
-  #
-  # `subject:` takes any sealed container (D-vault-sealed); only credentials
-  # have a column to land in today, so a diary entry records the *act* —
-  # who shared with whom — without an entry-scoped row, which is also the
-  # only shape that could carry a title into a table declared secret-free.
-  def self.record(action, user:, actor:, credential: nil, subject: nil, subject_user: nil)
-    credential ||= subject if subject.is_a?(Credential)
-    create!(action: action, user: user, actor: actor, credential: credential, subject_user: subject_user)
+  # `subject:` takes any sealed container (D-vault-sealed) — a credential,
+  # a diary entry — or nothing at all, for the events that belong to the
+  # vault itself.
+  def self.record(action, user:, actor:, subject: nil, subject_user: nil)
+    create!(action: action, user: user, actor: actor, subject: subject, subject_user: subject_user)
   rescue StandardError => error
     AppError.record(error, source: "VaultEvent.record", user: actor)
     nil

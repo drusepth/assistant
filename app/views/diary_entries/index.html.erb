@@ -66,6 +66,47 @@
   </div>
 <% end %>
 
+<%# The emergency dial (DIARY_PLAN §7). Off by default and honest about
+    what kind of "off" it is. %>
+<% if vault_unlocked? && Current.user.emergency_contacts.any? %>
+  <div class="mb-5 rounded-lg border border-edge bg-surface p-4 text-sm">
+    <p class="mb-1 font-medium text-ink">
+      Emergency access <%= @diary.emergency_included? ? "includes" : "does not include" %> your diary
+    </p>
+    <p class="mb-3 text-xs text-soft">
+      <%= Current.user.emergency_contacts.map { |contact| contact.contact_user.name }.to_sentence %>
+      can open your passwords if something happens to you.
+      <%= @diary.emergency_included? ? "Right now they'd read this diary too." : "Your diary stays sealed to them." %>
+      This is enforced by the app, not by encryption — someone who controls the server itself could bypass it.
+    </p>
+    <%= form_with url: settings_diary_entries_path, method: :patch do |form| %>
+      <%= form.hidden_field :emergency_included, value: @diary.emergency_included? ? "0" : "1" %>
+      <%= form.button @diary.emergency_included? ? "Keep my diary out of emergency access" : "Include my diary in emergency access",
+            class: "btn btn-secondary btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
+
+<%# Never interleaved with your own writing — someone else's entry is a
+    different kind of thing and belongs in its own place. %>
+<% if @shared_with_me.present? %>
+  <section class="mb-5">
+    <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-soft">Shared with you</h2>
+    <div class="card divide-y divide-edge">
+      <% @shared_with_me.each do |opened| %>
+        <div class="flex items-baseline gap-4 p-4">
+          <time class="w-24 shrink-0 text-sm text-soft"><%= l(opened.entry.entry_date, format: :long) %></time>
+          <div class="min-w-0 flex-1">
+            <%= link_to opened.display_title, diary_entry_path(opened.entry),
+                  class: "font-medium text-ink hover:text-primary-700" %>
+            <p class="mt-0.5 truncate text-sm text-soft">by <%= opened.entry.user.name %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
 <%# On this day — the payoff of years of entries, and the reason to import
     an old journal rather than start fresh. %>
 <% if @on_this_day.present? %>

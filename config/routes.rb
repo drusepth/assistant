@@ -146,6 +146,10 @@ Rails.application.routes.draw do
   # under /diary so the keyring cookie scoped to that prefix covers exactly
   # this surface — see VaultSession::COOKIES.
   resources :diary_entries, path: "diary" do
+    member do
+      post :share
+      delete :unshare
+    end
     collection do
       post :unlock
       post :lock

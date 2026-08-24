@@ -31,7 +31,8 @@ class CredentialsController < ApplicationController
 
     @emergency_contacts = Current.user.emergency_contacts.includes(:contact_user)
     @emergency_roles = EmergencyContact.for_contact(Current.user).includes(user: :keyring)
-    @recent_events = Current.user.vault_events.includes(:actor, :subject_user, :credential).newest_first.limit(8)
+    @recent_events = Current.user.vault_events.for_container("Credential")
+      .includes(:actor, :subject_user, :subject).newest_first.limit(8)
   end
 
   def show

@@ -25,6 +25,7 @@ class DiaryEntry < ApplicationRecord
   seals payload: :payload_ciphertext, keys: :diary_entry_keys, aad: PAYLOAD_AAD
 
   has_many :diary_entry_keys, dependent: :destroy
+  has_many :vault_events, as: :subject, dependent: :destroy
 
   validates :entry_date, presence: true
 
