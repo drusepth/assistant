@@ -35,6 +35,24 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", avatar_path
   end
 
+  test "the work profile saves, normalizes, and clears without touching sections (D-work-profile)" do
+    enabled_before = Section.top_level.select { |s| users(:one).section_enabled?(s) }
+
+    patch settings_path, params: { work: { job_title: " Cashier ", employer: "Costco" } }
+    assert_redirected_to settings_path
+    assert_equal "Cashier", users(:one).reload.job_title
+    assert_equal "Costco", users(:one).employer
+    assert enabled_before.all? { |s| users(:one).section_enabled?(s) }
+
+    get settings_path
+    assert_select "input[name=?][value=?]", "work[job_title]", "Cashier"
+
+    patch settings_path, params: { work: { job_title: "", employer: "" } }
+    users(:one).reload
+    assert_nil users(:one).job_title
+    assert_nil users(:one).employer
+  end
+
   test "celebrations toggle off and back on without touching sections" do
     enabled_before = Section.top_level.select { |s| users(:one).section_enabled?(s) }
     assert enabled_before.any?, "fixture user should start with sections enabled"

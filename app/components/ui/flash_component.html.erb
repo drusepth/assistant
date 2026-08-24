@@ -1,5 +1,19 @@
+<%# `role="status"` makes the banner a polite live region. On the pages that
+    morph on redirect-to-self — Today, the board — the sentence is inserted
+    into a page that is already loaded, so a screen reader announces it, and
+    it is the only account of what happened that anyone gets who can't see
+    the row animate away (D-row-send-off). On a full page load a live region
+    present at load time is not announced; that's a browser rule, not
+    something to work around here. %>
 <div class="mb-6 space-y-2">
-  <% messages.each do |style, message| %>
-    <div class="rounded-lg border px-4 py-3 text-sm <%= style %>"><%= message %></div>
+  <% messages.each do |type, style, message| %>
+    <div role="status"
+         class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-4 py-3 text-sm <%= style %>">
+      <span class="min-w-0 flex-1"><%= message %></span>
+      <% if undo && type == "notice" %>
+        <%= button_to undo["label"], undo["url"], method: :patch,
+              class: "btn btn-secondary btn-sm", form_class: "shrink-0" %>
+      <% end %>
+    </div>
   <% end %>
 </div>

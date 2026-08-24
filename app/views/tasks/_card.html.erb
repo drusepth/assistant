@@ -1,9 +1,16 @@
 <%# Board card. `column` is "later"/"today"/"done"; moves go one column at a time. %>
+<%# Named for morph (D-row-identity), and deliberately *without* a per-column
+    prefix — unlike Today's lists. The three columns hold disjoint sets, so a
+    bare `dom_id` is unique on the page, and keeping it stable is the point:
+    moving a card is the same card changing column, so morph should carry the
+    node across rather than destroy one and build another. %>
+<% card_id = dom_id(task) %>
 <% own = task.user_id == Current.user.id %>
-<div class="card p-3">
+<div id="<%= card_id %>" class="card p-3">
   <div class="flex items-start gap-2.5">
     <% if own %>
       <%= button_to task.completed? ? reopen_task_path(task) : complete_task_path(task), method: :patch,
+            id: "#{card_id}_toggle",
             class: "-m-1.5 mt-0 shrink-0 cursor-pointer p-1.5 text-soft hover:text-primary-600",
             title: task.completed? ? "Reopen" : "Complete" do %>
         <% if task.completed? %>
@@ -37,10 +44,12 @@
       <% back, forward = moves %>
       <% if back %>
         <%= button_to "←", move_task_path(task, column: back), method: :patch, class: "btn btn-ghost btn-sm",
+              id: "#{card_id}_back",
               title: "Move to #{back.humanize}", "aria-label": "Move to #{back.humanize}" %>
       <% else %><span></span><% end %>
       <% if forward %>
         <%= button_to "→", move_task_path(task, column: forward), method: :patch, class: "btn btn-ghost btn-sm",
+              id: "#{card_id}_forward",
               title: "Move to #{forward.humanize}", "aria-label": "Move to #{forward.humanize}" %>
       <% end %>
     </div>

@@ -680,7 +680,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_163148) do
     t.text "digest"
     t.datetime "digest_generated_at"
     t.string "email_address", null: false
+    t.string "employer"
     t.integer "household_id", null: false
+    t.string "job_title"
     t.json "mail_digest"
     t.date "mail_digest_generated_on"
     t.integer "mail_digest_hour", default: 8, null: false

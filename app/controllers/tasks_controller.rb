@@ -67,8 +67,19 @@ class TasksController < ApplicationController
     redirect_back fallback_location: tasks_path
   end
 
+  # Claiming a task for a day, and taking that back. The row it was on has
+  # just animated off the list (D-row-send-off), which says "gone" but never
+  # "gone where" — and until there was a way back, a mis-tap on a phone cost
+  # a hunt through Tasks to put right. So the move says what it did and
+  # carries its own undo, which is nothing more than a reschedule to where
+  # the task was: `to` takes a plain date and "none" as well as the two
+  # words the buttons send.
   def reschedule
-    @task.update!(due_on: params[:to] == "tomorrow" ? Date.tomorrow : Date.current)
+    was = @task.due_on
+    @task.update!(due_on: reschedule_target)
+
+    flash[:notice] = "“#{@task.title.truncate(48)}” moved to #{due_phrase(@task.due_on)}."
+    flash[:undo] = { "label" => "Undo", "url" => reschedule_task_path(@task, to: was&.to_fs(:iso8601) || "none") }
     redirect_back fallback_location: today_path
   end
 
@@ -95,6 +106,32 @@ class TasksController < ApplicationController
   end
 
   private
+    # The two words the buttons send, an ISO date (which is what an undo
+    # sends), or "none" for a task that had no date to begin with. Anything
+    # else — including a date that parses but doesn't exist — means today,
+    # which is what this action did for every unrecognised `to` before.
+    def reschedule_target
+      case params[:to]
+      when "tomorrow" then Date.tomorrow
+      when "none" then nil
+      when /\A\d{4}-\d{2}-\d{2}\z/ then Date.iso8601(params[:to])
+      else Date.current
+      end
+    rescue Date::Error
+      Date.current
+    end
+
+    # How the notice names where the task landed. Deliberately not
+    # `task_due_label`: that one answers "how late is this" in a list, and
+    # "moved to 9 days late" is not a sentence.
+    def due_phrase(date)
+      return "no date" if date.nil?
+      return "today" if date == Date.current
+      return "tomorrow" if date == Date.tomorrow
+
+      date.strftime("%b %-d")
+    end
+
     # Finishing a task is the app's one genuinely good moment, so it gets a
     # party (D-task-celebration). The redirect that follows would wipe an
     # animation started here, so the celebration rides the flash and fires on

@@ -390,6 +390,74 @@
     @apply px-2 pt-1 text-xs font-semibold uppercase tracking-wide text-soft;
   }
 
+  /* The send-off: a row leaving the list its own button just took it off
+     (Today/Tomorrow on a task). Without it the row is simply missing from
+     the page the redirect brings back, which reads as the app swallowing
+     the tap. Instead the side you picked lights up, the row takes that
+     side's tint, and the whole thing slides out and closes the gap under
+     it. `row_dismiss_controller` holds Turbo's re-render until this has
+     played; every duration and distance is here, so retiming the moment is
+     a change to this block alone. Nothing opts out of the reduced-motion
+     floor at the foot of this file — asked for less motion, the row goes
+     the instant it's tapped, which is what this screen did all along.
+
+     Compound selector on purpose: `.item-stack .item-row` above is (0,2,0)
+     and its `transition-colors` would otherwise outrank the transition
+     list below. */
+  .item-row.row-leaving {
+    @apply pointer-events-none overflow-hidden;
+    transition:
+      background-color 120ms ease-out,
+      opacity 200ms ease-in 120ms,
+      transform 260ms ease-in 120ms,
+      height 200ms ease-in 180ms,
+      padding 200ms ease-in 180ms,
+      margin 200ms ease-in 180ms;
+  }
+  /* Tinted to the side that won — the same pale steps `.btn-now` and
+     `.btn-later` carry, so the row briefly *becomes* the button you hit.
+     Compound again: `.item-stack .item-row` sets the row's `bg-canvas` at
+     (0,2,0) and a lone `.row-leaving-now` would never be seen. */
+  .item-row.row-leaving-now {
+    @apply bg-sage-100;
+  }
+  .item-row.row-leaving-later {
+    @apply bg-red-100;
+  }
+  /* The loser steps back so the choice reads in the half-second it's up. */
+  .row-leaving .btn:not(.btn-chosen) {
+    @apply opacity-30;
+  }
+  /* The end state. `-mb-2` cancels the `gap-2` a collapsed row still holds
+     open in its `.item-stack` — without it the list closes down to a
+     zero-height row between two 8px gaps. The height and the padding are
+     set inline by the controller instead of here — a number to animate
+     down from can only come from measuring the row, and `py-3` is a
+     utility this layer can't outrank. The slide stays inside the ~24pt a
+     row has to spare in its card on a phone; a transform wider than that
+     puts the whole page sideways for the length of the animation. */
+  .row-gone {
+    @apply -mb-2 opacity-0;
+    transform: translateX(0.75rem);
+  }
+  /* The tapped half of a `.btn-now`/`.btn-later` pair, holding the pressed
+     state that a normal `active:` gives up the moment the finger lifts —
+     the one bit of the send-off that is pure acknowledgement. */
+  .btn-chosen {
+    animation: btn-chosen-pop 260ms ease-out;
+  }
+  .btn-now.btn-chosen {
+    @apply border-sage-500 bg-sage-300 text-sage-900;
+  }
+  .btn-later.btn-chosen {
+    @apply border-red-300 bg-red-200 text-red-800;
+  }
+  @keyframes btn-chosen-pop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.09); }
+    100% { transform: scale(1); }
+  }
+
   /* The two shapes that decide whether a page reads on a phone.
 
      A row of buttons at the end of a list row rides beside the text on a

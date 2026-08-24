@@ -10,14 +10,20 @@ module Ui
     end
 
     # Flash keys the app uses to carry data rather than a sentence to read —
-    # they travel the same redirect, but they are never banners.
-    SILENT = %w[ celebrate ].freeze
+    # they travel the same redirect, but they are never banners of their own.
+    # `undo` is an action that rides *inside* the notice describing it.
+    SILENT = %w[ celebrate undo ].freeze
 
     def render? = messages.any?
 
     def messages
       @messages ||= @flash.to_hash.except(*SILENT)
-        .map { |type, message| [ STYLES.fetch(type, STYLES["notice"]), message ] }
+        .map { |type, message| [ type, STYLES.fetch(type, STYLES["notice"]), message ] }
     end
+
+    # `{"label" =>, "url" =>}` — a one-click way back from the action the
+    # notice just described. PATCH, because every undo the app has is a
+    # write that puts a field back where it was.
+    def undo = @flash[:undo]
   end
 end

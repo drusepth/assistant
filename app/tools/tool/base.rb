@@ -21,7 +21,7 @@ module Tool
   # `create_*` landing helpers (deadlines land as all-day calendar Events),
   # and `store_next_tools` — the D28 routing seam.
   class Base
-    Input = Data.define(:name, :label, :kind, :required, :hint, :options) do
+    Input = Data.define(:name, :label, :kind, :required, :hint, :options, :prefill) do
       def required? = required
       def document? = kind == :document
       def person? = kind == :person
@@ -58,8 +58,11 @@ module Tool
     class << self
       def slug = name.demodulize.underscore
 
-      def input(name, label:, kind: :text, required: false, hint: nil, options: nil)
-        self.input_definitions += [ Input.new(name: name.to_s, label:, kind:, required:, hint:, options:) ]
+      # prefill: a User method whose value seeds the form field when the
+      # user hasn't typed one (D-work-profile) — profile facts arrive
+      # pre-filled and stay editable, instead of being asked for again.
+      def input(name, label:, kind: :text, required: false, hint: nil, options: nil, prefill: nil)
+        self.input_definitions += [ Input.new(name: name.to_s, label:, kind:, required:, hint:, options:, prefill:) ]
       end
 
       def inputs = input_definitions
@@ -193,6 +196,15 @@ module Tool
       def region_line
         region = user.household.region
         "Where the household lives (tailor jurisdiction-specific details to this): #{region}" if region.present?
+      end
+
+      # The user's stated work (D-work-profile) for Career tools — nil when
+      # unset, so prompts fall back to asking or to placeholders, same
+      # contract as region_line. Stated by the user in Settings, never
+      # inferred (Q8): the model may treat it as fact.
+      def work_line
+        summary = user.work_summary
+        "The user's current work, from their profile (treat as stated fact): #{summary}" if summary
       end
 
       # The household's own return address (D-household-profile), for tools
