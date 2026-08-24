@@ -1,0 +1,48 @@
+<% content_for :title, "Conversations" %>
+
+<%= render Ui::PageHeaderComponent.new(
+      title: "Conversations",
+      subtitle: "Every session you've had, newest first — pick one back up where it stopped"
+    ) %>
+
+<div class="max-w-3xl space-y-4">
+  <% if @conversations.any? %>
+    <%# The filter row only earns its space once there's more than one kind of
+        conversation to tell apart. %>
+    <% if @counts.length > 1 %>
+      <div class="flex flex-wrap gap-1.5">
+        <%= link_to "All", chats_path,
+              class: "chip border border-edge #{@tool_slug ? "bg-surface text-soft hover:text-ink" : "bg-primary-600 text-white"}" %>
+        <% @counts.sort_by { |slug, count| [ -count, slug ] }.each do |slug, count| %>
+          <% tool = Tool.find(slug) %>
+          <% next unless tool %>
+          <%= link_to "#{tool.title} · #{count}", chats_path(tool: slug),
+                class: "chip border border-edge #{@tool_slug == slug ? "bg-primary-600 text-white" : "bg-surface text-soft hover:text-ink"}" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(padded: false) do %>
+      <div class="divide-y divide-edge">
+        <% @conversations.each do |conversation| %>
+          <%= render "chats/conversation", conversation: conversation %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @truncated %>
+      <p class="px-1 text-xs text-soft">
+        Showing the <%= ChatsController::LIMIT %> most recent. Transcripts are working
+        data, not the record — one idle for 90 days is deleted, while any recap you
+        saved stays in <%= link_to "your notes", notes_path, class: "underline" %>.
+      </p>
+    <% end %>
+  <% else %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "No conversations yet",
+          description: "The talking tools — the tutor, the check-in, the money coach — keep their sessions here, so you can pick one back up instead of starting over."
+        ) do |empty| %>
+      <% empty.with_action { link_to "Start a check-in", new_tool_run_path("check_in"), class: "btn btn-primary" } %>
+    <% end %>
+  <% end %>
+</div>

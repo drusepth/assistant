@@ -90,6 +90,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D-photos-primitive, D-storage-seam)
 - `docs/EMAIL_PLAN.md` — email import & monitoring: the mirror layer (D-mirror-layer) in its own database (D-mirror-database), multi-account IMAP sync, triage + sender-rule feedback loop, digest/urgent alerts, the boomerang family (D-email-monitoring), the hostile-input threat model
 - `docs/RECIPES_PLAN.md` — the recipe box: the Recipe primitive and its ingredient parser, recipe books, sharing to the household and to people outside it by link, and the pantry/AI waves (D-recipe-primitive, D-share-link, D-pantry)
+- `docs/CHAT_PLAN.md` — the chat surface, brought up to native-messaging quality on a phone: the screen/panel split, optimistic send, streaming replies (D-chat-shell, D-chat-optimistic, D-chat-stream)
 - `docs/TRAVEL.md` — the Travel section: why it's a lens and not a page, the self-drawn world map of geotagged photos (no tiles, no geocoder, owner-only per Q14), and what the hub grows next (D-travel-facet)
 - `docs/PASSWORDS_PLAN.md` — the password vault: per-user envelope encryption, sharing, TOTP, import/export, and the agent-access bridge (D-passwords-vault, D-vault-crypto)
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence

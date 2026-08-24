@@ -1,0 +1,15 @@
+<%# The seam at the top of a windowed transcript. It stays in the DOM once the
+    history runs out (hidden, empty) because it is also the anchor the Turbo
+    Stream inserts each older batch *after* — so successive loads stack in the
+    right order without knowing about each other.
+
+    `before` is the oldest message currently rendered, or nil when there is
+    nothing older. chat-scroll#capture runs on the click so the reader's place
+    is held while the batch lands above them. %>
+<div id="chat-earlier" class="mt-3 flex justify-center <%= "hidden" unless before %>">
+  <% if before %>
+    <%= link_to "Earlier messages", tool_run_messages_path(run, before: before.id),
+          class: "chip cursor-pointer border border-edge bg-surface text-soft transition-colors hover:border-primary-300 hover:text-ink",
+          data: { turbo_stream: true, action: "chat-scroll#capture" } %>
+  <% end %>
+</div>

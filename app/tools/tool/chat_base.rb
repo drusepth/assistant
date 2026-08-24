@@ -34,7 +34,7 @@ module Tool
     def self.recap_pending_label = "Saving recap…"
 
     def self.recap_hint
-      "Wrapping up? A recap files this session to your notes — it's what the next session remembers."
+      "A recap files this session to your notes — it's what the next one remembers."
     end
 
     def call

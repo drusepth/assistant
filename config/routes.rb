@@ -77,7 +77,7 @@ Rails.application.routes.draw do
   resources :tasks do
     # The task page's embedded chat (D30) — find-or-create the bound run,
     # append the turn.
-    resource :conversation, only: :create, module: :tasks
+    resource :conversation, only: %i[ show create ], module: :tasks
     member do
       patch :complete
       patch :reopen
@@ -201,10 +201,13 @@ Rails.application.routes.draw do
     end
   end
 
+  # The conversation index (D-chat-index) — chat runs listed as conversations,
+  # not as tool runs, which is what they are to the person having them.
+  get "chats" => "chats#index", as: :chats
   get "tools/:tool_slug/run" => "tool_runs#new", as: :new_tool_run
   post "tools/:tool_slug/run" => "tool_runs#create", as: :run_tool
   resources :tool_runs, only: %i[ show destroy ] do
-    resources :messages, only: :create, controller: "tool_run_messages"
+    resources :messages, only: %i[ index create ], controller: "tool_run_messages"
     resource :application_email, only: :create
     member do
       post :recap
