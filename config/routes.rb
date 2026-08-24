@@ -127,6 +127,7 @@ Rails.application.routes.draw do
       post :export
       post :recovery
       post :recovery_confirm
+      post :recovery_check
       get :health
       get :import, action: :new_import
       post :import, action: :create_import

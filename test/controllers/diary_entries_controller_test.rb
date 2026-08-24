@@ -13,8 +13,7 @@ class DiaryEntriesControllerTest < ActionDispatch::IntegrationTest
   end
 
   def save_recovery_kit
-    post recovery_credentials_url
-    post recovery_confirm_credentials_url
+    verify_recovery_kit
   end
 
   def write_entry(title: TITLE, body: BODY, on: Date.current)
@@ -67,13 +66,13 @@ class DiaryEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Written-while-locked-99.", response.body
   end
 
-  test "the recovery kit gates the first entry" do
+  test "the recovery kit gates the first entry, and wants it proven" do
     other = users(:two)
     sign_in_with_password(other)
 
     get new_diary_entry_url
     assert_redirected_to diary_entries_path
-    assert_equal "Save your recovery kit before you start writing.", flash[:alert]
+    assert_equal "Check your recovery code before you start writing.", flash[:alert]
 
     post diary_entries_url, params: { entry_date: Date.current.iso8601, diary: { body: "Nope." } }
     assert_equal 0, other.diary_entries.count

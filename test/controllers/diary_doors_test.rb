@@ -6,8 +6,7 @@ class DiaryDoorsTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
     post session_url, params: { email_address: @user.email_address, password: "password" }
-    post recovery_credentials_url
-    post recovery_confirm_credentials_url
+    verify_recovery_kit
     @session = Diary::Session.new(@user, nil)
   end
 

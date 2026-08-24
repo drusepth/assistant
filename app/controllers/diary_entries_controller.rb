@@ -309,8 +309,8 @@ class DiaryEntriesController < ApplicationController
     def require_writable_vault
       if @keyring.nil?
         redirect_to diary_entries_path, alert: "Sign in again to set up your vault first."
-      elsif @keyring.recovery_pending?
-        redirect_to diary_entries_path, alert: "Save your recovery kit before you start writing."
+      elsif !@keyring.recovery_verified?
+        redirect_to diary_entries_path, alert: "Check your recovery code before you start writing."
       end
     end
 

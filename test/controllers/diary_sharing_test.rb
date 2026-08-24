@@ -15,8 +15,7 @@ class DiarySharingTest < ActionDispatch::IntegrationTest
 
   def sign_in(user)
     post session_url, params: { email_address: user.email_address, password: "password" }
-    post recovery_credentials_url
-    post recovery_confirm_credentials_url
+    verify_recovery_kit
   end
 
   def write(body: BODY, title: "Shared entry")

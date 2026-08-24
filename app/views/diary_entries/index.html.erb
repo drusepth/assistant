@@ -12,19 +12,32 @@
   <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
     Your vault initializes the next time you sign in — sign out and back in once to get started.
   </div>
-<% elsif @keyring.recovery_pending? %>
-  <%# The gate, not a nag (DIARY_PLAN §4.5). Nothing can be written until
-      the kit exists, because nothing can recover a diary without it. %>
+<% elsif !@keyring.recovery_verified? %>
+  <%# The gate, not a nag (DIARY_PLAN §4.5) — and it wants proof rather than
+      a promise: a kit that turns out to be mistyped is the whole journal,
+      and nobody else holds a key to restore it from. %>
   <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
-    <p class="mb-1 text-sm font-medium text-amber-900">Save your recovery kit before you start writing.</p>
+    <p class="mb-1 text-sm font-medium text-amber-900">Check your recovery code before you start writing.</p>
     <p class="mb-3 text-sm text-amber-900">
       If you forget your password and lose this code, your diary is gone — not resettable, gone.
-      Nobody else holds a key to it, so there is nothing to restore it from.
+      Nobody else holds a key to it, so there is nothing to restore it from. Type it back here once,
+      and we'll tell you whether the copy you wrote down actually works.
     </p>
-    <%# turbo: false — the kit renders in the response body rather than
-        redirecting, and Turbo drops any non-redirect 200 from a form. %>
-    <%= button_to "Generate recovery kit", recovery_credentials_path, method: :post,
-          class: "btn btn-primary btn-sm", form: { data: { turbo: false } } %>
+    <% if @keyring.recovery_wrapped_key.present? %>
+      <%= form_with url: recovery_check_credentials_path, class: "flex flex-wrap items-center gap-2" do |form| %>
+        <%= form.hidden_field :return_to, value: diary_entries_path %>
+        <%= form.text_field :recovery_code, placeholder: "XXXXXX-XXXXXX-XXXXXX-XXXXXX",
+              autocomplete: "off", spellcheck: false, class: "input w-72 font-mono", required: true %>
+        <%= form.submit "Check it" %>
+      <% end %>
+      <%= button_to "I've lost it — make a new kit", recovery_credentials_path, method: :post,
+            class: "mt-2 text-xs text-amber-900 underline", form: { data: { turbo: false } } %>
+    <% else %>
+      <%# turbo: false — the kit renders in the response body rather than
+          redirecting, and Turbo drops any non-redirect 200 from a form. %>
+      <%= button_to "Generate recovery kit", recovery_credentials_path, method: :post,
+            class: "btn btn-primary btn-sm", form: { data: { turbo: false } } %>
+    <% end %>
   </div>
 <% elsif !vault_unlocked? %>
   <div class="mb-4 rounded-lg border border-edge bg-surface p-4">

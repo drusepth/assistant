@@ -57,10 +57,23 @@ class Keyring < ApplicationRecord
     salt = Vault::Crypto.random_salt
     kek = Vault::Crypto.derive_kek(Vault::Crypto.normalize_recovery_code(code), salt: salt,
       iterations: Vault::Crypto.kdf_iterations)
-    update!(recovery_salt: salt, recovery_confirmed_at: nil,
+    update!(recovery_salt: salt, recovery_confirmed_at: nil, recovery_verified_at: nil,
       recovery_wrapped_key: Vault::Crypto.encrypt(kek, vault_key, aad: RECOVERY_AAD))
     code
   end
+
+  # Proof rather than a promise: the code was pasted back and it opened the
+  # vault. `recovery_confirmed_at` only ever meant "someone clicked I saved
+  # it", which is enough for passwords and not for a diary — a mistyped kit
+  # there costs the whole journal, and nobody else holds a key to it.
+  def verify_recovery(code)
+    return false if unlock_with_recovery(code).nil?
+
+    update!(recovery_verified_at: Time.current, recovery_confirmed_at: recovery_confirmed_at || Time.current)
+    true
+  end
+
+  def recovery_verified? = recovery_verified_at.present?
 
   def unlock_with_recovery(code)
     return nil if recovery_wrapped_key.blank?
@@ -97,7 +110,7 @@ class Keyring < ApplicationRecord
         public_key: keypair.public_key.to_pem,
         wrapped_private_key: Vault::Crypto.encrypt(vault_key, keypair.to_pem, aad: PRIVATE_KEY_AAD),
         recovery_salt: nil, recovery_wrapped_key: nil, recovery_confirmed_at: nil,
-        reset_at: Time.current
+        recovery_verified_at: nil, reset_at: Time.current
       )
       VaultSealed::CONTAINERS.each { |container| container.constantize.mark_lost_on_reset!(user) }
       EmergencyContact.where(user: user).or(EmergencyContact.where(contact_user: user)).destroy_all

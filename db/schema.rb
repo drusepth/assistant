@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_162233) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_163148) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -312,6 +312,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_162233) do
     t.text "public_key", null: false
     t.datetime "recovery_confirmed_at"
     t.string "recovery_salt"
+    t.datetime "recovery_verified_at"
     t.binary "recovery_wrapped_key"
     t.datetime "reset_at"
     t.datetime "updated_at", null: false

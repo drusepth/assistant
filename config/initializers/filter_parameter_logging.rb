@@ -6,5 +6,6 @@
 Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc,
   :recovery_code, # the vault's secrets hash is covered by :secret; the recovery code rides its own param
+  :recovery_check,
   :diary # filtering the wrapper filters the subtree, which is why the diary posts everything under it
 ]
