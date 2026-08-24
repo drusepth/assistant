@@ -135,7 +135,7 @@ module Feeds
         guid: guid.to_s, url: url, title: title.presence || url,
         author: item.dig("author", "name").presence || Array(item["authors"]).first&.dig("name"),
         summary: summarize(item["summary"].presence || item["content_text"].presence || item["content_html"]),
-        image_url: item["image"].presence || item["banner_image"].presence,
+        image_url: http_url(item["image"].presence || item["banner_image"]),
         published_at: parse_time(item["date_published"] || item["date_modified"])
       )
     end
@@ -152,12 +152,20 @@ module Feeds
     end
 
     # Publishers put the picture in three different places and none of them
-    # is a standard.
+    # is a standard. Nothing renders it today (the river is text — see
+    # docs/READER.md), but the guard lives here rather than at some future
+    # call site: an entry that reaches anything downstream carries an
+    # http(s) address or nothing at all.
     def image_in(node)
       enclosure = node.xpath("./enclosure").find { |tag| tag["type"].to_s.start_with?("image/") }
       thumbnail = node.at_xpath("./thumbnail") || node.at_xpath("./content[@medium='image']")
-      enclosure&.[]("url") || thumbnail&.[]("url") ||
+      found = enclosure&.[]("url") || thumbnail&.[]("url") ||
         node.at_xpath("./image")&.then { |image| image["href"] || text_of(image) }
+      http_url(found)
+    end
+
+    def http_url(url)
+      url.to_s.strip.match?(%r{\Ahttps?://\S+\z}i) ? url.to_s.strip : nil
     end
 
     def text_of(node)

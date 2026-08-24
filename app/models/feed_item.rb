@@ -30,12 +30,20 @@ class FeedItem < ApplicationRecord
 
   def source_name = feed.display_title
 
-  def mark_read! = update!(read_at: Time.current)
+  # Reading also stamps the feed (D-feed-reader): "does anybody still read
+  # this?" decides how often we poll its publisher, and asking the items
+  # that question once per feed per sweep was a query nobody needed.
+  def mark_read!
+    update!(read_at: Time.current)
+    feed.touch_read!(read_at)
+  end
+
   def mark_unread! = update!(read_at: nil)
 
   # Saving is also reading: you don't keep something you haven't opened.
   def save_item!
     update!(saved_at: Time.current, read_at: read_at || Time.current)
+    feed.touch_read!(read_at)
   end
 
   def unsave! = update!(saved_at: nil)

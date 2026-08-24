@@ -9,6 +9,10 @@
 class FeedItemsController < ApplicationController
   before_action :set_item
 
+  # A row marked read while you are *looking at the unread list* should
+  # leave it — otherwise "unread" is a lie and the only way to clear a
+  # screen is Mark all read. It leaves behind a line its own height saying
+  # what went, with an Undo, so nothing vanishes without a way back.
   def read = act { @item.mark_read! }
   def unread = act { @item.mark_unread! }
   def save = act { @item.save_item! }
@@ -23,8 +27,14 @@ class FeedItemsController < ApplicationController
     def act
       yield
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace(@item, partial: "reader/item", locals: { item: @item }) }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace(@item, partial: row_partial, locals: { item: @item }) }
         format.html { redirect_back fallback_location: reader_path }
       end
+    end
+
+    # `from` is the filter the row was rendered under, so the row knows
+    # whether it still belongs where it is.
+    def row_partial
+      @item.read? && params[:from] == "unread" ? "reader/dismissed" : "reader/item"
     end
 end

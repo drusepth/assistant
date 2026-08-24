@@ -94,6 +94,20 @@ redirect cap all apply. `Web::Fetch.raw` was added for pass 3 — finding a
 `<link>` means reading the markup that the text extraction exists to throw
 away. Anything that hands a page to a *model* still goes through `.text`.
 
+### Two fetch postures, and the difference is who is waiting
+
+Adding a feed fetches **now**, in the request, on short timeouts: a
+subscription that silently fails to exist is worse than a slow form, and
+discovery has to answer "is this a feed?" before there is anything to save.
+
+Everything else — "Check now", "Check all", an OPML import, the scheduled
+sweep — hands the work to `RefreshFeedJob`. A stranger's server that hangs
+must never hold a web worker for the length of a timeout, and the row
+updates itself when the job lands: `RefreshFeedJob` broadcasts a Turbo
+refresh to the user's `:reader` stream, but only when something actually
+changed, since a page-refresh every fifteen minutes for a polite no-op
+check is worse than no refresh at all.
+
 ### Refresh: idempotent by guid
 
 A publisher who re-lists the same item every hour (many do) can't flood the
@@ -107,9 +121,20 @@ This is the one part of the app that makes repeated requests to other
 people's servers on a timer, and a self-hosted instance should be
 indistinguishable from one person with a browser:
 
+- **Conditional GET.** Every refresh sends back the `ETag` and
+  `Last-Modified` the publisher gave us last time, so an unchanged feed
+  costs them a header exchange and us no parse at all. Two things are worth
+  knowing: the `Last-Modified` value is stored and echoed *raw*, because
+  reformatting a date is how a working cache becomes a broken one; and in
+  `Web::Fetch`, the `Net::HTTPNotModified` branch has to come **before**
+  `Net::HTTPRedirection`, since 304 is a 3xx and Ruby makes the former a
+  subclass of the latter — a redirect-first `case` reads every 304 as a
+  redirect with a missing `Location`.
 - an hourly floor per feed, swept every 15 minutes (`RefreshFeedsJob`),
 - exponential backoff after failures, capped at a day,
-- a longer interval for a feed nobody has read in a month,
+- a longer interval for a feed nobody has read in a month. "Nobody reads
+  it" is `feeds.last_read_at`, denormalized from the items when one is read
+  — the sweep asks it as a column rather than counting items once per feed.
 - a read-item cap per feed — the river is not an archive. Saved and unread
   items are never pruned.
 
@@ -156,27 +181,56 @@ usual card-per-item shape (`docs/DESIGN.md` → Lists):
 
 - **`/reader`** — the river, newest first. Unread / Saved / Everything,
   narrowed by hobby lens or by feed, with **Mark all read** scoped to
-  whatever you are looking at. Per item: save, mark read, open at the
-  source, and **Make a task** (prefilled and pre-tagged with the feed's
-  lenses) — the verb that makes this a hobby surface rather than a
-  better-groomed reading list.
+  whatever you are looking at, and the unread count in the rail beside
+  "Reader". Per item: save, mark read, open at the source, and **Make a
+  task** (prefilled and pre-tagged with the feed's lenses) — the verb that
+  makes this a hobby surface rather than a better-groomed reading list.
+
+  **Opening an article marks it read.** Every reader worth using has done
+  this since Reader itself; without it "unread" means "not explicitly
+  dismissed", which is a different and much less useful thing. The click
+  still opens the source; a Stimulus controller rides alongside and asks
+  for the same Turbo Stream the Read button would have produced, so there
+  is one code path. A modifier or middle click is exempt — that is somebody
+  stashing tabs, not reading.
+
+  **A row read from the unread list leaves it**, replaced by a line of its
+  own height saying what went, with an **Undo**. Otherwise "unread" is a
+  lie and the only way to clear a screen is Mark all read. (Mark all read
+  has no undo: it asks first instead.)
 - **`/feeds`** — subscriptions: one paste field, per-feed unread counts,
-  honest health ("Last check failed — the site answered HTTP 500"), and the
-  lens picker that files a feed under its hobby.
+  honest health ("failing — the site answered HTTP 500"), the lens picker
+  that files a feed under its hobby, and **OPML import/export**.
 - **The Hobbies page** — a "From your feeds" card with the three newest
   unread, or the invitation to follow a first source.
 
+### OPML, in and out
+
+The format every reader since 2000 agrees on, and the only reason a reading
+list can survive its reader. An app whose whole argument is that you should
+own your things has no business being where a subscription list gets stuck
+— the same reasoning as the export archive (D14/M4.2), in the format the
+rest of the world can actually read.
+
+OPML's nested outlines are folders, and this app already has folders: hobby
+lenses. A lens becomes a folder on the way out; a folder matches a lens by
+name on the way in. Import **creates** a missing lens only when the user
+ticks the box — silently adding thirty sections to somebody's taxonomy
+because their old reader had thirty folders is not an import, it's a mess.
+Nothing is fetched during an import: the feeds it names are checked by the
+ordinary background refresh afterwards.
+
 ## What it doesn't do yet
 
-- **Conditional GET** (`ETag` / `If-Modified-Since`). The interval floor is
-  most of the politeness; this is the rest of it, and it needs `Web::Fetch`
-  to hand back response headers.
-- **OPML import/export.** The obvious next thing for anybody arriving from
-  another reader. Subscriptions already ride the JSON export (M4.2).
 - **Full-text extraction / read-here.** Deliberate: the article belongs to
   the site that wrote it, and the reader's job is to get you there.
 - **A "what did I miss" digest**, which is a watcher (D20) over the same
   rows rather than anything new.
+- **A hard ceiling on unread items.** Pruning only trims *read* ones, so a
+  feed nobody opens grows without bound.
+- **Folders for the feed filter.** The "Feed · all · A · B · …" line is a
+  sideways scroll at thirty feeds; it wants grouping by lens, or a second
+  sidebar.
 - **Keyboard navigation** (`j`/`k`/`o`), which is the one Reader affordance
   its actual users would notice missing.
 - **The expanded item** — Reader opened an entry in place rather than

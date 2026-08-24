@@ -1,5 +1,7 @@
 # Fetches one feed (D-feed-reader). Enqueued by the scheduled sweep, when a
-# feed is first added, and by the reader's own "Refresh" button.
+# feed is first added, by an OPML import, and by the reader's own "Check"
+# buttons — which hand the work here rather than doing it in the request,
+# because a stranger's server that hangs must never hold a web worker.
 #
 # A fetch failure is a *condition*, not an exception: a stranger's server
 # being down is the normal weather of an RSS reader, so Feeds::Refresh
@@ -12,6 +14,15 @@ class RefreshFeedJob < ApplicationJob
   def perform(feed)
     return unless feed.active?
 
-    Feeds::Refresh.call(feed)
+    result = Feeds::Refresh.call(feed)
+    # Only when something actually moved: the page the user is looking at
+    # morphs in place, so a broadcast per polite no-op check would be a
+    # page-refresh every fifteen minutes for nothing.
+    broadcast(feed) if result.changed? || !result.ok?
   end
+
+  private
+    def broadcast(feed)
+      Turbo::StreamsChannel.broadcast_refresh_to(feed.user, :reader)
+    end
 end

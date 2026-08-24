@@ -42,9 +42,11 @@ class Feed < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :failing, -> { where.not(last_error: nil) }
 
-  # The cheap SQL prefilter for the scheduled sweep: nothing fetched inside
-  # the base interval can be due. `due_for_refresh?` then decides exactly,
-  # since backoff and dormancy need the feed's own history.
+  # The sweep's prefilter: nothing fetched inside the base interval can be
+  # due. `due_for_refresh?` then decides exactly — the exponential backoff
+  # is arithmetic SQLite has no portable function for, and it now costs
+  # nothing to apply in Ruby, because dormancy is a column read rather
+  # than the per-feed query it used to be (`last_read_at`).
   scope :due_for_refresh, ->(now = Time.current) {
     active.where(last_fetched_at: [ nil, ..(now - REFRESH_EVERY) ])
   }
@@ -65,28 +67,44 @@ class Feed < ApplicationRecord
   # after repeated failures, and stretched once nothing here has been read
   # in a month (the reader is not a crawler — an abandoned feed should cost
   # its publisher almost nothing).
-  def refresh_interval
+  def refresh_interval(now = Time.current)
     interval = REFRESH_EVERY
     interval = [ interval * (2**failure_count), MAX_BACKOFF ].min if failure_count.positive?
-    interval = [ interval, DORMANT_REFRESH_EVERY ].max if dormant?
+    interval = [ interval, DORMANT_REFRESH_EVERY ].max if dormant?(now)
     interval
   end
 
   def due_for_refresh?(now = Time.current)
-    active? && (last_fetched_at.nil? || last_fetched_at <= now - refresh_interval)
+    active? && (last_fetched_at.nil? || last_fetched_at <= now - refresh_interval(now))
   end
 
-  def dormant?
-    return false if last_item_at.nil?
+  # Nothing new in a month and nothing read here in a month. Reads only
+  # columns on this row — `last_read_at` is denormalized from the items on
+  # purpose, so the sweep never asks the database once per feed.
+  def dormant?(now = Time.current)
+    return false if last_item_at.nil? || last_item_at >= now - DORMANT_AFTER
 
-    feed_items.where(read_at: DORMANT_AFTER.ago..).none? && last_item_at < DORMANT_AFTER.ago
+    last_read_at.nil? || last_read_at < now - DORMANT_AFTER
   end
 
-  def record_success!(last_item_at: nil)
+  def record_success!(last_item_at: nil, etag: nil, last_modified: nil)
     update!(
       last_fetched_at: Time.current, last_error: nil, failure_count: 0,
-      last_item_at: [ last_item_at, self.last_item_at ].compact.max
+      last_item_at: [ last_item_at, self.last_item_at ].compact.max,
+      etag: etag, last_modified: last_modified
     )
+  end
+
+  # What we send back to ask "anything new?" — the publisher's own words
+  # from last time, echoed exactly (D-feed-reader).
+  def conditional_headers
+    { "If-None-Match" => etag, "If-Modified-Since" => last_modified }.compact_blank
+  end
+
+  # Somebody read something here. Denormalized so the sweep can see it in
+  # SQL; `update_column` because this is bookkeeping, not an edit.
+  def touch_read!(at = Time.current)
+    update_column(:last_read_at, at) if last_read_at.nil? || last_read_at < at
   end
 
   def record_failure!(message)

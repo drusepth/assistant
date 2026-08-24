@@ -23,6 +23,31 @@ class FeedItemsControllerTest < ActionDispatch::IntegrationTest
     assert_not @item.reload.saved?
   end
 
+  test "a row read from the unread list is replaced by an undo, not by a read row" do
+    patch read_feed_item_path(@item, from: "unread"), as: :turbo_stream
+
+    assert_response :success
+    assert_match "Marked read", response.body
+    assert_match "Undo", response.body
+    assert @item.reload.read?
+  end
+
+  test "the undo puts it back" do
+    @item.mark_read!
+
+    patch unread_feed_item_path(@item), as: :turbo_stream
+
+    assert_not @item.reload.read?
+    assert_match @item.title, response.body
+  end
+
+  test "the same row read from Everything just becomes a read row" do
+    patch read_feed_item_path(@item, from: "all"), as: :turbo_stream
+
+    assert_no_match "Marked read", response.body
+    assert_match @item.title, response.body
+  end
+
   test "an action re-renders just that row over Turbo" do
     patch read_feed_item_path(@item), as: :turbo_stream
 

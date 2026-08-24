@@ -117,6 +117,46 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='task[title]'][value=?]", "Build a shop-made bench hook"
   end
 
+  test "the rail carries the unread count" do
+    item(@feed, "Unread one")
+    item(@feed, "Unread two")
+    item(@feed, "Already read", read_at: Time.current)
+
+    get reader_path
+
+    rail = Nokogiri::HTML(response.body).css("a[href='#{reader_path}']").first
+    assert_equal "2", rail.text.scan(/\d+/).last, "the pile behind the link is the reason to open it"
+  end
+
+  test "a paused feed's unread items are not counted in the rail" do
+    item(@feed, "Unread one")
+    @feed.update!(active: false)
+
+    get reader_path
+
+    rail = Nokogiri::HTML(response.body).css("a[href='#{reader_path}']").first
+    assert_no_match(/\d/, rail.text)
+  end
+
+  test "marking everything read stamps the feeds, so the polling stays polite" do
+    item(@feed, "One")
+
+    post reader_read_all_path
+
+    assert_not_nil @feed.reload.last_read_at
+  end
+
+  test "the row carries what opening the article should call" do
+    item = item(@feed, "Sharpening a card scraper", url: "https://example.com/scraper")
+
+    get reader_path
+
+    row = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(item)}").first
+    assert_equal "reader", row["data-controller"]
+    assert_equal read_feed_item_path(item, from: "unread"), row["data-reader-url-value"]
+    assert_equal "reader#markRead", row.css("h3 a").first["data-action"]
+  end
+
   test "an empty reader invites a first feed instead of showing an empty list" do
     users(:one).feeds.destroy_all
 

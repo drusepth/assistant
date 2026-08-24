@@ -21,8 +21,15 @@ class ReaderController < ApplicationController
   # every feed the user has.
   def read_all
     river = Feeds::River.new(Current.user, filter: "unread", section: hobby_lens, feed: own_feed_id)
-    count = FeedItem.where(id: river.scope.unread.pluck(:id))
-      .update_all(read_at: Time.current, updated_at: Time.current)
+    # By id rather than on the scope: the river's scope carries a LIMIT, and
+    # SQLite is usually built without UPDATE … LIMIT.
+    ids = river.scope.unread.pluck(:id)
+    feed_ids = FeedItem.where(id: ids).distinct.pluck(:feed_id)
+    count = FeedItem.where(id: ids).update_all(read_at: Time.current, updated_at: Time.current)
+    # `update_all` skips the callback that would have stamped each feed, and
+    # that stamp is what keeps a feed nobody reads from being polled as if
+    # somebody did — so do it here, in one statement.
+    Feed.where(id: feed_ids).update_all(last_read_at: Time.current) if feed_ids.any?
     redirect_back fallback_location: reader_path,
       notice: count.positive? ? "#{helpers.pluralize(count, "item")} marked read." : "Nothing left to mark read."
   end

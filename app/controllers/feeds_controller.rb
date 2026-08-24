@@ -3,10 +3,11 @@
 # hunt for the orange icon — the friction that made this format feel like a
 # format for hobbyists.
 #
-# Adding a feed fetches twice on purpose: once, synchronously, to prove the
-# address is a feed and to name it (a subscription that silently fails to
-# exist is worse than a slow form), then again in the background to fill the
-# river.
+# Two fetch postures, and the difference is who is waiting. Adding a feed
+# fetches *now*, on short timeouts, because a subscription that silently
+# fails to exist is worse than a slow form. Everything else — "Check now",
+# "Check all", an OPML import — hands the work to a job: a stranger's server
+# that hangs must never hold a web worker for half a minute.
 class FeedsController < ApplicationController
   before_action :set_feed, only: %i[ edit update destroy refresh ]
 
@@ -50,10 +51,12 @@ class FeedsController < ApplicationController
     redirect_to feeds_path, notice: "Unfollowed #{@feed.display_title}. Its items are gone too."
   end
 
+  # Enqueued, not fetched here: the row updates itself over Turbo when the
+  # job lands (RefreshFeedJob broadcasts), so nobody watches a spinner and
+  # no thread is hostage to somebody else's timeout.
   def refresh
-    Feeds::Refresh.call(@feed)
-    redirect_back fallback_location: feeds_path,
-      notice: @feed.healthy? ? "#{@feed.display_title} is up to date." : "#{@feed.display_title}: #{@feed.last_error}"
+    RefreshFeedJob.perform_later(@feed)
+    redirect_back fallback_location: feeds_path, notice: "Checking #{@feed.display_title}…"
   end
 
   def refresh_all
@@ -61,9 +64,32 @@ class FeedsController < ApplicationController
     redirect_back fallback_location: feeds_path, notice: "Checking your feeds — new items appear as they arrive."
   end
 
+  # The reading list, in the format every reader since 2000 agrees on.
+  def export
+    send_data Feeds::Opml.export(Current.user),
+      filename: "feeds-#{Date.current.iso8601}.opml", type: "text/x-opml", disposition: "attachment"
+  end
+
+  def import
+    file = params[:file]
+    return redirect_to feeds_path, alert: "Choose an OPML file to import." if file.blank?
+
+    result = Feeds::Opml.import(Current.user, file.read, create_lenses: params[:create_lenses] == "1")
+    return redirect_to feeds_path, alert: result.error unless result.ok?
+
+    redirect_to feeds_path, notice: import_notice(result)
+  end
+
   private
     def set_feed
       @feed = Current.user.feeds.find(params[:id])
+    end
+
+    def import_notice(result)
+      parts = [ "#{helpers.pluralize(result.added, "feed")} added" ]
+      parts << "#{result.skipped} already followed or unreadable" if result.skipped.positive?
+      parts << "filed under #{result.lenses.to_sentence}" if result.lenses.any?
+      "#{parts.join(", ")}. They're being checked now."
     end
 
     def feed_params

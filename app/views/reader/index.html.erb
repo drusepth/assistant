@@ -1,3 +1,5 @@
+<%= turbo_stream_from Current.user, :reader %>
+
 <%# The river (D-feed-reader) — Google Reader's shape and Google Reader's
     density: everything your feeds carried, newest first, one line each.
     The chrome is deliberately thin. On this page the list *is* the
@@ -67,7 +69,8 @@
     </div>
 
     <div class="card divide-y divide-edge py-1">
-      <%= render partial: "reader/item", collection: @page.items, as: :item %>
+      <%= render partial: "reader/item", collection: @page.items, as: :item,
+            locals: { filter: @river.filter } %>
     </div>
 
     <% if @page.more? %>

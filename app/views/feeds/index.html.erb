@@ -1,3 +1,5 @@
+<%= turbo_stream_from Current.user, :reader %>
+
 <%# Subscriptions (D-feed-reader): the list of what you follow, and the one
     field that adds to it. Paste a site, a blog, a subreddit, a channel —
     discovery finds the feed behind it, so nobody has to hunt for an orange
@@ -8,6 +10,7 @@
     <%= link_to "Reader", reader_path, class: "reader-filter" %>
     <% if @feeds.any? %>
       <%= button_to "Check all now", refresh_all_feeds_path, class: "reader-verb", form_class: "contents" %>
+      <%= link_to "Export OPML", export_feeds_path, class: "reader-filter" %>
     <% end %>
   </div>
 </div>
@@ -22,6 +25,23 @@
   Feeds only — the reader subscribes to what publishers offer, and never scrapes a site that
   doesn't. Items are fetched on a polite schedule and stay on your own box.
 </p>
+
+<%# OPML in and out: a reading list that can't leave isn't yours. %>
+<details class="mb-4 text-xs text-soft">
+  <summary class="reader-filter">Import from another reader (OPML)</summary>
+  <%= form_with url: import_feeds_path, html: { multipart: true }, class: "mt-2 space-y-2" do |form| %>
+    <%= file_field_tag :file, accept: ".opml,.xml,text/xml,application/xml,text/x-opml", class: "text-xs" %>
+    <label class="flex items-center gap-2">
+      <%= check_box_tag :create_lenses, "1", false, class: "size-3.5 accent-primary-600" %>
+      Make a hobby for each folder it uses
+    </label>
+    <%= submit_tag "Import", class: "btn btn-secondary btn-sm" %>
+  <% end %>
+  <p class="mt-2">
+    Nothing is fetched while importing — the feeds it names are checked in the background
+    afterwards. Folders match your hobbies by name.
+  </p>
+</details>
 
 <% if @feeds.any? %>
   <p class="mb-1 px-3 text-xs text-soft"><%= pluralize(@feeds.size, "feed") %></p>

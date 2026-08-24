@@ -2,7 +2,9 @@
 **D-feed-reader. The reader: a chronological river over the feeds behind the user's hobbies — no ranking, no scores, no votes.**
 Two new tables — `feeds` (a subscription: `Visible` + `Sectionable`, so a
 feed is filed under the hobby lenses it belongs to, D25) and `feed_items`
-(an entry, carrying the reader's own read/saved state). Items are
+(an entry, carrying the reader's own read/saved state). The reading list
+imports and exports as **OPML**, where a hobby lens is a folder: a list
+that can't leave its reader isn't owned, whatever the storage says. Items are
 deliberately *not* Sectionable: an item's tags are its feed's tags, so
 filing happens once, at the subscription, and the hobby filter is a join.
 Paste any address and `Feeds::Discover` finds the feed behind it
@@ -32,11 +34,15 @@ works on an instance with no model configured at all: there is no LLM
 anywhere in this feature.
 
 Politeness is a design constraint, since this is the one part of the app
-that polls strangers' servers on a timer: an hourly floor per feed,
+that polls strangers' servers on a timer: conditional GET (the publisher's
+own `ETag`/`Last-Modified`, echoed raw), an hourly floor per feed,
 exponential backoff on failure (capped at a day), a longer interval for a
 feed nobody reads any more, and a read-item cap per feed — the river is not
-an archive. Feed bodies are hostile input from strangers: entities are
+an archive. Only *adding* a feed fetches in the request; every other check
+is a job, because a stranger's server that hangs must never hold a web
+worker. Feed bodies are hostile input from strangers: entities are
 never expanded, summaries are stripped to text at parse time (nothing
 downstream holds a string it could be tempted to call `html_safe` on),
-item links and images are refused unless `http(s)`, images load lazily with
-no referrer, and every fetch goes through `Web::Fetch`'s SSRF guard.
+item links and images are refused unless `http(s)` (in the parser, so an
+entry is safe by construction), and every fetch goes through `Web::Fetch`'s
+SSRF guard.

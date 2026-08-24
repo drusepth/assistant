@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_084509) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -203,7 +203,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_084509) do
     t.datetime "created_at", null: false
     t.integer "feed_id", null: false
     t.string "guid", null: false
-    t.string "image_url"
     t.datetime "published_at"
     t.datetime "read_at"
     t.datetime "saved_at"
@@ -222,12 +221,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_084509) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "etag"
     t.integer "failure_count", default: 0, null: false
     t.string "kind", default: "rss", null: false
     t.string "label"
     t.string "last_error"
     t.datetime "last_fetched_at"
     t.datetime "last_item_at"
+    t.string "last_modified"
+    t.datetime "last_read_at"
     t.string "site_url"
     t.string "title"
     t.datetime "updated_at", null: false

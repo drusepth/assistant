@@ -71,6 +71,40 @@ class FeedTest < ActiveSupport::TestCase
     assert_operator feed.refresh_interval, :>, Feed::REFRESH_EVERY
   end
 
+  test "dormancy is read off the row, not counted from the items" do
+    feed = @user.feeds.create!(url: "https://example.com/feed.xml")
+    feed.feed_items.create!(guid: "1", title: "Old news", published_at: 90.days.ago)
+    feed.record_success!(last_item_at: 90.days.ago)
+    feed.reload
+
+    # One query per feed inside the sweep was the whole point of the
+    # `last_read_at` column — this pins that it stays zero.
+    assert_no_queries { feed.dormant? }
+    assert_no_queries { feed.due_for_refresh? }
+  end
+
+  test "reading something here wakes the feed back up" do
+    feed = @user.feeds.create!(url: "https://example.com/feed.xml")
+    item = feed.feed_items.create!(guid: "1", title: "Old news", published_at: 90.days.ago)
+    feed.record_success!(last_item_at: 90.days.ago)
+    assert feed.dormant?
+
+    item.mark_read!
+
+    assert_not feed.reload.dormant?
+    assert_equal Feed::REFRESH_EVERY, feed.refresh_interval
+  end
+
+  test "the validators only go back out when the publisher gave us some" do
+    feed = @user.feeds.create!(url: "https://example.com/feed.xml")
+    assert_empty feed.conditional_headers
+
+    feed.update!(etag: "\"abc\"", last_modified: "Tue, 18 Aug 2026 09:00:00 GMT")
+
+    assert_equal({ "If-None-Match" => "\"abc\"",
+                   "If-Modified-Since" => "Tue, 18 Aug 2026 09:00:00 GMT" }, feed.conditional_headers)
+  end
+
   test "unfollowing a feed takes its items with it" do
     feed = @user.feeds.create!(url: "https://example.com/feed.xml")
     feed.feed_items.create!(guid: "1", title: "One")

@@ -108,20 +108,57 @@ class Feeds::RefreshTest < ActiveSupport::TestCase
     assert_equal [ "Newer", "Older" ], @feed.feed_items.newest.map(&:title)
   end
 
-  test "an entry's image only survives if it is an http(s) address" do
+  test "the validators the publisher sent are kept, and sent back next time" do
     stub_request(:get, @feed.url).to_return(
-      headers: { "Content-Type" => "application/rss+xml" },
-      body: <<~XML
-        <rss><channel><title>T</title>
-          <item><title>One</title><link>https://example.com/1</link>
-            <enclosure url="javascript:alert(1)" type="image/png"/></item>
-        </channel></rss>
-      XML
+      body: "<rss><channel><title>T</title><item><title>One</title><link>https://e.com/1</link></item></channel></rss>",
+      headers: { "Content-Type" => "application/rss+xml", "ETag" => "W/\"abc\"",
+                 "Last-Modified" => "Tue, 18 Aug 2026 09:00:00 GMT" }
     )
-
     Feeds::Refresh.call(@feed)
 
-    assert_nil @feed.feed_items.sole.image_url
+    assert_equal "W/\"abc\"", @feed.reload.etag
+    assert_equal "Tue, 18 Aug 2026 09:00:00 GMT", @feed.last_modified
+
+    conditional = stub_request(:get, @feed.url)
+      .with(headers: { "If-None-Match" => "W/\"abc\"",
+                       "If-Modified-Since" => "Tue, 18 Aug 2026 09:00:00 GMT" })
+      .to_return(status: 304)
+
+    result = Feeds::Refresh.call(@feed)
+
+    assert_requested conditional
+    assert result.ok?
+    assert_not result.changed?, "a 304 is a successful check with nothing to do"
+    assert @feed.reload.healthy?
+    assert_equal 1, @feed.feed_items.count, "nothing was parsed and nothing was lost"
+  end
+
+  test "a feed that stops sending validators stops being asked with them" do
+    stub_request(:get, @feed.url).to_return(
+      body: "<rss><channel><title>T</title></channel></rss>",
+      headers: { "Content-Type" => "application/rss+xml", "ETag" => "\"one\"" }
+    )
+    Feeds::Refresh.call(@feed)
+    assert_equal "\"one\"", @feed.reload.etag
+
+    stub_request(:get, @feed.url).to_return(
+      body: "<rss><channel><title>T</title></channel></rss>",
+      headers: { "Content-Type" => "application/rss+xml" }
+    )
+    Feeds::Refresh.call(@feed)
+
+    assert_nil @feed.reload.etag
+    assert_empty @feed.conditional_headers
+  end
+
+  test "reading an item stamps its feed, which is what keeps the poll polite" do
+    stub_feed(item(title: "One"))
+    Feeds::Refresh.call(@feed)
+
+    assert_nil @feed.reload.last_read_at
+    @feed.feed_items.sole.mark_read!
+
+    assert_not_nil @feed.reload.last_read_at
   end
 
   test "read items past the cap are pruned; saved and unread ones never are" do

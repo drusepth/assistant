@@ -24,24 +24,35 @@ module Web
       172.16.0.0/12 192.168.0.0/16 ::1/128 fc00::/7 fe80::/10
     ].map { |range| IPAddr.new(range) }.freeze
 
-    Page = Data.define(:title, :text, :final_url)
+    # `headers` and `not_modified` exist for the reader's conditional GET
+    # (D-feed-reader): a caller that sent If-None-Match needs the validators
+    # back, and needs "nothing changed" to be an *answer* rather than an
+    # error. Everything else can ignore both.
+    Page = Data.define(:title, :text, :final_url, :headers, :not_modified) do
+      def not_modified? = not_modified
+    end
 
     # Injectable so tests run without DNS; anything answering getaddresses.
     cattr_accessor :resolver, default: Resolv
 
-    def self.text(url, headers: {}) = new(url, headers: headers).call
+    def self.text(url, **options) = new(url, **options).call
 
     # The same fetch with the markup left on. Only the reader's feed
     # discovery wants this (D-feed-reader): finding a site's <link
     # rel="alternate"> means reading the tags the text extraction exists to
     # throw away. Everything that hands a page to a *model* still goes
     # through .text — raw markup is never prompt material.
-    def self.raw(url, headers: {}) = new(url, headers: headers, raw: true).call
+    def self.raw(url, **options) = new(url, raw: true, **options).call
 
-    def initialize(url, headers: {}, raw: false)
+    # Timeouts are per call because they are a product decision, not a
+    # network one: the defaults suit a background job, and a fetch somebody
+    # is *waiting on* in a form submit wants to give up much sooner.
+    def initialize(url, headers: {}, raw: false, open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT)
       @url = url.to_s.strip
       @headers = headers
       @raw = raw
+      @open_timeout = open_timeout
+      @read_timeout = read_timeout
     end
 
     def call
@@ -50,6 +61,14 @@ module Web
         guard!(uri)
         response = get(uri)
         case response
+        # Before the redirect branch, and this ordering is load-bearing:
+        # 304 *is* a 3xx, so Net::HTTPNotModified is a subclass of
+        # Net::HTTPRedirection, and a redirect-first case treats it as a
+        # redirect with a missing Location.
+        when Net::HTTPNotModified
+          # Only reachable when the caller sent a validator, and the whole
+          # point of sending one: no body, no parse, no work for either end.
+          return page(nil, "", uri, response, not_modified: true)
         when Net::HTTPRedirection
           location = response["location"] or raise Error, "redirect with no destination"
           uri = parsed(URI.join(uri, location).to_s)
@@ -90,8 +109,8 @@ module Web
       def get(uri)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
-        http.open_timeout = OPEN_TIMEOUT
-        http.read_timeout = READ_TIMEOUT
+        http.open_timeout = @open_timeout
+        http.read_timeout = @read_timeout
         request = Net::HTTP::Get.new(uri, {
           "User-Agent" => USER_AGENT,
           "Accept" => "text/html, application/xhtml+xml, text/*, application/json"
@@ -101,24 +120,29 @@ module Web
         raise Error, "couldn't reach the site (#{e.class.name.demodulize})"
       end
 
+      # Just the two validators. Handing back the whole response would hand
+      # back Set-Cookie too, and nothing here wants that.
+      def page(title, text, uri, response, not_modified: false)
+        Page.new(
+          title: title, text: text, final_url: uri.to_s, not_modified: not_modified,
+          headers: { "etag" => response["etag"], "last-modified" => response["last-modified"] }.compact
+        )
+      end
+
       def extract(response, uri)
         body = response.body.to_s
         raise Error, "the page is too large to read" if body.bytesize > MAX_BYTES
 
         type = response["content-type"].to_s
         if type.include?("html") && @raw
-          Page.new(title: Nokogiri::HTML(body.scrub).title.to_s.squish.presence,
-                   text: body.scrub, final_url: uri.to_s)
+          page(Nokogiri::HTML(body.scrub).title.to_s.squish.presence, body.scrub, uri, response)
         elsif type.include?("html")
           document = Nokogiri::HTML(body.scrub)
           document.css("script, style, noscript, svg").remove
-          Page.new(
-            title: document.title.to_s.squish.presence,
-            text: document.text.gsub(/[ \t]+/, " ").gsub(/\n{3,}/, "\n\n").strip,
-            final_url: uri.to_s
-          )
+          page(document.title.to_s.squish.presence,
+               document.text.gsub(/[ \t]+/, " ").gsub(/\n{3,}/, "\n\n").strip, uri, response)
         elsif type.start_with?("text/") || type.include?("json") || type.include?("xml")
-          Page.new(title: nil, text: body.scrub.strip, final_url: uri.to_s)
+          page(nil, body.scrub.strip, uri, response)
         else
           raise Error, "that link is #{type.split(";").first.presence || "not text"} — only pages and text work"
         end

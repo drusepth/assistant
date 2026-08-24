@@ -201,7 +201,12 @@ Rails.application.routes.draw do
   post "reader/read_all" => "reader#read_all", as: :reader_read_all
   resources :feeds, except: %i[ show new ] do
     member { post :refresh }
-    collection { post :refresh_all }
+    collection do
+      post :refresh_all
+      # The reading list leaves in the format every other reader can read.
+      get :export
+      post :import
+    end
   end
   resources :feed_items, only: [] do
     member do

@@ -93,14 +93,62 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "check-now reports the failure on the feed rather than blowing up" do
+  test "check-now hands the fetch to a job instead of holding the request" do
+    feed = users(:one).feeds.create!(url: "https://example.com/posts.xml")
+
+    assert_enqueued_with job: RefreshFeedJob, args: [ feed ] do
+      post refresh_feed_path(feed)
+    end
+
+    assert_redirected_to feeds_path
+    assert_match(/checking/i, flash[:notice])
+    assert_not_requested :get, feed.url
+  end
+
+  test "a failing feed's own row still says what went wrong" do
     feed = users(:one).feeds.create!(url: "https://example.com/posts.xml")
     stub_request(:get, feed.url).to_return(status: 503)
 
-    post refresh_feed_path(feed)
+    perform_enqueued_jobs { post refresh_feed_path(feed) }
+
+    assert_match(/503/, feed.reload.last_error)
+    get feeds_path
+    assert_match(/503/, response.body)
+  end
+
+  test "the reading list exports as OPML" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    users(:one).feeds.create!(url: "https://example.com/wood.xml", title: "Wood", sections: [ lens ])
+
+    get export_feeds_path
+
+    assert_response :success
+    assert_equal "text/x-opml", response.media_type
+    assert_match(/attachment/, response.headers["Content-Disposition"])
+    assert_match "https://example.com/wood.xml", response.body
+  end
+
+  test "an OPML file becomes subscriptions, checked in the background" do
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new('<opml><body><outline type="rss" xmlUrl="https://example.com/a.xml"/></body></opml>'),
+      "text/x-opml", original_filename: "subscriptions.opml"
+    )
+
+    assert_difference "Feed.count", 1 do
+      assert_enqueued_jobs 1, only: RefreshFeedJob do
+        post import_feeds_path, params: { file: file }
+      end
+    end
 
     assert_redirected_to feeds_path
-    assert_match(/503/, feed.reload.last_error)
+    assert_match(/1 feed added/i, flash[:notice])
+    assert_not_requested :get, "https://example.com/a.xml"
+  end
+
+  test "importing nothing explains itself" do
+    post import_feeds_path
+
+    assert_match(/choose an opml file/i, flash[:alert])
   end
 
   test "check-all enqueues one fetch per active feed" do

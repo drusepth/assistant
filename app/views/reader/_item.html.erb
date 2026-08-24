@@ -4,10 +4,16 @@
     carries the weight; read recedes without disappearing.
 
     Text and a link out, never the publisher's HTML (it's stripped at parse
-    time), because the article belongs to the site that wrote it. Locals:
-    item. %>
+    time), because the article belongs to the site that wrote it.
+
+    Locals: item; optional filter — the list this row is being rendered
+    under, so a row marked read while you are looking at the *unread* list
+    knows to leave it. %>
 <% url = reader_safe_url(item.url) %>
-<article id="<%= dom_id(item) %>" class="reader-line group">
+<% filter = local_assigns.fetch(:filter, nil) %>
+<% read_path = read_feed_item_path(item, from: filter) %>
+<article id="<%= dom_id(item) %>" class="reader-line group"
+         data-controller="reader" data-reader-url-value="<%= read_path %>">
   <%# The source column: fixed and truncated, so four hundred headlines all
       start at the same x. Below `lg` it moves into the meta line, where
       there is room for it. %>
@@ -23,7 +29,9 @@
     <% end %>
     <h3 class="inline text-sm <%= item.read? ? "font-normal text-soft" : "font-semibold text-ink" %>">
       <% if url %>
-        <%= link_to item.title, url, class: "hover:underline", **ReaderHelper::OUTBOUND %>
+        <%# Opening it is what marks it read — see reader_controller.js. %>
+        <%= link_to item.title, url, class: "hover:underline",
+              data: { action: item.read? ? nil : "reader#markRead" }, **ReaderHelper::OUTBOUND %>
       <% else %>
         <%= item.title %>
       <% end %>
@@ -59,7 +67,7 @@
       <%= button_to "Unread", unread_feed_item_path(item), method: :patch,
             class: "reader-verb", form_class: "contents" %>
     <% else %>
-      <%= button_to "Read", read_feed_item_path(item), method: :patch,
+      <%= button_to "Read", read_path, method: :patch,
             class: "reader-verb", form_class: "contents" %>
     <% end %>
 

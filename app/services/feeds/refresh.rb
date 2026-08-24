@@ -23,13 +23,18 @@ module Feeds
     end
 
     def call
-      page = Web::Fetch.raw(@feed.url, headers: { "Accept" => Discover::ACCEPT })
+      page = Web::Fetch.raw(@feed.url, headers: request_headers)
+      # The whole point of the conditional GET: the publisher said nothing
+      # changed, so there is no body to parse and nothing to write beyond
+      # "we checked".
+      return unchanged(page) if page.not_modified?
+
       parsed = Parse.call(page.text)
       return failure("that address stopped being a feed") unless parsed
 
       added, updated = ingest(parsed)
       adopt_metadata(parsed)
-      @feed.record_success!(last_item_at: parsed.entries.filter_map(&:published_at).max)
+      record_success(page, parsed)
       prune
       Result.new(added: added, updated: updated, error: nil)
     rescue Web::Fetch::Error => e
@@ -37,6 +42,25 @@ module Feeds
     end
 
     private
+      # Ask for what we haven't seen. A feed that hands back 304 costs its
+      # publisher a header exchange and us no parse at all — the other half
+      # of the politeness the interval floor starts (D-feed-reader).
+      def request_headers
+        { "Accept" => Discover::ACCEPT }.merge(@feed.conditional_headers)
+      end
+
+      def unchanged(page)
+        record_success(page, nil)
+        Result.new(added: 0, updated: 0, error: nil)
+      end
+
+      def record_success(page, parsed)
+        @feed.record_success!(
+          last_item_at: parsed&.entries&.filter_map(&:published_at)&.max,
+          etag: page.headers["etag"], last_modified: page.headers["last-modified"]
+        )
+      end
+
       def ingest(parsed)
         added = updated = 0
 
@@ -61,18 +85,10 @@ module Feeds
           title: entry.title.to_s.squish.truncate(300).presence || "(untitled)",
           author: entry.author&.squish&.truncate(120),
           summary: entry.summary,
-          image_url: http_image(entry.image_url),
           # A feed with no dates at all still has to sort: fall back to when
           # we first saw it, which is what "new to me" means anyway.
           published_at: entry.published_at || Time.current
         }
-      end
-
-      # The item's picture is loaded by the reader's browser, so it is a
-      # request the publisher gets to see. Only http(s) — a `data:` or
-      # `javascript:` src from a stranger's feed never reaches an img tag.
-      def http_image(url)
-        url.to_s.match?(%r{\Ahttps?://\S+\z}i) ? url.to_s.truncate(2_000) : nil
       end
 
       # The feed names itself; the user's own label always wins at display.
