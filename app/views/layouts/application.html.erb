@@ -59,7 +59,13 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-canvas text-ink antialiased">
+  <%# On `<body>` because it is the one element a morph keeps: Turbo morphs
+      body's *children*, so a controller here survives the render it is
+      bridging (see focus_keeper_controller). %>
+  <body class="bg-canvas text-ink antialiased"
+        data-controller="focus-keeper"
+        data-action="turbo:submit-start@document->focus-keeper#remember
+                     turbo:render@document->focus-keeper#restore">
     <% if authenticated? %>
       <%= render "shared/celebration" %>
       <div data-controller="nav"
