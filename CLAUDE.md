@@ -68,7 +68,7 @@ Every item is **multi-taggable** by section (e.g., "Mom's cardiology appointment
 
 ### Model integration
 
-Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI, Anthropic (Claude), and Google (Gemini) — each an API key + model name, the latter two over the providers' own OpenAI-compatibility endpoints — plus Chroma Golem (key only; router-style) and a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Presets may carry per-provider quirks the adapter absorbs (`json_mode:`, `max_tokens:`) but never a second code path (D-provider-presets). Remote models first; local models are a custom-endpoint config swap. Security/encryption hardening deliberately deferred until the foundation is built.
+Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI, Anthropic (Claude), and Google (Gemini) — each an API key + model name, the latter two over the providers' own OpenAI-compatibility endpoints — plus Chroma Golem (key only; router-style) and a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Presets may carry per-provider quirks the adapter absorbs (`json_mode:`, `max_tokens:`) but never a second code path (D-provider-presets). **Local models are the recommended answer and the UI argues for them** — an `allow_cloud_models` toggle (default on) gates every `cloud: true` preset, and the picker groups self-run endpoints ahead of hosted ones (D-local-first-models). Local models work today through the self-hosted endpoint (Ollama, llama.cpp, LM Studio); first-class one-click local setup is still to come. Security/encryption hardening deliberately deferred until the foundation is built.
 
 ## Tech stack
 

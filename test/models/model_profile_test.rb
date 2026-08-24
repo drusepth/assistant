@@ -59,6 +59,39 @@ class ModelProfileTest < ActiveSupport::TestCase
     assert_equal "https://api.chromagolem.com/v1", profile.effective_base_url
   end
 
+  test "turning cloud models off takes the hosted providers out of the picker" do
+    assert_equal ModelProfile::PROVIDERS.keys, ModelProfile.selectable_providers(allow_cloud: true)
+    assert_equal [ "custom" ], ModelProfile.selectable_providers(allow_cloud: false)
+
+    %w[ openai anthropic google chroma_golem ].each do |provider|
+      assert ModelProfile.cloud_provider?(provider), "#{provider} is somebody else's computer"
+    end
+    assert_not ModelProfile.cloud_provider?("custom"), "a URL you type is not a hosted service"
+  end
+
+  test "a cloud provider can't be saved while cloud models are turned off" do
+    profile = model_profiles(:smith)
+
+    profile.assign_attributes(provider: "anthropic", model: "claude-opus-5", allow_cloud_models: false)
+    assert_not profile.valid?
+    assert_match(/cloud models are turned off/, profile.errors.full_messages.to_sentence)
+
+    # The escape hatch is never gated: it's how you reach a local model.
+    profile.assign_attributes(provider: "custom", base_url: "http://localhost:11434/v1", model: "llama3.2")
+    assert profile.valid?
+  end
+
+  test "client refuses a cloud provider the household has turned off" do
+    profile = model_profiles(:smith)
+    profile.update_column(:allow_cloud_models, false) # only a hand-edited row gets here
+
+    error = assert_raises(Llm::Error) { profile.client }
+    assert_match "Cloud models are turned off", error.message
+
+    profile.update_column(:allow_cloud_models, true)
+    assert_kind_of Llm::Client, profile.client
+  end
+
   test "unknown providers are rejected" do
     profile = model_profiles(:smith)
     profile.provider = "skynet"

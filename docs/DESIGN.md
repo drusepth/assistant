@@ -63,6 +63,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.btn-sm`, `.btn-touch` — the two sizes off the default
    - `.input`, `.label`, `.hint`, `.field-error` — the form set
    - `.card`, `.chip`
+   - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a
+     recommendation or caveat that belongs to the form, not the request
    - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
    - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
    - `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`)

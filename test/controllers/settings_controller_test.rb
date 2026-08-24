@@ -10,6 +10,20 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_match users(:two).name, response.body
   end
 
+  test "the AI card groups self-run providers ahead of cloud ones and recommends running your own" do
+    get settings_path
+    assert_response :success
+
+    assert_select "select[name=?] optgroup", "model_profile[provider]", count: 2
+    assert_select "optgroup[label=?] option[value=?]", "Runs where you put it", "custom"
+    assert_select "optgroup[label=?] option[value=?]", "Cloud providers", "anthropic"
+    assert_select "optgroup[label=?] option[value=?]", "Cloud providers", "google"
+
+    assert_select "input[type=checkbox][name=?]", "model_profile[allow_cloud_models]"
+    assert_match "Allow cloud LLMs", response.body
+    assert_match "own the means of your own empowerment", response.body
+  end
+
   test "the photo card offers an upload, and a remove only once there's something to remove" do
     get settings_path
     assert_select "form[action=?][enctype=?]", avatar_path, "multipart/form-data"

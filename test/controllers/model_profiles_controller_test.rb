@@ -52,6 +52,35 @@ class ModelProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "https://generativelanguage.googleapis.com/v1beta/openai", profile.effective_base_url
   end
 
+  test "cloud models can be turned off, and the picker's local option still saves" do
+    sign_in_as users(:one)
+
+    patch model_profile_path, params: {
+      model_profile: { provider: "custom", base_url: "http://localhost:11434/v1", model: "llama3.2",
+                       api_key: "", allow_cloud_models: "0" }
+    }
+    assert_redirected_to settings_path
+
+    profile = households(:smith).reload.model_profile
+    assert_not profile.allow_cloud_models?
+    assert_equal "custom", profile.provider
+  end
+
+  test "a cloud provider is refused while cloud models are off, and the old settings stand" do
+    sign_in_as users(:one)
+    households(:smith).model_profile.update!(allow_cloud_models: false, provider: "custom",
+      base_url: "http://localhost:11434/v1", model: "llama3.2")
+
+    patch model_profile_path, params: {
+      model_profile: { provider: "openai", model: "gpt-4o-mini", api_key: "sk-x", allow_cloud_models: "0" }
+    }
+    assert_redirected_to settings_path
+    assert_match(/cloud models are turned off/, flash[:alert])
+
+    profile = households(:smith).reload.model_profile
+    assert_equal "custom", profile.provider, "the rejected save changed nothing"
+  end
+
   test "a blank api key keeps the stored one" do
     sign_in_as users(:one)
 

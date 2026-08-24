@@ -259,6 +259,21 @@
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
+  /* A tinted aside inside a card: a recommendation, a caveat, a "here's why
+     this default is the default". Louder than `.hint` and quieter than a
+     flash — it belongs to the form it sits in rather than to the request.
+     The sage register is the calm one, so `-warn` is the accent variant for
+     the version that should give someone pause. */
+  .callout {
+    @apply rounded-xl border border-sage-300 bg-sage-50/70 px-4 py-3 text-sm text-sage-800;
+  }
+  .callout-warn {
+    @apply border-primary-200 bg-primary-50/70 text-primary-900;
+  }
+  .callout-title {
+    @apply mb-1 font-semibold;
+  }
+
   /* A list of item rows inside a card. A hairline divider is enough between
      two one-line rows on a laptop; it is not enough between two task rows
      on a phone, where each is a wrapped title plus a meta line plus its
