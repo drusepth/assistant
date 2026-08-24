@@ -14,14 +14,16 @@
     <%= render Ui::CardComponent.new(title: "Overdue", subtitle: "Oldest first — claim one for today or push it to tomorrow",
           count: @overdue_tasks.size, anchor: "overdue", padded: false) do %>
       <div class="item-stack">
-        <%= render partial: "tasks/task", collection: @overdue_tasks, locals: { reschedule: true } %>
+        <%= render partial: "tasks/task", collection: @overdue_tasks, locals: { reschedule: true, dom_prefix: "overdue" } %>
       </div>
     <% end %>
   <% end %>
 
   <%= render Ui::CardComponent.new(title: "Due today", count: @today_tasks.size, anchor: "due-today", padded: false) do %>
     <% if @today_tasks.any? %>
-      <div class="item-stack"><%= render @today_tasks %></div>
+      <div class="item-stack">
+        <%= render partial: "tasks/task", collection: @today_tasks, locals: { dom_prefix: "due-today" } %>
+      </div>
     <% else %>
       <p class="px-5 py-8 text-center text-sm text-soft">Nothing due today.</p>
     <% end %>
@@ -33,7 +35,9 @@
         <% @today_events.each do |event| %>
           <%# A finished event stays on the page — it's how the day reads back
               — but it steps out of the way of what's still ahead. %>
-          <div class="<%= "opacity-50" if event.finished? %>"><%= render event %></div>
+          <div class="<%= "opacity-50" if event.finished? %>">
+            <%= render "events/event", event: event, dom_prefix: "today" %>
+          </div>
         <% end %>
       </div>
     <% else %>
@@ -68,14 +72,14 @@
             <% day_events = @prep_events.select { |event| [ event.starts_at.to_date, @prep_range.first ].max == day } %>
             <% next if day_tasks.empty? && day_events.empty? %>
             <p class="stack-label"><%= day.strftime("%A") %></p>
-            <%= render day_tasks %>
-            <%= render day_events %>
+            <%= render partial: "tasks/task", collection: day_tasks, locals: { dom_prefix: "prep" } %>
+            <%= render partial: "events/event", collection: day_events, locals: { dom_prefix: "prep" } %>
           <% end %>
         </div>
       <% else %>
         <div class="item-stack">
-          <%= render @prep_tasks %>
-          <%= render @prep_events %>
+          <%= render partial: "tasks/task", collection: @prep_tasks, locals: { dom_prefix: "prep" } %>
+          <%= render partial: "events/event", collection: @prep_events, locals: { dom_prefix: "prep" } %>
         </div>
       <% end %>
     <% else %>
@@ -89,7 +93,7 @@
       <div class="item-stack">
         <% @week_events_by_day.each do |day, events| %>
           <p class="stack-label"><%= day.strftime("%A, %b %-d") %></p>
-          <%= render events %>
+          <%= render partial: "events/event", collection: events, locals: { dom_prefix: "week" } %>
         <% end %>
       </div>
     <% end %>
@@ -101,7 +105,7 @@
     <%= render Ui::CardComponent.new(title: "Unscheduled", subtitle: "Open tasks with no date, oldest first",
           count: @unscheduled_count, anchor: "unscheduled", padded: false) do %>
       <div class="item-stack">
-        <%= render partial: "tasks/task", collection: @unscheduled_tasks, locals: { reschedule: true } %>
+        <%= render partial: "tasks/task", collection: @unscheduled_tasks, locals: { reschedule: true, dom_prefix: "unscheduled" } %>
       </div>
       <% if @unscheduled_count > @unscheduled_tasks.length %>
         <div class="border-t border-edge px-4 py-2.5">

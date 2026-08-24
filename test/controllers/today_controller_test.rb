@@ -88,6 +88,25 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_select "#overdue button[data-row-dismiss-direction=?]", "later"
   end
 
+  test "every row on the page is named, and no name is used twice" do
+    users(:one).tasks.create!(title: "Very late", due_on: 3.days.ago)
+    users(:one).tasks.create!(title: "Do today", due_on: Date.current)
+    users(:one).tasks.create!(title: "Pack gym bag", due_on: Date.tomorrow)
+    users(:one).tasks.create!(title: "Someday thing")
+    # Event.overlapping is inclusive at both ends, so this one is genuinely
+    # on today's list *and* tomorrow's — the case a bare dom_id gets wrong.
+    users(:one).events.create!(title: "Conference", starts_at: Time.current.beginning_of_day + 9.hours,
+      ends_at: Date.tomorrow.end_of_day)
+
+    get today_path
+    rows = css_select(".item-row")
+    assert rows.any?
+    assert_empty rows.reject { |row| row["id"].present? }, "an item row with no id"
+
+    ids = css_select("[id]").map { |el| el["id"] }
+    assert_empty ids.tally.select { |_id, count| count > 1 }.keys, "ids used more than once"
+  end
+
   test "a row with no reschedule buttons has nothing to animate out" do
     users(:one).tasks.create!(title: "Do today", due_on: Date.current)
 
