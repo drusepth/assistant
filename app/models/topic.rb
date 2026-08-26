@@ -41,4 +41,10 @@ class Topic < ApplicationRecord
   def shore_up!(evidence: "quiz")
     advance!(to: :mastered, evidence: evidence) if rusty?
   end
+
+  # Decay keeps the evidence and the date — the history is the record; only
+  # the color stops lying (D-mastery-evidence).
+  def decay!
+    update!(mastery: :rusty) if mastered?
+  end
 end
