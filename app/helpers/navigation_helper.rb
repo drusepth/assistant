@@ -1,44 +1,17 @@
 module NavigationHelper
-  NAV_METADATA = {
-    "Dashboard" => { subtitle: "Overview & daily summary", shortcut: "⌘1" },
-    "Today" => { subtitle: "Current agenda", badge: "Today", shortcut: "⌘2" },
-    "Calendar" => { subtitle: "Schedule & events", shortcut: "⌘3" },
-    "Tasks" => { subtitle: "To-do items & priorities", shortcut: "⌘4" },
-    "Address Book" => { subtitle: "Contacts & directory", badge: "Vault" },
-    "Photos" => { subtitle: "Photo library & memories", badge: "Vault" },
-    "Documents" => { subtitle: "Files & attachments", badge: "Vault" },
-    "Notes" => { subtitle: "Quick notes & drafts", badge: "Vault" },
-    "Mail" => { subtitle: "Inbox & messages", badge: "Vault" },
-    "Passwords" => { subtitle: "Credentials & security", badge: "Vault" }
-  }.freeze
-
   # `count:` is a number that rides at the end of the row — the unread pile
   # behind a destination, which is the thing that makes anybody open it.
-  # Deliberately not called `badge:`: that word is already taken here for
-  # the tooltip's *kind* label ("Vault", "Today"), and one keyword meaning
-  # two things is how a helper becomes a puzzle. Zero doesn't draw, and the
-  # count carries `nav-label` so it disappears with the labels when the rail
-  # is collapsed rather than sitting alone beside an icon.
-  def nav_link_to(name, path, icon_name, subtitle: nil, badge: nil, shortcut: nil, count: nil)
+  # Zero doesn't draw, and the count carries `nav-label` so it disappears
+  # with the labels when the rail is collapsed rather than sitting alone
+  # beside an icon.
+  def nav_link_to(name, path, icon_name, count: nil)
     active = nav_active?(path)
     classes = active ?
       "bg-primary-600 text-primary-50 font-semibold" :
       "text-ink hover:bg-canvas"
 
-    meta = NAV_METADATA[name] || {}
-    sub_text = subtitle || meta[:subtitle]
-    badge_text = badge || meta[:badge]
-    shortcut_text = shortcut || meta[:shortcut]
-
-    data = {
-      controller: "tooltip",
-      tooltip_title_value: name
-    }
-    data[:tooltip_subtitle_value] = sub_text if sub_text.present?
-    data[:tooltip_badge_value] = badge_text if badge_text.present?
-    data[:tooltip_shortcut_value] = shortcut_text if shortcut_text.present?
-
-    link_to path, class: "flex items-center gap-2.5 rounded-full px-3 py-2 text-sm #{classes}", data: data do
+    link_to path, class: "flex items-center gap-2.5 rounded-full px-3 py-2 text-sm #{classes}",
+      aria: { label: name }, data: tooltip_data(name, nav_signals.row(name)) do
       safe_join([
         icon(icon_name, css_class: "size-4.5 shrink-0"),
         tag.span(name, class: "nav-label"),
@@ -72,16 +45,15 @@ module NavigationHelper
       "bg-primary-600 text-primary-50 font-semibold" :
       "text-ink hover:bg-canvas"
 
-    sub_text = section.parent ? "#{section.parent.name} section" : "Life Lens section"
+    # "Budget" reads ambiguously the moment it's off its own page, and a
+    # collapsed rail is nothing but dots — so the name the tooltip and the
+    # screen reader get is the qualified one. `top_level?` reads the foreign
+    # key rather than the association, so the common row costs no query to
+    # learn it has no parent to name.
+    label = section.top_level? ? section.name : section.qualified_name
 
-    data = {
-      controller: "tooltip",
-      tooltip_title_value: section.name,
-      tooltip_subtitle_value: sub_text,
-      tooltip_badge_value: "Section"
-    }
-
-    link_to section_path(section.slug), class: "flex items-center gap-2.5 rounded-full px-3 py-2 text-sm #{classes}", data: data do
+    link_to section_path(section.slug), class: "flex items-center gap-2.5 rounded-full px-3 py-2 text-sm #{classes}",
+      aria: { label: label }, data: tooltip_data(label, nav_signals.section(section)) do
       # The dot sits in a fixed-width slot so it stays put when the labels
       # go — collapsed, the column of dots is the only thing telling the
       # sections apart, and a ragged column reads as broken.
@@ -91,7 +63,29 @@ module NavigationHelper
     end
   end
 
+  # One signals object per render, so the rail's dozen rows cost a handful of
+  # batched aggregates rather than a query each.
+  def nav_signals
+    @nav_signals ||= Navigation::Signals.new(Current.user)
+  end
+
+  # The lenses the rail draws. It comes from the signals object because that
+  # object needs the same list to batch over — asking the user twice is two
+  # trips for one answer.
+  def nav_sections = nav_signals.sections
+
   private
+    # A nav tooltip carries the row's name (the only label there is when the
+    # rail is collapsed) and, when there is one, what's waiting behind it.
+    # It never carries a description: restating the label to somebody who is
+    # already pointing at it is what made these tooltips worth nothing.
+    def tooltip_data(title, signal)
+      data = { controller: "tooltip", tooltip_title_value: title }
+      data[:tooltip_detail_value] = signal.body if signal&.body.present?
+      data[:tooltip_badge_value] = signal.badge if signal&.badge.present?
+      data
+    end
+
     def nav_active?(path)
       return request.path == path if path == root_path
       request.path == path || request.path.start_with?("#{path}/")

@@ -68,8 +68,14 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a
      recommendation or caveat that belongs to the form, not the request
    - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
-   - `.reader-line` (+ `.reader-verbs`, `.reader-verb`, `.reader-filter`)
-     — the scanning list: one line per item, verbs on hover (see Lists)
+   - `.reader-row`/`.reader-line` (+ `.reader-face`, `.reader-headline`,
+     `.reader-signal`, `.reader-verbs`, `.reader-verb`, `.reader-verb-lg`,
+     `.reader-expand`, `.reader-day`, `.reader-filter`) — the scanning
+     list: one non-wrapping line per item, opened in place (see Lists)
+   - `.reader-scopes`/`.reader-scope-row` (+ `.reader-scope`) — a filter
+     tree, in a rail at `lg` and a `.sheet` below it
+   - `.sheet` (+ `.sheet-backdrop`, `.sheet-grip`) — a panel up from the
+     bottom of a phone: a list of choices, where the thumb is
    - `.row-leaving`/`.row-gone` (+ `.btn-chosen`) — a row's send-off off
      the list its own button just took it off (see Lists)
    - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
@@ -154,16 +160,44 @@ the rows are rather than about taste:
   buttons — because at that height a hairline stops separating anything and
   the card reads as one column of text. Today's lists are the reference.
 
-- **`.reader-line`** — the scanning list: one line per item inside a
-  `divide-y`, with the verbs (`.reader-verbs`/`.reader-verb`) revealed on
-  hover rather than drawn in. Right when the list is *long* and being
-  scanned rather than read — the reader's river is the case, and Google
-  Reader is the reference: source, headline, first few words, age, at a
-  height where twenty fit on a laptop screen. Unread is the emphasised
-  state and read the quiet one, which inverts the usual weighting on
-  purpose: in a pile, what you've dealt with should recede. Don't reach for
-  it for a list of six things — at that length the density reads as
-  cramped rather than efficient, and `.item-stack` is right.
+- **`.reader-line`** — the scanning list: one line per item, with the
+  verbs (`.reader-verbs`/`.reader-verb`) dimmed rather than drawn in.
+  Right when the list is *long* and being scanned rather than read — the
+  reader's river is the case, and Google Reader is the reference: face,
+  source, headline, first few words, age, at a height where twenty fit on a
+  laptop screen. Unread is the emphasised state and read the quiet one,
+  which inverts the usual weighting on purpose: in a pile, what you've
+  dealt with should recede. Don't reach for it for a list of six things —
+  at that length the density reads as cramped rather than efficient, and
+  `.item-stack` is right.
+
+  Three rules the reader learned the hard way and any dense list inherits
+  (D-reader-density):
+
+  - **It must not wrap at any width.** The phone version was `flex-wrap`
+    with a full-width verb row, which took a line of its own and wrapped
+    again — ~96px per row to say less than the 34px laptop row said. A
+    dense row is a fixed shape; what doesn't fit goes somewhere else.
+  - **Hover-revealed is dimmed, never `opacity-0`.** At zero a pointer
+    user never learns the verbs exist, and the most valuable one is the one
+    nobody discovers. Opacity rather than `display` either way, so the row
+    can't change height under a reader who is scanning.
+  - **A label on every row is texture, not information.** A chip earns its
+    contrast only when it varies across the list.
+  - **The list container must not set `overflow`.** Anything other than
+    `visible` makes it the scroll container for the sticky day headings
+    inside it, which then pin to the container's own top edge rather than to
+    the page and sit on the rows permanently. Round the first and last
+    children instead of clipping the parent — which also stops a row's hover
+    fill poking past the border. This one is invisible at `lg`, where
+    `--app-header-h` is 0 and the pinned position happens to be the right
+    one; it only shows on a phone.
+
+  What the collapsed row can't carry goes in `.reader-expand`, opened by a
+  click on the row: the preview and the verbs at `.reader-verb-lg` (a real
+  44px target). Collapsing is `grid-template-rows: 0fr`, which animates
+  where a height cannot — so the panel needs **exactly one child**, or the
+  second lands in an implicit auto row and hangs out of the closed panel.
 
 Rows opt in by carrying `item-row` on their outer element (the primitive
 row partials already do), so a `.stack-label` day heading can sit in the
@@ -287,4 +321,12 @@ And one rule about *reach* rather than fit:
   run page and any page hosting a conversation. Assistant turns go through
   `chat_body` (`ChatHelper`) — a deliberately tiny markdown subset over
   escaped text; user turns are printed verbatim.
+- Tooltips carry state, never a description (D-nav-signals). A bubble that
+  restates the label it is attached to is a no-op beside a labelled control
+  and a bare label beside an unlabelled one, so `data-tooltip-detail-value`
+  gets what is behind the door right now — a date, else a count, else
+  nothing at all, and never a filler line. `badge` is a state worth acting
+  on ("Overdue"), never a category name ("Section"). Anything hoverable that
+  loses its visible text (the collapsed rail) still needs its own
+  `aria-label`: a tooltip is not an accessible name.
 - Rebuild CSS with `bin/rails tailwindcss:build` (or `bin/dev` watches).

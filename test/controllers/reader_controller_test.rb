@@ -18,6 +18,11 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     page.css("aside a[href='#{section_path("hobbies")}']").first
   end
 
+  # The face is a view concern, so it is asked of the helper the way the row
+  # asks for it.
+  def helper_face(feed) = ApplicationController.helpers.feed_face(feed).to_s[/bg-[\w-]+/]
+  def helper_monogram(feed) = ApplicationController.helpers.feed_monogram(feed)
+
   def item(feed, title, **attributes)
     feed.feed_items.create!(
       guid: "#{feed.id}-#{title.parameterize}", title: title,
@@ -156,15 +161,37 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil @feed.reload.last_read_at
   end
 
-  test "the row carries what opening the article should call" do
+  # Two urls, because a row has two ways of becoming read and they mean
+  # different things (D-reader-density): opening it *here* keeps it in the
+  # unread list, and going to the source takes it out.
+  test "the row carries both of the ways it can be opened" do
     item = item(@feed, "Sharpening a card scraper", url: "https://example.com/scraper")
 
     get reader_path
 
     row = Nokogiri::HTML(response.body).css("##{ActionView::RecordIdentifier.dom_id(item)}").first
-    assert_equal "reader", row["data-controller"]
-    assert_equal read_feed_item_path(item, from: "unread"), row["data-reader-url-value"]
-    assert_equal "reader#markRead", row.css("h3 a").first["data-action"]
+    assert_equal "reader-row", row["data-controller"]
+    assert_equal read_feed_item_path(item, from: "expand"), row["data-reader-row-read-url-value"]
+    assert_equal read_feed_item_path(item, from: "unread"), row["data-reader-row-dismiss-url-value"]
+    assert_equal "reader-row#openOrExpand", row.css("h3 a").first["data-action"]
+  end
+
+  test "opening a row in place leaves it in the unread list, read and open" do
+    item = item(@feed, "Sharpening a card scraper")
+
+    patch read_feed_item_path(item, from: "expand"), as: :turbo_stream
+
+    assert_predicate item.reload, :read?
+    assert_match(/is-open/, response.body)
+    assert_no_match(/Marked read —/, response.body)
+  end
+
+  test "a row marked read from the unread list still gets its send-off" do
+    item = item(@feed, "Sharpening a card scraper")
+
+    patch read_feed_item_path(item, from: "unread"), as: :turbo_stream
+
+    assert_match(/Marked read —/, response.body)
   end
 
   test "an empty reader invites a first feed instead of showing an empty list" do
@@ -184,10 +211,145 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     get reader_path
 
     page = Nokogiri::HTML(response.body)
-    list = page.at_css("[data-controller=river]")
+    list = page.at_css("[data-controller~=river]")
     assert list, "j/k/o/m/s need a scope to run in"
     assert list.css("[data-river-target=row]").any?
-    assert_match(/mark read/, page.at_css("kbd").parent.text)
+    assert list.at_css("[data-river-target=sheet]"), "`?` needs a sheet to open"
+    assert_match(/all keys/, page.at_css("kbd").parent.text)
+  end
+
+  # The verbs a key presses by name have to exist under that name, or `m`
+  # and `s` press nothing (river_controller.js).
+  test "every key that presses a verb has a verb to press" do
+    item(@feed, "Bench hooks")
+
+    get reader_path
+
+    page = Nokogiri::HTML(response.body)
+    labels = page.css("[data-river-target=row] button").map { |button| button.text.strip }
+    assert_includes labels, "Read"
+    assert_includes labels, "Save"
+    assert page.at_css("[data-river-refresh]"), "`r` presses Check now"
+    assert page.at_css("[data-river-read-all]"), "`A` presses Mark all read"
+  end
+
+  # ---- density (D-reader-density) ----------------------------------------
+
+  # The chip that used to be on every row. "Other Interests" is the catch-all
+  # every feed has by construction (D-hobby-feeds), so painting it made a
+  # label that appeared on 100% of items and carried no bits — while being
+  # the highest-contrast thing in the row.
+  test "the catch-all lens never earns a chip" do
+    @other_feed.sections = [ Hobbies::OtherInterests.find_or_create! ]
+    item(@other_feed, "Parrot eggs")
+
+    get reader_path
+
+    assert_match "Parrot eggs", response.body
+    assert_no_match Hobbies::OtherInterests::NAME, Nokogiri::HTML(response.body).css(".reader-signal").to_s
+  end
+
+  test "the lens you have already filtered to never earns a chip either" do
+    item(@feed, "A woodworking bench")
+
+    get reader_path
+    assert_match @lens.name, Nokogiri::HTML(response.body).css(".reader-signal").to_s
+
+    get reader_path(hobby: @lens.slug)
+    assert_no_match @lens.name, Nokogiri::HTML(response.body).css(".reader-signal").to_s
+  end
+
+  test "a feed's face is stable, and two feeds on one host wear the same one" do
+    one = users(:one).feeds.create!(url: "https://feeds.example.org/a.xml")
+    two = users(:one).feeds.create!(url: "https://example.org/b.xml")
+
+    assert_equal helper_face(one), helper_face(two), "same publisher, same face"
+    assert_equal "E", helper_monogram(one), "the noise subdomain is not the name"
+    assert_equal helper_face(one), helper_face(one.reload), "and it never moves"
+  end
+
+  test "the river is grouped under a day spine" do
+    item(@feed, "Today's", published_at: 2.hours.ago)
+    item(@feed, "Older", published_at: 3.days.ago)
+
+    get reader_path
+
+    days = Nokogiri::HTML(response.body).css(".reader-day").map { |node| node.text.strip }
+    assert_includes days, "Earlier today"
+    assert_equal 2, days.length, "one heading per day, not one per row"
+  end
+
+  # A CSS invariant, asserted here because it is the only suite there is and
+  # the failure was invisible on a laptop: any `overflow` other than visible
+  # makes the river the *scroll container* for the sticky day headers inside
+  # it, so they pin to `top: var(--app-header-h)` measured from the river's
+  # own top edge — which never scrolls. On a phone that token is 3.5rem, so
+  # the first heading sat permanently 56px into the list, on top of the first
+  # row. On a laptop the token is 0, which is exactly where the heading
+  # belongs anyway, so nothing looked wrong there.
+  test "the river is not a scroll container, or the day spine pins inside it" do
+    item(@feed, "Bench hooks")
+
+    get reader_path
+
+    classes = Nokogiri::HTML(response.body).at_css(".reader-river")["class"]
+    assert_no_match(/overflow-(hidden|auto|scroll|clip)/, classes,
+      "sticky headings inside this element would pin to it rather than to the page")
+  end
+
+  test "saved is a shelf and unread is a river" do
+    item(@feed, "Kept", saved_at: Time.current, read_at: Time.current)
+
+    get reader_path(filter: "saved")
+    assert_select ".reader-shelf"
+    assert_select ".reader-river", false
+
+    get reader_path
+    assert_select ".reader-river", false, "nothing unread, so no river"
+  end
+
+  test "the scope tree lists feeds under the hobby they were filed under" do
+    item(@feed, "A woodworking bench")
+
+    get reader_path
+
+    lens_row = Nokogiri::HTML(response.body).at_css(".reader-scope-group")
+    assert_match @lens.name, lens_row.text
+    assert_match "Wood", lens_row.text, "the feed rides under its lens, not in a flat list"
+  end
+
+  # ---- read-on-scroll -----------------------------------------------------
+
+  test "a batch of scrolled-past items is marked read in one request" do
+    one = item(@feed, "One")
+    two = item(@feed, "Two")
+
+    post reader_read_seen_path, params: { ids: [ one.id, two.id ] }
+
+    assert_response :success
+    assert_predicate one.reload, :read?
+    assert_predicate two.reload, :read?
+    assert_not_nil @feed.reload.last_read_at, "the batch still stamps the feed, so polling stays polite"
+  end
+
+  test "undoing a batch puts every one of them back" do
+    one = item(@feed, "One", read_at: Time.current)
+
+    post reader_unread_seen_path, params: { ids: [ one.id ] }
+
+    assert_not_predicate one.reload, :read?
+  end
+
+  test "a batch cannot reach another member's items" do
+    theirs = users(:two).feeds.create!(url: "https://example.com/theirs.xml")
+    hers = item(theirs, "Bob's private reading")
+    mine = item(@feed, "Mine")
+
+    post reader_read_seen_path, params: { ids: [ hers.id, mine.id ] }
+
+    assert_response :success
+    assert_not_predicate hers.reload, :read?, "a forged id in the list updates nothing"
+    assert_predicate mine.reload, :read?, "and the rest of the batch still goes through"
   end
 
   test "the river pages rather than rendering everything at once" do

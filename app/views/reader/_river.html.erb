@@ -1,0 +1,20 @@
+<%# The river itself, with a day spine through it (D-reader-density).
+
+    Four hundred rows that all read "1h" gave the list no shape — the age
+    column, two characters wide and well-judged for a laptop, does no work
+    when a whole sweep lands at once, and there was no sense of how far back
+    you had got or of a floor you could reach. A heading per day costs one
+    row per group and gives the pile a bottom.
+
+    Locals: page. %>
+<div class="reader-river">
+  <% last_day = nil %>
+  <% page.items.each do |item| %>
+    <% day = reader_day_label(item.published_on) %>
+    <% if day != last_day %>
+      <h2 class="reader-day"><%= day %></h2>
+      <% last_day = day %>
+    <% end %>
+    <%= render "reader/item", item: item, filter: @river.filter %>
+  <% end %>
+</div>

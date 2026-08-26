@@ -1,7 +1,7 @@
 module Sections
   module Panels
     # The Health lead panel (docs/HEALTH.md): care radar, household care,
-    # Mind, medications, insurance & coverage.
+    # Mind, medications, allergies, insurance & coverage.
     class Health < Panel
       def hidden_tool_slugs = ::Health::PANEL_TOOL_SLUGS
 
@@ -39,6 +39,10 @@ module Sections
 
       def medications
         @medications ||= viewer.notes.medications.order(:title)
+      end
+
+      def allergies
+        @allergies ||= viewer.notes.allergies.by_severity
       end
 
       def last_check_in

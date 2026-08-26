@@ -1,105 +1,134 @@
 <%= turbo_stream_from Current.user, :reader %>
 
-<%# The river (D-feed-reader) — Google Reader's shape and Google Reader's
-    density: everything your feeds carried, newest first, one line each.
-    The chrome is deliberately thin. On this page the list *is* the
+<%# The river (D-feed-reader, D-reader-density) — Google Reader's shape and
+    Google Reader's density: everything your feeds carried, newest first, one
+    line each. The chrome is deliberately thin. On this page the list *is* the
     interface, and every pixel spent on furniture above it is a headline
-    somebody doesn't see. %>
-<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-  <h1 class="display text-2xl text-ink">Reader</h1>
-  <div class="flex items-baseline gap-3 text-xs">
-    <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
-    <% if @feeds.any? %>
-      <%= button_to "Check now", refresh_all_feeds_path, class: "reader-verb", form_class: "contents" %>
-    <% end %>
-  </div>
-</div>
+    somebody doesn't see.
 
-<% if @feeds.none? %>
-  <%= render Ui::EmptyStateComponent.new(
-        title: "No feeds yet",
-        description: "Follow the sites, blogs, subreddits and channels behind your hobbies. Paste any address — the feed behind it gets found for you — and everything they publish lands here, newest first, with no account anywhere and nobody deciding what you see."
-      ) do |empty| %>
-    <% empty.with_action { link_to "Add your first feed", feeds_path, class: "btn btn-primary" } %>
-  <% end %>
-
-  <% if @starters.present? %>
-    <div class="card mt-4 p-5">
-      <%= render "feeds/starters", starters: @starters %>
-    </div>
-  <% end %>
-<% else %>
-  <%# One toolbar line per axis, and only the axes that have more than one
-      answer: a filter row for a household with one feed is furniture. %>
-  <div class="mb-2 space-y-1 border-b border-edge pb-2">
-    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-      <% ReaderHelper::FILTER_LABELS.each_with_index do |(key, label), index| %>
-        <%= reader_dot if index.positive? %>
-        <%= reader_filter_link label, { filter: key }, active: @river.filter == key %>
-      <% end %>
-    </div>
-
-    <% if @lenses.any? %>
-      <div class="flex items-baseline gap-x-2 overflow-x-auto whitespace-nowrap">
-        <span class="text-xs text-stone-500">Hobby</span>
-        <%= reader_filter_link "all", { hobby: nil }, active: params[:hobby].blank? %>
-        <% @lenses.each do |lens| %>
-          <%= reader_dot %>
-          <%= reader_filter_link lens.name, { hobby: lens.slug }, active: params[:hobby] == lens.slug %>
-        <% end %>
-      </div>
-    <% end %>
-
-    <% if @feeds.many? %>
-      <div class="flex items-baseline gap-x-2 overflow-x-auto whitespace-nowrap">
-        <span class="text-xs text-stone-500">Feed</span>
-        <%= reader_filter_link "all", { feed: nil }, active: params[:feed].blank? %>
-        <% @feeds.each do |feed| %>
-          <% unread = @unread_counts.fetch(feed.id, 0) %>
-          <%= reader_dot %>
-          <%= reader_filter_link "#{feed.display_title}#{" (#{unread})" if unread.positive?}",
-                { feed: feed.id }, active: params[:feed].to_s == feed.id.to_s %>
-        <% end %>
-      </div>
-    <% end %>
+    That principle was right and the page had stopped honouring it on a
+    phone: a title row, three filter rows and a count row came to ~200px
+    before the first headline, over rows that wrapped twice and stood ~96px
+    each. Six headlines on a screen that should hold twenty. What follows is
+    the same page with the furniture taken out — one filter line, a scope
+    picker that opens a sheet, and rows that don't wrap. %>
+<div data-controller="pull-refresh">
+  <%# Pull past the top and the sweep starts. Politeness (docs/READER.md) is
+      unchanged: this presses the page's own button, so the conditional GETs,
+      the per-feed intervals and the backoff still decide what actually
+      leaves the machine. %>
+  <div class="reader-pull lg:hidden" data-pull-refresh-target="indicator" aria-hidden="true">
+    <span class="reader-pull-dot"></span>
   </div>
 
-  <% if @page.any? %>
-    <div class="mb-1 flex items-baseline justify-between gap-3 px-3 text-xs text-soft">
-      <span class="tabular-nums"><%= reader_count_label(@page.total, @river.filter) %></span>
-      <% if @river.filter == "unread" %>
-        <%= button_to "Mark all read", reader_read_all_path(request.query_parameters.slice("hobby", "feed")),
-              class: "reader-verb", form_class: "contents",
-              form: { data: { turbo_confirm: "Mark everything in this view as read?" } } %>
+  <%# Tight on purpose: every pixel above the list is a headline somebody
+      doesn't see, and on a phone this block plus the filters used to come to
+      about a third of the viewport before the first story. %>
+  <div class="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+    <h1 class="display text-xl text-ink sm:text-2xl">Reader</h1>
+    <div class="flex items-baseline gap-3 text-xs">
+      <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
+      <% if @feeds.any? %>
+        <%= button_to "Check now", refresh_all_feeds_path, class: "reader-verb",
+              form_class: "contents", form: { data: { pull_refresh_target: "form" } },
+              data: { river_refresh: true } %>
       <% end %>
     </div>
+  </div>
 
-    <%# j/k/o/m/s — Google Reader's keys (river_controller.js). The hint sits
-        under the list rather than above it: it is for the second visit, not
-        the first, and the list is what the page is for. %>
-    <div class="card divide-y divide-edge py-1" data-controller="river">
-      <%= render partial: "reader/item", collection: @page.items, as: :item,
-            locals: { filter: @river.filter } %>
-    </div>
-    <p class="mt-2 hidden px-3 text-xs text-stone-500 sm:block">
-      <kbd>j</kbd>/<kbd>k</kbd> move · <kbd>o</kbd> open · <kbd>m</kbd> mark read · <kbd>s</kbd> save
-    </p>
+  <% if @feeds.none? %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "No feeds yet",
+          description: "Follow the sites, blogs, subreddits and channels behind your hobbies. Paste any address — the feed behind it gets found for you — and everything they publish lands here, newest first, with no account anywhere and nobody deciding what you see."
+        ) do |empty| %>
+      <% empty.with_action { link_to "Add your first feed", feeds_path, class: "btn btn-primary" } %>
+    <% end %>
 
-    <% if @page.more? %>
-      <div class="mt-3 text-center">
-        <%= link_to "Older", reader_path(request.query_parameters.merge(offset: @page.next_offset)),
-              class: "reader-filter" %>
+    <% if @starters.present? %>
+      <div class="card mt-4 p-5">
+        <%= render "feeds/starters", starters: @starters %>
       </div>
     <% end %>
   <% else %>
-    <p class="px-3 py-8 text-center text-sm text-soft">
-      <% if @river.filter == "unread" %>
-        You're all caught up. New items arrive on their own.
-        <%= reader_filter_link "See everything", { filter: "all" }, active: false %>
-      <% else %>
-        Nothing matches these filters.
-        <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
-      <% end %>
-    </p>
+    <%# Rail beside the river from `lg` up. The feed list used to be a
+        paragraph of inline link text across the top of the page — a wall at
+        ten feeds and unusable at forty — and this is the shape that content
+        always wanted. %>
+    <div class="reader-shell" data-controller="river ledger"
+         data-ledger-read-url-value="<%= reader_read_seen_path %>"
+         data-ledger-unread-url-value="<%= reader_unread_seen_path %>"
+         data-ledger-total-value="<%= @page.total %>">
+
+      <div class="reader-rail">
+        <%= render "reader/scopes" %>
+      </div>
+
+      <div class="min-w-0">
+        <%= render "reader/toolbar" %>
+
+        <% if @page.any? %>
+          <div class="mb-0.5 flex items-baseline justify-between gap-3 px-3 text-xs text-soft">
+            <span class="tabular-nums"><%= reader_count_label(@page.total, @river.filter) %></span>
+            <span class="flex items-baseline gap-3">
+              <%# What the ledger has cleared this session — a backlog with no
+                  visible floor is a guilt pile. %>
+              <span class="tabular-nums text-stone-500" data-ledger-target="count"></span>
+              <% if @river.filter == "unread" %>
+                <%= button_to "Mark all read", reader_read_all_path(request.query_parameters.slice("hobby", "feed")),
+                      class: "reader-verb", form_class: "contents",
+                      data: { river_read_all: true },
+                      form: { data: { turbo_confirm: "Mark everything in this view as read?" } } %>
+              <% end %>
+            </span>
+          </div>
+
+          <% if @river.filter == "unread" %>
+            <div class="reader-rail-progress" aria-hidden="true">
+              <i data-ledger-target="rail"></i>
+            </div>
+          <% end %>
+
+          <% if @river.filter == "saved" %>
+            <%= render "reader/shelf", page: @page %>
+          <% else %>
+            <%= render "reader/river", page: @page %>
+          <% end %>
+
+          <p class="mt-2 hidden px-3 text-xs text-stone-500 lg:block">
+            <kbd>j</kbd>/<kbd>k</kbd> move · <kbd>Enter</kbd> open here · <kbd>o</kbd> at the source ·
+            <kbd>?</kbd> all keys
+          </p>
+
+          <% if @page.more? %>
+            <div class="mt-3 text-center">
+              <%= link_to "Older", reader_path(request.query_parameters.merge(offset: @page.next_offset)),
+                    class: "reader-filter" %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="px-3 py-8 text-center text-sm text-soft">
+            <% if @river.filter == "unread" %>
+              You're all caught up. New items arrive on their own.
+              <%= reader_filter_link "See everything", { filter: "all" }, active: false %>
+            <% elsif @river.filter == "saved" %>
+              Nothing kept yet. Saving a story puts it on this shelf.
+              <%= reader_filter_link "Back to unread", { filter: "unread" }, active: false %>
+            <% else %>
+              Nothing matches these filters.
+              <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
+            <% end %>
+          </p>
+        <% end %>
+      </div>
+
+      <%# The send-off for read-on-scroll: the number that just went, and one
+          press to bring it back. Nothing here leaves without a way back. %>
+      <div class="reader-ledger-bar hidden" data-ledger-target="bar" role="status">
+        <span data-ledger-target="barText"></span>
+        <button type="button" class="reader-ledger-undo" data-action="ledger#undo">Undo</button>
+      </div>
+
+      <%= render "reader/shortcuts" %>
+    </div>
   <% end %>
-<% end %>
+</div>

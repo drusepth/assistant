@@ -29,6 +29,8 @@ Rails.application.routes.draw do
   patch "health/care-settings" => "care_settings#update"
   delete "health/care-settings/:kind_key" => "care_settings#destroy", as: :care_setting
   post "health/medications" => "medications#create", as: :medications
+  post "health/allergies" => "allergies#create", as: :allergies
+  delete "health/allergies/:id" => "allergies#destroy", as: :allergy
 
   post "career/win" => "career#create_win", as: :career_win
   post "career/comp_change" => "career#create_comp_change", as: :career_comp_change
@@ -262,6 +264,10 @@ Rails.application.routes.draw do
   # reader rather than a list.
   get "reader" => "reader#index", as: :reader
   post "reader/read_all" => "reader#read_all", as: :reader_read_all
+  # Read-on-scroll and its Undo (D-reader-density): a batch of ids the
+  # reader has already scrolled past, marked in one statement.
+  post "reader/read_seen" => "reader#read_seen", as: :reader_read_seen
+  post "reader/unread_seen" => "reader#unread_seen", as: :reader_unread_seen
   resources :feeds, except: %i[ show new ] do
     member do
       post :refresh
