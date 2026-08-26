@@ -11,47 +11,27 @@
     Locals: card (Panels::Hobbies::Card). %>
 <% summary = card.summary %>
 <% river = card.river %>
-<div class="card flex flex-col p-5 transition hover:border-primary-300 hover:shadow-sm"
+<div class="card p-5 transition hover:border-primary-300 hover:shadow-sm"
      data-hobby-card="<%= summary.section.slug %>">
-  <%= link_to section_path(summary.section.slug), class: "group/hobby block" do %>
-    <p class="flex items-center gap-2 text-sm font-semibold text-ink group-hover/hobby:underline">
-      <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(summary.section) %>" aria-hidden="true"></span>
+  <%# Name and signal on one line: what you do stays first, and costs the
+      card no height at all. A hobby with nothing on says nothing — silence
+      is shorter than "nothing planned yet" and means the same. %>
+  <%= link_to section_path(summary.section.slug), class: "group/hobby flex items-baseline gap-2" do %>
+    <span class="size-2 shrink-0 translate-y-px rounded-full <%= section_dot_classes(summary.section) %>" aria-hidden="true"></span>
+    <span class="min-w-0 flex-1 truncate text-sm font-semibold text-ink group-hover/hobby:underline">
       <%= summary.section.name %>
-    </p>
-    <%# The catch-all says what it is rather than pretending to be quiet:
-        these are the feeds no hobby claimed yet. %>
-    <% if card.catch_all? %>
-      <p class="mt-2 text-sm text-soft">Feeds that don't belong to a hobby yet.</p>
-    <% elsif summary.quiet? %>
-      <p class="mt-2 text-sm text-soft">Nothing planned yet — dive back in.</p>
-    <% else %>
-      <div class="mt-2 space-y-1 text-sm text-soft">
-        <% if summary.next_event %>
-          <p class="flex items-center gap-1.5">
-            <%= icon(:calendar, css_class: "size-4 shrink-0") %>
-            <span class="truncate"><%= summary.next_event.title %> · <%= summary.next_event.starts_at.strftime("%b %-d") %></span>
-          </p>
-        <% end %>
-        <% in_flight = [] %>
-        <% in_flight << pluralize(summary.open_tasks_count, "open task") if summary.open_tasks_count.positive? %>
-        <% in_flight << pluralize(summary.active_goals_count, "project") if summary.active_goals_count.positive? %>
-        <% if in_flight.any? %>
-          <p class="flex items-center gap-1.5">
-            <%= icon(:check_circle, css_class: "size-4 shrink-0") %>
-            <span><%= in_flight.join(" · ") %></span>
-          </p>
-        <% end %>
-      </div>
+    </span>
+    <% if (meta = card.meta) %>
+      <span class="shrink-0 text-xs text-soft" title="<%= card.meta_title %>"><%= meta %></span>
     <% end %>
   <% end %>
 
-  <%# `mt-auto` so the footers line up across a row of cards whose hobbies
-      have different amounts to say. A hobby with no feeds gets no river
-      block at all: the hub is the high-level view, and an invitation to
-      paste a URL belongs on the hobby's own page, where somebody has
-      already decided to spend time on it. %>
+  <%# A hobby with no feeds gets no river block at all: the hub is the
+      high-level view, and an invitation to paste a URL belongs on the
+      hobby's own page, where somebody has already decided to spend time on
+      it. %>
   <% if river.any_feeds? %>
-    <div class="mt-auto pt-4 text-sm">
+    <div class="pt-4 text-sm">
       <div class="border-t border-edge pt-3">
         <% if river.items.any? %>
           <ul class="space-y-1.5">

@@ -21,7 +21,10 @@
         <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
       </div>
     </div>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <%# `items-start` so a card with one story is the height of one story: with
+        stretched rows, the shortest card in a row wears the tallest card's
+        whitespace, which is the same wasted space the signal line was. %>
+    <div class="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <%= render partial: "sections/hobby_card", collection: panel.cards, as: :card %>
       <%# Content first, then the two housekeeping tiles: everything the
           hobbies you are actually using have to say, then the names you

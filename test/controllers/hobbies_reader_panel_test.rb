@@ -69,8 +69,7 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
 
     get section_path("hobbies")
 
-    assert_select "[data-hobby-card=?]", lens.slug
-    assert_match(/1 open task/, response.body)
+    assert_select "[data-hobby-card=?]", lens.slug, text: /1 task/
     assert_select "[data-hobby-explore]", false
   end
 
@@ -81,6 +80,26 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     get section_path("hobbies")
 
     assert_select "[data-hobby-card=?]", Hobbies::OtherInterests::SLUG, false
+  end
+
+  # One line of signal, beside the name rather than under it: at hub
+  # altitude a date or a count is the useful part, and "nothing planned yet"
+  # is a row of height spent on silence.
+  test "a card's signal is one short line, and a hobby with nothing on says nothing" do
+    quiet = Hobbies::Lens.find_or_create!("Baking")
+    dated = Hobbies::Lens.find_or_create!("Guitar")
+    users(:one).feeds.create!(url: "https://example.com/bake.xml", sections: [ quiet ])
+    users(:one).feeds.create!(url: "https://example.com/guitar.xml", sections: [ dated ])
+    users(:one).events.create!(title: "Open mic night", starts_at: Date.new(2026, 9, 3).noon)
+      .sections = [ dated ]
+
+    get section_path("hobbies")
+
+    page = Nokogiri::HTML(response.body)
+    assert_match "Sep 3", page.at_css("[data-hobby-card='#{dated.slug}']").text
+    assert_equal "Open mic night", page.at_css("[data-hobby-card='#{dated.slug}'] [title]")["title"],
+      "the short version says what it is short for"
+    assert_no_match(/Nothing planned yet|dive back in/, page.at_css("[data-hobby-card='#{quiet.slug}']").text)
   end
 
   test "a hobby's card carries its newest unread and a link into that hobby's river" do

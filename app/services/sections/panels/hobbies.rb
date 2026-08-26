@@ -60,6 +60,32 @@ module Sections
         def catch_all? = river.catch_all?
         # Sources or a life: either earns the space a card takes.
         def anything? = river.any_feeds? || !summary.quiet?
+
+        # The card's one line of signal, and it rides *beside* the hobby's
+        # name rather than under it. A line each for "Nothing planned yet —
+        # dive back in" and "1 open task" cost every card a row of height to
+        # say almost nothing; at hub altitude the useful part is the date or
+        # the number, and the detail is one click away on the lens page.
+        #
+        # One thing, most actionable first: a date beats a count, because a
+        # date is a commitment and a count is a pile.
+        def meta
+          return "no hobby yet" if catch_all?
+          return summary.next_event.starts_at.strftime("%b %-d") if summary.next_event
+          return pluralize(summary.open_tasks_count, "task") if summary.open_tasks_count.positive?
+          return pluralize(summary.active_goals_count, "project") if summary.active_goals_count.positive?
+
+          nil
+        end
+
+        # What the short version is short *for* — the hover title, so the
+        # meaning of "Aug 29" is never more than a pointer away.
+        def meta_title
+          summary.next_event&.title
+        end
+
+        private
+          def pluralize(count, noun) = ActionController::Base.helpers.pluralize(count, noun)
       end
     end
   end

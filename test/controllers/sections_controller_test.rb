@@ -227,8 +227,10 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
 
     get section_path("hobbies")
     assert_response :success
-    assert_match "Open mic night", response.body
-    assert_match "1 open task", response.body
+    # One short signal beside the name (D-hobby-feeds): the date, with the
+    # event's own title on hover. The full picture is on the lens page.
+    assert_select "[data-hobby-card=?] [title=?]", lens.slug, "Open mic night"
+    assert_match event.starts_at.strftime("%b %-d"), response.body
   end
 
   # A hobby with nothing in it is a link in the Explore card rather than a

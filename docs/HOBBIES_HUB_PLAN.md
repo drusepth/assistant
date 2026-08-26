@@ -180,8 +180,7 @@ river moves inside the cards.**
 ```
 Hobbies
   Your hobbies                            [ Everything · 41 ]  Manage feeds →
-  ┌─ Baking ────────────┐ ┌─ Guitar ────────────┐ ┌─ Other Interests ──┐
-  │ ● next: class Thu   │ │ ● 2 open tasks      │ │ feeds with no hobby│
+  ┌─ Baking ─────Sep 3 ─┐ ┌─ Guitar ────2 tasks ┐ ┌─ Other Int. no hobby┐
   │ ─────────────────── │ │ ─────────────────── │ │ ────────────────── │
   │ 3 newest unread     │ │ 3 newest unread     │ │ 3 newest unread    │
   │ …                   │ │ …                   │ │ …                  │
@@ -194,10 +193,15 @@ Hobbies
 
 Rules that keep this from becoming a second reader:
 
-- **The engagement line stays above the stories.** HOBBIES.md's named trap is
-  making consuming the hobby; a card whose top line is "next: class Thursday"
-  and whose bottom line is reading material has its priorities visible in its
-  layout.
+- **What you do stays above what you read**, but on the *name's own line*.
+  HOBBIES.md's named trap is making consuming the hobby, so the signal keeps
+  its place at the top of the card — it just stopped costing a row of height
+  to say it. One thing, most actionable first (a date beats a count, because
+  a date is a commitment and a count is a pile), with the event's own title
+  on hover. A hobby with nothing on says nothing: silence is shorter than
+  "nothing planned yet" and means the same. The full picture — every event,
+  task and project — is one click away on the lens page, which is what a hub
+  is *for*.
 - **Three items, not ten.** The card is a taste and a doorway. Depth is one
   click away in two directions: the hobby's own page, or `/reader`.
 - **A card is for a hobby with something in it.** A household names hobbies
