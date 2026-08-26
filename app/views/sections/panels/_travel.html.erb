@@ -1,15 +1,83 @@
-<%# The Travel hub's lead (D-travel-facet): the trips you took, then the map
-    of everywhere your camera has been. More will live here — documents,
-    packing, the "where next" tools — as further panels. %>
+<%# The Travel hub's lead (D-travel-facet, D-trip-spine): where you'll be
+    and what isn't booked, then the trips, then the map of everywhere your
+    camera has been. %>
 <% map = panel.map %>
+<% outlook = panel.outlook %>
 
 <div class="space-y-4">
 
-<% if panel.trips.any? || panel.suggestions.any? %>
-  <%= render Ui::CardComponent.new(title: "Your trips") do %>
-    <% if panel.trips.any? %>
+<%# ── Where you'll be ─────────────────────────────────────────────────
+    The forward view a moving household actually runs on: the stay you're
+    in, the next few moves, and the bookings nobody has made yet. %>
+<% if outlook.any? %>
+  <%= render Ui::CardComponent.new(title: "Where you'll be") do |card| %>
+    <% card.with_actions do %>
+      <%= link_to "Plan a trip", new_trip_path, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+
+    <% if outlook.current_stay %>
+      <p class="text-sm text-ink">
+        <span class="font-semibold">You're in <%= outlook.current_stay.location %></span>
+        through <%= outlook.current_stay.check_out.strftime("%b %-d") %>
+        <span class="text-soft">· <%= outlook.current_stay.display_name %></span>
+      </p>
+    <% elsif outlook.current_trip %>
+      <p class="text-sm text-ink">
+        <span class="font-semibold"><%= outlook.current_trip.name %></span> is underway.
+      </p>
+    <% end %>
+
+    <% if outlook.warnings.any? %>
+      <div class="callout callout-warn mt-3">
+        <p class="callout-title">Still to book</p>
+        <ul class="mt-1 space-y-0.5 text-sm">
+          <% outlook.warnings.each do |warning| %>
+            <li><%= link_to warning.message, trip_path(warning.trip, anchor: "itinerary"), class: "hover:underline" %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% if outlook.next_moves.any? %>
+      <h3 class="mb-1 mt-4 text-sm font-medium text-soft">Next moves</h3>
+      <div class="divide-y divide-edge rounded-xl bg-canvas">
+        <% outlook.next_moves.each do |item| %>
+          <%= link_to trip_path(item.trip, anchor: "itinerary"), class: "capture-row block p-2.5 hover:bg-stone-50" do %>
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="w-20 shrink-0 text-sm text-soft sm:w-24"><%= item.period %></span>
+              <span class="min-w-0 truncate text-sm font-medium text-ink"><%= item.display_name %></span>
+            </div>
+            <% unless item.is_a?(TripLeg) && TripLeg::BOOKLESS_KINDS.include?(item.kind) && item.planned? %>
+              <span class="shrink-0"><%= booking_chip(item) %></span>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if panel.upcoming_trips.any? || panel.shown_past_trips.any? || panel.suggestions.any? %>
+  <%= render Ui::CardComponent.new(title: "Your trips") do |card| %>
+    <% card.with_actions do %>
+      <div class="row-actions">
+        <%= link_to "All trips", trips_path, class: "btn btn-ghost btn-sm" %>
+        <%= link_to "Plan a trip", new_trip_path, class: "btn btn-secondary btn-sm" %>
+      </div>
+    <% end %>
+
+    <% if panel.upcoming_trips.any? %>
+      <div class="divide-y divide-edge rounded-xl bg-canvas">
+        <%= render partial: "trips/trip_row", collection: panel.upcoming_trips, as: :trip %>
+      </div>
+    <% end %>
+
+    <% if panel.shown_past_trips.any? %>
+      <% if panel.upcoming_trips.any? %>
+        <h3 class="mb-2 mt-5 text-sm font-medium text-soft">Been and back</h3>
+      <% end %>
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <% panel.shown_trips.each do |trip| %>
+        <% panel.shown_past_trips.each do |trip| %>
           <%= link_to trip_path(trip), class: "group block overflow-hidden rounded-xl bg-canvas" do %>
             <% if trip.cover&.image&.attached? %>
               <%= image_tag url_for(trip.cover.image.variant(:thumb)), loading: "lazy", alt: "",
@@ -22,8 +90,10 @@
           <% end %>
         <% end %>
       </div>
-      <% if panel.more_trips.positive? %>
-        <p class="mt-3 text-sm text-soft"><%= panel.more_trips %> older <%= "trip".pluralize(panel.more_trips) %> not shown.</p>
+      <% if panel.more_past_trips.positive? %>
+        <p class="mt-3 text-sm text-soft">
+          <%= link_to "#{panel.more_past_trips} older #{"trip".pluralize(panel.more_past_trips)} not shown.", trips_path, class: "hover:underline" %>
+        </p>
       <% end %>
     <% end %>
 
@@ -31,8 +101,8 @@
         the user decides whether it was one. Nothing is stored until they
         say so. %>
     <% if panel.suggestions.any? %>
-      <h3 class="<%= panel.trips.any? ? "mt-5" : "" %> mb-2 text-sm font-medium text-soft">
-        <%= panel.trips.any? ? "Also in your photos" : "Trips in your photos" %>
+      <h3 class="<%= (panel.upcoming_trips.any? || panel.shown_past_trips.any?) ? "mt-5" : "" %> mb-2 text-sm font-medium text-soft">
+        <%= (panel.upcoming_trips.any? || panel.shown_past_trips.any?) ? "Also in your photos" : "Trips in your photos" %>
       </h3>
       <div class="divide-y divide-edge rounded-xl bg-canvas">
         <% panel.suggestions.each do |candidate| %>
@@ -44,6 +114,7 @@
               </p>
             </div>
             <%= form_with url: trips_path, class: "shrink-0" do %>
+              <%= hidden_field_tag "trip[source]", "photos" %>
               <%= hidden_field_tag "trip[starts_on]", candidate.starts_on.iso8601 %>
               <%= hidden_field_tag "trip[name]", candidate.suggested_name %>
               <%= submit_tag "Keep this trip", class: "btn btn-secondary btn-sm" %>

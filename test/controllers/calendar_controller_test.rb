@@ -29,4 +29,25 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "January 2026"
   end
+
+  test "the travel band shows where you'll be, on your trips and on trips you joined" do
+    trip = users(:two).trips.create!(name: "Idaho", starts_on: "2026-03-01", ends_on: "2026-03-31")
+    trip.memberships.create!(user: users(:one))
+    trip.stays.create!(location: "Boise", check_in: "2026-03-10", check_out: "2026-03-17")
+
+    get calendar_path(year: 2026, month: 3)
+    assert_response :success
+    # The place name prints on the check-in day and on Mondays; the rest of
+    # the run is a tinted band linking to the trip (check-out day inclusive).
+    assert_select "a[title='Boise · Idaho']", count: 8
+    assert_select "a[title='Boise · Idaho']", text: "Boise", count: 2 # check-in Tue Mar 10 + Mon Mar 16
+  end
+
+  test "no travel band for trips you aren't on" do
+    trip = users(:two).trips.create!(name: "Idaho", starts_on: "2026-03-01", ends_on: "2026-03-31")
+    trip.stays.create!(location: "Boise", check_in: "2026-03-10", check_out: "2026-03-14")
+
+    get calendar_path(year: 2026, month: 3)
+    assert_select "a[title='Boise · Idaho']", count: 0
+  end
 end

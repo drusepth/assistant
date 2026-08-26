@@ -1,22 +1,46 @@
-# A trip the user kept (D-travel-facet, docs/TRAVEL.md §3): a name, a date
-# range and a box on the map. Everything else is derived from those three —
-# the photos are the ones taken inside the box while it ran, the events are
-# the ones on the calendar during it — so a trip needs no join table (Q17
-# stays deferred) and stays correct as photos arrive later.
+# A trip (D-travel-facet, D-trip-spine; docs/TRAVEL.md, docs/TRIPS_PLAN.md).
+# Two births, one record:
 #
-# Owner-only, deliberately: a trip is a lens on photo *coordinates*, which
-# are owner-only under Q14. Sharing one would hand a household member the
-# locations the photo pages withhold, and that question (the per-album
-# "share locations" toggle) is still open.
+# - **Found in photos**: the detector's candidate — a name, a date range and
+#   a box on the map. Its photos are derived (taken inside the box while it
+#   ran) so they join the trip on their own as they arrive.
+# - **Planned ahead**: a name, a place and dates typed before going. No box
+#   yet, so no derived photos — the itinerary (stays and legs) is what the
+#   page is for until you're back.
+#
+# The box, when present, is only ever computed server-side from the owner's
+# own photos; bounds are all-or-none and never taken from a form.
+#
+# Sharing is membership (D-trip-companions), not an AccessGrant: companions
+# collaborate on the itinerary, comment, and post photos. What they never
+# see is anything derived from photo *coordinates* — the map and the camera
+# roll stay owner-only under Q14, and each traveller posts photos to the
+# trip explicitly instead.
 class Trip < ApplicationRecord
   belongs_to :user
 
+  has_many :stays, dependent: :destroy, inverse_of: :trip
+  has_many :legs, class_name: "TripLeg", dependent: :destroy, inverse_of: :trip
+  has_many :memberships, class_name: "TripMembership", dependent: :destroy
+  has_many :companions, through: :memberships, source: :user
+  has_many :comments, class_name: "TripComment", dependent: :destroy
+  has_many :trip_photos, dependent: :destroy
+  has_many :posted_photos, through: :trip_photos, source: :photo
+
   validates :name, presence: true, length: { maximum: 120 }
+  validates :place_label, length: { maximum: 120 }
   validates :starts_on, :ends_on, presence: true
-  validates :south, :west, :north, :east, presence: true
   validate :ends_on_after_starts_on
+  validate :bounds_all_or_none
 
   scope :recent, -> { order(starts_on: :desc, id: :desc) }
+  # Trips this user travels on: their own, plus the household trips they
+  # were added to. The write-side equivalent of visible_to, scoped to the
+  # one kind of sharing trips have.
+  scope :involving, ->(viewer) {
+    where(user: viewer)
+      .or(where(id: TripMembership.where(user: viewer).select(:trip_id)))
+  }
 
   def self.from_candidate(candidate, name: nil)
     new(
@@ -37,11 +61,59 @@ class Trip < ApplicationRecord
     end
   end
 
-  # The trip's own photos: taken inside the box, during the range. A box
-  # that crosses the antimeridian has west > east, and then "inside" means
-  # outside the numeric range — the one place this arithmetic needs to know
-  # the world is round.
+  # Upcoming, underway, or past — never stored, so it can't go stale.
+  def phase(today = Date.current)
+    return :upcoming if starts_on > today
+    return :past if ends_on < today
+
+    :underway
+  end
+
+  def upcoming?(today = Date.current) = phase(today) == :upcoming
+  def underway?(today = Date.current) = phase(today) == :underway
+  def past?(today = Date.current) = phase(today) == :past
+
+  # Whether the trip has its box on the map — every photo-derived feature
+  # keys off this, so a planned trip is simply a trip without them yet.
+  def placed? = south.present? && west.present? && north.present? && east.present?
+
+  def travelers = [ user ] + companions.order(:name)
+
+  def traveler?(viewer) = viewer.id == user_id || memberships.exists?(user_id: viewer.id)
+
+  # The itinerary: stays and legs in one chronological run. Legs sort ahead
+  # of stays on a shared date — you fly in before you check in.
+  def timeline
+    (legs.by_date.to_a + stays.by_date.to_a).sort_by do |item|
+      date = item.is_a?(Stay) ? item.check_in : item.starts_on
+      [ date, item.is_a?(Stay) ? 1 : 0, item.id ]
+    end
+  end
+
+  # Nights inside the trip's dates with nowhere yet to sleep, as date
+  # ranges (each range's end is the night before the next check-in — the
+  # half-open convention from Stay#covers?). An empty itinerary returns the
+  # whole trip; the view words that case differently.
+  def lodging_gaps
+    nights = (starts_on...ends_on).reject { |night| stays.any? { |stay| stay.covers?(night) } }
+    nights.slice_when { |night, following| following != night + 1 }.map { |run| run.first..run.last }
+  end
+
+  # Ruby filters, not scopes, so a page that preloaded stays and legs pays
+  # no extra queries. A drive in your own car never counts as unbooked.
+  def unbooked_stays = stays.select(&:planned?)
+
+  def unbooked_legs
+    legs.select { |leg| leg.planned? && !TripLeg::BOOKLESS_KINDS.include?(leg.kind) }
+  end
+
+  # The trip's own derived photos: taken inside the box, during the range.
+  # A box that crosses the antimeridian has west > east, and then "inside"
+  # means outside the numeric range — the one place this arithmetic needs
+  # to know the world is round. No box yet, no derived photos.
   def photos
+    return user.photos.none unless placed?
+
     user.photos.located.within(**map_bounds)
       .where(taken_at: starts_on.beginning_of_day..ends_on.end_of_day)
   end
@@ -70,5 +142,12 @@ class Trip < ApplicationRecord
       return if starts_on.blank? || ends_on.blank? || ends_on >= starts_on
 
       errors.add(:ends_on, "can't be before the start")
+    end
+
+    def bounds_all_or_none
+      bounds = [ south, west, north, east ]
+      return if bounds.all?(&:present?) || bounds.all?(&:blank?)
+
+      errors.add(:base, "The map box needs all four edges")
     end
 end

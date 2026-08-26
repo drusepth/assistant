@@ -23,17 +23,36 @@ class Photo < ApplicationRecord
   # collaborative album (Q15) can never leak a contributor's photo through
   # someone else's grant.
   def self.extra_visibility_clauses
-    [ <<~SQL ]
-      EXISTS (
-        SELECT 1 FROM access_grants
-        INNER JOIN album_photos
-          ON album_photos.album_id = access_grants.subject_id
-          AND album_photos.photo_id = photos.id
-        WHERE access_grants.grantee_id = :viewer_id
-          AND access_grants.subject_type = 'Album'
-          AND access_grants.grantor_id = photos.user_id
-      )
-    SQL
+    [
+      <<~SQL,
+        EXISTS (
+          SELECT 1 FROM access_grants
+          INNER JOIN album_photos
+            ON album_photos.album_id = access_grants.subject_id
+            AND album_photos.photo_id = photos.id
+          WHERE access_grants.grantee_id = :viewer_id
+            AND access_grants.subject_type = 'Album'
+            AND access_grants.grantor_id = photos.user_id
+        )
+      SQL
+      # The trip-post path (D-trip-companions): a photo posted to a trip is
+      # visible to everyone travelling on it. Same guard as albums — the
+      # poster must own the photo — so a trip can never leak a photo through
+      # someone else's post.
+      <<~SQL
+        EXISTS (
+          SELECT 1 FROM trip_photos
+          INNER JOIN trips ON trips.id = trip_photos.trip_id
+          WHERE trip_photos.photo_id = photos.id
+            AND trip_photos.user_id = photos.user_id
+            AND (trips.user_id = :viewer_id OR EXISTS (
+              SELECT 1 FROM trip_memberships
+              WHERE trip_memberships.trip_id = trips.id
+                AND trip_memberships.user_id = :viewer_id
+            ))
+        )
+      SQL
+    ]
   end
 
   # Photos the map can place (D-travel-facet). Most libraries are a mix:

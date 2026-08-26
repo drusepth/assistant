@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_185203) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -632,6 +632,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
     t.index ["user_id"], name: "index_spending_rules_on_user_id"
   end
 
+  create_table "stays", force: :cascade do |t|
+    t.string "booking_status", default: "planned", null: false
+    t.date "check_in", null: false
+    t.date "check_out", null: false
+    t.string "confirmation_code"
+    t.datetime "created_at", null: false
+    t.string "kind", default: "airbnb", null: false
+    t.string "location", null: false
+    t.string "name"
+    t.text "notes"
+    t.integer "trip_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.index ["trip_id", "check_in"], name: "index_stays_on_trip_id_and_check_in"
+    t.index ["trip_id"], name: "index_stays_on_trip_id"
+  end
+
   create_table "study_logs", force: :cascade do |t|
     t.integer "activity", default: 0, null: false
     t.datetime "created_at", null: false
@@ -753,19 +770,71 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
     t.index ["subject_id"], name: "index_topics_on_subject_id"
   end
 
+  create_table "trip_comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.integer "trip_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["trip_id"], name: "index_trip_comments_on_trip_id"
+    t.index ["user_id"], name: "index_trip_comments_on_user_id"
+  end
+
+  create_table "trip_legs", force: :cascade do |t|
+    t.string "booking_status", default: "planned", null: false
+    t.string "carrier"
+    t.string "confirmation_code"
+    t.datetime "created_at", null: false
+    t.datetime "departs_at"
+    t.string "destination"
+    t.date "ends_on"
+    t.string "kind", default: "flight", null: false
+    t.text "notes"
+    t.string "origin"
+    t.date "starts_on", null: false
+    t.integer "trip_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.index ["trip_id", "starts_on"], name: "index_trip_legs_on_trip_id_and_starts_on"
+    t.index ["trip_id"], name: "index_trip_legs_on_trip_id"
+  end
+
+  create_table "trip_memberships", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "trip_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["trip_id", "user_id"], name: "index_trip_memberships_on_trip_id_and_user_id", unique: true
+    t.index ["trip_id"], name: "index_trip_memberships_on_trip_id"
+    t.index ["user_id"], name: "index_trip_memberships_on_user_id"
+  end
+
+  create_table "trip_photos", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "photo_id", null: false
+    t.integer "trip_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["photo_id"], name: "index_trip_photos_on_photo_id"
+    t.index ["trip_id", "photo_id"], name: "index_trip_photos_on_trip_id_and_photo_id", unique: true
+    t.index ["trip_id"], name: "index_trip_photos_on_trip_id"
+    t.index ["user_id"], name: "index_trip_photos_on_user_id"
+  end
+
   create_table "trips", force: :cascade do |t|
     t.integer "cover_photo_id"
     t.datetime "created_at", null: false
-    t.decimal "east", precision: 10, scale: 6, null: false
+    t.text "description"
+    t.decimal "east", precision: 10, scale: 6
     t.date "ends_on", null: false
     t.string "name", null: false
-    t.decimal "north", precision: 10, scale: 6, null: false
+    t.decimal "north", precision: 10, scale: 6
     t.string "place_label"
-    t.decimal "south", precision: 10, scale: 6, null: false
+    t.decimal "south", precision: 10, scale: 6
     t.date "starts_on", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.decimal "west", precision: 10, scale: 6, null: false
+    t.decimal "west", precision: 10, scale: 6
     t.index ["user_id", "starts_on"], name: "index_trips_on_user_id_and_starts_on"
     t.index ["user_id"], name: "index_trips_on_user_id"
   end
@@ -879,6 +948,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
   add_foreign_key "spending_accounts", "users"
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"
+  add_foreign_key "stays", "trips"
   add_foreign_key "study_logs", "subjects"
   add_foreign_key "study_logs", "topics"
   add_foreign_key "study_logs", "users"
@@ -892,6 +962,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
   add_foreign_key "topics", "goals"
   add_foreign_key "topics", "subjects"
   add_foreign_key "topics", "topics", column: "parent_id"
+  add_foreign_key "trip_comments", "trips"
+  add_foreign_key "trip_comments", "users"
+  add_foreign_key "trip_legs", "trips"
+  add_foreign_key "trip_memberships", "trips"
+  add_foreign_key "trip_memberships", "users"
+  add_foreign_key "trip_photos", "photos"
+  add_foreign_key "trip_photos", "trips"
+  add_foreign_key "trip_photos", "users"
   add_foreign_key "trips", "users"
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"

@@ -1,0 +1,24 @@
+<%= form_with model: stay, url: stay.persisted? ? stay_path(stay) : trip_stays_path(trip), class: "space-y-4" do |form| %>
+  <%= form.field :location, label_text: "Where", placeholder: "Boise, Idaho",
+        hint: "The city or town — this is what the calendar and the hub show for these dates." %>
+  <%= form.field :name, label_text: "Place (optional)", placeholder: "The A-frame on 5th St" %>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :kind, as: :select do %>
+      <%= form.select :kind, Stay::KIND_LABELS.map { |value, label| [ label, value ] } %>
+    <% end %>
+    <%= form.field :booking_status, label_text: "Status", as: :select do %>
+      <%= form.select :booking_status, [ [ "Planned — not booked yet", "planned" ], [ "Booked", "booked" ] ] %>
+    <% end %>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :check_in, as: :date_field %>
+    <%= form.field :check_out, as: :date_field %>
+  </div>
+  <%= form.field :url, as: :url_field, label_text: "Listing or booking link (optional)", placeholder: "https://…" %>
+  <%= form.field :confirmation_code, label_text: "Confirmation code (optional)" %>
+  <%= form.field :notes, as: :text_area, hint: "Door codes, parking, host quirks — everyone on the trip sees this." %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", trip_path(trip, anchor: "itinerary"), class: "btn btn-ghost" %>
+  </div>
+<% end %>

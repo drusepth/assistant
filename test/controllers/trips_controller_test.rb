@@ -16,7 +16,7 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Lisbon", response.body
 
     assert_difference("Trip.count", 1) do
-      post trips_path, params: { trip: { starts_on: "2024-03-10", name: "Lisbon" } }
+      post trips_path, params: { trip: { source: "photos", starts_on: "2024-03-10", name: "Lisbon" } }
     end
     trip = Trip.sole
     assert_redirected_to trip
@@ -28,7 +28,7 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
   test "a kept trip stops being offered again" do
     live_at_home
     3.times { |day| place(LISBON, on: Date.new(2024, 3, 10 + day)) }
-    post trips_path, params: { trip: { starts_on: "2024-03-10" } }
+    post trips_path, params: { trip: { source: "photos", starts_on: "2024-03-10" } }
 
     get section_path("travel")
     assert_match "Your trips", response.body
@@ -39,7 +39,7 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
     live_at_home
     3.times { |day| place(LISBON, on: Date.new(2024, 3, 10 + day)) }
 
-    post trips_path, params: { trip: { starts_on: "2024-03-10", name: "Somewhere else",
+    post trips_path, params: { trip: { source: "photos", starts_on: "2024-03-10", name: "Somewhere else",
       south: "-89", west: "-179", north: "89", east: "179", ends_on: "2030-01-01" } }
 
     trip = Trip.sole
@@ -51,7 +51,7 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
     live_at_home
 
     assert_no_difference("Trip.count") do
-      post trips_path, params: { trip: { starts_on: "2019-01-01" } }
+      post trips_path, params: { trip: { source: "photos", starts_on: "2019-01-01" } }
     end
     assert_redirected_to section_path("travel")
     assert_match "isn't in your photos", flash[:alert]
@@ -63,7 +63,7 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
     at_home = place(HOME, on: Date.new(2024, 3, 11))
     during = users(:one).events.create!(title: "Flight home", starts_at: Time.zone.local(2024, 3, 12, 18))
     after = users(:one).events.create!(title: "Dentist", starts_at: Time.zone.local(2024, 4, 2, 9))
-    post trips_path, params: { trip: { starts_on: "2024-03-10" } }
+    post trips_path, params: { trip: { source: "photos", starts_on: "2024-03-10" } }
 
     get trip_path(Trip.sole)
     assert_response :success
@@ -80,7 +80,7 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
   test "trips are owner-only" do
     live_at_home
     3.times { |day| place(LISBON, on: Date.new(2024, 3, 10 + day)) }
-    post trips_path, params: { trip: { starts_on: "2024-03-10" } }
+    post trips_path, params: { trip: { source: "photos", starts_on: "2024-03-10" } }
     trip = Trip.sole
 
     sign_in_as users(:two)
@@ -95,7 +95,7 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
   test "renaming and removing leave the photos alone" do
     live_at_home
     3.times { |day| place(LISBON, on: Date.new(2024, 3, 10 + day)) }
-    post trips_path, params: { trip: { starts_on: "2024-03-10" } }
+    post trips_path, params: { trip: { source: "photos", starts_on: "2024-03-10" } }
     trip = Trip.sole
 
     patch trip_path(trip), params: { trip: { name: "Portugal, at last" } }

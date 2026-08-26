@@ -1,0 +1,29 @@
+<%= form_with model: leg, url: leg.persisted? ? leg_path(leg) : trip_legs_path(trip),
+      scope: :trip_leg, class: "space-y-4" do |form| %>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :kind, as: :select do %>
+      <%= form.select :kind, TripLeg::KIND_LABELS.map { |value, label| [ label, value ] } %>
+    <% end %>
+    <%= form.field :booking_status, label_text: "Status", as: :select do %>
+      <%= form.select :booking_status, [ [ "Planned — not booked yet", "planned" ], [ "Booked", "booked" ] ] %>
+    <% end %>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :origin, label_text: "From (optional)", placeholder: "AUS" %>
+    <%= form.field :destination, label_text: "To (optional)", placeholder: "BOI" %>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :starts_on, as: :date_field, label_text: "Date" %>
+    <%= form.field :ends_on, as: :date_field, label_text: "Until (optional)",
+          hint: "For a rental: the drop-off date." %>
+  </div>
+  <%= form.field :departs_at, as: :datetime_local_field, label_text: "Departure time (optional)" %>
+  <%= form.field :carrier, label_text: "Airline / company (optional)", placeholder: "Southwest, Hertz…" %>
+  <%= form.field :confirmation_code, label_text: "Confirmation code (optional)" %>
+  <%= form.field :url, as: :url_field, label_text: "Booking link (optional)", placeholder: "https://…" %>
+  <%= form.field :notes, as: :text_area %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", trip_path(trip, anchor: "itinerary"), class: "btn btn-ghost" %>
+  </div>
+<% end %>

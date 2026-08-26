@@ -32,6 +32,18 @@
                         #{day == Date.current ? "bg-primary-600 text-white" : day.month == @month.month ? "text-ink hover:bg-stone-100" : "text-stone-400 hover:bg-stone-100"}" do %>
             <%= day.day %>
           <% end %>
+          <%# The travel band (D-trip-spine): which stay covers this day.
+              The place name prints where a reading eye lands — check-in
+              day, Mondays, the 1st — and the tint alone carries the rest
+              of the run. %>
+          <% if (stay = @stay_by_day[day]) %>
+            <%= link_to trip_path(stay.trip), title: "#{stay.location} · #{stay.trip.name}",
+                  class: "mb-0.5 block h-4 truncate rounded bg-sage-200/70 px-1 text-[10px] font-medium leading-4 text-sage-900" do %>
+              <% if day == stay.check_in || day.day == 1 || day.wday == 1 %>
+                <%= stay.location %>
+              <% end %>
+            <% end %>
+          <% end %>
           <% events = @events_by_day.fetch(day, []) %>
           <div class="hidden space-y-0.5 sm:block">
             <% events.first(3).each do |event| %>

@@ -1,0 +1,42 @@
+<%= render Ui::PageHeaderComponent.new(title: "Trips",
+      subtitle: "Everywhere you're going, and everywhere you've been.") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Travel", section_path("travel"), class: "btn btn-secondary" %>
+    <%= link_to "Plan a trip", new_trip_path, class: "btn btn-primary" %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <% if @underway.any? %>
+    <%= render Ui::CardComponent.new(title: "Underway", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <%= render partial: "trips/trip_row", collection: @underway, as: :trip %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @upcoming.any? %>
+    <%= render Ui::CardComponent.new(title: "Coming up", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <%= render partial: "trips/trip_row", collection: @upcoming, as: :trip %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @past.any? %>
+    <%= render Ui::CardComponent.new(title: "Been and back", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <%= render partial: "trips/trip_row", collection: @past, as: :trip %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @underway.empty? && @upcoming.empty? && @past.empty? %>
+    <%= render Ui::EmptyStateComponent.new(title: "No trips yet",
+          description: "Plan the next place you'll be, or keep a trip the Travel hub finds in your photos.") do |empty| %>
+      <% empty.with_action do %>
+        <%= link_to "Plan a trip", new_trip_path, class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

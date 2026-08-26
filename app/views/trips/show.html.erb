@@ -1,28 +1,135 @@
 <%= render Ui::PageHeaderComponent.new(title: @trip.name,
       subtitle: [ @trip.period, pluralize(@trip.days, "day"), @trip.place_label ].compact_blank.join(" · ")) do |header| %>
+  <% header.with_meta do %>
+    <div class="flex items-center gap-2">
+      <%= trip_phase_chip(@trip) %>
+      <% if @trip.upcoming? && trip_countdown(@trip) %>
+        <span class="text-sm text-soft">Leaving <%= trip_countdown(@trip) %></span>
+      <% end %>
+      <% if @travelers.size > 1 %>
+        <span class="flex items-center -space-x-1.5">
+          <% @travelers.each do |traveler| %>
+            <%= render Ui::AvatarComponent.new(user: traveler, size: :xs,
+                  css_class: "relative ring-2 ring-surface", title: traveler.name) %>
+          <% end %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
   <% header.with_actions do %>
-    <%= link_to "Rename", edit_trip_path(@trip), class: "btn btn-secondary" %>
-    <%= link_to "Travel", section_path("travel"), class: "btn btn-secondary" %>
+    <% if @own %>
+      <%= link_to "Edit", edit_trip_path(@trip), class: "btn btn-secondary" %>
+    <% end %>
+    <%= link_to "Trips", trips_path, class: "btn btn-secondary" %>
   <% end %>
 <% end %>
 
 <div class="space-y-6">
-  <%# The trip's own map, zoomed to where it happened — which is where the
-      world view can't help: two cities an hour apart are one smudge at
-      world zoom and two clear pins here. %>
-  <% if @map.any? %>
+  <% if @trip.description.present? %>
+    <%= render Ui::CardComponent.new(title: "The plan") do %>
+      <p class="whitespace-pre-line text-sm text-ink"><%= @trip.description %></p>
+    <% end %>
+  <% end %>
+
+  <%# The itinerary: stays and legs in one chronological run, each wearing
+      its booked/not-booked chip. This is the page's job while the trip is
+      still ahead — the photos take over once you're back. %>
+  <%= render Ui::CardComponent.new(title: "Itinerary", anchor: "itinerary", padded: false) do |card| %>
+    <% card.with_actions do %>
+      <div class="row-actions">
+        <%= link_to "+ Stay", new_trip_stay_path(@trip), class: "btn btn-secondary btn-sm" %>
+        <%= link_to "+ Flight", new_trip_leg_path(@trip, kind: "flight"), class: "btn btn-secondary btn-sm" %>
+        <%= link_to "+ Drive", new_trip_leg_path(@trip, kind: "drive"), class: "btn btn-secondary btn-sm" %>
+        <%= link_to "+ Car rental", new_trip_leg_path(@trip, kind: "car_rental"), class: "btn btn-secondary btn-sm" %>
+      </div>
+    <% end %>
+
+    <% if @timeline.any? %>
+      <div class="divide-y divide-edge">
+        <% @timeline.each do |item| %>
+          <%= render "trips/itinerary_item", item: item, trip: @trip %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="p-4 text-sm text-soft">
+        Nothing on the itinerary yet. Add where you'll stay, then how you'll get there —
+        each one tracks whether it's booked or still just planned.
+      </p>
+    <% end %>
+
+    <% unless @trip.past? %>
+      <% gaps = @trip.lodging_gaps %>
+      <% if @trip.stays.any? && gaps.any? %>
+        <div class="callout callout-warn m-4 mt-3">
+          <p class="callout-title">Nights with nowhere to sleep</p>
+          <ul class="mt-1 space-y-0.5 text-sm">
+            <% gaps.each do |gap| %>
+              <% nights = (gap.last - gap.first).to_i + 1 %>
+              <li>
+                <%= gap.first.strftime("%b %-d") %><%= " – #{gap.last.strftime("%b %-d")}" if gap.last != gap.first %>
+                (<%= pluralize(nights, "night") %>)
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% elsif @trip.stays.none? && @timeline.any? %>
+        <div class="callout callout-warn m-4 mt-3">
+          <p class="callout-title">No lodging on this trip yet</p>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%# Photos posted to the trip — the shared album everyone on it builds
+      together. Distinct from the camera roll below: posting is the
+      explicit act that shares a photo (D-trip-companions). %>
+  <% if @posted.any? || @travelers.size > 1 %>
+    <div data-controller="lightbox">
+      <%= render Ui::CardComponent.new(title: "Trip photos", anchor: "photos") do |card| %>
+        <% card.with_actions do %>
+          <%= link_to "Post photos", new_trip_photo_post_path(@trip), class: "btn btn-secondary btn-sm" %>
+        <% end %>
+        <% if @posted.any? %>
+          <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-6">
+            <% @posted.each do |post| %>
+              <div class="group/post relative">
+                <%= render "photos/photo_tile", photo: post.photo %>
+                <% if post.user_id == Current.user.id || @own %>
+                  <%= button_to trip_photo_post_path(post), method: :delete,
+                        class: "absolute right-1.5 top-1.5 hidden rounded-full bg-black/50 p-1 text-white group-hover/post:block",
+                        title: "Take off the trip",
+                        data: { turbo_confirm: "Take this photo off the trip? It stays in the library." } do %>
+                    <%= icon(:x_mark, css_class: "size-3.5") %>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-soft">
+            Nothing posted yet. Photos posted here are seen by everyone on the trip.
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# The owner's own map and camera roll, derived from coordinates — and
+      therefore owner-only under Q14, exactly like the Travel hub's map.
+      Companions share the trip through the posted photos above instead. %>
+  <% if @own && @map&.any? %>
     <%= render Ui::CardComponent.new do %>
       <%= render Ui::PhotoMapComponent.new(map: @map) %>
       <p class="mt-3 text-sm text-soft">
         <%= pluralize(@map.place_count, "place") %> over <%= pluralize(@trip.days, "day") %>.
-        Pick a pin to see what you took there.
+        Pick a pin to see what you took there. Only you see this map.
       </p>
     <% end %>
   <% end %>
 
   <% if @photos.any? %>
     <div data-controller="lightbox">
-      <%= render Ui::CardComponent.new(title: "Photos") do |card| %>
+      <%= render Ui::CardComponent.new(title: "Your camera roll from this trip") do |card| %>
         <% card.with_actions do %>
           <span class="text-sm text-soft"><%= number_with_delimiter(@photo_count) %></span>
         <% end %>
@@ -39,24 +146,95 @@
   <% end %>
 
   <%# Events come from the dates alone, which is why a trip needs no link
-      table: anything on the calendar while you were away belongs to the
-      trip by definition. They read through the ordinary visibility path, so
-      a flight your spouse shared with you shows up here. %>
+      table: anything on the calendar while you're away belongs to the
+      trip by definition — including the thing you'll need to fly back
+      for. They read through the ordinary visibility path. %>
   <% if @events.any? %>
-    <%= render Ui::CardComponent.new(title: "On the calendar then", padded: false) do %>
+    <%= render Ui::CardComponent.new(title: @trip.past? ? "On the calendar then" : "On the calendar during this trip", padded: false) do %>
       <div class="divide-y divide-edge"><%= render @events %></div>
     <% end %>
   <% end %>
 
-  <%= render Ui::CardComponent.new(title: "This trip") do %>
-    <p class="text-sm text-soft">
-      A trip is a name, a date range and a box on the map. Its photos are the ones taken inside that box while
-      it ran, so photos you add later join it on their own. Removing a trip removes only the trip.
-    </p>
-    <div class="row-actions mt-4">
-      <%= link_to "Rename or change the dates", edit_trip_path(@trip), class: "btn btn-secondary btn-sm" %>
-      <%= button_to "Remove this trip", trip_path(@trip), method: :delete, class: "btn btn-ghost btn-sm",
-            data: { turbo_confirm: "Remove #{@trip.name}? Your photos stay exactly where they are." } %>
+  <%= render Ui::CardComponent.new(title: "Notes & comments", anchor: "comments", padded: false) do %>
+    <% if @comments.any? %>
+      <div class="divide-y divide-edge">
+        <% @comments.each do |comment| %>
+          <div class="flex items-start gap-3 p-4">
+            <%= render Ui::AvatarComponent.new(user: comment.user, size: :sm) %>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm">
+                <span class="font-medium text-ink"><%= comment.user.name %></span>
+                <span class="text-soft">· <%= comment.created_at.strftime("%-d %b %Y") %></span>
+              </p>
+              <p class="mt-0.5 whitespace-pre-line text-sm text-ink"><%= comment.body %></p>
+            </div>
+            <% if comment.editable_by?(Current.user) %>
+              <%= button_to trip_comment_path(comment), method: :delete, class: "btn btn-ghost btn-sm shrink-0",
+                    data: { turbo_confirm: "Remove this comment?" } do %>Remove<% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="border-t border-edge p-4">
+      <%= form_with url: trip_comments_path(@trip), class: "space-y-2" do |form| %>
+        <%= form.text_area "trip_comment[body]", rows: 2, class: "input",
+              placeholder: @travelers.size > 1 ? "Leave a note for everyone on the trip…" : "Leave a note on this trip…" %>
+        <%= form.submit "Post", class: "btn btn-secondary btn-sm" %>
+      <% end %>
     </div>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Travelers", anchor: "travelers") do %>
+    <div class="space-y-2">
+      <% @travelers.each do |traveler| %>
+        <div class="flex items-center gap-2">
+          <%= render Ui::AvatarComponent.new(user: traveler, size: :xs) %>
+          <span class="text-sm text-ink"><%= traveler.name %></span>
+          <% if traveler.id == @trip.user_id %>
+            <span class="chip bg-stone-100 text-stone-600">Owner</span>
+          <% elsif @own || traveler.id == Current.user.id %>
+            <% membership = @trip.memberships.find { |m| m.user_id == traveler.id } %>
+            <%= button_to trip_companion_path(membership), method: :delete, class: "btn btn-ghost btn-sm",
+                  data: { turbo_confirm: traveler.id == Current.user.id ? "Leave this trip?" : "Remove #{traveler.name} from the trip?" } do %>
+              <%= traveler.id == Current.user.id ? "Leave" : "Remove" %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <% if @own %>
+      <% addable = Current.user.household.users.where.not(id: @travelers.map(&:id)).order(:name) %>
+      <% if addable.any? %>
+        <%= form_with url: trip_companions_path(@trip), class: "mt-4 flex items-center gap-2" do |form| %>
+          <%= form.select "trip_membership[user_id]", addable.map { |user| [ user.name, user.id ] },
+                { include_blank: "Add someone from the household…" }, class: "input" %>
+          <%= form.submit "Add", class: "btn btn-secondary btn-sm" %>
+        <% end %>
+        <p class="hint mt-2">
+          Everyone on the trip sees the itinerary, notes and posted photos, and can add their own.
+          Your map and camera roll stay yours.
+        </p>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if @own %>
+    <%= render Ui::CardComponent.new(title: "This trip") do %>
+      <p class="text-sm text-soft">
+        <% if @trip.placed? %>
+          A trip is a name, a date range and a box on the map. Its photos are the ones taken inside that box while
+          it ran, so photos you add later join it on their own. Removing a trip removes only the trip.
+        <% else %>
+          This trip was planned ahead, so it has no box on the map yet — once you're back, the Travel hub
+          will spot it in your photos too. Removing a trip removes only the trip and its itinerary.
+        <% end %>
+      </p>
+      <div class="row-actions mt-4">
+        <%= link_to "Rename or change the dates", edit_trip_path(@trip), class: "btn btn-secondary btn-sm" %>
+        <%= button_to "Remove this trip", trip_path(@trip), method: :delete, class: "btn btn-ghost btn-sm",
+              data: { turbo_confirm: "Remove #{@trip.name}? Your photos stay exactly where they are." } %>
+      </div>
+    <% end %>
   <% end %>
 </div>

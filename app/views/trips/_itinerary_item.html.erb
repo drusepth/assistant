@@ -1,0 +1,35 @@
+<%# One row of the itinerary — a stay or a leg, distinguished by shape:
+    stays are where you sleep, legs are how you move. Both wear the
+    booked/not-booked chip that this whole tool exists to track. %>
+<% stay = item.is_a?(Stay) %>
+<div class="capture-row p-3">
+  <div class="w-20 shrink-0 pt-0.5 text-sm text-soft sm:w-24">
+    <%= item.period %>
+  </div>
+  <div class="min-w-0 flex-1">
+    <p class="truncate font-medium text-ink">
+      <% if item.url.present? %>
+        <%= link_to item.display_name, item.url, target: "_blank", rel: "noopener", class: "hover:underline" %>
+      <% else %>
+        <%= item.display_name %>
+      <% end %>
+    </p>
+    <p class="truncate text-sm text-soft">
+      <% if stay %>
+        <%= pluralize(item.nights, "night") %><%= " · #{item.location}" if item.name.present? %><%= " · ##{item.confirmation_code}" if item.confirmation_code.present? %>
+      <% else %>
+        <%= [ item.departure_time, item.carrier.presence,
+              item.confirmation_code.present? ? "##{item.confirmation_code}" : nil ].compact_blank.join(" · ").presence || item.kind_label %>
+      <% end %>
+    </p>
+    <% if item.notes.present? %>
+      <p class="mt-0.5 truncate text-xs text-soft"><%= item.notes %></p>
+    <% end %>
+  </div>
+  <div class="flex shrink-0 items-center gap-2">
+    <% unless !stay && TripLeg::BOOKLESS_KINDS.include?(item.kind) && item.planned? %>
+      <%= booking_chip(item) %>
+    <% end %>
+    <%= link_to "Edit", stay ? edit_stay_path(item) : edit_leg_path(item), class: "btn btn-ghost btn-sm" %>
+  </div>
+</div>
