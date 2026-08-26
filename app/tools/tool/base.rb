@@ -33,6 +33,8 @@ module Tool
       def ledger_month? = kind == :ledger_month
       def textarea? = kind == :textarea
       def date? = kind == :date
+      def topic? = kind == :topic
+      def study_subject? = kind == :study_subject
     end
 
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil

@@ -1,0 +1,116 @@
+<% owner = @owner %>
+<%= turbo_stream_from Current.user, :subjects if owner %>
+
+<%= render Ui::PageHeaderComponent.new(title: @subject.title) do |header| %>
+  <% if owner %>
+    <% header.with_actions do %>
+      <%= link_to "Edit", edit_subject_path(@subject), class: "btn btn-ghost" %>
+      <% if @subject.active? %>
+        <%= button_to "Pause", pause_subject_path(@subject), method: :patch, class: "btn btn-ghost" %>
+      <% elsif @subject.paused? %>
+        <%= button_to "Resume", resume_subject_path(@subject), method: :patch, class: "btn btn-secondary" %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center gap-2 text-sm text-soft">
+    <% unless owner %>
+      <%= render Ui::UserLabelComponent.new(user: @subject.user) do %>shared by <%= @subject.user.name %><% end %>
+      <span aria-hidden="true">·</span>
+    <% end %>
+    <% if @subject.interest_frame.present? %><span><%= @subject.interest_frame %></span><% end %>
+    <%= render "shared/item_chips", item: @subject %>
+    <% if @subject.paused? %><span class="chip">paused</span><% end %>
+    <% if @subject.finished? %><span class="chip bg-sage-200 text-sage-800">finished</span><% end %>
+  </div>
+
+  <% if @subject.leaf_count.positive? %>
+    <%= render Ui::CardComponent.new do %>
+      <%= mastery_bar(@subject) %>
+      <p class="mt-2 text-sm text-ink"><%= mastery_mix_sentence(@subject) %></p>
+      <p class="mt-0.5 text-xs text-soft">
+        <% if @subject.target_date %>
+          Aiming for <%= @subject.target_date.strftime("%B %-d, %Y") %> —
+          <%= @subject.pace == :behind ? "a little behind that pace; the pace is still yours" : "on pace" %>.
+        <% else %>
+          Your pace, your call — no target date set.
+        <% end %>
+      </p>
+    <% end %>
+  <% end %>
+
+  <% if @subject.building_tree? %>
+    <%= render Ui::CardComponent.new do %>
+      <p class="text-sm text-ink">Your assistant is drafting the curriculum — strands, topics, and what mastering each one means. This page will refresh when it lands.</p>
+    <% end %>
+  <% elsif @subject.topics.none? %>
+    <%= render Ui::CardComponent.new(title: "No syllabus yet") do %>
+      <p class="text-sm text-soft">Add strands and topics below<% if owner && @subject.generation_profile %>, or ask your assistant for a draft<% end %>.</p>
+      <% if owner && @subject.generation_profile %>
+        <%= button_to "Draft my curriculum", retry_tree_subject_path(@subject), class: "btn btn-primary btn-sm mt-3" %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%= render Ui::CardComponent.new(title: "Syllabus", padded: false) do %>
+      <div class="space-y-1 p-4">
+        <% @subject.strands.each do |strand| %>
+          <% if strand.children.any? %>
+            <p class="stack-label mt-3 first:mt-0 text-xs font-semibold uppercase tracking-wide text-soft"><%= strand.title %></p>
+            <% strand.children.each do |topic| %>
+              <%= render "subjects/topic_row", topic: topic, subject: @subject, owner: owner %>
+            <% end %>
+          <% else %>
+            <%= render "subjects/topic_row", topic: strand, subject: @subject, owner: owner %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if owner %>
+    <%= render Ui::CardComponent.new(title: "Reshape the syllabus", subtitle: "It's your curriculum — add, reorder, prune") do %>
+      <div class="space-y-3">
+        <%= form_with url: topics_path, class: "capture-row" do |form| %>
+          <%= hidden_field_tag "topic[subject_id]", @subject.id %>
+          <%= text_field_tag "topic[title]", nil, placeholder: "New strand (a unit of topics)", class: "input flex-1", required: true %>
+          <%= form.submit "Add strand", class: "btn btn-secondary" %>
+        <% end %>
+        <% strands_with_children = @subject.strands.select { |strand| strand.children.any? } %>
+        <% if strands_with_children.any? %>
+          <%= form_with url: topics_path, class: "capture-row" do |form| %>
+            <%= hidden_field_tag "topic[subject_id]", @subject.id %>
+            <%= select_tag "topic[parent_id]", options_from_collection_for_select(strands_with_children, :id, :title), class: "input sm:w-56" %>
+            <%= text_field_tag "topic[title]", nil, placeholder: "New topic", class: "input flex-1", required: true %>
+            <%= form.submit "Add topic", class: "btn btn-secondary" %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @study_logs.any? %>
+    <%= render Ui::CardComponent.new(title: "Recent study", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <% @study_logs.each do |log| %>
+          <div class="flex items-center gap-3 px-4 py-2 text-sm">
+            <span class="w-24 flex-none text-soft"><%= log.on.strftime("%b %-d") %></span>
+            <span class="min-w-0 flex-1 truncate text-ink"><%= log.topic&.title || log.activity.humanize %></span>
+            <span class="flex-none text-soft"><%= log.minutes %> min · <%= log.activity %></span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if owner %>
+    <%= render "shared/share_controls", subject: @subject %>
+    <% if @subject.active? && @subject.leaf_count.positive? && @subject.mastered_count == @subject.leaf_count %>
+      <%= render Ui::CardComponent.new do %>
+        <p class="text-sm text-ink">Every topic is mastered. Finishing moves this subject to your record.</p>
+        <%= button_to "Finish this subject", finish_subject_path(@subject), method: :patch, class: "btn btn-primary btn-sm mt-3" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

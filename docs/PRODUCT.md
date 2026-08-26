@@ -35,6 +35,7 @@ Build order and trust ladder: Organize → Tools → Agent. Agent aggressiveness
 - Homework help; "explain anything at my level"
 - Reskilling and career-transition learning paths
 - Example pack: "IEP meeting prep"
+- Full section deep-dive in `docs/EDUCATION_PLAN.md`: the hub as a personal school — mastery-fixed/time-variable progression on the Bloom two-sigma play, per-learner curriculum trees (D-education-spine) seeded from an open curriculum commons or generated for any topic (D-curriculum-commons), evidence-gated mastery (D-mastery-evidence), FSRS spaced review (D-review-scheduler), interest-framed teaching, subjects suggested from the other lenses, and homeschool records (D-learning-record).
 
 ### 4. Career
 - Job search + matching; resume and interview prep

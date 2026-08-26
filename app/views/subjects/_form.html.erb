@@ -1,0 +1,18 @@
+<%= form_with model: subject, class: "space-y-4" do |form| %>
+  <%= form.field :title, placeholder: "What do you want to learn?" %>
+  <%= form.field :interest_frame, as: :text_area, label_text: "Who's learning, and through what?",
+        hint: "Optional — “my 9-year-old, loves skateboarding”, “me, switching careers, evenings only”. It shapes how everything here gets taught." %>
+  <%= form.field :description, as: :text_area, label_text: "Anything else",
+        hint: "Optional — your level, a goal, what didn't work last time." %>
+  <%= form.field :target_date, as: :date_field, label_text: "Target date",
+        hint: "Optional. Your pace is the only pace — this just lets the app say honestly whether you're on it." %>
+  <% if subject.persisted? %>
+    <%= render layout: "shared/advanced", locals: { hint: section_filing_hint(form.object) } do %>
+      <%= render "shared/section_picker", form: form %>
+    <% end %>
+  <% end %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", subject.persisted? ? subject_path(subject) : section_path("education"), class: "btn btn-ghost" %>
+  </div>
+<% end %>

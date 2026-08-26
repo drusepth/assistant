@@ -1,0 +1,22 @@
+algebra:
+  user: one
+  title: Everyday math → algebra
+  commons_key: everyday-math
+  status: active
+  tree_built_at: <%= Time.current %>
+  updated_at: <%= 1.day.ago %>
+
+physics:
+  user: one
+  title: Physics of motion
+  interest_frame: taught through skateboarding
+  status: active
+  tree_built_at: <%= Time.current %>
+  updated_at: <%= 2.days.ago %>
+
+bob_civics:
+  user: two
+  title: Civics & how power works
+  commons_key: civics
+  status: active
+  tree_built_at: <%= Time.current %>

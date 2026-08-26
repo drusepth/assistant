@@ -106,6 +106,28 @@
                   options_for_select(@hobby_choices.map(&:name), @tool_run.inputs[input.name]),
                   include_blank: input.required? ? "Choose a hobby…" : "All my hobbies",
                   class: "input", id: "inputs_#{input.name}" %>
+          <% elsif input.topic? %>
+            <% if @topic_choices.any? %>
+              <%= select_tag "inputs[#{input.name}]",
+                    grouped_options_for_select(@topic_choices.map { |subject, topics| [ subject.title, topics.map { |topic| [ topic.title, topic.id ] } ] }, @tool_run.inputs[input.name]),
+                    include_blank: "Choose a topic…", class: "input", id: "inputs_#{input.name}" %>
+            <% else %>
+              <p class="hint">
+                No subjects on the go yet —
+                <%= link_to "start one first", curriculum_shelf_path, class: "text-primary-700 hover:underline" %>.
+              </p>
+            <% end %>
+          <% elsif input.study_subject? %>
+            <% if @study_subject_choices.any? %>
+              <%= select_tag "inputs[#{input.name}]",
+                    options_from_collection_for_select(@study_subject_choices, :id, :title, @tool_run.inputs[input.name]),
+                    include_blank: "Choose a subject…", class: "input", id: "inputs_#{input.name}" %>
+            <% else %>
+              <p class="hint">
+                No subjects on the go yet —
+                <%= link_to "start one first", curriculum_shelf_path, class: "text-primary-700 hover:underline" %>.
+              </p>
+            <% end %>
           <% elsif input.textarea? %>
             <%= text_area_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", rows: 6, id: "inputs_#{input.name}" %>
           <% else %>

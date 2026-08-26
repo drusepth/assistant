@@ -1,0 +1,44 @@
+<%# One leaf of the tree (D-education-spine): mastery dot, title, the verbs
+    that matter — and the surgery folded behind a disclosure so the syllabus
+    reads as a syllabus, not a control panel. %>
+<div class="item-row flex flex-wrap items-start gap-3 rounded-2xl bg-canvas p-3" id="<%= dom_id(topic) %>">
+  <%= mastery_dot(topic, classes: "mt-1") %>
+  <div class="min-w-0 flex-1">
+    <p class="text-sm font-semibold text-ink"><%= topic.title %></p>
+    <% if topic.summary.present? %>
+      <p class="text-xs text-soft"><%= topic.summary %></p>
+    <% end %>
+    <p class="mt-0.5 text-xs text-soft">
+      <%= mastery_label(topic) %><% if topic.mastered_on && (topic.mastered? || topic.rusty?) %> · <%= topic.mastered? ? "since" : "was mastered" %> <%= topic.mastered_on.strftime("%b %-d") %><% end %><% if topic.mastery_evidence == "self_marked" %> · your own call<% end %><% if topic.rusty? %> · minutes shore it up<% end %>
+    </p>
+  </div>
+  <% if owner %>
+    <div class="row-actions">
+      <%= link_to topic.unseen? ? "Learn" : "Keep going",
+            new_tool_run_path("tutor", inputs: { topic: "#{topic.title} (#{subject.title})", topic_id: topic.id }),
+            class: "btn btn-secondary btn-sm" %>
+      <%= link_to "Quiz me", new_tool_run_path("quiz_me", inputs: { topic_id: topic.id }),
+            class: "btn #{topic.rusty? || topic.practicing? ? "btn-primary" : "btn-ghost"} btn-sm" %>
+      <details class="relative">
+        <summary class="btn btn-ghost btn-sm cursor-pointer list-none">More</summary>
+        <div class="absolute right-0 z-10 mt-1 w-56 space-y-1 rounded-2xl border border-edge bg-surface p-2 shadow-lg">
+          <% if topic.goal&.active? %>
+            <%= link_to "Open its study plan", goal_path(topic.goal), class: "btn btn-ghost btn-sm w-full" %>
+          <% else %>
+            <%= button_to "Plan steps for this", plan_topic_path(topic), class: "btn btn-ghost btn-sm w-full" %>
+          <% end %>
+          <% unless topic.mastered? %>
+            <%= button_to "Mark mastered — my call", mastery_topic_path(topic, state: :mastered), method: :patch, class: "btn btn-ghost btn-sm w-full" %>
+          <% end %>
+          <% unless topic.unseen? %>
+            <%= button_to "Reset to not started", mastery_topic_path(topic, state: :unseen), method: :patch, class: "btn btn-ghost btn-sm w-full" %>
+          <% end %>
+          <%= button_to "Move up", move_topic_path(topic, direction: :up), method: :patch, class: "btn btn-ghost btn-sm w-full" %>
+          <%= button_to "Move down", move_topic_path(topic, direction: :down), method: :patch, class: "btn btn-ghost btn-sm w-full" %>
+          <%= button_to "Remove", topic_path(topic), method: :delete, class: "btn btn-danger btn-sm w-full",
+                data: { turbo_confirm: "Remove “#{topic.title}”#{" and its review cards" if topic.review_items.any?}?" } %>
+        </div>
+      </details>
+    </div>
+  <% end %>
+</div>

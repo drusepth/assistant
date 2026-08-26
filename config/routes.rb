@@ -111,6 +111,29 @@ Rails.application.routes.draw do
   end
   resources :notes
 
+  # The personal school (docs/EDUCATION_PLAN.md): the curriculum spine —
+  # per-learner subjects and their topic trees (D-education-spine), the
+  # commons shelf they enroll from (D-curriculum-commons), and the daily
+  # review queue (D-review-scheduler).
+  get "education/shelf" => "subjects#shelf", as: :curriculum_shelf
+  resources :subjects do
+    member do
+      patch :pause
+      patch :resume
+      patch :finish
+      post :retry_tree
+    end
+  end
+  resources :topics, only: %i[ create update destroy ] do
+    member do
+      patch :mastery
+      patch :move
+      post :plan
+    end
+  end
+  get "reviews" => "reviews#show", as: :reviews
+  post "reviews/:id/grade" => "reviews#grade", as: :grade_review
+
   # The password vault (D-passwords-vault). Everything lives under
   # /credentials — the keyring cookie is path-scoped to exactly this prefix,
   # so the unlocked vault key never transits on any other request. (The

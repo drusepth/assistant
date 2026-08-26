@@ -19,6 +19,9 @@ class User < ApplicationRecord
   has_many :trips, dependent: :destroy
   has_many :recipes, dependent: :destroy
   has_many :recipe_books, dependent: :destroy
+  has_many :subjects, dependent: :destroy
+  has_many :study_logs, dependent: :destroy
+  has_many :review_items, dependent: :destroy
   has_many :share_links, dependent: :destroy
   has_many :tool_runs, dependent: :destroy
   has_many :suggestions, dependent: :destroy

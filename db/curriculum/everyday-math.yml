@@ -1,0 +1,64 @@
+# Curriculum commons (D-curriculum-commons). Informed by public standards
+# (Common Core trajectories), jurisdiction-neutral, deliberately terse:
+# strand → topic outlines a household can read, diff, and edit.
+key: everyday-math
+title: Everyday math → algebra
+description: >
+  Numeracy from the ground up to the doorstep of algebra — the math a life
+  actually uses, in the order the ideas build. Placement finds your edge;
+  nothing here assumes a grade level.
+strands:
+  - title: Numbers & arithmetic
+    topics:
+      - title: Place value and rounding
+        summary: Read, write, compare, and round whole numbers of any size, and say what each digit is worth.
+      - title: Adding and subtracting fluently
+        summary: Compute sums and differences on paper and in your head, and estimate before you compute.
+      - title: Multiplying and dividing fluently
+        summary: Compute products and quotients with confidence, including remainders and when they matter.
+      - title: Order of operations
+        summary: Evaluate multi-step expressions the same way every calculator does, and see why the rules exist.
+      - title: Negative numbers
+        summary: Work above and below zero — temperature, debt, elevation — and compute across the boundary.
+  - title: Fractions, decimals & percentages
+    topics:
+      - title: What a fraction is
+        summary: Name parts of a whole, place fractions on a number line, and find equivalent forms.
+      - title: Comparing unlike denominators
+        summary: Tell which of two fractions is bigger by making their denominators agree.
+      - title: Fraction arithmetic
+        summary: Add, subtract, multiply, and divide fractions, and explain each rule with a picture.
+      - title: Decimals and the metric mindset
+        summary: Move between fractions and decimals and compute with tenths, hundredths, thousandths.
+      - title: Percentages in the wild
+        summary: Find a percent of anything — tips, discounts, interest, tax — and go backwards from the result.
+      - title: Ratios and rates
+        summary: Scale recipes, read unit prices, and compare speeds using ratio reasoning.
+  - title: Measurement & geometry
+    topics:
+      - title: Units and conversion
+        summary: Measure length, weight, volume, and time, and convert within and between systems.
+      - title: Perimeter, area, and volume
+        summary: Compute how much edge, surface, and space everyday shapes take up.
+      - title: Angles and triangles
+        summary: Measure and reason about angles, and use what's always true of triangles.
+      - title: Coordinates
+        summary: Plot and read points on a grid — the bridge between geometry and algebra.
+  - title: Data & probability
+    topics:
+      - title: Reading charts honestly
+        summary: Read tables, bar charts, and line graphs — and spot the axis tricks that mislead.
+      - title: Averages and spread
+        summary: Compute mean, median, and mode, and know which one a claim is hiding behind.
+      - title: Basic probability
+        summary: Put a number on chance for simple events and combinations, and calibrate the gut feel.
+  - title: Into algebra
+    topics:
+      - title: Variables and expressions
+        summary: Use a letter to stand for a number and translate words into expressions.
+      - title: Solving linear equations
+        summary: Undo operations step by step to find the unknown, and check the answer.
+      - title: Graphing lines
+        summary: See an equation as a line — slope, intercept, and what they mean in a story.
+      - title: Systems and inequalities
+        summary: Solve two constraints at once and reason about ranges instead of single answers.

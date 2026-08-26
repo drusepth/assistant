@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -541,6 +541,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
     t.index ["user_id"], name: "index_reminders_on_user_id"
   end
 
+  create_table "review_items", force: :cascade do |t|
+    t.text "answer"
+    t.datetime "created_at", null: false
+    t.float "difficulty"
+    t.datetime "due_at"
+    t.integer "kind", default: 0, null: false
+    t.integer "lapses", default: 0, null: false
+    t.datetime "last_reviewed_at"
+    t.text "prompt", null: false
+    t.integer "reps", default: 0, null: false
+    t.float "stability"
+    t.integer "state", default: 0, null: false
+    t.integer "topic_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["topic_id"], name: "index_review_items_on_topic_id"
+    t.index ["user_id", "due_at"], name: "index_review_items_on_user_id_and_due_at"
+    t.index ["user_id"], name: "index_review_items_on_user_id"
+  end
+
   create_table "section_taggings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "section_id", null: false
@@ -609,6 +629,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
     t.index ["budget_category_id"], name: "index_spending_rules_on_budget_category_id"
     t.index ["user_id", "matcher"], name: "index_spending_rules_on_user_id_and_matcher", unique: true
     t.index ["user_id"], name: "index_spending_rules_on_user_id"
+  end
+
+  create_table "study_logs", force: :cascade do |t|
+    t.integer "activity", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "minutes", null: false
+    t.string "note"
+    t.date "on", null: false
+    t.integer "subject_id"
+    t.integer "topic_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["subject_id"], name: "index_study_logs_on_subject_id"
+    t.index ["topic_id"], name: "index_study_logs_on_topic_id"
+    t.index ["user_id", "on"], name: "index_study_logs_on_user_id_and_on"
+    t.index ["user_id"], name: "index_study_logs_on_user_id"
+  end
+
+  create_table "subjects", force: :cascade do |t|
+    t.string "commons_key"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "interest_frame"
+    t.integer "status", default: 0, null: false
+    t.date "target_date"
+    t.string "title", null: false
+    t.datetime "tree_built_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_subjects_on_user_id"
   end
 
   create_table "suggestions", force: :cascade do |t|
@@ -683,6 +733,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
     t.index ["subject_type", "subject_id"], name: "index_tool_runs_on_subject"
     t.index ["user_id", "created_at"], name: "index_tool_runs_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_tool_runs_on_user_id"
+  end
+
+  create_table "topics", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "goal_id"
+    t.date "mastered_on"
+    t.integer "mastery", default: 0, null: false
+    t.string "mastery_evidence"
+    t.integer "parent_id"
+    t.integer "position", default: 1, null: false
+    t.integer "subject_id", null: false
+    t.text "summary"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["goal_id"], name: "index_topics_on_goal_id"
+    t.index ["parent_id"], name: "index_topics_on_parent_id"
+    t.index ["subject_id"], name: "index_topics_on_subject_id"
   end
 
   create_table "trips", force: :cascade do |t|
@@ -802,6 +869,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
   add_foreign_key "recipe_ingredients", "recipes"
   add_foreign_key "recipes", "users"
   add_foreign_key "reminders", "users"
+  add_foreign_key "review_items", "topics"
+  add_foreign_key "review_items", "users"
   add_foreign_key "section_taggings", "sections"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
@@ -809,12 +878,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_175421) do
   add_foreign_key "spending_accounts", "users"
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"
+  add_foreign_key "study_logs", "subjects"
+  add_foreign_key "study_logs", "topics"
+  add_foreign_key "study_logs", "users"
+  add_foreign_key "subjects", "users"
   add_foreign_key "suggestions", "users"
   add_foreign_key "tasks", "goals"
   add_foreign_key "tasks", "users"
   add_foreign_key "tool_run_items", "tool_runs"
   add_foreign_key "tool_run_messages", "tool_runs"
   add_foreign_key "tool_runs", "users"
+  add_foreign_key "topics", "goals"
+  add_foreign_key "topics", "subjects"
+  add_foreign_key "topics", "topics", column: "parent_id"
   add_foreign_key "trips", "users"
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"
