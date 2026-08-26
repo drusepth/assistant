@@ -12,7 +12,10 @@ Decisions here are logged as **D-education-spine**, **D-curriculum-commons**,
 **Q-education-assessment-trust**, **Q-education-materials**, and
 **Q-education-fsrs-tuning**.
 
-Everything in this document is designed; nothing below W0 is built yet.
+**Status: W1–W5 are built** (the spine and commons, the evidence machine
+and its tools, the FSRS review engine, personalization and its watchers,
+the household view and the record generators). W6 remains the horizon it
+was designed as.
 
 ---
 
@@ -360,8 +363,9 @@ it's the learner's curriculum, not ours.
 
 **The review session** (`/reviews`) is a full-screen, card-at-a-time flow
 built for a phone held one-handed: prompt → reveal → Again/Hard/Good/Easy
-(the FSRS quartet) for flash cards; free-response cards take a typed answer
-and get model grading when a model is configured, self-grading when not.
+(the FSRS quartet). Every kind self-grades in v1 — free-response against
+"what you'd have accepted from a student", do-this by doing it — with
+model grading of typed answers a W6 nicety, never a dependency.
 Ten minutes, interleaved across subjects, ends with what moved: "3 topics
 shored up, 11 items pushed out past next month."
 
@@ -485,14 +489,14 @@ Each wave lands green (`bin/rails test`, `bin/rubocop`) and is independently
 shippable; the order front-loads the spine because every later wave hangs off
 its shape.
 
-| Wave | Contents |
-|---|---|
-| **W1 — the spine** | `subjects` + `topics`, models + `Visible`/`Sectionable`, the commons v1 (`Curriculum::Commons` + ~6 course files: arithmetic→algebra, reading & writing, one science, civics, financial literacy, digital literacy), enroll + generated-tree doors, subject CRUD + the syllabus page with manual mastery marking, `learn_something` upgrade, hub panel v1 (subjects · start-new · resume strip) |
-| **W2 — mastery earns its keep** | The evidence state machine, `quiz_me`, `placement`, tutor curriculum-context + checkpoint verdicts + session mining (items stored inert until W3 schedules them), `study_logs` written by sessions |
-| **W3 — the review engine** | `review_items` live: the FSRS scheduler service + its unit-test battery, the `/reviews` session surface, the queue on the hub, interleaving, `rusty` demotion, `reviews_due` watcher |
-| **W4 — personalization** | The suggestion engine (affinity map + lens candidates + model extension), suggested-subject cards, interest framing threaded through every prompt, `subject_stall` / `rusty_radar` / `pace_check` watchers, weekly digest |
-| **W5 — household + the record** | Subject sharing polish (container grant), the household card, `progress_report` (portfolio · transcript · hours), the record drawer, `explain_this` |
-| **W6 — the horizon** | Vision (photo of the worksheet / the handwritten page), voice sessions, commons pack format for community curricula (behind D11), co-learning, offline-friendly review, standardized-practice-test import (Q-education-assessment-trust) |
+| Wave | Contents | Status |
+|---|---|---|
+| **W1 — the spine** | `subjects` + `topics`, models + `Visible`/`Sectionable`, the commons v1 (`Curriculum::Commons` + ~6 course files: arithmetic→algebra, reading & writing, one science, civics, financial literacy, digital literacy), enroll + generated-tree doors, subject CRUD + the syllabus page with manual mastery marking, `learn_something` upgrade, hub panel v1 (subjects · start-new · resume strip) | ✅ built |
+| **W2 — mastery earns its keep** | The evidence state machine, `quiz_me`, `placement`, tutor curriculum-context + checkpoint verdicts + session mining (items stored inert until W3 schedules them), `study_logs` written by sessions | ✅ built |
+| **W3 — the review engine** | `review_items` live: the FSRS scheduler service + its unit-test battery, the `/reviews` session surface, the queue on the hub, interleaving, `rusty` demotion, `reviews_due` watcher | ✅ built |
+| **W4 — personalization** | The suggestion engine (affinity map + lens candidates + model extension), suggested-subject cards, interest framing threaded through every prompt, `subject_stall` / `rusty_radar` / `pace_check` watchers, weekly digest | ✅ built |
+| **W5 — household + the record** | Subject sharing polish (container grant), the household card, `progress_report` (portfolio · transcript · hours), the record drawer, `explain_this` | ✅ built |
+| **W6 — the horizon** | Vision (photo of the worksheet / the handwritten page), voice sessions, commons pack format for community curricula (behind D11), co-learning, offline-friendly review, standardized-practice-test import (Q-education-assessment-trust) | horizon |
 
 W1 alone is already a better hub than the placeholder: an owned curriculum
 you can walk through with the existing tutor is the Organize mode for
