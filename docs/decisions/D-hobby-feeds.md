@@ -27,10 +27,22 @@ Guardian's world news is Other Interests, not fifteen hobbies.
 or has this one, which means no query carries an "or untagged" branch and no
 surface carries a special lane. It is an ordinary child section of Hobbies
 (D25), created on demand by slug so a user's own "Other interests" hobby can't
-take it, never offered as a hobby in capture or suggestions, sorted last, and
-never a dead end: creating a hobby re-asks the model about the feeds sitting in
-Other Interests in one batched call, so following a guitar blog before you have
-a Guitar hobby fixes itself when you add one.
+take it, never offered as a hobby in capture or suggestions, and sorted last.
+
+**The map is maintained, not built once.** A household's hobbies arrive over
+months, so every new hobby is a question about every feed already followed —
+not only the ones parked in Other Interests. `Hobbies::MapFeeds` takes lens
+*ids* (an OPML import creating six folders-as-hobbies asks once, not six
+times), considers every active feed whatever it already carries, and only ever
+adds: a feed tagged Guitar can also become Woodworking, which is the
+multi-tagging the lens model exists for, and a hand-made tag is protected
+without `section_taggings` having to record who made it, because nothing is
+ever removed. The one exception is mechanical — a feed that gains a real hobby
+loses Other Interests, since the two mean opposite things. The reverse case is
+bookkeeping with no model call: `section_taggings` is `dependent: :destroy`, so
+removing a hobby can leave a feed with no lens at all, and those feeds fall
+back to Other Interests in the same transaction. Calls are chunked (≤40 feeds)
+and skipped entirely with no model or no feeds.
 
 **`FeedItem` stays as it is.** An earlier draft of this plan made it
 `Sectionable` to hold per-story tags; with per-story routing gone, so is the

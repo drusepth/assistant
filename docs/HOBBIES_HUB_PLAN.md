@@ -55,7 +55,7 @@ whole.** The Guardian's world news becomes Other Interests, not fifteen hobbies.
 That is correct — a world news feed genuinely isn't a hobby feed — and if the
 lane grows uncomfortable, the answers are to unfollow, to make the interest a
 hobby, or to revisit per-story classification later with the arithmetic
-re-checked (see §7).
+re-checked (see §8).
 
 ## 3. Other Interests
 
@@ -72,13 +72,48 @@ creates — with three rules on top:
   suggestion lists; the user did not tell us they do this for fun, and the card
   should not pretend otherwise. It sorts last in the grid and reads as the
   catch-all it is.
-- **Not a dead end.** Creating a new hobby re-asks the model about the feeds
-  sitting in Other Interests — one batched call, only those feeds, only against
-  the new lens — so following a guitar blog before you have a Guitar hobby
-  fixes itself the moment you add one. Per-feed "Re-file" does the same for
-  one row on demand.
+- **Not a dead end.** A feed sitting here is a feed waiting for the hobby that
+  hasn't been created yet, and §4 is how it gets claimed.
 
-## 4. What this needs
+## 4. When a hobby appears — and when one goes away
+
+The map is not built once at subscribe time. A household's hobbies arrive over
+months, and every new one is a question about **every feed already followed**,
+not just the ones parked in Other Interests. Following a lutherie blog under
+Guitar and later adding a Woodworking hobby should light up that feed on both
+cards; that is the multi-tagging the lens model exists for (a feed is
+`Sectionable`, so it takes as many lenses as fit).
+
+`Hobbies::MapFeeds` is the job, and it takes **lens ids**, not one lens: an
+OPML import that creates six folders-as-hobbies asks one question about six
+lenses rather than six questions. Its rules:
+
+- **It considers every active feed**, whatever it is already tagged with. A
+  feed with a hobby can gain another.
+- **It only ever adds.** No existing tagging is removed, which is also how a
+  hand-made tag is protected without `section_taggings` having to record who
+  made it: the model can propose a new home for a feed, never overrule the one
+  a human chose.
+- **The one removal is mechanical**: a feed that gains a real hobby loses Other
+  Interests, because Other Interests means "no hobby" and the two are mutually
+  exclusive by definition.
+- **It is chunked** (≤40 feeds a call, title + description + host) so a
+  household with two hundred subscriptions asks a bounded number of times, and
+  **it doesn't run at all** with no model configured, or with no feeds.
+- **It is idempotent.** Re-running maps the same feeds to the same lenses; the
+  answer is a set of taggings, not an append.
+
+The reverse case has to be handled too, because `sections.section_taggings` is
+`dependent: :destroy`: **removing a hobby can leave a feed with no lens at
+all.** Those feeds fall back to Other Interests in the same transaction, so the
+invariant from §3 — every feed has a hobby or has Other Interests — survives a
+deletion. No model call; this is bookkeeping.
+
+Two smaller doors onto the same machinery: per-feed **"Re-file"** on the feeds
+list re-asks about one row, and a household that configures a model *after*
+following feeds gets one backfill pass over everything unclassified.
+
+## 5. What this needs
 
 Almost nothing, which is the argument for it.
 
@@ -95,8 +130,9 @@ that wanted to reverse it, and per-story routing is gone.
 
 ```
 Feeds::Classify        one model call: feed → hobby lenses (or Other Interests)
-ClassifyFeedJob        runs it after create; re-runnable per feed
-Hobbies::Reclassify    batched re-ask for Other Interests feeds when a hobby appears
+ClassifyFeedJob        runs it after create; re-runnable per feed ("Re-file")
+Hobbies::MapFeeds      new hobby (or hobbies) → which existing feeds join it (§4)
+MapFeedsJob            enqueued by hobby creation; also the post-setup backfill
 ```
 
 `Feeds::Classify` follows `Notes::Categorize` exactly: a JSON response matched
@@ -135,7 +171,7 @@ the system prompt:
 - the prompt states that feed text is data to classify, never instructions —
   belt to the structural braces.
 
-## 5. The hub
+## 6. The hub
 
 The current page is a grid of hobby cards (identity + engagement) with one
 shared "From your feeds" card underneath. The redesign merges them: **the
@@ -189,7 +225,7 @@ still the dense chronological river, still filterable by hobby and feed, and it
 is now reached from the hub, the hobby pages, and bookmarks. Nothing is
 deleted; one nav entry is.
 
-## 6. Waves
+## 7. Waves
 
 **W1 — the hub (no AI).** Per-hobby rivers in the hobby cards, the Other
 Interests lens and its card, `Panels::HobbiesLens` for per-hobby pages, the two
@@ -202,15 +238,18 @@ row grows "Re-file"; `classified_at` distinguishes "the model passed on this"
 from "the model has never seen it". Tests for the no-model path and the
 injection path.
 
-**W3 — `Hobbies::Reclassify`.** Adding a hobby re-asks about the feeds in Other
-Interests, in one batched call.
+**W3 — `Hobbies::MapFeeds` (§4).** Creating a hobby maps the existing feeds
+onto it — from the capture chips, the add tile, and an OPML import's folders,
+all through `Hobbies::Lens.find_or_create!` so there is one seam rather than
+three. Plus the deletion fallback, per-feed "Re-file", and the backfill for a
+household that configures its model late.
 
 **W4 — the watcher.** When Other Interests keeps filling with feeds about the
 same thing, suggest the hobby (D20: agent proposes, user disposes). This is
 the honest version of the "we noticed you're into X" feature, and it operates
 on feeds — a handful of rows — rather than on the story firehose.
 
-## 7. Deliberately not doing (and what would change our minds)
+## 8. Deliberately not doing (and what would change our minds)
 
 - **Per-story classification.** Cut for the reasons in §2. What would revisit
   it: a local-model story where a small classifier runs on-box for free, or a
