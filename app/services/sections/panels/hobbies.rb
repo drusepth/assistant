@@ -40,6 +40,8 @@ module Sections
         @cards ||= rows.select { |card| card.catch_all? ? card.river.any_feeds? : card.anything? }
       end
 
+      def unread_count = @unread_count ||= rows.sum { |card| card.river.unread_count }
+
       # The hobbies that didn't earn a card: names and links, in one place.
       def quiet_lenses
         carded = cards.map { |card| card.section.id }.to_set
@@ -59,13 +61,11 @@ module Sections
       # field and doesn't need it.
       def starters = feeds.empty? ? ::Feeds::Starters.groups : nil
 
-      def unread_count = @unread_count ||= rows.sum { |card| card.river.unread_count }
-
       Card = Struct.new(:summary, :river, keyword_init: true) do
         def section = summary.section
         def catch_all? = river.catch_all?
         # Sources or a life: either earns the space a card takes.
-        def anything? = river.any_feeds? || !summary.quiet?
+        def anything? = river.any_river? || !summary.quiet?
 
         # The card's one line of signal, and it rides *beside* the hobby's
         # name rather than under it. A line each for "Nothing planned yet —

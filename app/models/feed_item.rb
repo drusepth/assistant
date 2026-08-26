@@ -11,6 +11,13 @@ class FeedItem < ApplicationRecord
   belongs_to :feed
   has_one :user, through: :feed
 
+  # The exceptions to "an item's tags are its feed's tags" (D-story-matching).
+  # `matches` is the live set — what a row wears and what a river adds.
+  has_many :feed_item_matches, dependent: :destroy
+  has_many :matches, -> { live }, class_name: "FeedItemMatch", inverse_of: :feed_item,
+    dependent: nil
+  has_many :matched_sections, through: :matches, source: :section
+
   validates :guid, :title, presence: true
 
   scope :unread, -> { where(read_at: nil) }

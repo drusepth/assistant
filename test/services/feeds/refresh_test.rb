@@ -180,4 +180,21 @@ class Feeds::RefreshTest < ActiveSupport::TestCase
     assert FeedItem.exists?(keeper.id)
     assert_not FeedItem.exists?(doomed.first.id), "the oldest read items go first"
   end
+
+  # Matching rides the refresh (D-story-matching §3.2): the story is filed
+  # into the hobby it is about as it arrives, in plain Ruby, with nothing
+  # fetched and nobody asked.
+  test "a story matching a hobby's words joins that hobby as it lands" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    @feed.sections = [ Hobbies::OtherInterests.find_or_create! ]
+    Watchlist.create!(user: @user, section: birding, terms: %w[ warbler ])
+    stub_feed(item(title: "Rare warbler on the marsh") + item(title: "Council approves budget"))
+
+    Feeds::Refresh.call(@feed)
+
+    filed = @feed.feed_items.find_by(title: "Rare warbler on the marsh")
+    assert_equal [ birding ], filed.matched_sections.to_a
+    assert_empty @feed.feed_items.find_by(title: "Council approves budget").matched_sections
+    assert_equal [ Hobbies::OtherInterests.find ], @feed.reload.sections.to_a, "the feed itself never moves"
+  end
 end

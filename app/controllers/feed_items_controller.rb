@@ -18,6 +18,13 @@ class FeedItemsController < ApplicationController
   def save = act { @item.save_item! }
   def unsave = act { @item.unsave! }
 
+  # "This isn't Birding" (D-story-matching): the correcting verb on a story
+  # a watchlist carried into a hobby its feed isn't filed under. It leaves
+  # the row's place with a send-off and an Undo, like every other verb here
+  # that takes something off a list.
+  def reject = act { @rejected = reject_match }
+  def unreject = act { restore_match }
+
   private
     # Items are reachable only through the user's own feeds.
     def set_item
@@ -40,11 +47,34 @@ class FeedItemsController < ApplicationController
     # would shut the thing the reader just opened.
     def expanded? = params[:from] == "expand"
 
+    # The match named in the params, if this user really has one there.
+    # `matches` is the live scope, so a second click on a row somebody left
+    # open finds nothing and changes nothing.
+    def reject_match
+      match = @item.matches.find_by(section_id: params[:section_id])
+      Feeds::Watchlists::Corrections.reject!(match, Current.user) if match
+    end
+
+    def restore_match
+      match = FeedItemMatch.rejected.find_by(feed_item_id: @item.id, section_id: params[:section_id])
+      Feeds::Watchlists::Corrections.restore!(match) if match
+    end
+
     def row_locals
       locals = { item: @item }
       locals[:filter] = params[:from] unless hub? || expanded?
       locals[:expanded] = true if expanded?
+      locals[:match] = @rejected if @rejected
+      # The lens the row was being read under, so the re-rendered row knows
+      # which chips repeat the page it is on.
+      locals[:section] = lens if lens && !@rejected
       locals
+    end
+
+    def lens
+      return nil if params[:section_id].blank?
+
+      @lens ||= Section.find_by(id: params[:section_id])
     end
 
     # The same verbs act on two surfaces now: the river, and the hobby cards
@@ -60,6 +90,10 @@ class FeedItemsController < ApplicationController
     # whether it still belongs where it is.
     def row_partial
       return "sections/hobby_story" if hub?
+      # A rejected row is no longer part of the river it is sitting in, so
+      # it gets the same send-off a mark-read leaves rather than a row that
+      # silently lost its tell.
+      return "reader/unmatched" if @rejected
 
       @item.read? && params[:from] == "unread" ? "reader/dismissed" : "reader/item"
     end

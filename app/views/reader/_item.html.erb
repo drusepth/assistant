@@ -27,7 +27,12 @@
   url = reader_safe_url(item.url)
   filter = local_assigns.fetch(:filter, nil)
   expanded = local_assigns.fetch(:expanded, false)
-  chips = reader_chips(item, current_slug: params[:hobby])
+  # The lens this row is being read under, if any — passed by the river
+  # that rendered it, falling back to the everything-view's own filter.
+  # It decides which chips repeat the page and which one earns its place.
+  lens_slug = local_assigns[:section]&.slug || params[:hobby]
+  chips = reader_chips(item, current_slug: lens_slug)
+  match = reader_match(item, lens_slug)
   blurb = item.blurb(320)
 %>
 <article id="<%= dom_id(item) %>"
@@ -47,7 +52,19 @@
     <%# On a wide screen the source gets its own fixed column, so four
         hundred headlines all start at the same x. Below `lg` it drops into
         the signal line under the headline, where it costs no height. %>
-    <span class="reader-src"><%= reader_source(item.feed) %></span>
+    <%# The wide-screen tell for a matched row (D-story-matching). The chips
+        below live on the phone's signal line, which is `lg:hidden`, so on a
+        laptop a story carried in by a word would otherwise look exactly like
+        one whose feed belongs here. A funnel in the source column costs no
+        height and answers the only question the row raises. %>
+    <span class="reader-src flex items-center gap-1">
+      <% if match %>
+        <span title="Matched on <%= match.because %>" class="shrink-0 text-stone-400">
+          <%= icon(:funnel, css_class: "size-3") %>
+        </span>
+      <% end %>
+      <span class="truncate"><%= reader_source(item.feed) %></span>
+    </span>
 
     <div class="min-w-0 flex-1 lg:truncate">
       <h3 class="reader-headline">
@@ -74,8 +91,15 @@
         <span class="truncate"><%= reader_source(item.feed) %></span>
         <span aria-hidden="true">·</span>
         <span class="tabular-nums"><%= reader_age(item.published_on) %></span>
-        <% chips.each do |section| %>
-          <span class="chip <%= section_chip_classes(section) %>"><%= section.name %></span>
+        <% chips.each do |chip| %>
+          <span class="chip <%= chip.matched? ? "chip-matched" : section_chip_classes(chip.section) %>"
+                title="<%= chip.title %>"><%= chip.section.name %></span>
+        <% end %>
+        <%# Already under this hobby's own title, so the chip would only
+            repeat the page. What is not obvious is *why* a story from a
+            feed filed elsewhere is here, and that is what this says. %>
+        <% if match %>
+          <span class="chip chip-matched" title="Matched on <%= match.because %>">matched</span>
         <% end %>
       </div>
     </div>
@@ -85,7 +109,7 @@
         into doing, which is the whole point of the section — was the one
         nobody discovered. %>
     <div class="reader-verbs">
-      <%= render "reader/verbs", item: item, filter: filter %>
+      <%= render "reader/verbs", item: item, filter: filter, match: match %>
     </div>
 
     <time class="reader-age" datetime="<%= item.published_on.iso8601 %>"
@@ -111,7 +135,7 @@
             Open<span aria-hidden="true"> ↗</span>
           <% end %>
         <% end %>
-        <%= render "reader/verbs", item: item, filter: filter, size: :lg %>
+        <%= render "reader/verbs", item: item, filter: filter, match: match, size: :lg %>
       </div>
     </div>
   </div>

@@ -1,0 +1,16 @@
+<%# What's left where a matched row was, after "Not this" (D-story-matching).
+    The same send-off shape a mark-read leaves — roughly the height of the
+    line it replaces, with an Undo, so nothing vanishes without a way back —
+    and it names the word that put the row here, because that word is the
+    thing the user is actually judging. Locals: item, match. %>
+<div id="<%= dom_id(item) %>" class="reader-row" data-river-target="row">
+  <div class="flex items-center gap-2 px-3 py-1.5 text-xs text-soft sm:gap-3">
+    <span class="size-5 shrink-0 text-center" aria-hidden="true">×</span>
+    <span class="min-w-0 flex-1 truncate">
+      Not <%= match.section.name %><% if match.because %> — matched on <%= match.because %><% end %>
+      <span class="text-stone-500"><%= item.title %></span>
+    </span>
+    <%= button_to "Undo", unreject_feed_item_path(item, section_id: match.section_id), method: :patch,
+          class: "reader-verb !flex", form_class: "contents" %>
+  </div>
+</div>

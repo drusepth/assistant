@@ -275,8 +275,21 @@ Rails.application.routes.draw do
       patch :unread
       patch :save
       patch :unsave
+      # "This isn't Birding" and its Undo — the correcting verb on a story
+      # a watchlist carried into a hobby (D-story-matching).
+      patch :reject
+      patch :unreject
     end
   end
+
+  # What counts as a hobby, as words (D-story-matching): the list that
+  # carries a broad feed's stories into the hobby they're about. Flat
+  # routes rather than nested under sections, because the watchlist is the
+  # user's own and the section is just which one it is about.
+  post   "watchlist/terms" => "watchlists#add_term", as: :watchlist_terms
+  delete "watchlist/terms" => "watchlists#remove_term"
+  post   "watchlist/author" => "watchlists#author", as: :watchlist_author
+  post   "watchlist/resume" => "watchlists#resume", as: :watchlist_resume
 
   resources :suggestions, only: [] do
     member do

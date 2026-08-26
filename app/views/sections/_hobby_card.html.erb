@@ -30,12 +30,13 @@
       high-level view, and an invitation to paste a URL belongs on the
       hobby's own page, where somebody has already decided to spend time on
       it. %>
-  <% if river.any_feeds? %>
+  <% if river.any_river? %>
     <div class="pt-4 text-sm">
       <div class="border-t border-edge pt-3">
         <% if river.items.any? %>
           <ul class="space-y-1.5">
-            <%= render partial: "sections/hobby_story", collection: river.items, as: :item %>
+            <%= render partial: "sections/hobby_story", collection: river.items, as: :item,
+                  locals: { section: summary.section } %>
           </ul>
           <p class="mt-3 flex items-baseline justify-between gap-3">
             <%= link_to river.unread_count.positive? ? "#{river.unread_count} unread →" : "Open the river →",

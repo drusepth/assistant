@@ -160,11 +160,21 @@ feed has a hobby or has Other Interests — is about *feeds* and is untouched.
    (D-hobby-spotting) is born with a draft rule written from the very stories
    that spotted it: the reading that named the hobby becomes the definition of
    it. The result is a draft the user can see and edit, never a black box.
-3. **Corrected.** "Not this" on a matched row deletes the match and adds the
-   term that fired to that rule's negatives when it was the only one that
-   fired — deterministic, no call. Once corrections accumulate (or monthly, at
-   most), `Watchlists::Author` re-runs with the confirms and rejects included
-   and rewrites the terms.
+3. **Corrected.** "Not this" on a matched row tombstones the match (a
+   rejection that forgets itself is not a correction) and counts against the
+   terms that fired. A term the user has rejected three times, and rejected
+   more often than they have read, **comes off the list** — deterministic, no
+   call. Once corrections accumulate (five, or monthly at most),
+   `Watchlists::Author` re-runs with the rejects included and rewrites the
+   terms.
+
+   *Changed while building.* The first draft of this line added the fired
+   term to the **negatives** instead. That is wrong, and wrong in a way that
+   would have quietly destroyed good rules: the word that fires is usually the
+   right word inside the wrong story — "warbler" in *Warbler Records signs a
+   band* — and negating it kills every real warbler story too. Removing an
+   over-broad term narrows the rule; negating a good one guts it. Negatives
+   stay something the user types on purpose.
 
 Calls, for a household with ten hobbies: ten at creation, at most ten a month
 after that. Against ~3,000 stories a month. That ratio is the plan.
@@ -186,7 +196,17 @@ it runs on the only corpus that matters: this user's.
   stories this week"). It sits with the sources, not above the river.
 - **A matched row** in any river wears a small tell and, on the expanded row,
   one verb: **Not this**. That is the only new verb the reader gets, and it
-  teaches (§4.3) rather than just hiding.
+  teaches (§4.3) rather than just hiding. The tell has two shapes because the
+  row does: the phone's signal line takes a `chip-matched` naming the hobby,
+  and the laptop's row — whose signal line is `lg:hidden` — takes a funnel in
+  the source column. Both carry the words that fired as their hover title, so
+  "why is this Guardian story in Birding" is answerable on the row itself.
+- **The counts follow the river.** A hobby's number in the reader's rail, on
+  its hub card and on its page counts matched stories too, because a number
+  that disagrees with what clicking it shows is worse than no number. A hobby
+  with *no feeds of its own* still gets a row, a card and a river when
+  something has been matched into it — that stranded case is the whole
+  feature, so it cannot be the case that falls through the UI.
 - **The hub card** is unchanged, and gets richer for free: a hobby whose feeds
   are quiet but whose subject is in the news now has something to show.
 - **Nothing new to triage.** No tray, no "suggested stories" queue, no second
@@ -199,7 +219,8 @@ it runs on the only corpus that matters: this user's.
 | --- | --- |
 | **No model configured** | Doors 1 and 3 work in full. Matching is offline; the app behaves identically minus the authoring convenience. |
 | **Homonyms** ("bass", "python", "mint") | Title-or-two-terms, negatives, and the 20% corpus test. Then one click on the first wrong row, which writes the negative. |
-| **A term that matches everything** | Dropped at authoring (§4.1); if a hand-typed one gets through, the runtime guard suspends that rule *for that feed* once it matches >40% of a window and says so on the hobby page. |
+| **A term that matches everything** | Dropped at authoring (§4.1); if a hand-typed one gets through, or a feed changes what it publishes, the runtime guard suspends that rule *for that feed* once it matches >40% of a week (min. 10 stories) and says so on the hobby page, naming the words. Suspension takes the *unread* matches from that feed with it — they are the flood, nobody has looked at them, and Resume re-derives them. Read ones stay: the app does not take back spent attention. |
+| **The user disagrees with the guard** | Resume wins. A resumed feed is remembered, and the guard does not fire on it again — a warning the user has already overruled is nagging, not safety. Changing the words is a new question, and re-opens it. |
 | **Hostile feed text** | Terms are validated strings (length, character class, count) — never patterns, never SQL. Read titles from strangers shape an authored draft at worst, and the blast radius is "a word you didn't want appears in an editable list on your own page". The rule can never file a *feed*, create a lens, or leave the box. |
 | **One story, several hobbies** | Multi-tagged, like every other lens in the app. |
 | **A matched item's feed later gains the hobby** | The match becomes redundant; the OR dedupes it in the query, and the next backfill prunes it. |
@@ -236,24 +257,42 @@ spotter — is unchanged.
 
 ## 8. Waves
 
-**W1 — hand-written rules, no AI.** `watchlists`, `feed_item_matches`,
+All four are built. What each one turned out to be, and the two places the
+building changed the design, are in the build log (`bin/status`).
+
+**W1 ✅ — hand-written rules, no AI.** `watchlists`, `feed_item_matches`,
 `Feeds::Match` at ingest, the backfill job, the river's OR, the "What counts
 as Birding" editor, the matched tell and **Not this**. Ships the whole user
 value on a box with no API key, and is the honest floor everything else stands
 on.
 
-**W2 — the model writes the draft.** `Watchlists::Author` at hobby creation
+**W2 ✅ — the model writes the draft.** `Watchlists::Author` at hobby creation
 and on demand, seeded from read titles (and from `Hobbies::Spotter`'s evidence
 when the hobby was spotted), with the corpus test in front of the save.
 
-**W3 — the correction loop.** "Not this" writes negatives deterministically;
+**W3 ✅ — the correction loop.** "Not this" writes negatives deterministically;
 a monthly re-author folds in confirms and rejects.
 
-**W4 — the guards and the receipt.** Runtime flood detection with per-feed
+**W4 ✅ — the guards and the receipt.** Runtime flood detection with per-feed
 suspension, the "this rule matches almost everything" notice, and the weekly
 matched count on the hobby page.
 
 W1 is independent and worth shipping alone. W2–W4 each need the one before it.
+
+Two things the build changed, both in §6's direction — the guard has to be
+something a person can live with:
+
+- **A correction removes a term; it never writes a negative** (§4.3 above).
+- **A resume outranks the guard.** Without that, "Watch it again" started a
+  fight the app won every night: the rule was unchanged, so the next refresh
+  flooded and re-suspended, and the button looked broken. A suspension the
+  user has overruled stays overruled until the words change.
+
+And one thing the build found: `Watchlist#suspend!`/`#resume!` **reload before
+editing their lists**. The guard runs in a job while a page may be holding the
+same row, and `update!` only writes *changed* attributes — so a stale `[]`
+doesn't overwrite a suspension, it silently declines to write anything at all,
+which is a harder bug to see than an overwrite.
 
 ## 9. Deliberately not doing (and what would change our minds)
 

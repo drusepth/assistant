@@ -15,6 +15,6 @@
       <h2 class="reader-day"><%= day %></h2>
       <% last_day = day %>
     <% end %>
-    <%= render "reader/item", item: item, filter: @river.filter %>
+    <%= render "reader/item", item: item, filter: @river.filter, section: @river.section %>
   <% end %>
 </div>

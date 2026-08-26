@@ -19,9 +19,18 @@
             class: "reader-scope-row #{"is-on" if params[:hobby] == lens.slug && params[:feed].blank?}" do %>
         <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(lens) %>" aria-hidden="true"></span>
         <span class="flex-1 truncate font-semibold"><%= lens.name %></span>
+        <%# Feeds filed here, plus what was matched here from feeds that
+            aren't (D-story-matching) — the number has to be what clicking
+            it shows. %>
         <span class="reader-scope-count">
-          <%= feeds.sum { |feed| @unread_counts.fetch(feed.id, 0) } %>
+          <%= feeds.sum { |feed| @unread_counts.fetch(feed.id, 0) } + @matched_counts.fetch(lens.id, 0) %>
         </span>
+      <% end %>
+
+      <%# A hobby can be fed entirely by matches: no feed of its own, and a
+          river all the same. %>
+      <% if feeds.empty? && @matched_counts.fetch(lens.id, 0).positive? %>
+        <p class="reader-scope-row is-feed text-stone-500">matched stories only</p>
       <% end %>
 
       <% feeds.each do |feed| %>

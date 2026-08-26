@@ -32,7 +32,11 @@ module Feeds
       parsed = Parse.call(page.text)
       return failure("that address stopped being a feed") unless parsed
 
-      added, updated = ingest(parsed)
+      added, updated, touched = ingest(parsed)
+      # The stories that don't belong to this feed's hobbies but do belong to
+      # one of the user's (D-story-matching): matched here, at ingest, in
+      # plain Ruby — no model, no network, nothing the publisher waits for.
+      match(touched)
       adopt_metadata(parsed)
       record_success(page, parsed)
       prune
@@ -63,6 +67,7 @@ module Feeds
 
       def ingest(parsed)
         added = updated = 0
+        touched = []
 
         parsed.entries.each do |entry|
           item = @feed.feed_items.find_or_initialize_by(guid: entry.guid.to_s.truncate(500))
@@ -74,9 +79,20 @@ module Feeds
           item.save or AppError.record(
             ActiveRecord::RecordInvalid.new(item), source: "Feeds::Refresh", user: @feed.user
           )
+          touched << item if item.persisted?
         end
 
-        [ added, updated ]
+        [ added, updated, touched ]
+      end
+
+      # Never at the cost of the refresh: a rule that raises is a bug worth
+      # recording, not a feed that stops updating.
+      def match(items)
+        return if items.empty?
+
+        Match.for_feed(@feed, items)
+      rescue StandardError => e
+        AppError.record(e, source: "Feeds::Match", user: @feed.user, context: { feed: @feed.id })
       end
 
       def attributes_for(entry)

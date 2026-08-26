@@ -21,7 +21,7 @@
   <% if panel.items.any? %>
     <div class="divide-y divide-edge py-1">
       <%= render partial: "reader/item", collection: panel.items, as: :item,
-            locals: { filter: "unread" } %>
+            locals: { filter: "unread", section: section } %>
     </div>
   <% elsif panel.feeds.any? %>
     <p class="px-5 py-4 text-sm text-soft">
@@ -43,4 +43,14 @@
       <% end %>
     </div>
   <% end %>
+<% end %>
+
+<%# The rule that fills the river above out of feeds filed somewhere else
+    (D-story-matching). Under the river rather than over it: what arrived is
+    what you came for, and how it got here is the answer to a question you
+    only ask about one row. %>
+<% if panel.watchlist? %>
+  <div class="mt-4">
+    <%= render "sections/watchlist", panel: panel, section: section %>
+  </div>
 <% end %>

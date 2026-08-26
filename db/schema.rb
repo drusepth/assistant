@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_200242) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -253,6 +253,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_200242) do
     t.index ["goal_id"], name: "index_events_on_goal_id"
     t.index ["starts_at"], name: "index_events_on_starts_at"
     t.index ["user_id"], name: "index_events_on_user_id"
+  end
+
+  create_table "feed_item_matches", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "feed_item_id", null: false
+    t.datetime "rejected_at"
+    t.integer "section_id", null: false
+    t.string "source", default: "match", null: false
+    t.json "terms", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.index ["feed_item_id", "section_id"], name: "index_feed_item_matches_on_feed_item_id_and_section_id", unique: true
+    t.index ["feed_item_id"], name: "index_feed_item_matches_on_feed_item_id"
+    t.index ["section_id", "rejected_at"], name: "index_feed_item_matches_on_section_id_and_rejected_at"
+    t.index ["section_id"], name: "index_feed_item_matches_on_section_id"
   end
 
   create_table "feed_items", force: :cascade do |t|
@@ -834,6 +848,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_200242) do
     t.index ["user_id"], name: "index_vault_events_on_user_id"
   end
 
+  create_table "watchlists", force: :cascade do |t|
+    t.datetime "authored_at"
+    t.datetime "created_at", null: false
+    t.json "dropped", default: [], null: false
+    t.json "negatives", default: [], null: false
+    t.json "resumed_feed_ids", default: [], null: false
+    t.integer "section_id", null: false
+    t.string "source", default: "hand", null: false
+    t.json "suspended_feed_ids", default: [], null: false
+    t.json "terms", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["section_id"], name: "index_watchlists_on_section_id"
+    t.index ["user_id", "section_id"], name: "index_watchlists_on_user_id_and_section_id", unique: true
+    t.index ["user_id"], name: "index_watchlists_on_user_id"
+  end
+
   add_foreign_key "access_grants", "users", column: "grantee_id"
   add_foreign_key "access_grants", "users", column: "grantor_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -860,6 +891,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_200242) do
   add_foreign_key "emergency_contacts", "users", column: "contact_user_id"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
+  add_foreign_key "feed_item_matches", "feed_items"
+  add_foreign_key "feed_item_matches", "sections"
   add_foreign_key "feed_items", "feeds"
   add_foreign_key "feeds", "users"
   add_foreign_key "goals", "users"
@@ -913,4 +946,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_200242) do
   add_foreign_key "vault_events", "users"
   add_foreign_key "vault_events", "users", column: "actor_id"
   add_foreign_key "vault_events", "users", column: "subject_user_id"
+  add_foreign_key "watchlists", "sections"
+  add_foreign_key "watchlists", "users"
 end

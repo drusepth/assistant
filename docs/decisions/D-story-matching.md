@@ -44,9 +44,33 @@ matched story, because the feed is still unfiled and nothing should vanish
 from where the user last saw it.
 
 **No new queue.** Matched stories land in the river they belong to, wearing a
-small tell, with one new verb — "Not this" — that deletes the match and
+small tell, with one new verb — "Not this" — that tombstones the match and
 teaches the rule. A suggested-stories tray would be a second inbox, which is
-the thing this app exists to not be.
+the thing this app exists to not be. Every count that names a hobby — the
+reader's rail, the hub card, the page — counts matched stories too, and a
+hobby with no feeds of its own still gets a row, a card and a river: that
+stranded case is the entire feature, so it must not be the one that falls
+through the UI.
+
+**A correction removes a term; it never writes a negative.** The first draft
+said a rejection would add the fired term to the negatives. That is wrong in a
+way that would quietly destroy good rules: the word that fires is usually the
+right word inside the wrong story — "warbler" in *Warbler Records signs a
+band* — and negating it takes every real warbler story with it. So a rejection
+tombstones the row and counts against the term, and a term rejected three
+times and rejected more often than read comes *off* the list. Removing an
+over-broad term narrows the rule; negating a good one guts it. Negatives stay
+something the user types on purpose.
+
+**The runtime guard is narrow, and it loses to the user.** A rule that starts
+matching more than 40% of a week of one feed is paused *for that feed* — never
+for the rule, since one loud feed says nothing about the twelve the same words
+file correctly — and the notice names the words. Suspension drains the unread
+matches from that feed (they are the flood, nobody looked at them, and Resume
+re-derives them) and keeps the read ones, because the app does not take back
+spent attention. If the user resumes, the guard does not fire on that feed
+again: a warning already overruled is nagging, not safety. Changing the words
+re-opens the question.
 
 Plan, waves and the full case list in `docs/STORY_ROUTING_PLAN.md`. Embeddings
 are the acknowledged long-term mechanism and are not reachable yet

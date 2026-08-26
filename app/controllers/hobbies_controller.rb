@@ -10,6 +10,10 @@ class HobbiesController < ApplicationController
     # And a new hobby is still a question about every feed already followed,
     # not just the ones parked in the catch-all (D-hobby-feeds §4).
     Hobbies::MapFeeds.enqueue(Current.user, [ lens ])
+    # Feeds are only half of it: the stories about this hobby inside a feed
+    # that is mostly about something else need words to find them
+    # (D-story-matching). One call, in a job, and the editor works meanwhile.
+    Feeds::Watchlists::Author.enqueue(Current.user, lens)
     redirect_to section_path("hobbies"), notice: created_notice(lens, moved)
   rescue ArgumentError
     redirect_to section_path("hobbies"), alert: "A hobby needs a name."

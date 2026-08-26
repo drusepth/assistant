@@ -307,6 +307,12 @@
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
+  /* A chip for something the app inferred rather than something the user
+     filed (D-story-matching): outlined instead of filled, so a match never
+     wears the same weight as a decision. */
+  .chip-matched {
+    @apply border border-dashed border-edge text-soft;
+  }
 
   /* Rendered prose from a writer's own Markdown (Diary::Markdown). Preflight
      strips headings and lists back to plain text, so the tags that renderer

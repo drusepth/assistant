@@ -266,4 +266,64 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert Hobbies::OtherInterests.find, "the invariant is protected at the controller layer"
   end
+
+  # The rule that fills a hobby's river out of feeds filed elsewhere is a
+  # list of words on the hobby's own page (D-story-matching §5) — visible,
+  # editable, and there whether or not a model ever wrote a line of it.
+  test "a hobby's page carries its watchlist, and the catch-all doesn't" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    Watchlist.create!(user: users(:one), section: birding, terms: %w[ warbler ])
+
+    get section_path(birding.slug)
+
+    assert_response :success
+    assert_match "What counts as Birding", response.body
+    assert_match "warbler", response.body
+
+    get section_path(Hobbies::OtherInterests.find_or_create!.slug)
+
+    assert_response :success
+    assert_no_match(/What counts as/, response.body)
+  end
+
+  test "a flooded feed says so on the hobby's page, with the way back" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    feed = users(:one).feeds.create!(url: "https://example.com/news.xml", title: "The Daily")
+    Watchlist.create!(user: users(:one), section: birding, terms: %w[ bird ]).suspend!(feed, reason: "bird")
+
+    get section_path(birding.slug)
+
+    assert_match "almost everything in The Daily", response.body
+    assert_match "Watch it again", response.body
+  end
+
+  test "a word the corpus refused is explained rather than missing" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    Watchlist.create!(user: users(:one), section: birding, terms: %w[ warbler ],
+      dropped: [ { "term" => "nature", "kind" => "broad", "detail" => "it matched 48% of your river" } ])
+
+    get section_path(birding.slug)
+
+    assert_match "“nature” isn't on the list", response.body
+    assert_match "48% of your river", response.body
+  end
+
+  # The reader's rail counts what clicking it shows (D-story-matching), and
+  # a hobby with no feeds of its own still gets a row there.
+  test "the reader's hobby rows count matched stories too" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    other = Hobbies::OtherInterests.find_or_create!
+    feed = users(:one).feeds.create!(url: "https://example.com/news.xml", sections: [ other ])
+    story = feed.feed_items.create!(guid: "1", title: "Rare warbler on the coast")
+    FeedItemMatch.create!(feed_item: story, section: birding, terms: %w[ warbler ])
+
+    get reader_path
+
+    assert_response :success
+    page = Nokogiri::HTML(response.body)
+    row = page.css("a.reader-scope-row").find { |link| link.text.include?("Birding") }
+    assert row, "a hobby fed only by matches still has a row"
+    assert_match "1", row.text
+    assert_match "matched stories only", response.body
+  end
 end

@@ -59,10 +59,33 @@ module ReaderHelper
   # item is texture rather than information, and the catch-all lens is on
   # every item by construction (D-hobby-feeds) — so it never shows, the lens
   # you have already filtered to never shows, and at most one does.
+  # A chip either says where the row is filed or that it was *matched*
+  # here (D-story-matching) — and a match says which words did it, because
+  # "why is this Guardian story in Birding" has to be answerable on the row
+  # itself.
+  Chip = Struct.new(:section, :match) do
+    def matched? = match.present?
+    def title = matched? ? "Matched on #{match.because}" : nil
+  end
+
   def reader_chips(item, current_slug: nil)
-    item.feed.sections.reject { |section|
+    filed = item.feed.sections.reject { |section|
       Hobbies::OtherInterests.catch_all?(section) || section.slug == current_slug
-    }.first(1)
+    }.first(1).map { |section| Chip.new(section, nil) }
+
+    matched = item.matches.reject { |match| match.section.slug == current_slug }
+      .first(1).map { |match| Chip.new(match.section, match) }
+
+    (filed + matched).first(2)
+  end
+
+  # The match for the river you are already looking at. Its chip would
+  # only repeat the page's own title, so the row wears a shorter tell and
+  # the one verb a match needs.
+  def reader_match(item, slug)
+    return nil if slug.blank?
+
+    item.matches.find { |match| match.section.slug == slug }
   end
 
   # The day a row belongs under in the river's spine. Four hundred items
