@@ -204,9 +204,23 @@ Rails.application.routes.draw do
       patch :apply_suggestion
     end
   end
-  # Trips are owner-only (D-travel-facet): a trip is a lens on photo
-  # coordinates, and those are owner-only under Q14.
-  resources :trips, except: :new
+  # Trips (D-trip-spine): the spine of the travel tool. Shared by
+  # membership, not AccessGrant (D-trip-companions) — but everything
+  # derived from photo coordinates on a trip stays owner-only under Q14.
+  resources :trips do
+    member do
+      post :place
+    end
+    resources :stays, shallow: true, except: %i[ index show ]
+    resources :legs, controller: "trip_legs", shallow: true, except: %i[ index show ]
+    # shallow_prefix keeps the un-nested helpers namespaced (trip_comment_path,
+    # not comment_path) — "comment" is too generic a name for trips to squat.
+    scope shallow_prefix: "trip" do
+      resources :comments, controller: "trip_comments", shallow: true, only: %i[ create destroy ]
+      resources :photo_posts, controller: "trip_photo_posts", shallow: true, only: %i[ new create destroy ]
+      resources :companions, controller: "trip_companions", shallow: true, only: %i[ create destroy ]
+    end
+  end
 
   resources :albums do
     member do

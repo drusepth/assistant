@@ -1,0 +1,19 @@
+<div class="capture-row p-3">
+  <div class="min-w-0">
+    <div class="flex min-w-0 items-center gap-2">
+      <%= link_to trip.name, trip_path(trip), class: "truncate font-medium text-ink hover:underline" %>
+      <%= trip_phase_chip(trip) %>
+      <% if trip.user_id != Current.user.id %>
+        <%= render Ui::AvatarComponent.new(user: trip.user, size: :xxs, tone: :stone) %>
+      <% end %>
+    </div>
+    <p class="truncate text-sm text-soft">
+      <%= [ trip.period, pluralize(trip.days, "day"), trip.place_label.presence,
+            trip_countdown(trip) ].compact_blank.join(" · ") %>
+    </p>
+  </div>
+  <% unbooked = trip.unbooked_stays.size + trip.unbooked_legs.size %>
+  <% if !trip.past? && unbooked.positive? %>
+    <span class="chip shrink-0 bg-amber-100 text-amber-900"><%= unbooked %> to book</span>
+  <% end %>
+</div>

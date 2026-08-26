@@ -70,6 +70,29 @@ module Datasets
         distance_km: best[:distance].round(1))
     end
 
+    # The reverse direction (D-stay-pins): a typed place name to
+    # coordinates, for pinning a stay's location on the itinerary map. Same
+    # honesty as ever — the file holds settlements, so "Boise, Idaho" finds
+    # Boise and "the A-frame on Route 9" finds nothing, and nothing is the
+    # right answer. Text after a comma narrows by country when it matches
+    # one ("Paris, France"); otherwise it's ignored ("Boise, Idaho" — the
+    # file doesn't know states), and ties go to the biggest population, so
+    # a bare "Portland" is Oregon's.
+    def named(query)
+      return nil unless present?
+
+      name, qualifier = query.to_s.split(",", 2).map { |part| part.strip.downcase }
+      rows = name.present? ? names_index[name] : nil
+      return nil if rows.blank?
+
+      if qualifier.present?
+        narrowed = rows.select { |row| row[:country].downcase == qualifier }
+        rows = narrowed if narrowed.any?
+      end
+      row = rows.max_by { |candidate| candidate[:population] }
+      Match.new(**row.slice(:name, :country, :latitude, :longitude, :population), distance_km: 0.0)
+    end
+
     # The most populous settlements inside a box, biggest first — the labels
     # a zoomed map draws so a bare coastline is readable. Same file, same
     # honesty: it can only name what it holds.
@@ -89,6 +112,15 @@ module Datasets
     end
 
     private
+      # Downcased name → rows, built lazily: only surfaces that look
+      # places up by name (stays) pay for it, and like the bands it's a
+      # few hundred KB parsed once per process.
+      def names_index
+        @names_index ||= @bands.each_value.with_object({}) do |band, index|
+          band.each { |row| (index[row[:name].downcase] ||= []) << row }
+        end
+      end
+
       # One-degree latitude bands. A band is 111km tall, so scanning the
       # photo's band and its two neighbours always covers at least ±1°,
       # which is more than NEAR_KM — no candidate inside the radius can hide
