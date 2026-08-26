@@ -36,6 +36,9 @@ class Pet < ApplicationRecord
   # specialty prefilled rather than a tool of its own.
   belongs_to :vet, class_name: "Person", optional: true
 
+  # What she eats, and what she ate (D-pet-food-shelf).
+  has_many :pet_foods, dependent: :destroy
+
   validates :name, presence: true
   validates :species, inclusion: { in: SPECIES }
   validates :weight_kg, numericality: { greater_than: 0, less_than: 2_000 }, allow_nil: true

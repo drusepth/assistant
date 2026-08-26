@@ -24,6 +24,10 @@ module Users
       "photos" => ->(user) { user.photos },
       "albums" => ->(user) { user.albums },
       "recipes" => ->(user) { user.recipes },
+      # A pet and her diet history leave with her owner (D14) — the diet is
+      # the half a vet asks for, so it is not an ornament of the pet row.
+      "pets" => ->(user) { user.pets },
+      "pet_foods" => ->(user) { PetFood.where(pet_id: user.pets.select(:id)) },
       "recipe_books" => ->(user) { user.recipe_books },
       "suggestions" => ->(user) { user.suggestions },
       "spending_accounts" => ->(user) { user.spending_accounts },

@@ -108,6 +108,13 @@ Rails.application.routes.draw do
   # cards live on the People page, so there is no index here.
   resources :pets, except: :index do
     resource :avatar, only: %i[ destroy ], module: :pets
+    resource :budget, only: %i[ create update ], controller: :pet_budgets
+    resources :foods, only: %i[ create update ], controller: :pet_foods do
+      member do
+        patch :end_food
+        post :reorder
+      end
+    end
   end
   resources :goals do
     member do

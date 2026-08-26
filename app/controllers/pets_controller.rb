@@ -13,6 +13,11 @@ class PetsController < ApplicationController
     @health_section_id = Section.find_by(slug: "health")&.id
     @events = @pet.items(Event, Current.user).upcoming.includes(:sections, :user).limit(6)
     @tasks = @pet.items(Task, Current.user).open.includes(:sections, :user).limit(6)
+    @shelf = Pets::FoodShelf.new(@pet)
+    # The money side is the owner's own: envelopes and the ledger are per-user
+    # and private (BudgetCategory has no grants path), so a shared viewer sees
+    # the shelf and not the bill.
+    @cost = Pets::CostOfCare.new(Current.user) if @own
   end
 
   def new

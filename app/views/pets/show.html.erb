@@ -87,6 +87,10 @@
       <%= render "pets/care_radar", pet: @pet, statuses: @care_statuses, health_section_id: @health_section_id %>
     <% end %>
 
+    <% if @shelf.any? || @own %>
+      <%= render "pets/food_shelf", pet: @pet, shelf: @shelf, own: @own %>
+    <% end %>
+
     <% if @events.any? || @tasks.any? %>
       <%= render Ui::CardComponent.new(title: "Coming up", padded: false) do %>
         <div class="divide-y divide-edge">
@@ -98,6 +102,9 @@
   </div>
 
   <div class="space-y-6">
+    <% if @cost %>
+      <%= render "pets/cost", pet: @pet, cost: @cost %>
+    <% end %>
     <%= render "pets/filing", pet: @pet %>
     <% if @own %>
       <%= render "shared/share_controls", subject: @pet %>
