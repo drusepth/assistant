@@ -16,7 +16,8 @@ class SubjectTest < ActiveSupport::TestCase
   end
 
   test "rusty topics surface" do
-    assert_equal [ topics(:friction) ], subjects(:physics).rusty_topics
+    topics(:friction).decay!
+    assert_equal [ topics(:friction) ], subjects(:physics).reload.rusty_topics
   end
 
   test "private by default, visible through a grant" do

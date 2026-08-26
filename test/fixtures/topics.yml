@@ -32,11 +32,13 @@ forces_strand:
   title: Forces & momentum
   position: 1
 
+# Kept mastered here on purpose: a rusty fixture makes rusty_radar fire in
+# every full-scan test — tests that need rust set it themselves.
 friction:
   subject: physics
   parent: forces_strand
   title: Friction & grip
-  mastery: rusty
+  mastery: mastered
   mastery_evidence: quiz
   mastered_on: <%= 2.months.ago.to_date %>
   position: 1

@@ -69,6 +69,7 @@ class QuizMeToolTest < ActiveJob::TestCase
 
   test "a rusty topic re-earns green through the same evidence" do
     rusty = topics(:friction)
+    rusty.decay!
     run = users(:one).tool_runs.create!(tool_slug: "quiz_me", inputs: { "topic_id" => rusty.id.to_s })
     run.tool_run_messages.create!(role: :user, content: "answers")
     stub_recap(

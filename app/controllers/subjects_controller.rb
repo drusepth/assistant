@@ -31,6 +31,7 @@ class SubjectsController < ApplicationController
         interest_frame: subject_params[:interest_frame].presence
       )
       file_under_education(@subject)
+      PersonalizeSubjectJob.perform_later(@subject) if @subject.interest_frame.present? && @subject.generation_profile
       redirect_to @subject, notice: "Enrolled — the syllabus is yours to reshape."
     else
       @subject = Current.user.subjects.new(subject_params)

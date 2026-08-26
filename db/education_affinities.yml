@@ -1,0 +1,65 @@
+# The affinity map (docs/EDUCATION_PLAN.md §7): what a hobby lens says is
+# worth learning. Deterministic and auditable on purpose — the common cases
+# cost no model call, and every card can print its reason. Matched
+# case-insensitively as substrings against the household's hobby lens names.
+# Plain data: edit freely; a dismissed suggestion stays dismissed either way.
+- match: [ theatre, theater, drama, acting, improv ]
+  subject: Public speaking & rhetoric
+  reason: Stagecraft is half rhetoric — the same presence, projected without a script.
+- match: [ skateboard, skating, bmx, parkour ]
+  subject: Physics of motion
+  reason: Momentum, friction, and energy are what your body already knows — this names it.
+- match: [ baking, sourdough, bread ]
+  subject: Kitchen chemistry
+  reason: Fermentation and gluten are chemistry you can eat.
+- match: [ cooking, kitchen ]
+  subject: Food science
+  reason: Heat, emulsions, and Maillard — why recipes work, so you can leave them.
+- match: [ garden, allotment, plants, houseplant ]
+  subject: Botany & soil science
+  reason: Why things grow — the science under the beds you already tend.
+- match: [ photography, photo ]
+  subject: Optics & light
+  reason: Aperture and focal length are physics wearing a camera strap.
+- match: [ music, guitar, piano, singing, choir, bass, drums ]
+  subject: Music theory
+  reason: The patterns behind the songs you already play.
+- match: [ hiking, camping, backpacking, birding, fishing ]
+  subject: Ecology & field naturalism
+  reason: Name what you walk through — the trail gets deeper when you can read it.
+- match: [ astronomy, stargazing, telescope ]
+  subject: Astronomy
+  reason: You're already looking up — this is the map.
+- match: [ knitting, sewing, crochet, quilting, weaving ]
+  subject: Geometry of making
+  reason: Gauge, tessellation, and scaling — the math your hands are already doing.
+- match: [ woodwork, carpentry, maker, diy, "3d printing" ]
+  subject: Practical engineering
+  reason: Loads, joints, and tolerances — why the thing you built holds.
+- match: [ gaming, video games, chess, board games ]
+  subject: Probability & strategic thinking
+  reason: Expected value and game trees — the edge under every good move.
+- match: [ running, cycling, lifting, swimming, climbing, yoga, martial ]
+  subject: Exercise physiology
+  reason: Training load, recovery, and fuel — coach yourself with the actual science.
+- match: [ writing, journaling, poetry, fanfic ]
+  subject: The craft of writing
+  reason: You already write — this is the deliberate-practice ladder for it.
+- match: [ drawing, painting, sketch, watercolor, illustration ]
+  subject: Perspective, light & color
+  reason: The rules the artists you admire are quietly using.
+- match: [ travel, languages, language ]
+  subject: A new language
+  reason: The one subject that turns every trip into a different trip.
+- match: [ investing, stocks, crypto ]
+  subject: Financial literacy
+  reason: Before the picks — the fees, the risk math, and the defenses.
+- match: [ cars, motorcycle, mechanic, engine ]
+  subject: How engines work
+  reason: From the wrench to the why — thermodynamics with grease on it.
+- match: [ electronics, arduino, raspberry, ham radio ]
+  subject: Electronics & circuits
+  reason: Current, voltage, and logic — the theory your bench work keeps bumping into.
+- match: [ genealogy, history, museums ]
+  subject: Historical research methods
+  reason: Sources, archives, and evidence — do history, not just read it.

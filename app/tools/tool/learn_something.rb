@@ -39,7 +39,9 @@ module Tool
           if course && (enrolled = user.subjects.find_by(commons_key: course.key))
             enrolled
           elsif course
-            Curriculum::Commons.instantiate!(course.key, user: user, interest_frame: inputs[:angle].presence)
+            Curriculum::Commons.instantiate!(course.key, user: user, interest_frame: inputs[:angle].presence).tap do |enrolled|
+              PersonalizeSubjectJob.perform_later(enrolled) if enrolled.interest_frame.present?
+            end
           else
             generated_subject
           end
