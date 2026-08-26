@@ -7,122 +7,116 @@ each hobby different every day**. This plan turns the Hobbies hub into the
 reader's home surface — one river per hobby — and demotes `/reader` from a rail
 destination to the everything-view you click through to.
 
-The new decision is **D-hobby-feeds**. It reverses one line of D-feed-reader
-(items were deliberately not `Sectionable`) and adds one model call per
-*subscription* — never per story.
+The new decision is **D-hobby-feeds**: the model files each *feed* under the
+hobbies it belongs to, a feed that matches none lands in **Other Interests**,
+and stories are never classified individually.
 
 ## 1. What changes, in one paragraph
 
-Adding a feed asks the household's model, once, which hobbies it belongs to.
-Stories inherit their feed's hobbies at ingest, so every item carries lenses
-without a second model call. A feed the model can't pin to a hobby — a world
-news site, Hacker News, anything general — is marked **broad**, and its stories
-are routed per item by keyword match against each hobby's own vocabulary: no
-model, no per-story cost, and an explanation the user can read and edit. The
-Hobbies page becomes a grid of hobby cards, each carrying its own three newest
-unread underneath the engagement signal it already shows. The rail loses
-"Reader" and Hobbies inherits the unread badge.
+Adding a feed asks the household's model, once, which of the user's existing
+hobbies it belongs to. The answer becomes ordinary section taggings on the
+feed, which the reader already understands — so the whole river splits by hobby
+with no per-story work at all. A feed that matches no hobby goes to **Other
+Interests**, a real lens that gets created the first time it's needed, so
+every feed always has a home and no query anywhere needs an "or untagged"
+branch. The Hobbies page becomes a grid of hobby cards, each carrying its own
+three newest unread underneath the engagement signal it already shows. The rail
+loses "Reader" and Hobbies inherits the unread badge.
 
-## 2. Per feed or per story? Both — and the order is the whole design
+## 2. Why classification is per feed, and per story is not on the roadmap
 
-This was the open question, and the arithmetic answers most of it.
+**Per feed is nearly free and nearly always right.** `Feed` is already
+`Sectionable`, `Feeds::River` already filters by section, and a subscription is
+added a handful of times per household *ever*. One model call there is a
+rounding error. It is also the only classification that can be right by
+construction: r/woodworking is about woodworking in a way no individual post
+can contradict.
 
-**Per feed** is nearly free. `Feed` is already `Sectionable`, `Feeds::River`
-already filters by section, and a subscription is added a handful of times per
-household *ever*. One model call per feed is a rounding error, and it is the
-only classification that can be *correct by construction*: r/woodworking is
-about woodworking in a way no individual post can contradict.
+**Per story is a different product with a different bill.** The instance this
+plan was written against carried 228 unread items across eight feeds after
+about two days — 100+ items a day, ~3,000 a month. At one model call each that
+is a real monthly bill on a hosted provider and an unusable queue on the local
+models this project argues for (`CLAUDE.md` → model integration). It would also
+break the reader's third promise — *nothing leaves the box, and it works
+identically with no API key configured* — because a hub organized by per-item
+model calls has no organization at all on a model-less instance.
 
-**Per story** is where the cost is. The instance this plan was written against
-carried 228 unread items across eight feeds after about two days — call it
-100+ items a day, ~3,000 a month. At one model call each that is a real monthly
-bill on a hosted provider and an unusable queue on the local models this project
-argues for (`CLAUDE.md` → model integration). It also breaks the reader's third
-promise — *nothing leaves the box, and it works identically with no API key
-configured* — because a hub organized by per-item model calls has no
-organization at all on a model-less instance.
+**And the cheap approximation of it doesn't work.** An earlier draft of this
+plan routed broad feeds' stories by keyword match against a per-hobby
+vocabulary. It was cut before anything was built: keywords cannot cover the
+truly open space of hobbies and feeds that any number of users will bring, and
+a matcher that works for "sourdough → Baking" fails silently and
+unaccountably for everything nobody thought to enumerate. A vocabulary list is
+a promise to keep enumerating the world, which is the kind of promise this
+codebase should not make.
 
-But per-feed alone fails exactly where the screenshots show the volume: a
-general news feed has no hobby, and its stories have several. Filing the
-Guardian under "Reading" would be a lie, and dropping it from the hub would
-hide most of the river.
+So the honest consequence, stated up front: **a broad feed lands in one place,
+whole.** The Guardian's world news becomes Other Interests, not fifteen hobbies.
+That is correct — a world news feed genuinely isn't a hobby feed — and if the
+lane grows uncomfortable, the answers are to unfollow, to make the interest a
+hobby, or to revisit per-story classification later with the arithmetic
+re-checked (see §7).
 
-So: **per-feed classification is the backbone, per-story routing is the
-exception, and the exception does not use a model.**
+## 3. Other Interests
 
-| | who decides | when | cost |
-|---|---|---|---|
-| Focused feed (a subreddit, a channel, a craft blog) | model, once | on subscribe | 1 call, ever |
-| Its stories | inherited from the feed | at ingest | 0 |
-| Broad feed (news, HN, aggregators) | model marks it broad | on subscribe | (same call) |
-| Its stories | keyword match against hobby vocabulary | at ingest | 0 |
-| Stories nothing matches | nobody — they stay unfiled | — | 0 |
-| *Optional* per-story model pass | model, batched ≤25 | off by default | ~4 calls/day |
+Every feed gets a hobby, or it gets **Other Interests**. There is no third
+state, and that is the point: no "untagged" branch in the river query, no
+special lane on the hub, no empty-set edge case in the filter row. It is an
+ordinary hobby lens — a child section of Hobbies, the same rows D25 already
+creates — with three rules on top:
 
-The keyword vocabulary is itself AI-generated — once per hobby, not once per
-story — and stored on the lens where the user can see and edit it. "Sourdough"
-under Baking is a rule you can read, correct, and reason about; a per-item
-model verdict is neither.
+- **Created on demand**, the first time a feed needs it, by slug
+  (`other-interests`) rather than by name, so it can't be stolen by a user who
+  happens to name a hobby "Other interests".
+- **Never offered as a hobby.** It's absent from the capture chips and the
+  suggestion lists; the user did not tell us they do this for fun, and the card
+  should not pretend otherwise. It sorts last in the grid and reads as the
+  catch-all it is.
+- **Not a dead end.** Creating a new hobby re-asks the model about the feeds
+  sitting in Other Interests — one batched call, only those feeds, only against
+  the new lens — so following a guitar blog before you have a Guitar hobby
+  fixes itself the moment you add one. Per-feed "Re-file" does the same for
+  one row on demand.
 
-### Why unfiled stories are a feature
+## 4. What this needs
 
-Anything that matches no hobby stays untagged and shows up in one place: the
-**Everything else** lane at the foot of the hub, and the `/reader` river. That
-lane is the honest home for world news in a Hobbies section, and it is also the
-input to the D20-style watcher HOBBIES.md §1.2 already describes: *forty
-unfiled stories keep saying "climbing" — want a Climbing hobby?* Agent
-proposes, user disposes. Nothing is auto-created.
-
-## 3. Data model
-
-Three small additions. No new tables.
-
-```
-Feed        + routing:"inherit"|"per_item"   + classified_at
-            (lenses stay ordinary section_taggings — already there)
-FeedItem    include Sectionable              ← the D-feed-reader reversal
-Section     + keywords (text)                the lens's own vocabulary
-```
-
-**`FeedItem` becomes `Sectionable`.** D-feed-reader's reasoning was that "an
-item's tags are its feed's tags, so filing happens once, at the subscription" —
-true for focused feeds, and the reason inheritance is the default here. It
-stops being true the moment one feed's stories belong to different hobbies,
-which is the case this plan exists to serve. Tags are **materialized at
-ingest** rather than resolved at query time: the hub asks one question per
-hobby (`FeedItem.in_section(lens)`), a stray story can be re-filed by hand
-without inventing negative tags, and `Feeds::Refresh` already writes each item
-once anyway. Retagging a feed enqueues a backfill over its items.
-
-Pruning already caps items at `KEEP_PER_FEED`, so the tagging table grows with
-the river rather than without bound.
-
-## 4. Services and jobs
+Almost nothing, which is the argument for it.
 
 ```
-Feeds::Classify        one model call: feed → hobby lenses + inherit/per_item
-ClassifyFeedJob        runs it after create; re-runnable from the feed row
-Hobbies::Vocabulary    one model call: hobby → keywords (on lens create, editable)
-Hobbies::Router        no model: item text × lens keywords → lenses
-Feeds::Retag           backfill a feed's existing items after a lens change
+Feed   + classified_at:datetime     has the model looked at this yet
+       (lenses stay ordinary section_taggings — already there)
 ```
 
-`Feeds::Classify` follows `Notes::Categorize` exactly — a JSON response matched
+That is the entire schema change. In particular **`FeedItem` stays exactly as
+it is** — not `Sectionable`, no per-item taggings, no ingest-time writes.
+D-feed-reader's line holds unchanged: *an item's tags are its feed's tags, so
+filing happens once, at the subscription*. It was only ever per-story routing
+that wanted to reverse it, and per-story routing is gone.
+
+```
+Feeds::Classify        one model call: feed → hobby lenses (or Other Interests)
+ClassifyFeedJob        runs it after create; re-runnable per feed
+Hobbies::Reclassify    batched re-ask for Other Interests feeds when a hobby appears
+```
+
+`Feeds::Classify` follows `Notes::Categorize` exactly: a JSON response matched
 back through a `Llm::Taxonomy`-style listing restricted to Hobbies' children,
-unknown slugs dropped. Its input is the feed's title, description, site URL and
-the ten newest entry titles.
+unknown slugs dropped, at most two lenses kept. Its input is the feed's title,
+description, site URL and the ten newest entry titles — the titles matter,
+because a site called "Hackaday" tells the model less than five of its
+headlines do.
 
 **It runs in a job, not the request.** READER.md's two-postures rule
 (`docs/READER.md` → "who is waiting") says adding a feed fetches in-request
 because the user needs to know the subscription is real; a model call has no
 such claim on the user's patience, and a slow provider must not hold the form.
-The feed appears immediately, unfiled, and files itself over Turbo when the job
-lands — the same broadcast `RefreshFeedJob` already uses.
+The feed appears immediately in Other Interests and re-files itself over Turbo
+when the job lands — the same broadcast `RefreshFeedJob` already uses.
 
-**With no model configured, everything above is skipped** and the existing
-manual lens picker on `/feeds` is the whole story. The hub degrades to "feeds
-you filed by hand", which is what it is today. That is the promise-3 test, and
-it should have a test with that name.
+**With no model configured, none of this runs.** New feeds land in Other
+Interests and the existing manual lens picker on `/feeds` is the whole story;
+a user who files by hand never sees a difference. That is the promise-3 test,
+and it should have a test with that name.
 
 ### Hostile input: the prompt is a stranger's XML
 
@@ -133,8 +127,9 @@ the system prompt:
 
 - the model's answer is matched against **existing** lens slugs and anything
   else is dropped — it selects from a closed set, it does not name things;
-- the classifier can **never create a lens**, so the worst an injected entry
-  achieves is filing its own feed wrongly, which the user can fix in one click;
+- the classifier can **never create a lens** (Other Interests is created by our
+  code, not by a model answer), so the worst an injected entry achieves is
+  filing its own feed wrongly, which the user fixes in one click;
 - entry text is already stripped to plain text at parse time, so no markup
   reaches the prompt;
 - the prompt states that feed text is data to classify, never instructions —
@@ -157,9 +152,9 @@ Hobbies
   │ 12 unread →         │ │ 4 unread →          │ │                    │
   └─────────────────────┘ └─────────────────────┘ └────────────────────┘
   + add a hobby
-
-  Everything else (41)                     Everything →   Manage feeds →
-  ─ unfiled stories, newest first, with "file under…" per row
+  ┌─ Other Interests ───┐                  Everything →   Manage feeds →
+  │ 41 unread           │
+  └─────────────────────┘
 ```
 
 Rules that keep this from becoming a second reader:
@@ -196,43 +191,39 @@ deleted; one nav entry is.
 
 ## 6. Waves
 
-Each wave ships something usable on its own, and only wave 2 needs a model.
+**W1 — the hub (no AI).** Per-hobby rivers in the hobby cards, the Other
+Interests lens and its card, `Panels::HobbiesLens` for per-hobby pages, the two
+through-links, the rail change. Every existing feed gets filed into Other
+Interests by a one-off backfill unless the user already tagged it. *After W1
+the whole redesign works, filed by hand.*
 
-**W1 — inheritance and the hub (no AI).** `FeedItem` becomes `Sectionable`;
-`Feeds::Refresh` tags new items with their feed's lenses; `Feeds::Retag`
-backfills on lens change plus a one-off task for existing items. The hub grid
-gains per-hobby rivers, the Everything-else lane, and the two through-links;
-`Panels::HobbiesLens` gives each hobby page its river; the rail entry moves.
-*After W1 the whole redesign works for hand-filed feeds.*
+**W2 — `Feeds::Classify`.** The model files a new subscription on add; the feed
+row grows "Re-file"; `classified_at` distinguishes "the model passed on this"
+from "the model has never seen it". Tests for the no-model path and the
+injection path.
 
-**W2 — `Feeds::Classify`.** The model files a new subscription, marks it
-focused or broad, and the feed row grows "Re-file". Tests for the no-model
-path and the injection path.
+**W3 — `Hobbies::Reclassify`.** Adding a hobby re-asks about the feeds in Other
+Interests, in one batched call.
 
-**W3 — `Hobbies::Vocabulary` + `Hobbies::Router`.** Keywords per lens, seeded
-by one model call at lens creation and editable on the hobby page; broad feeds'
-stories route per item at ingest. The Everything-else lane starts shrinking.
+**W4 — the watcher.** When Other Interests keeps filling with feeds about the
+same thing, suggest the hobby (D20: agent proposes, user disposes). This is
+the honest version of the "we noticed you're into X" feature, and it operates
+on feeds — a handful of rows — rather than on the story firehose.
 
-**W4 — optional batched per-story model pass.** Off by default, gated on a
-configured model, ≤25 unrouted items per call, only from broad feeds. For
-people who want the accuracy and are paying for it anyway.
+## 7. Deliberately not doing (and what would change our minds)
 
-**W5 — the unfiled watcher.** "Forty unfiled stories keep mentioning
-climbing — want a Climbing hobby?" (D20 suggestion, user disposes.)
-
-## 7. Open questions
-
-- **Do non-hobby sections get feeds too?** The plumbing is section-generic —
-  a CFPB feed under Money, a Federal Register feed under Rights would work
-  unchanged. This plan keeps the surfaces to Hobbies; the classifier is
-  restricted to Hobbies' children so it can't file a woodworking blog under
-  Health. Widening later is a prompt change and a second panel, not a schema
-  change.
-- **Should a broad feed's *unmatched* stories be hidden from the hub
-  entirely?** Currently they land in Everything else, which risks that lane
-  becoming the biggest thing on the page (see the screenshots — world news
-  dominates). A cap plus "see all in the reader" is the likely answer.
+- **Per-story classification.** Cut for the reasons in §2. What would revisit
+  it: a local-model story where a small classifier runs on-box for free, or a
+  batched pass (≤25 items a call, off by default) if users report that broad
+  feeds are the majority of their river and Other Interests has become a
+  second inbox. Neither is speculative infrastructure worth building now.
+- **Keyword/vocabulary routing.** Cut permanently. Enumerating the topic space
+  is a promise we can't keep.
+- **Feeds on non-hobby sections.** The plumbing is section-generic — a CFPB
+  feed under Money would work unchanged — but the classifier is restricted to
+  Hobbies' children so a woodworking blog can't land under Health. Widening
+  later is a prompt change and a second panel, not a schema change.
 - **Starter feeds.** The empty-state starter list drafted for this branch
-  (`config/starter_feeds.opml`, per-lens folders) becomes much better with a
-  classifier in place: the OPML's folders name hobbies, so an imported starter
-  list files itself. Sequence it after W2.
+  (`config/starter_feeds.opml`, per-lens folders) gets better once W2 exists:
+  the OPML's folders name hobbies, and anything unmatched has a home. Sequence
+  it after W2.

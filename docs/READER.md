@@ -225,11 +225,13 @@ ordinary background refresh afterwards.
 `docs/HOBBIES_HUB_PLAN.md` folds this surface into the Hobbies hub: one river
 per hobby on the section page, `/reader` demoted from a rail destination to the
 everything-view you click through to, and feeds filed by the model at
-subscribe time rather than by hand. Two things stated above change there, and
-both are argued in the plan: `FeedItem` becomes `Sectionable` (so a broad
-feed's stories can file individually), and the reader gains a model call — one
-per *subscription*, never per story, so promise 3 survives intact: an instance
-with no API key still reads its feeds, it just files them by hand.
+subscribe time rather than by hand. One thing stated above changes there, and
+it is argued in the plan: the reader gains a model call — one per
+*subscription*, never per story, so promise 3 survives intact (an instance with
+no API key still reads its feeds, it just files them by hand). Everything else
+holds, including the line about items not being `Sectionable`: filing still
+happens once, at the subscription, and a feed the model can't place under a
+hobby lands whole in one called Other Interests.
 
 ## What it doesn't do yet
 
