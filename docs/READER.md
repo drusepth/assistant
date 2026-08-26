@@ -220,6 +220,17 @@ because their old reader had thirty folders is not an import, it's a mess.
 Nothing is fetched during an import: the feeds it names are checked by the
 ordinary background refresh afterwards.
 
+## Where this is going (D-hobby-feeds)
+
+`docs/HOBBIES_HUB_PLAN.md` folds this surface into the Hobbies hub: one river
+per hobby on the section page, `/reader` demoted from a rail destination to the
+everything-view you click through to, and feeds filed by the model at
+subscribe time rather than by hand. Two things stated above change there, and
+both are argued in the plan: `FeedItem` becomes `Sectionable` (so a broad
+feed's stories can file individually), and the reader gains a model call — one
+per *subscription*, never per story, so promise 3 survives intact: an instance
+with no API key still reads its feeds, it just files them by hand.
+
 ## What it doesn't do yet
 
 - **Full-text extraction / read-here.** Deliberate: the article belongs to

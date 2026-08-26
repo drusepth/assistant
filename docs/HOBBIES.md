@@ -168,7 +168,11 @@ behind their hobbies, and everything they publish lands in one
 chronological river, filterable by hobby — no crawler, no third-party
 index, no capability the app doesn't have, and no model call. Deliberately
 *not* ranked: these sources were each chosen by hand, so there is nothing
-to sift, and a river you can predict is the whole point. It resolves the
+to sift, and a river you can predict is the whole point. Its next step is
+**D-hobby-feeds** (`docs/HOBBIES_HUB_PLAN.md`), which brings the river onto
+*this* page — one per hobby card, with `/reader` as the everything-view — and
+lets the model file a new subscription under the hobbies it belongs to. It
+resolves the
 *sources* half of the split below without waiting on Q9; what still waits
 is anything the app would have to go and find on its own (local meetups,
 classes, listings).
