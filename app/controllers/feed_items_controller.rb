@@ -28,10 +28,23 @@ class FeedItemsController < ApplicationController
       yield
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(row_id, partial: row_partial, locals: { item: @item })
+          render turbo_stream: turbo_stream.replace(row_id, partial: row_partial, locals: row_locals)
         end
         format.html { redirect_back fallback_location: reader_path }
       end
+    end
+
+    # `from=expand` is a row that marked itself read *by being opened* rather
+    # than by being left. It stays where it is (no send-off line), and it
+    # comes back open — otherwise the re-render its own mark-read triggered
+    # would shut the thing the reader just opened.
+    def expanded? = params[:from] == "expand"
+
+    def row_locals
+      locals = { item: @item }
+      locals[:filter] = params[:from] unless hub? || expanded?
+      locals[:expanded] = true if expanded?
+      locals
     end
 
     # The same verbs act on two surfaces now: the river, and the hobby cards

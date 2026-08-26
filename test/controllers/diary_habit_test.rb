@@ -77,6 +77,22 @@ class DiaryHabitTest < ActionDispatch::IntegrationTest
     assert_no_match CGI.escapeHTML(Diary::Prompts.for(Date.current)), response.body
   end
 
+  # The assertion above only catches a leak on the day the rotation happens to
+  # pick the leaking string, which is how the placeholder fallback sat in the
+  # page as one of the fourteen prompts and failed one day in fourteen. Off
+  # means off on every date, so check every date's prompt rather than today's.
+  test "prompts turned off leaks no prompt on any day of the rotation" do
+    write(body: "Something.")
+    patch settings_diary_entries_url, params: { prompts_enabled: "0" }
+
+    get new_diary_entry_url
+
+    Diary::Prompts::ALL.each do |prompt|
+      assert_no_match CGI.escapeHTML(prompt), response.body,
+        "#{prompt.inspect} reaches a writer who turned prompts off"
+    end
+  end
+
   test "toggling a dial never mistakes a fresh settings row for a broken one" do
     write(body: "Something.")
     patch settings_diary_entries_url, params: { prompts_enabled: "0" }

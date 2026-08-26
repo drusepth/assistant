@@ -1,5 +1,11 @@
 <%= render Ui::PageHeaderComponent.new(title: "Write",
       subtitle: vault_unlocked? ? nil : "Your vault is locked — you can write now and read it back after you unlock") %>
 
+<%# The placeholder fallback is deliberately not a prompt string. It used to
+    be "What happened today?", which is one of the fourteen in
+    Diary::Prompts::ALL — so on the one day in fourteen the rotation picked
+    it, a writer who had turned prompts *off* got that day's prompt anyway,
+    straight out of the placeholder. It has to be something the rotation can
+    never say. %>
 <%= render "form", entry: @entry, opened: @opened,
-      placeholder: @prompt || "What happened today?" %>
+      placeholder: @prompt || "Write here" %>
