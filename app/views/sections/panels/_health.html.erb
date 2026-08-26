@@ -8,6 +8,7 @@
    family_care = panel.family_care
    coverage_documents = panel.coverage_documents
    medications = panel.medications
+   allergies = panel.allergies
    last_check_in = panel.last_check_in %>
 <% if statuses.any? %>
   <%= render Ui::CardComponent.new(
@@ -142,6 +143,60 @@
       <%= submit_tag "Add", class: "btn btn-secondary" %>
     <% end %>
     <p class="hint mt-2">A refill date lands on the calendar as “Refill …” — the assistant gives it lead time.</p>
+  </div>
+<% end %>
+
+<%# Allergies (docs/HEALTH.md §8): an allergy is a Note (kind: allergy) —
+    allergen as title, reaction as body — plus the one structured field a
+    clinician asks for first. Worst first, because that is the order they
+    matter in, and the list feeds doctor-visit prep as its own block rather
+    than as three lines buried in the notes dump. %>
+<%= render Ui::CardComponent.new(title: "Allergies", padded: false) do %>
+  <% if allergies.any? %>
+    <div class="divide-y divide-edge">
+      <% allergies.each do |allergy| %>
+        <div class="flex items-center justify-between gap-4 px-5 py-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <%= link_to allergy.title, allergy, class: "text-sm font-medium text-ink hover:underline" %>
+              <% if allergy.severity %>
+                <span class="chip <%= allergy_severity_chip_classes(allergy.severity) %>">
+                  <%= allergy_severity_label(allergy.severity) %>
+                </span>
+              <% end %>
+            </div>
+            <% if allergy.body != allergy.title %>
+              <p class="truncate text-xs text-soft"><%= allergy.body %></p>
+            <% end %>
+          </div>
+          <%= button_to "Remove", allergy_path(allergy), method: :delete,
+                data: { turbo_confirm: "Remove #{allergy.title} from your allergies?" },
+                class: "btn btn-ghost btn-sm shrink-0 text-xs text-red-700" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="<%= allergies.any? ? "border-t border-edge" : "" %> p-5">
+    <%= form_with url: allergies_path, class: "flex flex-wrap items-end gap-2" do %>
+      <div class="min-w-40 flex-1 space-y-1">
+        <%= label_tag :allergen, "Allergic to", class: "label" %>
+        <%= text_field_tag :allergen, nil, class: "input", placeholder: "“Penicillin”, “peanuts”, “bee stings”" %>
+      </div>
+      <div class="min-w-40 flex-1 space-y-1">
+        <%= label_tag :reaction, "Reaction", class: "label" %>
+        <%= text_field_tag :reaction, nil, class: "input", placeholder: "Optional — “hives and swelling”" %>
+      </div>
+      <div class="space-y-1">
+        <%= label_tag :severity, "How bad", class: "label" %>
+        <%= select_tag :severity, options_for_select(allergy_severity_options),
+              include_blank: "Not sure", class: "input" %>
+      </div>
+      <%= submit_tag "Add", class: "btn btn-secondary" %>
+    <% end %>
+    <p class="hint mt-2">
+      Anything you’d want a doctor or a host to know — medicines, foods, stings, latex.
+      Visit prep reads this list, and severe ones lead it.
+    </p>
   </div>
 <% end %>
 

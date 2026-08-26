@@ -224,9 +224,51 @@ dose-time reminders (that's an alarm clock's job, and being nagged
 nightly by your life assistant is how it gets turned off) or adherence
 tracking. The next honest rung is a med-list block in the
 doctor-visit-prep and check-in prompts called out explicitly, if the
-generic notes context proves too diluted.
+generic notes context proves too diluted — which §8 then took, for the
+list where dilution costs the most.
 
-## 8. Later rungs (in rough order of earn)
+## 8. Allergies (D-allergy-notes)
+
+An allergy takes the medication shape one rung further: a **Note with
+`kind: "allergy"`** — allergen as title, reaction as body — filed under
+Health by the Allergies card's add form. No new primitive again, so it
+exports, shares, and reaches the tools like every other note.
+
+What it adds over §7 is **one structured field, `notes.severity`**
+(severe / moderate / mild, or nothing). Severity earns a column the way
+`events.care_kind` and `documents.health_plan` did — a narrow field for a
+structured kind, not a table for a thing that is still a note — because it
+is the only fact about an allergy that changes what anyone does about it:
+a peanut allergy that means an itchy mouth and one that means an EpiPen
+are not the same fact. It is optional on purpose. "How bad" is a question
+the user is allowed not to answer, and a guessed severity is worse than a
+missing one — so the form's default is "Not sure", and unrated allergies
+sort *last* rather than as mild: an unrated allergy is an unanswered
+question, not a small one.
+
+The list is worst first everywhere it appears, which is the order it
+matters in, and the severe ones carry a red chip. Removal lives on the
+card, not only on the note page: allergies get outgrown and misremembered,
+and the list you're looking at is where you notice it's wrong.
+
+**Doctor-visit prep reads it as its own block** rather than as three lines
+buried in the generic Health-notes dump — "any allergies?" is the first
+question in the room, the prompt is told to repeat the list verbatim near
+the top of the sheet, and the block ignores section tags on purpose: an
+allergy is one whether or not the note ever got filed under Health, and
+the sheet cannot afford to miss it. This is the §7 "next honest rung"
+(a called-out block instead of diluted generic context), taken for the
+list where dilution costs the most.
+
+**Deliberately not built:** anything that looks like allergy *advice* —
+no cross-reactivity warnings, no interaction checks against the med list,
+no "you may also react to…". That is diagnosis wearing a helpful hat, and
+the Health scoping line (preparation and comprehension, never diagnosis)
+is exactly what it would cross. Testing history, dates diagnosed, and
+per-member household allergy views are honest later rungs; they wait for
+the one-field version to prove the card.
+
+## 9. Later rungs (in rough order of earn)
 
 - **Symptom journal** — a chat-kind tool (D29, tutor-shaped): log in
   plain language, recap Notes accumulate into exactly what
