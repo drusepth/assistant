@@ -279,6 +279,24 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, days.length, "one heading per day, not one per row"
   end
 
+  # A CSS invariant, asserted here because it is the only suite there is and
+  # the failure was invisible on a laptop: any `overflow` other than visible
+  # makes the river the *scroll container* for the sticky day headers inside
+  # it, so they pin to `top: var(--app-header-h)` measured from the river's
+  # own top edge — which never scrolls. On a phone that token is 3.5rem, so
+  # the first heading sat permanently 56px into the list, on top of the first
+  # row. On a laptop the token is 0, which is exactly where the heading
+  # belongs anyway, so nothing looked wrong there.
+  test "the river is not a scroll container, or the day spine pins inside it" do
+    item(@feed, "Bench hooks")
+
+    get reader_path
+
+    classes = Nokogiri::HTML(response.body).at_css(".reader-river")["class"]
+    assert_no_match(/overflow-(hidden|auto|scroll|clip)/, classes,
+      "sticky headings inside this element would pin to it rather than to the page")
+  end
+
   test "saved is a shelf and unread is a river" do
     item(@feed, "Kept", saved_at: Time.current, read_at: Time.current)
 

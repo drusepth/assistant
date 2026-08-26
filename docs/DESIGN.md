@@ -184,6 +184,14 @@ the rows are rather than about taste:
     can't change height under a reader who is scanning.
   - **A label on every row is texture, not information.** A chip earns its
     contrast only when it varies across the list.
+  - **The list container must not set `overflow`.** Anything other than
+    `visible` makes it the scroll container for the sticky day headings
+    inside it, which then pin to the container's own top edge rather than to
+    the page and sit on the rows permanently. Round the first and last
+    children instead of clipping the parent — which also stops a row's hover
+    fill poking past the border. This one is invisible at `lg`, where
+    `--app-header-h` is 0 and the pinned position happens to be the right
+    one; it only shows on a phone.
 
   What the collapsed row can't carry goes in `.reader-expand`, opened by a
   click on the row: the preview and the verbs at `.reader-verb-lg` (a real

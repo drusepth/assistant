@@ -579,8 +579,23 @@
     @apply sticky z-10 bg-surface px-3 py-1 text-[0.65rem] font-bold uppercase tracking-widest text-soft;
     top: var(--app-header-h);
   }
+  /* No `overflow: hidden` here, however much the rounded corners want it:
+     an `overflow` other than `visible` makes this element the *scroll
+     container* for the sticky day headers inside it. They then pin to
+     `top: var(--app-header-h)` measured from the river's own top edge —
+     which never scrolls — so on a phone (where that token is 3.5rem) the
+     first day header sat permanently 56px into the list, on top of the
+     first row. On a laptop the token is 0, so the bug was invisible there.
+     The corners are rounded on the first and last children instead, which
+     also stops a row's hover fill poking past the border. */
   .reader-river {
-    @apply overflow-hidden rounded-xl border border-edge bg-canvas;
+    @apply rounded-xl border border-edge bg-canvas;
+  }
+  .reader-river > :first-child {
+    @apply rounded-t-xl;
+  }
+  .reader-river > :last-child {
+    @apply rounded-b-xl;
   }
   .reader-river .reader-row + .reader-row,
   .reader-river .reader-day + .reader-row {
