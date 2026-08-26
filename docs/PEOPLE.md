@@ -223,6 +223,11 @@ agenda drafts, rotating-duty rosters, phone trees. Not the first wave, but
 it is *why* the section must not collapse into a private-friends CRM: the
 collective-capacity line of the mission lives here.
 
+*Groups shipped as chips beside a special-cased "Your circle" list, which is
+the wrong shape twice over — and nothing outside the person form could put a
+person into a group. The redesign into one card grid, and the membership verb
+that goes with it, is **D-people-circles** / `docs/PEOPLE_CIRCLES.md`.*
+
 ## 7. Cross-section dividends
 
 - **× Hobbies** — hobby buddies tag both ways (HOBBIES.md §5 already claims
