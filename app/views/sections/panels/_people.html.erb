@@ -2,8 +2,8 @@
     the social dashboard. The events card renders inside Coming up and the
     roster lives in the Address Book — the panel hides both generic
     versions via hidden_browse. %>
-<%= render "sections/people_capture", circle: panel.circle, candidates: panel.circle_candidates %>
+<%= render "sections/people_capture", circle_size: panel.circle_size, candidates: panel.circle_candidates %>
 
 <%= render "sections/people_hub",
-      circle: panel.circle, birthdays: panel.upcoming_birthdays, events: @events,
-      address_book_size: panel.address_book_size, groups: panel.groups %>
+      cards: panel.circle_cards, reach_out: panel.reach_out, candidates: panel.member_candidates,
+      birthdays: panel.upcoming_birthdays, events: @events, address_book_size: panel.address_book_size %>

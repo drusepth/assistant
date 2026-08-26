@@ -12,8 +12,17 @@ module Sections
   # should hide because the panel surfaces them with better context.
   class Panel
     def self.for(section, viewer)
-      "Sections::Panels::#{section.slug.camelize}".safe_constantize
-        &.new(section: section, viewer: viewer)
+      panel_class(section)&.new(section: section, viewer: viewer)
+    end
+
+    # By slug first. Failing that, a parent may claim its user-created
+    # lenses as a class — `Sections::Panels::PeopleLens` for every group
+    # under People (D-people-circles) — since those slugs are named by the
+    # user and can't be known here. A parent that declares no such class
+    # keeps the old answer: no panel, generic page.
+    def self.panel_class(section)
+      "Sections::Panels::#{section.slug.camelize}".safe_constantize ||
+        (section.parent && "Sections::Panels::#{section.parent.slug.camelize}Lens".safe_constantize)
     end
 
     attr_reader :section, :viewer

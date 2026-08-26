@@ -87,6 +87,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/DECISIONS.md` — the front door to the decision log in `docs/decisions/` (one file per entry, named by its ID; read it with `bin/decisions`)
 - `docs/ROADMAP.md` — Milestones 2 (Tools) & 3 (Agent) design: section page anatomy, tool pipeline, agent/suggestion architecture (D18–D20)
 - `docs/TOOLS_PLAN.md` — the high-impact tool wave: nine tools in five waves, per-tool specs, the three infra seams (shared draft plumbing, `next_tools` routing (D28), chat tools (D29))
+- `docs/PEOPLE_CIRCLES.md` — the People page redesign: groups and the circle as one grid of one card (avatar stacks, one line of signal, actions that end in contact), and the group-membership verb that was missing under the visual problem (D-people-circles)
 - `docs/PHOTOS_PLAN.md` — household photos: the Photo primitive, albums, sharing, and the S3-compatible storage seam (D-photos-primitive, D-storage-seam)
 - `docs/EMAIL_PLAN.md` — email import & monitoring: the mirror layer (D-mirror-layer) in its own database (D-mirror-database), multi-account IMAP sync, triage + sender-rule feedback loop, digest/urgent alerts, the boomerang family (D-email-monitoring), the hostile-input threat model
 - `docs/RECIPES_PLAN.md` — the recipe box: the Recipe primitive and its ingredient parser, recipe books, sharing to the household and to people outside it by link, and the pantry/AI waves (D-recipe-primitive, D-share-link, D-pantry)

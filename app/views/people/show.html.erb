@@ -75,6 +75,42 @@
       </dl>
     <% end %>
 
+    <%# Groups (D-people-circles): membership is a section tagging, but this
+        is where someone actually thinks "oh, she's in the book club" —
+        same service as the cards on the People page. %>
+    <% if @groups.any? || @group_candidates.any? %>
+      <div class="mt-6">
+        <%= render Ui::CardComponent.new(title: "Groups") do %>
+          <div class="space-y-3">
+            <% if @groups.any? %>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <% @groups.each do |group| %>
+                  <span class="chip bg-primary-100 py-0.5 pr-1 pl-2.5 text-primary-800">
+                    <%= link_to group.name, section_path(group.slug), class: "hover:underline" %>
+                    <%= button_to "×", people_membership_path(section_id: group.id, person_id: @person.id),
+                          method: :delete, class: "rounded-full px-1 leading-none text-primary-800/70 hover:text-primary-800",
+                          form_class: "inline", title: "Take #{@person.name} out of #{group.name}",
+                          data: { turbo_confirm: "Take #{@person.name} out of #{group.name}?" } %>
+                  </span>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-sm text-soft"><%= @person.name %> isn't in any group yet.</p>
+            <% end %>
+
+            <% if @group_candidates.any? %>
+              <%= form_with url: people_memberships_path, class: "capture-row" do %>
+                <%= hidden_field_tag :person_id, @person.id %>
+                <%= select_tag :section_id, options_from_collection_for_select(@group_candidates, :id, :name),
+                      class: "input sm:max-w-60", "aria-label": "Add #{@person.name} to a group" %>
+                <%= submit_tag "Add to group", class: "btn btn-secondary" %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
     <% if @photos.any? %>
       <div class="mt-6" data-controller="lightbox">
         <%= render Ui::CardComponent.new(title: "Photos", subtitle: "Tagged with #{@person.name}") do |card| %>

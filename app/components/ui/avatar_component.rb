@@ -24,6 +24,7 @@ module Ui
     TONES = {
       primary: "bg-primary-100 text-primary-800",
       amber: "bg-amber-100 text-amber-800",
+      sage: "bg-sage-100 text-sage-800",
       stone: "bg-stone-100 text-stone-700"
     }.freeze
 

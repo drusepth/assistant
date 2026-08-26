@@ -1,0 +1,46 @@
+<%# A group page's lead panel (D-people-circles): who's in it, how to add
+    someone, and how to end up in touch with them. Everything else on the
+    page — tools, suggestions, the lens lists — is the ordinary D18
+    anatomy. %>
+<%= render Ui::CardComponent.new(title: "Members", count: panel.members.size, padded: false) do |card| %>
+  <% card.with_actions do %>
+    <%= link_to "Plan something", new_tool_run_path("get_together", inputs: { who: section.name }), class: "btn btn-ghost" %>
+  <% end %>
+
+  <% if panel.members.any? %>
+    <%# No avatar stack here: the list below *is* the faces. The stack earns
+        its place on a card that stands in for the group, not above the
+        thing it summarizes. %>
+    <div class="divide-y divide-edge">
+      <% panel.members.each do |person| %>
+        <div class="flex flex-wrap items-center gap-3 p-4">
+          <%= render Ui::AvatarComponent.new(person: person) %>
+          <div class="min-w-0 flex-1">
+            <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+            <p class="text-xs text-soft">
+              <% if person.relationship.present? %><%= person.relationship %> · <% end %><%= contact_recency_phrase(person) %>
+            </p>
+          </div>
+          <div class="row-actions">
+            <%= link_to "Reconnect", new_tool_run_path("reconnect", inputs: { person_id: person.id }), class: "btn btn-ghost" %>
+            <%# Quieter than Reconnect on purpose — leaving a group is the
+                rarer intent, and it sits next to the action that matters. %>
+            <%= button_to "Remove", people_membership_path(section_id: section.id, person_id: person.id),
+                  method: :delete, class: "btn btn-ghost text-soft hover:text-ink",
+                  data: { turbo_confirm: "Take #{person.name} out of #{section.name}? They stay in your Address Book." } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="p-4">
+      <p class="text-sm text-soft">No one here yet — a group is its people.</p>
+    </div>
+  <% end %>
+
+  <div class="max-w-sm border-t border-edge p-4">
+    <%= render "sections/circle_add_person",
+          url: people_memberships_path, section: section,
+          candidates: panel.candidates, label: "Add to #{section.name}" %>
+  </div>
+<% end %>

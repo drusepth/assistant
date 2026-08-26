@@ -6,7 +6,7 @@ modes (D6). Everything rides existing infrastructure (D18 anatomy, D19 tools,
 D25 lenses, D28 routing, D29 chat) except where flagged. The one decision it
 needs — the roster/dashboard split — is **D-people-dashboard** in `DECISIONS.md`
 (a slug ID per the post-D37 convention); person↔item linking is open question
-**Q17**. The first build pass — steps 1–7 of §9 — is built, marked ✅ below.
+**Q17**. Steps 1–8 of §9 are built, marked ✅ below.
 
 ## Why this section matters (mission tie)
 
@@ -119,10 +119,16 @@ and stay-in-touch will feed Attend). Browse rebuilds as modules:
    December birthdays, Feb 29, month/day comparison in SQLite) lives in one
    `Person.birthday_within(days)` scope that the birthday-radar watcher
    reuses — solve once, use twice.
-2. **Your circle** — kept-in-touch people, stalest first: name, relationship,
+2. **Your people** — since D-people-circles, one card per collection: the
+   circle first (wearing an *Only you* chip), then every group, then a
+   dashed start-a-group tile. Each card is an avatar stack, a name, one
+   line of signal, and actions that end in contact. Beneath it, **Reach
+   out**: the stalest few of the circle as rows — name, relationship,
    "last contact 5 weeks ago" / "no contact logged yet", one-tap **Log
-   contact** and **Reconnect**. This is the pull-side twin of the
-   stay-in-touch watcher — same math, always visible, no nudge required.
+   contact** and **Reconnect**. That list is the pull-side twin of the
+   stay-in-touch watcher — same math, always visible, no nudge required;
+   the *whole* circle is one tap away on its card, as an Address Book
+   filter.
 3. **The lens lists** — People-tagged Tasks, Events, Goals, Notes as today,
    *minus* the Person grid (D-people-dashboard), plus the Address Book link line. The grid
    removal is the *People page only*: other sections' small filtered person
@@ -223,6 +229,13 @@ agenda drafts, rotating-duty rosters, phone trees. Not the first wave, but
 it is *why* the section must not collapse into a private-friends CRM: the
 collective-capacity line of the mission lives here.
 
+*Groups shipped as chips beside a special-cased "Your circle" list, which was
+the wrong shape twice over — and nothing outside the person form could put a
+person into a group. ✅ Rebuilt (2026-08) as one card grid with the membership
+verb that goes with it: **D-people-circles** / `docs/PEOPLE_CIRCLES.md`. A
+group can now actually hold people, which is the precondition the community
+tools below were waiting on.*
+
 ## 7. Cross-section dividends
 
 - **× Hobbies** — hobby buddies tag both ways (HOBBIES.md §5 already claims
@@ -274,7 +287,11 @@ queued consumers.
    tools get their own design conversation after real use.
 7. ✅ **Caregiver + bereavement Situations** (decided 2026-08: demand was
    affirmed for these two; "new baby" and co-parenting stay on demand).
-8. Deferred — each behind an explicit wait decided 2026-08, not indecision:
+8. ✅ **The circles grid** (D-people-circles) — groups and the circle as one
+   card each, the avatar stack, `People::Membership`, the group page's
+   member panel, and the Address Book's circle filter. See
+   `docs/PEOPLE_CIRCLES.md`.
+9. Deferred — each behind an explicit wait decided 2026-08, not indecision:
    **Q17 links** (→ afterglow watcher + per-person history) wait for a
    second consumer to demand them; the **cadence upgrade** waits for a
    real user to hit a wrong-feeling 90-day nudge; **community tools for
