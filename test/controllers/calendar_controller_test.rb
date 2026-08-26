@@ -43,15 +43,27 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[title='Boise · Idaho']", text: "Boise", count: 2 # check-in Tue Mar 10 + Mon Mar 16
   end
 
-  test "a day two stays both claim turns the band amber and says so" do
+  test "a night two stays both claim turns the band amber and says so" do
     trip = users(:one).trips.create!(name: "Idaho", starts_on: "2026-03-01", ends_on: "2026-03-31")
     trip.stays.create!(location: "Boise", check_in: "2026-03-10", check_out: "2026-03-14")
     trip.stays.create!(location: "McCall", check_in: "2026-03-12", check_out: "2026-03-20")
 
     get calendar_path(year: 2026, month: 3)
     assert_response :success
-    # Mar 12-14: both stays cover them (check-out day inclusive on the band).
-    assert_select "a[title^='Double-booked']", count: 3, text: "2 places"
+    # Mar 12 and 13 are nights both stays claim. Mar 14 is not — Boise's
+    # band shows that morning, but the night is McCall's alone.
+    assert_select "a[title^='Double-booked']", count: 2, text: "2 places"
+  end
+
+  test "a seamless move day is not a double booking, and prints where you'll sleep" do
+    trip = users(:one).trips.create!(name: "Idaho", starts_on: "2026-03-01", ends_on: "2026-03-31")
+    trip.stays.create!(location: "Boise", check_in: "2026-03-10", check_out: "2026-03-14")
+    trip.stays.create!(location: "McCall", check_in: "2026-03-14", check_out: "2026-03-20")
+
+    get calendar_path(year: 2026, month: 3)
+    assert_select "a[title^='Double-booked']", count: 0
+    # The handoff day belongs to the stay whose night it is.
+    assert_select "a[title='McCall · Idaho']", text: "McCall", minimum: 1
   end
 
   test "no travel band for trips you aren't on" do

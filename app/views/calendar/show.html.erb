@@ -35,16 +35,21 @@
           <%# The travel band (D-trip-spine): which stay covers this day.
               The place name prints where a reading eye lands — check-in
               day, Mondays, the 1st — and the tint alone carries the rest
-              of the run. Two stays on one day is a double booking, so the
-              band turns amber and says so rather than quietly picking one. %>
+              of the run. Double-booking is judged by *nights* (half-open,
+              like Stay#covers?): the band shows the check-out morning too,
+              but two stays sharing only a handoff day is the ordinary
+              nomad move, and amber is reserved for two claims on the same
+              night. On a move day the night's stay wins the band, so the
+              day you drive prints where you'll sleep. %>
           <% stays = @stays_by_day.fetch(day, []) %>
-          <% if stays.size > 1 %>
-            <%= link_to trip_path(stays.first.trip),
-                  title: "Double-booked: #{stays.map { |stay| "#{stay.location} (#{stay.trip.name})" }.join(" and ")}",
+          <% night_claims = stays.select { |stay| stay.covers?(day) } %>
+          <% if night_claims.size > 1 %>
+            <%= link_to trip_path(night_claims.first.trip),
+                  title: "Double-booked: #{night_claims.map { |stay| "#{stay.location} (#{stay.trip.name})" }.join(" and ")}",
                   class: "mb-0.5 block h-4 truncate rounded bg-amber-200/80 px-1 text-[10px] font-semibold leading-4 text-amber-900" do %>
-              <%= stays.size %> places
+              <%= night_claims.size %> places
             <% end %>
-          <% elsif (stay = stays.first) %>
+          <% elsif (stay = night_claims.first || stays.first) %>
             <%= link_to trip_path(stay.trip), title: "#{stay.location} · #{stay.trip.name}",
                   class: "mb-0.5 block h-4 truncate rounded bg-sage-200/70 px-1 text-[10px] font-medium leading-4 text-sage-900" do %>
               <% if day == stay.check_in || day.day == 1 || day.wday == 1 %>

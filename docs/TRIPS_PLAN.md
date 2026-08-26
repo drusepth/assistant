@@ -112,7 +112,12 @@ from photo coordinates ever crosses users.
   - **Double bookings.** Two stays claiming the same night — whatever trips
     they belong to — means somebody is paying twice or misread a date.
     Every still-fixable overlap warns, and the calendar band turns amber on
-    the contested days ("2 places") instead of quietly picking one.
+    the contested days ("2 places") instead of quietly picking one. Contested
+    is judged by *nights* (half-open), even though the band displays the
+    check-out morning too: checking out of Boise the day you check into
+    McCall is the ordinary move, never a flag — and the handoff day's band
+    belongs to the stay whose night it is, so a move day prints where
+    you'll sleep.
   - **The nights between chained trips.** Trip A ends, trip B starts one to
     three nights later: those nights are the drive, they belong to neither
     trip's own gap check, and somebody has to sleep somewhere. Both trips

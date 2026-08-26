@@ -31,67 +31,7 @@
     <% end %>
   <% end %>
 
-  <%# The itinerary: stays and legs in one chronological run, each wearing
-      its booked/not-booked chip. This is the page's job while the trip is
-      still ahead — the photos take over once you're back. %>
-  <%= render Ui::CardComponent.new(title: "Itinerary", anchor: "itinerary", padded: false) do |card| %>
-    <% card.with_actions do %>
-      <div class="row-actions">
-        <%= link_to "+ Stay", new_trip_stay_path(@trip), class: "btn btn-secondary btn-sm" %>
-        <%= link_to "+ Flight", new_trip_leg_path(@trip, kind: "flight"), class: "btn btn-secondary btn-sm" %>
-        <%= link_to "+ Drive", new_trip_leg_path(@trip, kind: "drive"), class: "btn btn-secondary btn-sm" %>
-        <%= link_to "+ Car rental", new_trip_leg_path(@trip, kind: "car_rental"), class: "btn btn-secondary btn-sm" %>
-      </div>
-    <% end %>
-
-    <% if @timeline.any? %>
-      <div class="divide-y divide-edge">
-        <% @timeline.each do |item| %>
-          <%= render "trips/itinerary_item", item: item, trip: @trip %>
-        <% end %>
-      </div>
-    <% else %>
-      <p class="p-4 text-sm text-soft">
-        Nothing on the itinerary yet. Add where you'll stay, then how you'll get there —
-        each one tracks whether it's booked or still just planned.
-      </p>
-    <% end %>
-
-    <% booked_cents, planned_cents = @trip.booked_cost_cents, @trip.planned_cost_cents %>
-    <% if booked_cents.positive? || planned_cents.positive? %>
-      <p class="border-t border-edge px-4 py-3 text-sm text-soft">
-        <% if booked_cents.positive? %>
-          Booked: <span class="font-semibold text-ink"><%= money_amount(booked_cents) %></span>
-        <% end %>
-        <% if planned_cents.positive? %>
-          <%= "·" if booked_cents.positive? %>
-          Still to book: <span class="font-semibold text-ink"><%= money_amount(planned_cents) %></span>
-        <% end %>
-      </p>
-    <% end %>
-
-    <% unless @trip.past? %>
-      <% gaps = @trip.lodging_gaps %>
-      <% if @trip.stays.any? && gaps.any? %>
-        <div class="callout callout-warn m-4 mt-3">
-          <p class="callout-title">Nights with nowhere to sleep</p>
-          <ul class="mt-1 space-y-0.5 text-sm">
-            <% gaps.each do |gap| %>
-              <% nights = (gap.last - gap.first).to_i + 1 %>
-              <li>
-                <%= gap.first.strftime("%b %-d") %><%= " – #{gap.last.strftime("%b %-d")}" if gap.last != gap.first %>
-                (<%= pluralize(nights, "night") %>)
-              </li>
-            <% end %>
-          </ul>
-        </div>
-      <% elsif @trip.stays.none? && @timeline.any? %>
-        <div class="callout callout-warn m-4 mt-3">
-          <p class="callout-title">No lodging on this trip yet</p>
-        </div>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= render "trips/itinerary_card" %>
 
   <%# The itinerary on the basemap (D-stay-pins): pins from typed stay
       locations matched against the local gazetteer — no photos read, so
@@ -197,69 +137,9 @@
     <% end %>
   <% end %>
 
-  <%= render Ui::CardComponent.new(title: "Notes & comments", anchor: "comments", padded: false) do %>
-    <% if @comments.any? %>
-      <div class="divide-y divide-edge">
-        <% @comments.each do |comment| %>
-          <div class="flex items-start gap-3 p-4">
-            <%= render Ui::AvatarComponent.new(user: comment.user, size: :sm) %>
-            <div class="min-w-0 flex-1">
-              <p class="text-sm">
-                <span class="font-medium text-ink"><%= comment.user.name %></span>
-                <span class="text-soft">· <%= comment.created_at.strftime("%-d %b %Y") %></span>
-              </p>
-              <p class="mt-0.5 whitespace-pre-line text-sm text-ink"><%= comment.body %></p>
-            </div>
-            <% if comment.editable_by?(Current.user) %>
-              <%= button_to trip_comment_path(comment), method: :delete, class: "btn btn-ghost btn-sm shrink-0",
-                    data: { turbo_confirm: "Remove this comment?" } do %>Remove<% end %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
-    <div class="border-t border-edge p-4">
-      <%= form_with url: trip_comments_path(@trip), class: "space-y-2" do |form| %>
-        <%= form.text_area "trip_comment[body]", rows: 2, class: "input",
-              placeholder: @travelers.size > 1 ? "Leave a note for everyone on the trip…" : "Leave a note on this trip…" %>
-        <%= form.submit "Post", class: "btn btn-secondary btn-sm" %>
-      <% end %>
-    </div>
-  <% end %>
+  <%= render "trips/comments_card" %>
 
-  <%= render Ui::CardComponent.new(title: "Travelers", anchor: "travelers") do %>
-    <div class="space-y-2">
-      <% @travelers.each do |traveler| %>
-        <div class="flex items-center gap-2">
-          <%= render Ui::AvatarComponent.new(user: traveler, size: :xs) %>
-          <span class="text-sm text-ink"><%= traveler.name %></span>
-          <% if traveler.id == @trip.user_id %>
-            <span class="chip bg-stone-100 text-stone-600">Owner</span>
-          <% elsif @own || traveler.id == Current.user.id %>
-            <% membership = @trip.memberships.find { |m| m.user_id == traveler.id } %>
-            <%= button_to trip_companion_path(membership), method: :delete, class: "btn btn-ghost btn-sm",
-                  data: { turbo_confirm: traveler.id == Current.user.id ? "Leave this trip?" : "Remove #{traveler.name} from the trip?" } do %>
-              <%= traveler.id == Current.user.id ? "Leave" : "Remove" %>
-            <% end %>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-    <% if @own %>
-      <% addable = Current.user.household.users.where.not(id: @travelers.map(&:id)).order(:name) %>
-      <% if addable.any? %>
-        <%= form_with url: trip_companions_path(@trip), class: "mt-4 flex items-center gap-2" do |form| %>
-          <%= form.select "trip_membership[user_id]", addable.map { |user| [ user.name, user.id ] },
-                { include_blank: "Add someone from the household…" }, class: "input" %>
-          <%= form.submit "Add", class: "btn btn-secondary btn-sm" %>
-        <% end %>
-        <p class="hint mt-2">
-          Everyone on the trip sees the itinerary, notes and posted photos, and can add their own.
-          Your map and camera roll stay yours.
-        </p>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= render "trips/travelers_card" %>
 
   <% if @own %>
     <%= render Ui::CardComponent.new(title: "This trip") do %>
