@@ -129,8 +129,11 @@ Three smaller calls that follow:
 
 **Zero pets is zero pixels.** No section toggle is needed because there's
 nothing to toggle: every pet surface is gated on the household having a pet.
-The only entry point in a petless install is "Add a pet" on the People page
-(and, later, an FTUE question).
+The entry points in a petless install are "Add a pet" on the People page and
+a fourth shortcut on the FTUE's last step — *not* a question on its first
+step, where the subject is sections and a pet is not one, and not a step of
+its own, which is the persona quiz `ROADMAP.md` §5.4 refuses. The FTUE card
+hides itself once this user can see a household pet.
 
 ### D-pet-care-radar. The care radar takes a subject, not a user.
 

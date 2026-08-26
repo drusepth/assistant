@@ -1,0 +1,12 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "9679e87ddc947ea49d6194fba21184dc02ff9a694ad86a9ba460922111025dd3",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/note.rb",
+      "note": "False positive. Note::SEVERITIES is a frozen constant of string literals; the CASE arms are built from it at load time, and `severity` is a bound column, not interpolated. No user input reaches this SQL (D-allergy-notes). A rewrite would be worse: in_order_of filters out the unrated allergies the scope deliberately sorts last, and hand-binding the arms makes a three-line scope unreadable to satisfy a checker that is wrong."
+    }
+  ],
+  "brakeman_version": "8.0.5"
+}

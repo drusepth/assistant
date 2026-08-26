@@ -59,4 +59,27 @@ class OnboardingFlowTest < ActionDispatch::IntegrationTest
     assert_not_equal "sk-super-secret", raw, "the raw column must not hold plaintext"
     assert_equal "sk-super-secret", profile.reload.api_key
   end
+
+  # A pet is the one household member no import can teach the app about, so
+  # the last step offers one — as a fourth shortcut, not as a fifth step and
+  # not as a question on step 1, where a pet is not a section.
+  test "the last step offers a pet, and stops once the household has one" do
+    get onboarding_path(step: 4)
+    assert_select "a[href=?]", new_pet_path
+
+    create_pet(user: users(:one))
+    users(:one).granted_access_grants.create!(grantee: @user, subject: Pet.sole)
+
+    get onboarding_path(step: 4)
+    assert_select "a[href=?]", new_pet_path, { count: 0 },
+      "the second member to onboard is not asked to add the dog again"
+  end
+
+  test "a pet somebody kept private still leaves the offer up" do
+    create_pet(user: users(:one))
+
+    get onboarding_path(step: 4)
+    assert_select "a[href=?]", new_pet_path, { minimum: 1 },
+      "visibility is the only read path — an unshared pet is not one this user has"
+  end
 end

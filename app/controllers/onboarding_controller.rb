@@ -11,6 +11,11 @@ class OnboardingController < ApplicationController
     @step = step_param
     @step = LAST_STEP if @step == 3 && !Current.user.admin?
 
+    # The last step offers a pet only when this user can't already see one:
+    # the household's second member has no business being asked to add the dog
+    # a second time (D-pet-primitive).
+    @offer_pet = @step == LAST_STEP && !Pet.visible_to(Current.user).exists?
+
     Current.user.update!(onboarded_at: Time.current) if @step == LAST_STEP && Current.user.onboarded_at.nil?
   end
 
