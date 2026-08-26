@@ -81,6 +81,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    action that redirected set `flash[:undo]` — see Lists),
    `Ui::SectionChip`, `Ui::Avatar` (a member's uploaded photo, falling back
    to their initials — every surface that names a person goes through it),
+   `Ui::AvatarStack` (layered faces for a group of people — renders
+   *through* `Ui::Avatar`, `+N` bubble for the rest),
    `Ui::UserLabel` (that avatar plus a name, with the wording around the
    name as block content: "from Bea", "shared by Bea — read-only"),
    `Ui::QuickAdd` (header + button whose capture form

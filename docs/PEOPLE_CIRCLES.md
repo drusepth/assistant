@@ -7,9 +7,14 @@ changes the D-people-dashboard split — the Address Book is still the roster,
 the section page is still the dashboard. This is about the *shape* of the
 dashboard's middle.
 
-## 1. What's wrong today
+*Waves 1–3 are built (2026-08). Wave 4 — community tools — still waits on a
+real group living in a lens, which wave 2 finally makes possible. Where the
+build learned something the plan had wrong, the text below says so inline
+rather than pretending it went to plan.*
 
-The page currently says "here are the people in your life" three times, in
+## 1. What was wrong
+
+The page said "here are the people in your life" three times, in
 three different visual languages, and none of them is the one you'd draw:
 
 | Surface | Rendered as | Problem |
@@ -84,9 +89,17 @@ Top to bottom, and every line has a job:
    no action here ends in a better-groomed record.
 
 **Empty group** — no members yet: the stack slot renders a soft dashed ring
-instead of faces, the signal line reads "No one here yet", and `Add someone`
-takes the primary emphasis. A new group should look like an invitation, not a
+instead of faces and the signal line reads "No one here yet". The ring is
+there to hold the row's height, so a brand-new group still lines up with the
+cards beside it; it carries no label, because the signal line one line down
+already says the words. A new group should look like an invitation, not a
 mistake.
+
+**One more thing the build changed**: stone is *not* in the face-tint cycle.
+With four tints cycling, the `+N` bubble — also stone — was indistinguishable
+from a face at a glance. Faces cycle primary/amber/sage by person id (stable,
+so the same person keeps their tint across cards), and stone belongs to the
+bubble alone.
 
 **Markup gotcha, worth naming before someone hits it**: `_hobby_card` wraps
 the entire tile in `link_to`. This card can't — it contains its own links and
@@ -108,7 +121,7 @@ both shapes one interface, and the partial never asks which it got:
 
 ```ruby
 People::Circles::Card = Struct.new(
-  :key,        # :circle, or the section
+  :section,    # nil for the circle — `card.circle?` reads off that
   :name, :path, :members, :member_count, :signal, :private,
   keyword_init: true
 )
@@ -149,12 +162,17 @@ forward.
 2. **Coming up** — unchanged (birthdays + People-tagged events).
 3. **Circles grid** — §2. Replaces *both* the Groups chip card and the "Your
    circle" rows card.
-4. **Been a while** — the stalest 3–5 circle people as rows, with one-tap
+4. **Reach out** — the stalest five circle people as rows, with one-tap
    `Log contact` and `Reconnect`. This is the part of "Your circle" that
    earned its rows: it's the pull-side twin of the stay-in-touch watcher
    (PEOPLE.md §3.2), and it must not be a grid — the whole point is name,
    recency, and a button. What it is *not* any more is the entire circle: the
    full circle is one tap away on the circle card.
+
+   *Built as "Reach out", not the planned "Been a while": the list has to
+   include people with no logged contact (otherwise a fresh circle loses the
+   one-tap loop entirely), and "been a while" is a claim you can't make about
+   someone you've never logged. An action for a title is honest for both.*
 5. **Address Book link line** — unchanged.
 6. Lens lists (tasks, events, notes, goals) — unchanged.
 
@@ -185,15 +203,26 @@ New:
 - `app/views/sections/_circle_card.html.erb` — the card.
 - `app/views/sections/_circle_add_tile.html.erb` — the dashed "Start a group…"
   tile (the existing `groups#create` form, restyled after `_hobby_add_tile`).
+- `app/views/sections/_circle_add_person.html.erb` — the one capture for "put
+  a person here", shared by the circle card, every group card, and the group
+  page.
 - `app/controllers/people/memberships_controller.rb` + routes for add/remove.
+- `app/services/sections/panels/people_lens.rb` +
+  `app/views/sections/panels/_people_lens.html.erb` — the group page's own
+  lead panel: members, remove, add. It needed one extension to `Panel.for`,
+  because a group's slug is whatever the user typed and can't be known by a
+  class name: a panel is resolved by slug first, then by
+  `Sections::Panels::<Parent>Lens`. Hobby lenses still resolve to nothing —
+  no `HobbiesLens` class exists — so nothing else changed.
 
 Changed:
 
 - `app/services/sections/panels/people.rb` — `circle_cards` replaces `groups`;
-  `circle` narrows to the drift list (`stalest_first.limit(5)`, and only
-  people with a logged contact old enough to mean something).
+  the reach-out rows and the capture's "does a circle exist" both read off
+  the circle card rather than re-querying, since it already loaded the circle
+  stalest-first with avatars attached.
 - `app/views/sections/_people_hub.html.erb` — the grid and the trimmed
-  "Been a while" card.
+  "Reach out" card.
 - `app/views/people/index.html.erb` + controller — the `circle` filter.
 - `app/views/people/show.html.erb` — the Groups line.
 - `docs/DESIGN.md` — one line in the component registry for the stack.
@@ -210,9 +239,13 @@ every card wants a signal. All of it batches.
   `Person.visible_to(viewer).joins(:section_taggings).where(section_taggings:
   { section_id: group_ids }).with_attached_avatar`, selecting
   `section_taggings.section_id`, grouped in Ruby — plus the existing
-  `viewer.people.circle` for the circle card. Cap the fetch: the stack shows
-  five, so `+N` needs a *count*, not the rows — one `group(:section_id).count`
-  alongside, and the member fetch can stay limited.
+  `viewer.people.circle` for the circle card. Two queries, however many
+  groups there are, and a test asserts exactly that.
+
+  *The plan wanted to cap that fetch and get `+N` from a separate count.
+  The build doesn't: the birthday signal needs every member's birthday and
+  the count needs every member anyway, so a capped fetch would have bought a
+  third query to undo itself. Rows are cheap; round trips aren't.*
 - **Signals**: `Sections::Summary.for(viewer, groups)` already returns next
   event + open tasks + active goals in three batched queries. Reuse it as-is;
   don't touch the class (shared file, and it already does the job).
@@ -220,20 +253,22 @@ every card wants a signal. All of it batches.
   lens and can hold a spouse's contact); the circle stays `viewer.people`.
   This asymmetry is deliberate and is the same one PEOPLE.md §2 already draws.
 
-Test the batching, not just the render: a system test with two groups and a
-dozen members should assert a flat query count, because this is precisely the
-grid that silently degrades after a CardDAV sync.
+Test the batching, not just the render: `People::CirclesTest` builds three
+groups of two and asserts the member queries stay at two, because this is
+precisely the grid that silently degrades after a CardDAV sync.
 
 ## 9. Waves
 
-1. **The grid.** AvatarStack + `People::Circles` + `_circle_card` + add tile;
-   chips and the circle roster come out; "Been a while" replaces the full
+*1–3 built (2026-08); 4 still waiting, on purpose.*
+
+1. ✅ **The grid.** AvatarStack + `People::Circles` + `_circle_card` + add tile;
+   chips and the circle roster come out; "Reach out" replaces the full
    list; `People ·` prefix gone. Ships as a pure cleanup — no new verbs, so it
    can land and be judged on its own.
-2. **Membership.** `People::Membership`, `Add someone` on every card, the
+2. ✅ **Membership.** `People::Membership`, `Add someone` on every card, the
    group-page member list with remove, the person page's Groups line. This is
    what makes wave 1 true rather than decorative.
-3. **Signal and delight.** Per-group next-event/birthday line, `Plan
+3. ✅ **Signal and delight.** Per-group next-event/birthday line, `Plan
    something` prefilled, the circle's drift count, hover lift, the Address
    Book circle filter, an honest empty state per card.
 4. **Later, unchanged from PEOPLE.md §6.** Community tools — meeting agendas,

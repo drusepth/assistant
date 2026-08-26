@@ -339,6 +339,48 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "D&amp;D table", response.body
   end
 
+  # D-people-circles: groups and the circle are one grid of one card, so a
+  # group carries faces, a count and a next thing — not a bare chip.
+  test "the circles grid draws every collection of people as a card" do
+    group = People::Group.find_or_create!("Book club")
+    users(:one).people.create!(name: "Rosa").sections << group
+    users(:one).people.create!(name: "Circle Sam", keep_in_touch: true)
+
+    get section_path("people")
+    assert_response :success
+
+    assert_match "Your people", response.body
+    assert_match "Only you", response.body, "the circle card says it isn't shared with the household"
+    assert_match "Book club", response.body
+    assert_match "1 person · nothing planned yet", response.body
+    assert_select "a[href=?]", people_path(circle: "1"), { count: 1 },
+      "the circle card opens the full circle"
+    assert_select "a[href=?]", section_path(group.slug)
+    assert_no_match "People · Book club", response.body,
+      "a card is inside People already — the qualified name was noise"
+  end
+
+  test "every card can add someone, and a group card can plan something" do
+    People::Group.find_or_create!("Book club")
+
+    get section_path("people")
+    assert_select "form[action=?]", people_memberships_path
+    assert_select "form[action=?]", people_circle_path
+    assert_match "Plan something", response.body
+  end
+
+  test "a group page leads with its members and the way to add one" do
+    group = People::Group.find_or_create!("Book club")
+    users(:one).people.create!(name: "Rosa", relationship: "neighbor").sections << group
+
+    get section_path(group.slug)
+    assert_response :success
+    assert_match "Members", response.body
+    assert_match "Rosa", response.body
+    assert_select "form[action=?]", people_memberships_path
+    assert_select "form[action=?]", people_membership_path(section_id: group.id, person_id: Person.find_by(name: "Rosa").id)
+  end
+
   test "other sections keep their filtered person lists" do
     doctor = users(:one).people.create!(name: "Dr. Chen")
     doctor.sections << sections(:health)

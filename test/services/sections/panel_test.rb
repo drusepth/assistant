@@ -18,4 +18,15 @@ class Sections::PanelTest < ActiveSupport::TestCase
     lens = Hobbies::Lens.find_or_create!("Board games")
     assert_nil Sections::Panel.for(lens, users(:one))
   end
+
+  # D-people-circles: group slugs are whatever the user typed, so People
+  # claims its lenses by parent instead.
+  test "a group lens resolves its parent's lens panel" do
+    group = People::Group.find_or_create!("Book club")
+    panel = Sections::Panel.for(group, users(:one))
+
+    assert_instance_of Sections::Panels::PeopleLens, panel
+    assert_equal "sections/panels/people_lens", panel.partial
+    assert_equal group, panel.section
+  end
 end

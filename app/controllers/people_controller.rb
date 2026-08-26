@@ -1,12 +1,24 @@
 class PeopleController < ApplicationController
   before_action :set_own_person, only: %i[ edit update destroy log_contact ]
 
+  # The roster, and — since D-people-circles — the circle's own full view:
+  # the circle card on the People page links here filtered rather than to a
+  # fourth People surface. Circle mode is own-people-only, because the flag
+  # is the owner's intent (D-people-dashboard).
   def index
-    @people = Person.visible_to(Current.user).order(:name).includes(:sections, :user).with_attached_avatar
+    @circle_only = params[:circle].present?
+    @circle_size = Current.user.people.circle.count
+    scope = @circle_only ? Current.user.people.circle.stalest_first : Person.visible_to(Current.user).order(:name)
+    @people = scope.includes(:sections, :user).with_attached_avatar
   end
 
   def show
     @person = Person.visible_to(Current.user).find(params[:id])
+    # Groups this person is in, and the ones they could join
+    # (D-people-circles) — the second front door for membership, because
+    # "oh, she's in the book club" is a thought you have here.
+    all_groups = Section.find_by(slug: "people")&.children.to_a
+    @groups, @group_candidates = all_groups.partition { |group| @person.section_ids.include?(group.id) }
     @photos = Photo.visible_to(Current.user)
       .joins(:photo_people).where(photo_people: { person_id: @person.id })
       .with_attached_image.order(taken_at: :desc, id: :desc).limit(12)

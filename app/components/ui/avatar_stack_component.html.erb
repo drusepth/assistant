@@ -1,0 +1,20 @@
+<% if any? %>
+  <div class="<%= wrapper_classes %>">
+    <% shown.each do |person| %>
+      <% face = Ui::AvatarComponent.new(person: person, size: size, tone: tone_for(person), css_class: face_classes, title: person.name) %>
+      <% if link? %>
+        <%= link_to person, class: "shrink-0" do %><%= render face %><% end %>
+      <% else %>
+        <%= render face %>
+      <% end %>
+    <% end %>
+    <% if overflow.positive? %>
+      <span class="<%= bubble_classes %>" title="<%= pluralize(overflow, "more person", plural: "more people") %>">+<%= overflow %></span>
+    <% end %>
+  </div>
+<% elsif ghost? %>
+  <div class="flex items-center gap-2">
+    <span class="<%= ghost_classes %>" aria-hidden="true"></span>
+    <% if empty_label %><span class="text-xs text-soft"><%= empty_label %></span><% end %>
+  </div>
+<% end %>

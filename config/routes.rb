@@ -95,6 +95,8 @@ Rails.application.routes.draw do
   namespace :people do
     resource :import, only: %i[ new create ]
     resource :circle, only: %i[ create destroy ]
+    # Group membership (D-people-circles) — a person into a People lens.
+    resources :memberships, only: %i[ create destroy ], param: :section_id
   end
   resources :people do
     member do
