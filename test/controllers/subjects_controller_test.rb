@@ -65,6 +65,25 @@ class SubjectsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Quiz me", response.body
   end
 
+  test "the household card exists only where grants made it exist (D9)" do
+    get section_path("education")
+    assert_no_match "Household learning", response.body
+
+    AccessGrant.create!(grantor: users(:two), grantee: users(:one), subject: subjects(:bob_civics))
+    get section_path("education")
+    assert_match "Household learning", response.body
+    assert_match "Bob Smith", response.body
+    assert_match "Civics", response.body
+  end
+
+  test "the record drawer carries the year's numbers and the three generators" do
+    users(:one).study_logs.create!(subject: subjects(:algebra), on: Date.current, minutes: 120, activity: :tutor)
+    get section_path("education")
+    assert_match "The record", response.body
+    assert_match "2 hours logged this year", response.body
+    assert_match new_tool_run_path("progress_report", inputs: { artifact: "Transcript" }), response.body
+  end
+
   test "lifecycle verbs are owner-only" do
     patch pause_subject_path(subjects(:bob_civics))
     assert_response :not_found

@@ -7,7 +7,7 @@ module Tool
     decode_letter dispute_letter insurance_appeal debt_collector_response
     deposit_demand results_explainer doctor_visit_prep
     find_care insurance_explainer compare_plans check_in start_a_practice
-    negotiation_prep benefits_screener learn_something tutor quiz_me placement task_chat
+    negotiation_prep benefits_screener learn_something tutor quiz_me placement explain_this progress_report task_chat
     cancel_subscription reconnect gift_ideas get_together what_do_i_say make_new_friends moving
     build_my_budget money_coach spending_review debt_payoff_plan
     caregiver bereavement
