@@ -223,7 +223,11 @@ Rails.application.routes.draw do
   get "reader" => "reader#index", as: :reader
   post "reader/read_all" => "reader#read_all", as: :reader_read_all
   resources :feeds, except: %i[ show new ] do
-    member { post :refresh }
+    member do
+      post :refresh
+      # "Ask the model again" — see Feeds::Filing (D-hobby-feeds).
+      post :refile
+    end
     collection do
       post :refresh_all
       # The reading list leaves in the format every other reader can read.

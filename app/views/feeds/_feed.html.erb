@@ -27,6 +27,10 @@
   </div>
 
   <div class="reader-verbs">
+    <%# "Re-file" asks the model again (D-hobby-feeds) — the door back for a
+        feed whose hobby the model got wrong, and the way a household that
+        configured a model late files what it already follows. %>
+    <%= button_to "Re-file", refile_feed_path(feed), class: "reader-verb", form_class: "contents" %>
     <%= button_to "Check", refresh_feed_path(feed), class: "reader-verb", form_class: "contents" %>
     <%= link_to "Edit", edit_feed_path(feed), class: "reader-verb" %>
     <%= button_to "Unfollow", feed_path(feed), method: :delete, class: "reader-verb",

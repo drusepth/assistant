@@ -35,7 +35,7 @@ class Feeds::OpmlTest < ActiveJob::TestCase
     assert_equal [ @lens ], feed.sections.to_a, "a folder that matches a hobby files the feed under it"
   end
 
-  test "a folder with no matching hobby leaves the feed untagged unless asked" do
+  test "a folder with no matching hobby lands the feed in the catch-all, without growing the taxonomy" do
     xml = <<~XML
       <opml version="2.0"><body>
         <outline text="Cycling">
@@ -47,7 +47,10 @@ class Feeds::OpmlTest < ActiveJob::TestCase
     result = Feeds::Opml.import(@user, xml)
 
     assert_equal 1, result.added
-    assert_empty @user.feeds.sole.sections
+    # Every feed has a hobby or has Other Interests (D-hobby-feeds) — an
+    # import is no exception, and Hobbies::MapFeeds claims these in batches
+    # afterwards rather than asking the model once per imported row.
+    assert_equal [ Hobbies::OtherInterests.find ], @user.feeds.sole.sections.to_a
     assert_empty result.lenses
     assert_nil Hobbies::Lens.named("Cycling"), "an import doesn't quietly grow the taxonomy"
   end

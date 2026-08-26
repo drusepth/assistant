@@ -29,6 +29,9 @@ module Tool
       # The lens exists before the model call, so the breakdown can file
       # steps under it too.
       lens = Hobbies::Lens.find_or_create!(inputs[:hobby])
+      # A hobby is a question about the feeds already followed (D-hobby-feeds
+      # §4) — the same one the add tile asks, since a hobby can start here.
+      Hobbies::MapFeeds.enqueue(user, [ lens ])
       goal = plan_goal!(title: "Get into #{lens.name}", brief: BRIEF, description: inputs[:about].presence)
       goal.sections = (goal.sections.to_a + [ lens ]).uniq
     end

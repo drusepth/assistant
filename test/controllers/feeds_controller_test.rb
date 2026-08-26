@@ -34,6 +34,58 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to feeds_path
   end
 
+  # D-hobby-feeds: adding a feed fetches in the request (the user needs to
+  # know the subscription is real) but files it in a job (a slow provider
+  # must not hold the form).
+  test "a new feed asks the model which hobby it is, in a job" do
+    Hobbies::Lens.find_or_create!("Woodworking")
+    stub_request(:get, "https://example.com/posts.xml").to_return(body: FEED, headers: { "Content-Type" => "application/rss+xml" })
+
+    assert_enqueued_with(job: ClassifyFeedJob) do
+      post feeds_path, params: { feed: { url: "https://example.com/posts.xml" } }
+    end
+  end
+
+  test "a feed the user filed by hand on the way in is not re-filed" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    stub_request(:get, "https://example.com/posts.xml").to_return(body: FEED, headers: { "Content-Type" => "application/rss+xml" })
+
+    assert_no_enqueued_jobs(only: ClassifyFeedJob) do
+      post feeds_path, params: { feed: { url: "https://example.com/posts.xml", section_ids: [ lens.id ] } }
+    end
+    assert_equal [ lens ], users(:one).feeds.sole.sections.to_a
+  end
+
+  test "with no model a new feed still gets a home, without a round trip" do
+    users(:one).household.model_profile.update!(api_key: "")
+    stub_request(:get, "https://example.com/posts.xml").to_return(body: FEED, headers: { "Content-Type" => "application/rss+xml" })
+
+    assert_no_enqueued_jobs(only: ClassifyFeedJob) do
+      post feeds_path, params: { feed: { url: "https://example.com/posts.xml" } }
+    end
+    assert_equal [ Hobbies::OtherInterests.find ], users(:one).feeds.sole.sections.to_a
+  end
+
+  test "re-file asks again, and says so plainly when there is nobody to ask" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    feed = users(:one).feeds.create!(url: "https://example.com/posts.xml", sections: [ lens ])
+
+    assert_enqueued_with(job: ClassifyFeedJob) { post refile_feed_path(feed) }
+    assert_match(/Re-filing/, flash[:notice])
+
+    users(:one).household.model_profile.update!(api_key: "")
+    assert_no_enqueued_jobs(only: ClassifyFeedJob) { post refile_feed_path(feed) }
+    assert_match(/filed by hand/, flash[:notice])
+  end
+
+  test "re-file is your own feeds only" do
+    theirs = users(:two).feeds.create!(url: "https://example.com/theirs.xml")
+
+    post refile_feed_path(theirs)
+
+    assert_response :not_found
+  end
+
   test "an address with no feed explains itself and saves nothing" do
     stub_request(:get, %r{https://example\.com}).to_return(body: "<html>nope</html>", headers: { "Content-Type" => "text/html" })
 

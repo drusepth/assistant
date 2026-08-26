@@ -11,6 +11,12 @@
 class Feed < ApplicationRecord
   include Visible
   include Sectionable
+  # Filing a feed under its hobbies is the reader's one model call
+  # (D-hobby-feeds), and it is the same quick-add-then-sort shape the other
+  # primitives use: the user pastes a URL, the model does the paperwork.
+  include AutoSortable
+
+  AUTO_SORT_JOB = ClassifyFeedJob
 
   KINDS = %w[ rss atom json ].freeze
 
@@ -62,6 +68,11 @@ class Feed < ApplicationRecord
   def unread_count = feed_items.unread.count
 
   def healthy? = last_error.blank?
+
+  # A model has looked at this feed, whatever it concluded — which is not
+  # the same as the feed having a hobby, since "none of them" is a valid
+  # and common answer.
+  def classified? = classified_at.present?
 
   # The interval this feed has earned: the polite hourly default, backed off
   # after repeated failures, and stretched once nothing here has been read

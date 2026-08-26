@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_065503) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_065950) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -276,6 +276,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_065503) do
 
   create_table "feeds", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.datetime "classified_at"
     t.datetime "created_at", null: false
     t.text "description"
     t.string "etag"
