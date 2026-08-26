@@ -18,7 +18,20 @@ module Health
   # interval, and custom kinds ("Dermatology", every 12 months) classify by
   # their own label. Settings belong to the user whose care it is.
   class CareRadar
-    Kind = Data.define(:key, :label, :provider, :appointment_title, :book_title, :interval_months, :patterns)
+    Kind = Data.define(:key, :label, :provider, :appointment_title, :book_title, :interval_months, :patterns, :clinical) do
+      # Kinds are clinical unless they say otherwise — a non-clinical kind
+      # (the haircut) is tracked exactly the same way but skips the medical
+      # next-clicks (find-care, visit prep) and names itself in copy.
+      def initialize(clinical: true, **rest) = super
+
+      def clinical? = clinical
+
+      # Tile copy: "Last visit Feb 2026" / "Last haircut Feb 2026".
+      def visit_noun = clinical ? "visit" : label.downcase
+
+      # Watcher copy: "your last dental visit" / "your last haircut".
+      def history_phrase = clinical ? "#{label.downcase} visit" : label.downcase
+    end
 
     # Registry defaults, in display order. `provider` seeds the find-care
     # tool's specialty input; `appointment_title` seeds the event
@@ -41,6 +54,17 @@ module Health
         appointment_title: "Eye exam", book_title: "Book an eye exam",
         interval_months: 24,
         patterns: [ /\beyes?\b/, /vision/, /optometr/, /ophthalmolog/, /optician/, /glasses/, /contact lens/ ]
+      ),
+      # The first non-clinical kind: upkeep, not care. It earns a place on
+      # the radar for the same reason the others do — it is a recurring
+      # appointment on a rhythm you'd rather not keep in your head — but
+      # nothing about it is medical, so it gets none of the medical
+      # next-clicks. Grooming sits last, after the care that matters more.
+      Kind.new(
+        key: "haircut", label: "Haircut", provider: "barber or hair stylist",
+        appointment_title: "Haircut", book_title: "Book a haircut",
+        interval_months: 2, clinical: false,
+        patterns: [ /\bhaircut\b/, /\bhair\b.*\b(cut|trim|appointment)\b/, /barber/, /hairdress/, /hair salon/, /\bstylist\b/ ]
       )
     ].freeze
 

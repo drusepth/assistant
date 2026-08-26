@@ -98,6 +98,21 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Log a past visit", response.body, "the untracked checkup kind offers past-visit capture"
   end
 
+  test "the haircut tile tracks like any kind but offers no medical next-click" do
+    users(:one).events.create!(title: "Haircut", starts_at: 5.months.ago, all_day: true)
+      .sections << sections(:health)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Haircut", response.body
+    assert_match "Last haircut", response.body
+    assert_no_match(
+      Regexp.new(Regexp.escape(new_tool_run_path("find_care", inputs: { specialty: "barber or hair stylist" }))),
+      response.body,
+      "find-care finds doctors, not barbers"
+    )
+  end
+
   test "the coverage card lists plan-shaped documents and offers the insurance tools prefilled" do
     document = users(:one).documents.create!(title: "Acme PPO Summary of Benefits")
 
