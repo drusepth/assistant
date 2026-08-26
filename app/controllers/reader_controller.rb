@@ -14,6 +14,15 @@ class ReaderController < ApplicationController
     @feeds = Current.user.feeds.includes(:sections).order(:created_at)
     @lenses = Section.find_by(slug: "hobbies")&.children&.where(id: @feeds.flat_map(&:section_ids))&.order(:name) || []
     @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
+    # The rail and the phone's scope sheet render the same tree, so it is
+    # grouped once here: feeds under the hobby they were filed under
+    # (D-hobby-feeds), catch-all last because it is where things land rather
+    # than a hobby that happens to sort under O.
+    @feeds_by_lens = @lenses
+      .sort_by { |lens| [ Hobbies::OtherInterests.catch_all?(lens) ? 1 : 0, lens.name ] }
+      .index_with { |lens| @feeds.select { |feed| feed.section_ids.include?(lens.id) } }
+    @scope_lens = hobby_lens
+    @scope_feed = @feeds.find { |feed| feed.id == own_feed_id }
     # Only while there is nothing to read: a shelf above a river is clutter
     # (D-hobby-feeds §7.1).
     @starters = Feeds::Starters.groups if @feeds.none?
@@ -37,7 +46,34 @@ class ReaderController < ApplicationController
       notice: count.positive? ? "#{helpers.pluralize(count, "item")} marked read." : "Nothing left to mark read."
   end
 
+  # Read-on-scroll (D-reader-density). A four-hundred item backlog used to
+  # have exactly two outcomes — four hundred clicks, or Mark all read — and
+  # anybody sane picked the second and threw the pile away unseen. So items
+  # scrolled fully past mark themselves read, and the ledger keeps one Undo.
+  #
+  # Batched rather than one request per row: a thumb flicking through thirty
+  # headlines would otherwise open thirty connections and stamp each feed
+  # thirty times.
+  def read_seen = seen { |scope| scope.update_all(read_at: Time.current, updated_at: Time.current) }
+
+  def unread_seen = seen { |scope| scope.update_all(read_at: nil, updated_at: Time.current) }
+
   private
+    # The one authorization line for the batch: ids are narrowed to the
+    # caller's own feeds before anything is written, so a forged id in the
+    # list updates nothing and the request still succeeds for the rest.
+    def seen
+      ids = Array(params[:ids]).first(200).map(&:to_i)
+      scope = FeedItem.where(feed: Current.user.feeds, id: ids)
+      feed_ids = scope.distinct.pluck(:feed_id)
+      count = yield(scope)
+      # `update_all` skips the callback that would have stamped each feed,
+      # and that stamp is what keeps a feed nobody reads from being polled
+      # as if somebody did.
+      Feed.where(id: feed_ids).update_all(last_read_at: Time.current) if feed_ids.any?
+      render json: { count: count }
+    end
+
     def hobby_lens
       return nil if params[:hobby].blank?
 

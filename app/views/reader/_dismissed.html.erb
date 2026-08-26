@@ -1,13 +1,15 @@
 <%# What's left where a row was, after it was marked read in the unread
-    list (D-feed-reader). The same height as the line it replaces, so
+    list (D-feed-reader). Roughly the same height as the line it replaces, so
     nothing below jumps, and an Undo, so nothing leaves without a way back.
     It is not re-rendered on the next load — by then the item is simply
     read, and the unread list is honestly shorter. Locals: item. %>
-<div id="<%= dom_id(item) %>" class="reader-line text-xs text-soft" data-river-target="row">
-  <span class="min-w-0 flex-1 truncate">
-    <span aria-hidden="true">✓</span>
-    Marked read — <span class="text-stone-500"><%= item.title %></span>
-  </span>
-  <%= button_to "Undo", unread_feed_item_path(item), method: :patch,
-        class: "reader-verb", form_class: "contents" %>
+<div id="<%= dom_id(item) %>" class="reader-row" data-river-target="row">
+  <div class="flex items-center gap-2 px-3 py-1.5 text-xs text-soft sm:gap-3">
+    <span class="size-5 shrink-0 text-center text-sage-700" aria-hidden="true">✓</span>
+    <span class="min-w-0 flex-1 truncate">
+      Marked read — <span class="text-stone-500"><%= item.title %></span>
+    </span>
+    <%= button_to "Undo", unread_feed_item_path(item), method: :patch,
+          class: "reader-verb !flex", form_class: "contents" %>
+  </div>
 </div>

@@ -247,6 +247,10 @@ Rails.application.routes.draw do
   # reader rather than a list.
   get "reader" => "reader#index", as: :reader
   post "reader/read_all" => "reader#read_all", as: :reader_read_all
+  # Read-on-scroll and its Undo (D-reader-density): a batch of ids the
+  # reader has already scrolled past, marked in one statement.
+  post "reader/read_seen" => "reader#read_seen", as: :reader_read_seen
+  post "reader/unread_seen" => "reader#unread_seen", as: :reader_unread_seen
   resources :feeds, except: %i[ show new ] do
     member do
       post :refresh

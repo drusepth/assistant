@@ -1,0 +1,30 @@
+<%# The verbs on a row, in one place because they are rendered twice: dimmed
+    at the end of the collapsed line for a pointer, and at thumb size inside
+    the expanded panel for everything else.
+
+    Locals: item; filter (the list the row is under, so a mark-read knows
+    whether the row should leave it); optional size — :lg for the expanded
+    panel, where a 12px text link was the wrong control. %>
+<% size = local_assigns.fetch(:size, :sm) %>
+<% klass = size == :lg ? "reader-verb-lg" : "reader-verb" %>
+
+<% if item.saved? %>
+  <%= button_to "Unsave", unsave_feed_item_path(item), method: :patch,
+        class: klass, form_class: "contents" %>
+<% else %>
+  <%= button_to "Save", save_feed_item_path(item), method: :patch,
+        class: klass, form_class: "contents" %>
+<% end %>
+
+<% if item.read? %>
+  <%= button_to "Unread", unread_feed_item_path(item), method: :patch,
+        class: klass, form_class: "contents" %>
+<% else %>
+  <%= button_to "Read", read_feed_item_path(item, from: filter), method: :patch,
+        class: klass, form_class: "contents" %>
+<% end %>
+
+<%# The point of the whole section (docs/HOBBIES.md): a river that ends in
+    doing something, not in a better-groomed reading list. %>
+<%= link_to "Task", new_task_path(title: item.title, section_ids: item.feed.section_ids),
+      class: klass %>

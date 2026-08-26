@@ -1,0 +1,45 @@
+<%# What the river can be narrowed to, as a tree rather than as a paragraph
+    of link text. One shape, two homes: the bottom sheet on a phone and the
+    rail on a wide screen (D-reader-density).
+
+    Grouped by hobby lens, because that is how the feeds were filed
+    (D-hobby-feeds) and a flat list of forty subscriptions is the wall this
+    replaces. Each feed carries its face and its unread count, so the tree
+    also answers "where is the pile?" — which the old row of titles couldn't. %>
+<nav class="reader-scopes">
+  <%= link_to reader_path(request.query_parameters.except("offset", "hobby", "feed")),
+        class: "reader-scope-row #{"is-on" if params[:hobby].blank? && params[:feed].blank?}" do %>
+    <span class="flex-1 truncate font-semibold">Everything</span>
+    <span class="reader-scope-count"><%= @unread_counts.values.sum %></span>
+  <% end %>
+
+  <% @feeds_by_lens.each do |lens, feeds| %>
+    <div class="reader-scope-group">
+      <%= link_to reader_path(request.query_parameters.except("offset", "feed").merge(hobby: lens.slug)),
+            class: "reader-scope-row #{"is-on" if params[:hobby] == lens.slug && params[:feed].blank?}" do %>
+        <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(lens) %>" aria-hidden="true"></span>
+        <span class="flex-1 truncate font-semibold"><%= lens.name %></span>
+        <span class="reader-scope-count">
+          <%= feeds.sum { |feed| @unread_counts.fetch(feed.id, 0) } %>
+        </span>
+      <% end %>
+
+      <% feeds.each do |feed| %>
+        <% unread = @unread_counts.fetch(feed.id, 0) %>
+        <%= link_to reader_path(request.query_parameters.except("offset", "hobby").merge(feed: feed.id)),
+              class: "reader-scope-row is-feed #{"is-on" if params[:feed].to_s == feed.id.to_s}" do %>
+          <%= feed_face(feed) %>
+          <span class="flex-1 truncate <%= "text-stone-500" if unread.zero? %>"><%= reader_source(feed) %></span>
+          <% if unread.positive? %>
+            <span class="reader-scope-count"><%= unread %></span>
+          <% end %>
+          <% unless feed.healthy? %>
+            <span class="text-red-500" title="<%= feed.last_error %>" aria-label="This feed is erroring">!</span>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= link_to "Manage feeds", feeds_path, class: "reader-scope-row text-soft" %>
+</nav>

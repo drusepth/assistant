@@ -138,6 +138,24 @@ indistinguishable from one person with a browser:
 - a read-item cap per feed — the river is not an archive. Saved and unread
   items are never pruned.
 
+Two more things the reader deliberately **does not fetch**, for the same
+reason and about the reader rather than the publisher's server:
+
+- **Favicons.** A feed's face is a monogram tile coloured from a hash of the
+  host — offline, stable, free. An icon service would be handed the list of
+  every site this household reads; fetching each publisher's own icon at
+  render time would tell that publisher when their reader opened the app.
+  If real favicons are ever wanted, the honest way is one fetch per feed
+  during the poll we already make, stored, never at render time.
+- **Entry images.** The obvious way to make the saved shelf look good is to
+  render the publisher's `<media:content>`, but an `<img>` at their CDN
+  hands them the reader's IP and a timestamp for every article they have
+  shown interest in — a per-article read receipt from inside a signed-in
+  session. That is exactly the leak `noreferrer` and the stripped entry HTML
+  exist to prevent. The shelf is typographic instead. If images ship, they
+  get proxied through the app or they are an explicit, off-by-default
+  setting that says what it does.
+
 ### Hostile input
 
 A feed body is a stranger's XML rendered in a signed-in session, so the
@@ -157,47 +175,129 @@ threat model is the same one `docs/EMAIL_PLAN.md` names for mail:
 
 ## The surfaces
 
-### Density is the design (`.reader-line`)
+### Density is the design (`.reader-row`)
 
-The list *is* the interface here, so the chrome is thin and the rows are
-one line: source column, headline, the opening words, the age — Google
-Reader's row, at a height where twenty fit on a laptop screen. Three
-choices carry it, and they are the reason this page doesn't use the app's
-usual card-per-item shape (`docs/DESIGN.md` → Lists):
+The list *is* the interface here, so the chrome is thin and the rows are one
+line: face, source, headline, the opening words, the age — Google Reader's
+row, at a height where twenty fit on a laptop screen.
+
+That was true on a laptop and had quietly stopped being true on a phone
+(**D-reader-density**). The phone row was `flex-wrap` with a full-width verb
+line, which took a line of its own and then wrapped again under source + age
++ chip + three verbs: ~96px to say *less* than the 34px the laptop row said,
+under ~200px of chrome. Six headlines on a screen that should hold twenty.
+The row does not wrap at any width now. Measured on a 390×844 device: **12
+headlines rather than 6**, at 56px a row; at 1440px the row is 37px and 21
+fit.
+
+Five choices carry it, and they are the reason this page doesn't use the
+app's usual card-per-item shape (`docs/DESIGN.md` → Lists):
 
 - **Unread is the emphasised state, read the quiet one**, which inverts the
   app's usual weighting on purpose: in a pile, what you have dealt with
   should recede without disappearing.
-- **The verbs are furniture, so they wait for the pointer.** Save / Read /
-  Task fade in on hover on a device that can hover (and on focus, for a
-  keyboard) — as opacity, never display, so the row can't change height
-  under a reader who is scanning. A touch device shows them always.
-- **The phone drops the preview, not the headline.** Below `lg` the
-  opening words go, the source column folds into the small line that also
-  carries the age, the hobby and the verbs, and a row is a headline plus
-  one line. The filter rows scroll sideways rather than wrapping into four.
+- **Identity is a face, not a truncated sentence.** A 20px monogram tile,
+  coloured from a hash of the host, where "World news | The G…" was eating
+  45% of the meta line. Nothing is fetched — see *Politeness* below for why
+  that is a rule and not a shortcut.
+- **A chip only when it discriminates.** The row used to paint every section
+  on the feed, and Other Interests is on every feed by construction
+  (D-hobby-feeds) — so a label appeared on 100% of rows, carried no bits and
+  was the loudest thing in the line. Never the catch-all, never the lens you
+  have already filtered to, at most one.
+- **The verbs are furniture, so they are dimmed rather than absent.** Save /
+  Read / Task sit at 45% until the pointer or the keyboard reaches the row.
+  They used to be `sm:opacity-0`, which meant a pointer user never learned
+  they existed — and **Task**, the verb that makes this a hobby surface, was
+  the one nobody discovered. Below `lg` they aren't in the line at all: a
+  touch device gets them in the expanded panel at 44px, and as gestures.
+- **The phone drops the preview, not the headline.** Below `lg` the opening
+  words go and the source folds into one small line with the age. They come
+  back when the row is opened, so a preview is paid for on the item being
+  considered rather than on all forty.
+
+### Opening happens in the row
+
+The only way into an article used to be a new tab, which meant a
+four-hundred item river could be *triaged* but never *read* — you left the
+app once per item. That was the one Reader affordance genuinely missing.
+
+A plain click (or `Enter`) expands the row in place: the blurb, and
+**Open ↗ / Save / Read / Task** at thumb size. This is the change that lets
+the collapsed row drop its preview, its verbs and its chip, which is where
+the height came back from.
+
+The headline stays a real `<a href>`, so a modified or middle click still
+stashes a background tab natively — that reader is going to the source, and
+their row marks itself read *and leaves the unread list*, exactly as before.
+Only the plain left click is intercepted. Opening in place marks read too,
+but keeps the row where it is: it comes back `is-open` (`from=expand`), so
+the re-render its own mark-read triggers doesn't shut what was just opened.
+
+### Clearing the pile
+
+A 404-item backlog had exactly two outcomes — 404 deliberate clicks, or Mark
+all read — and anybody sane picked the second and threw the pile away
+unseen. Three things in between:
+
+- **Read on scroll.** A row fully past the top of the viewport, and left
+  there for a beat, marks itself read. The beat is what stops a fast flick
+  eating what it flew over. Batched into one request, because thirty rows
+  would otherwise be thirty connections and thirty feed stamps.
+- **A rail that fills**, under the header, with "*n* cleared · *m* left". A
+  backlog with no visible floor is a guilt pile.
+- **One Undo**, on a bar naming the number, restoring the whole batch. The
+  batch endpoint narrows ids to the caller's own feeds before writing, so a
+  forged id updates nothing and the rest still goes through.
+
+Two gestures on a phone: **swipe left marks read, swipe right saves**. Both
+end in pressing the row's own ordinary button, so the write, the re-render
+and the Undo line all go through the one path the buttons already use.
+**Pull past the top** starts a sweep — which changes the gesture, not the
+fetch policy: it presses the page's own *Check now*, so everything under
+*Politeness* still decides what leaves the machine.
 
 ### The pages
 
-- **`/reader`** — the river, newest first. Unread / Saved / Everything,
-  narrowed by hobby lens or by feed, with **Mark all read** scoped to
-  whatever you are looking at, and the unread count in the rail beside
-  "Reader". Per item: save, mark read, open at the source, and **Make a
-  task** (prefilled and pre-tagged with the feed's lenses) — the verb that
-  makes this a hobby surface rather than a better-groomed reading list.
+- **`/reader`** — the river, newest first, under a **day spine** (four
+  hundred rows that all read "1h" give a list no shape and no floor).
+  Unread / Saved / Everything, narrowed by hobby lens or by feed. Per item:
+  save, mark read, open at the source, and **Make a task** (prefilled and
+  pre-tagged with the feed's lenses) — the verb that makes this a hobby
+  surface rather than a better-groomed reading list.
 
-  **Opening an article marks it read.** Every reader worth using has done
-  this since Reader itself; without it "unread" means "not explicitly
-  dismissed", which is a different and much less useful thing. The click
-  still opens the source; a Stimulus controller rides alongside and asks
-  for the same Turbo Stream the Read button would have produced, so there
-  is one code path. A modifier or middle click is exempt — that is somebody
-  stashing tabs, not reading.
+  **The scope picker is a tree, not a paragraph.** It used to be every
+  feed's title inline across the top of the page, wrapping — a wall at ten
+  feeds and unusable at forty, and on a phone two `overflow-x-auto` rows
+  sheared off at the viewport edge with no fade, reading as a layout bug
+  rather than as an invitation to scroll. It is now one control naming the
+  current selection, which opens a **rail** at `lg` and a **bottom sheet**
+  below it, grouped by hobby lens with per-feed unread counts and faces.
 
   **A row read from the unread list leaves it**, replaced by a line of its
   own height saying what went, with an **Undo**. Otherwise "unread" is a
   lie and the only way to clear a screen is Mark all read. (Mark all read
   has no undo: it asks first instead.)
+
+  **Saved is a shelf, not a river.** Unread is chronological triage; saved
+  is a small collection you come back to, where the question is "which one
+  was that" rather than "what's next". Same data, a card grid, ordered by
+  when *you* kept it. No images, deliberately — see *Politeness*.
+
+  **The keys** (`river_controller.js`), on a `?` sheet because four
+  shortcuts nobody can discover are zero shortcuts:
+
+  | | |
+  |---|---|
+  | `j`/`n`, `k`/`p` | move |
+  | `Enter` | open it here |
+  | `o` | open at the source |
+  | `m`, `s` | mark read, save |
+  | `r` | check the feeds now |
+  | `A` | mark this whole view read |
+  | `1`/`2` | compact / comfortable |
+  | `?` | the sheet |
+
 - **`/feeds`** — subscriptions: one paste field, per-feed unread counts,
   honest health ("failing — the site answered HTTP 500"), the lens picker
   that files a feed under its hobby, and **OPML import/export**.
@@ -240,17 +340,16 @@ nothing fetched to build it, every row a checkbox.
 
 ## What it doesn't do yet
 
-- **Full-text extraction / read-here.** Deliberate: the article belongs to
-  the site that wrote it, and the reader's job is to get you there.
+- **Full-text extraction / read-here.** The expanded row shows the feed's
+  own summary; it does not go and fetch the article. Deliberate: the article
+  belongs to the site that wrote it, and the reader's job is to get you
+  there.
 - **A "what did I miss" digest**, which is a watcher (D20) over the same
   rows rather than anything new.
 - **A hard ceiling on unread items.** Pruning only trims *read* ones, so a
   feed nobody opens grows without bound.
-- **Folders for the feed filter.** The "Feed · all · A · B · …" line is a
-  sideways scroll at thirty feeds; it wants grouping by lens, or a second
-  sidebar.
-- **Keyboard navigation** (`j`/`k`/`o`), which is the one Reader affordance
-  its actual users would notice missing.
-- **The expanded item** — Reader opened an entry in place rather than
-  sending you off-site. Every row already carries an `image_url` and the
-  full summary for the day that lands.
+- **Per-feed and per-lens mark-all-read.** `A` marks the view you are in,
+  which covers it when you have filtered to a feed, but there is no button
+  on a rail row.
+- **Entry images anywhere**, and the shelf is where they would pay — see
+  *Politeness* for the condition on ever adding them.

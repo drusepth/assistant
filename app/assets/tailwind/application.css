@@ -403,23 +403,112 @@
      Unread is the strong state and read is the quiet one, exactly
      inverting the usual emphasis: in a reader the *pile* is the subject,
      and what you've dealt with should recede without disappearing. */
-  .reader-line {
-    @apply flex flex-wrap items-baseline gap-x-2 gap-y-1 px-3 py-1.5 transition-colors sm:flex-nowrap sm:gap-x-3 hover:bg-stone-50;
+  /* The row, and inside it the collapsed line. The line never wraps at any
+     width — the phone version used to be `flex-wrap` with a full-width verb
+     line, which took a line of its own and then wrapped again under source +
+     age + chip + three verbs. That came to ~96px per row to say *less* than
+     the 34px this says on a laptop, which is how a list designed for twenty
+     headlines a screen ended up showing six. */
+  .reader-row {
+    @apply relative transition-colors hover:bg-stone-50;
   }
-  /* The verbs at the end of a reader line. They are furniture, not the
-     content, so on a device that can hover they stay out of the way until
-     the pointer is on the row (opacity rather than display: the row must
-     not change height as it appears, or a list you are scanning twitches).
-     A keyboard tab-through reveals them the same way, and a touch device —
-     which can never hover — always shows them. */
+  .reader-line {
+    @apply flex cursor-pointer items-center gap-2 px-3 py-1.5 sm:gap-3;
+  }
+  /* A feed's face (reader_helper.rb): identity in a 20px square, where a
+     truncated feed title was doing the job badly and charging 45% of a phone
+     for it. Fixed size at both ends so a column of them is a straight edge. */
+  .reader-face {
+    @apply grid size-5 shrink-0 place-items-center rounded text-[0.6rem] font-extrabold leading-none text-white;
+  }
+  .reader-face-lg {
+    @apply size-8 rounded-md text-xs;
+  }
+  /* The source's own column on a wide screen, so four hundred headlines all
+     start at the same x. Below `lg` it folds into the signal line, where it
+     costs no height. */
+  .reader-src {
+    @apply hidden w-28 shrink-0 truncate text-xs text-soft lg:block xl:w-36;
+  }
+  /* Two lines at most on a phone, one cut line on a laptop. The clamp lives
+     on the heading rather than on the link inside it, because `line-clamp`
+     makes its element a `-webkit-box` — on the link, the saved star beside it
+     is pushed onto a line of its own; on the heading, star and title are
+     inline content of the same clamped box and flow together. On a laptop
+     the heading goes back to `inline` so the blurb can trail it. */
+  .reader-headline {
+    @apply line-clamp-2 text-sm font-semibold leading-tight text-ink lg:inline lg:line-clamp-none;
+  }
+  .reader-title {
+    @apply hover:underline;
+  }
+  .is-read .reader-headline {
+    @apply font-normal text-soft;
+  }
+  /* Wide-screen furniture: the opening words trailing the headline, cut
+     rather than wrapped. On a phone they are in the expanded panel instead,
+     so the preview is paid for on the item being considered rather than on
+     all forty. */
+  .reader-blurb {
+    @apply hidden text-sm text-soft lg:inline;
+  }
+  /* The one small line under a phone headline, carrying what the wide screen
+     puts in its own columns. */
+  .reader-signal {
+    @apply mt-0.5 flex items-center gap-1.5 text-[0.7rem] leading-tight text-stone-500 lg:hidden;
+  }
+  .reader-signal .chip {
+    @apply px-1.5 py-0 text-[0.65rem];
+  }
+  .reader-age {
+    @apply hidden w-8 shrink-0 text-right text-xs tabular-nums text-soft lg:block;
+  }
+  /* The verbs at the end of the line. They are furniture, not the content —
+     but at `opacity-0` a pointer user never learned they existed, and Task,
+     the verb that turns reading into doing, was the one nobody discovered.
+     So: dimmed at rest, ink on hover. Opacity rather than `display`, because
+     the row must not change height as it resolves or a list you are scanning
+     twitches. Below `lg` they are absent entirely and the expanded panel
+     carries them at a size a thumb can hit. */
   .reader-verbs {
-    @apply flex w-full shrink-0 items-baseline gap-2.5 text-xs text-soft sm:w-auto;
-    @apply sm:opacity-0 sm:transition-opacity sm:focus-within:opacity-100 sm:group-hover:opacity-100;
+    @apply hidden shrink-0 items-baseline gap-2.5 text-xs opacity-45 transition-opacity lg:flex;
+    @apply focus-within:opacity-100 group-hover:opacity-100;
   }
   /* One verb: a text button, not a pill. At this density a pill is a
      boulder. */
   .reader-verb {
     @apply cursor-pointer whitespace-nowrap text-xs text-soft underline-offset-2 hover:text-ink hover:underline;
+  }
+  /* The same verb in the expanded panel, where there is room and where a
+     thumb is the pointer: a real 44px target rather than 12px of underline. */
+  .reader-expand-open {
+    @apply h-11 px-4 text-sm;
+  }
+  .reader-verb-lg {
+    @apply inline-flex h-11 cursor-pointer items-center whitespace-nowrap rounded-lg px-3 text-sm font-medium text-soft hover:bg-stone-200 hover:text-ink;
+  }
+  /* The expanded state (reader_row_controller.js). Rendered with the row
+     rather than fetched, so opening is instant — this is the state that lets
+     the collapsed row drop its preview, its verbs and its chip all at once.
+     `grid-template-rows` animates from nothing to auto, which a height
+     cannot. */
+  .reader-expand {
+    @apply grid grid-rows-[0fr] overflow-hidden transition-[grid-template-rows] duration-200;
+  }
+  .reader-expand > * {
+    @apply min-h-0 overflow-hidden;
+  }
+  .is-open .reader-expand {
+    @apply grid-rows-[1fr];
+  }
+  .is-open {
+    @apply bg-stone-100;
+  }
+  .reader-expand-text {
+    @apply px-3 pb-1 pt-0.5 text-sm leading-relaxed text-soft lg:pl-[10.5rem] xl:pl-[12.5rem];
+  }
+  .reader-expand-verbs {
+    @apply flex flex-wrap items-center gap-1 px-2 pb-2 lg:pl-[9.75rem] xl:pl-[11.75rem];
   }
   /* The keyboard's cursor in the river (river_controller.js). A left rule
      rather than a background: at this density a filled row competes with
@@ -440,6 +529,143 @@
   /* A key in a hint line, at hint size. */
   kbd {
     @apply rounded border border-edge bg-canvas px-1 font-mono text-[0.65rem] text-soft;
+  }
+
+  /* Rail beside river from `lg` up. The feed list used to run across the top
+     of the page as inline link text — a wall at ten feeds, unusable at
+     forty — and a tree in a rail is the shape that content always wanted.
+     It also empties the top of the page, which is where the headlines are. */
+  .reader-shell {
+    @apply lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-6;
+  }
+  .reader-rail {
+    @apply hidden lg:block;
+  }
+  .reader-rail > * {
+    @apply sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto overscroll-contain;
+  }
+  .reader-scopes {
+    @apply flex flex-col gap-0.5 text-sm;
+  }
+  .reader-scope-group {
+    @apply mb-1.5 flex flex-col gap-0.5;
+  }
+  .reader-scope-row {
+    @apply flex min-h-11 items-center gap-2 rounded-lg px-2 py-1 text-left text-soft hover:bg-stone-200 lg:min-h-0 lg:py-1.5;
+  }
+  .reader-scope-row.is-feed {
+    @apply pl-4 text-xs;
+  }
+  .reader-scope-row.is-on {
+    @apply bg-stone-200 font-semibold text-ink;
+  }
+  .reader-scope-count {
+    @apply shrink-0 tabular-nums text-xs text-stone-500;
+  }
+  /* The scope control on a phone: names what you are looking at, and opens
+     the sheet. One line, where the thing it replaced was two scrolling rows
+     sheared off at the viewport edge. */
+  .reader-toolbar {
+    @apply mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-edge pb-1.5;
+  }
+  .reader-scope {
+    @apply flex min-w-0 max-w-[60%] cursor-pointer items-center gap-1.5 rounded-full border border-edge bg-surface px-3 py-1 text-xs font-medium text-ink;
+  }
+
+  /* The day spine through the river. Four hundred rows that all say "1h"
+     give a list no shape and no floor; one heading per group gives it both.
+     Sticky, so the day you are in is always named. */
+  .reader-day {
+    @apply sticky z-10 bg-surface px-3 py-1 text-[0.65rem] font-bold uppercase tracking-widest text-soft;
+    top: var(--app-header-h);
+  }
+  .reader-river {
+    @apply overflow-hidden rounded-xl border border-edge bg-canvas;
+  }
+  .reader-river .reader-row + .reader-row,
+  .reader-river .reader-day + .reader-row {
+    @apply border-t border-edge;
+  }
+  /* Comfortable density (`2`): the opening words come down onto the phone
+     row for somebody browsing rather than triaging. */
+  .river-comfortable .reader-blurb {
+    @apply mt-0.5 line-clamp-2 inline;
+  }
+  .river-comfortable .reader-line {
+    @apply py-2.5;
+  }
+
+  /* A swipe in progress, and which way it went (reader_row_controller.js).
+     The tint says what will happen if the thumb lifts here — read to the
+     left, keep to the right — so the gesture is legible before it commits. */
+  .reader-row-read {
+    @apply bg-stone-200;
+  }
+  .reader-row-save {
+    @apply bg-sage-100;
+  }
+
+  /* Read-on-scroll's rail and its send-off. The rail fills as the pile
+     clears, because a backlog with no visible floor is a guilt pile; the bar
+     is the Undo, because nothing here leaves without a way back. */
+  .reader-rail-progress {
+    @apply mb-1 h-0.5 w-full overflow-hidden rounded-full bg-edge;
+  }
+  .reader-rail-progress > i {
+    @apply block h-full w-0 bg-primary-600 transition-[width] duration-300;
+  }
+  .reader-ledger-bar {
+    @apply fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-sm items-center justify-between gap-3 rounded-full bg-stone-900 px-4 py-2.5 text-sm text-stone-50 shadow-lg;
+  }
+  .reader-ledger-undo {
+    @apply -my-2 cursor-pointer rounded-full px-3 py-2 font-semibold text-primary-300 hover:text-primary-200;
+  }
+
+  /* Pull to refresh. The dot grows out of the top of the page as the finger
+     travels and firms up when the pull is far enough to fire. */
+  .reader-pull {
+    @apply flex items-end justify-center overflow-hidden opacity-0;
+    height: 0;
+  }
+  .reader-pull-dot {
+    @apply mb-2 size-2 rounded-full bg-stone-400 transition-transform;
+  }
+  .reader-pull.is-ready .reader-pull-dot {
+    @apply scale-150 bg-primary-600;
+  }
+  .reader-pull.is-running .reader-pull-dot {
+    @apply animate-pulse bg-primary-600;
+  }
+
+  /* Saved, as a shelf. Unread is chronological triage; saved is a small
+     collection you come back to, and "which one was that" is a different
+     question from "what's next". */
+  .reader-shelf {
+    @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-3;
+  }
+  .reader-card {
+    @apply flex flex-col rounded-xl border border-edge bg-canvas p-4 transition-colors hover:border-stone-400;
+  }
+
+  /* The keys, on a sheet somebody can actually reach (`?`). */
+  .shortcut-sheet {
+    @apply fixed inset-0 z-40 flex items-center justify-center bg-stone-900/40 p-4;
+  }
+  .shortcut-card {
+    @apply max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-edge bg-canvas p-5 shadow-lg;
+  }
+
+  /* A sheet up from the bottom of a phone (sheet_controller.js) — the scope
+     picker, and anything else that is a list of choices. Bottom because that
+     is where the thumb is. */
+  .sheet-backdrop {
+    @apply fixed inset-0 z-40 flex items-end bg-stone-900/40;
+  }
+  .sheet {
+    @apply max-h-[80vh] w-full rounded-t-2xl border-t border-edge bg-canvas pb-[env(safe-area-inset-bottom)] shadow-lg;
+  }
+  .sheet-grip {
+    @apply mx-auto my-2.5 h-1 w-9 rounded-full bg-stone-400;
   }
 
   /* The compact filter bar above the list: small text links with a dot

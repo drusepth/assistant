@@ -1,85 +1,118 @@
-<%# One line in the river (D-feed-reader). Google Reader's row, which
-    nothing since has improved on: source, headline, the first few words,
-    the age — one line, at a height where twenty fit on a screen. Unread
-    carries the weight; read recedes without disappearing.
+<%# One line in the river (D-feed-reader, D-reader-density). Google Reader's
+    row, which nothing since has improved on — source, headline, the first
+    few words, the age — with two changes the phone forced.
+
+    The first is that it no longer wraps. The old row was `flex-wrap` below
+    `sm` with a full-width verb line, which took its own line and then
+    wrapped again under source + age + chip + three verbs: ~96px to say
+    less than the 34px desktop row said. This one is a fixed height at every
+    width, and the face carries the identity that a 45%-truncated feed title
+    was carrying badly.
+
+    The second is that it opens *here*. A plain click expands the row in
+    place — the blurb, and the verbs at a size a thumb can hit — rather than
+    throwing the reader out to a new tab, which is what made a four-hundred
+    item river something you could only ever triage. A modified or middle
+    click still goes straight to the source, because that is somebody
+    stashing tabs and it is not our business to redirect them.
 
     Text and a link out, never the publisher's HTML (it's stripped at parse
     time), because the article belongs to the site that wrote it.
 
     Locals: item; optional filter — the list this row is being rendered
     under, so a row marked read while you are looking at the *unread* list
-    knows to leave it. %>
-<% url = reader_safe_url(item.url) %>
-<% filter = local_assigns.fetch(:filter, nil) %>
-<% read_path = read_feed_item_path(item, from: filter) %>
-<article id="<%= dom_id(item) %>" class="reader-line group"
-         data-controller="reader" data-reader-url-value="<%= read_path %>"
-         data-river-target="row">
-  <%# The source column: fixed and truncated, so four hundred headlines all
-      start at the same x. Below `lg` it moves into the meta line, where
-      there is room for it. %>
-  <span class="hidden w-32 shrink-0 truncate text-xs text-soft lg:block xl:w-44">
-    <%= item.source_name %>
-  </span>
+    knows to leave it; optional expanded — whether it comes back open, which
+    is how the row survives the re-render its own mark-read triggers. %>
+<%
+  url = reader_safe_url(item.url)
+  filter = local_assigns.fetch(:filter, nil)
+  expanded = local_assigns.fetch(:expanded, false)
+  chips = reader_chips(item, current_slug: params[:hobby])
+  blurb = item.blurb(320)
+%>
+<article id="<%= dom_id(item) %>"
+         class="reader-row group <%= "is-read" if item.read? %> <%= "is-open" if expanded %>"
+         data-controller="reader-row"
+         data-reader-row-read-url-value="<%= read_feed_item_path(item, from: "expand") %>"
+         data-reader-row-dismiss-url-value="<%= read_feed_item_path(item, from: filter) %>"
+         data-reader-row-read-value="<%= item.read? %>"
+         data-river-target="row" data-ledger-target="row"
+         data-ledger-id-param="<%= item.id %>">
 
-  <%# One line on a wide screen — the headline and as much of the opening
-      as fits, cut cleanly rather than wrapped. %>
-  <div class="min-w-0 flex-1 lg:truncate">
-    <% if item.saved? %>
-      <span class="text-sage-700" title="Saved" aria-label="Saved">★</span>
-    <% end %>
-    <h3 class="inline text-sm <%= item.read? ? "font-normal text-soft" : "font-semibold text-ink" %>">
-      <% if url %>
-        <%# Opening it is what marks it read — see reader_controller.js. %>
-        <%= link_to item.title, url, class: "hover:underline", title: item.title,
-              data: { action: item.read? ? nil : "reader#markRead" }, **ReaderHelper::OUTBOUND %>
-      <% else %>
-        <%= item.title %>
+  <%# The collapsed line. One fixed-height row at every width: face, the
+      headline over one small signal line, the age. %>
+  <div class="reader-line" data-action="click->reader-row#toggle">
+    <%= feed_face(item.feed) %>
+
+    <%# On a wide screen the source gets its own fixed column, so four
+        hundred headlines all start at the same x. Below `lg` it drops into
+        the signal line under the headline, where it costs no height. %>
+    <span class="reader-src"><%= reader_source(item.feed) %></span>
+
+    <div class="min-w-0 flex-1 lg:truncate">
+      <h3 class="reader-headline">
+        <% if item.saved? %><span class="text-sage-700" title="Saved" aria-label="Saved">★</span><% end %>
+        <% if url %>
+          <%= link_to item.title, url, class: "reader-title", title: item.title,
+                data: { action: "reader-row#openOrExpand" }, **ReaderHelper::OUTBOUND %>
+        <% else %>
+          <span class="reader-title"><%= item.title %></span>
+        <% end %>
+      </h3>
+      <%# The opening words trail the headline on a wide screen and are cut
+          rather than wrapped. On a phone they are not here at all: they live
+          in the expanded state, so the preview is paid for on the one item
+          being considered rather than on all forty. %>
+      <% if blurb.present? %>
+        <span class="reader-blurb"> — <%= blurb.truncate(200) %></span>
       <% end %>
-    </h3>
-    <%# The opening words are wide-screen furniture: on a phone the headline
-        is the whole row, and a two-line preview under every one of forty
-        items is the density this list exists to avoid. %>
-    <% if (blurb = item.blurb(200)).present? %>
-      <span class="hidden text-sm text-soft lg:inline"> — <%= blurb %></span>
-    <% end %>
+
+      <%# What the wide screen puts in its own columns, folded into one small
+          line on a phone. A chip only appears here when it discriminates
+          (see reader_chips) — a label on every row is texture. %>
+      <div class="reader-signal">
+        <span class="truncate"><%= reader_source(item.feed) %></span>
+        <span aria-hidden="true">·</span>
+        <span class="tabular-nums"><%= reader_age(item.published_on) %></span>
+        <% chips.each do |section| %>
+          <span class="chip <%= section_chip_classes(section) %>"><%= section.name %></span>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Dimmed at rest rather than absent: at `opacity-0` a pointer user
+        never learned these existed, and Task — the verb that turns reading
+        into doing, which is the whole point of the section — was the one
+        nobody discovered. %>
+    <div class="reader-verbs">
+      <%= render "reader/verbs", item: item, filter: filter %>
+    </div>
+
+    <time class="reader-age" datetime="<%= item.published_on.iso8601 %>"
+          title="<%= l(item.published_on, format: :long) %>">
+      <%= reader_age(item.published_on) %>
+    </time>
   </div>
 
-  <%# Below `lg` this line carries what the wide screen puts in its own
-      columns — source, age, hobby — in front of the verbs, so a phone row
-      is a headline and one small line rather than three. %>
-  <div class="reader-verbs">
-    <span class="min-w-0 max-w-[45%] truncate lg:hidden"><%= item.source_name %></span>
-    <span class="lg:hidden" aria-hidden="true">·</span>
-    <span class="lg:hidden"><%= reader_age(item.published_on) %></span>
-    <% item.feed.sections.each do |section| %>
-      <span class="chip <%= section_chip_classes(section) %> lg:hidden"><%= section.name %></span>
-    <% end %>
-    <span class="hidden flex-1 lg:block" aria-hidden="true"></span>
-    <% if item.saved? %>
-      <%= button_to "Unsave", unsave_feed_item_path(item), method: :patch,
-            class: "reader-verb", form_class: "contents" %>
-    <% else %>
-      <%= button_to "Save", save_feed_item_path(item), method: :patch,
-            class: "reader-verb", form_class: "contents" %>
-    <% end %>
-
-    <% if item.read? %>
-      <%= button_to "Unread", unread_feed_item_path(item), method: :patch,
-            class: "reader-verb", form_class: "contents" %>
-    <% else %>
-      <%= button_to "Read", read_path, method: :patch,
-            class: "reader-verb", form_class: "contents" %>
-    <% end %>
-
-    <%# The point of the whole section (docs/HOBBIES.md): a river that ends
-        in doing something, not in a better-groomed reading list. %>
-    <%= link_to "Task", new_task_path(title: item.title, section_ids: item.feed.section_ids),
-          class: "reader-verb" %>
+  <%# The expanded state: what you need to decide whether to read the thing,
+      and the verbs at a size a thumb can actually hit. Rendered with the row
+      rather than fetched, so opening is instant. %>
+  <%# Exactly one child, because the collapse is `grid-template-rows: 0fr`
+      and that sizes the *first* row only — a second child lands in an
+      implicit auto row and hangs out of the closed panel. %>
+  <div class="reader-expand" data-reader-row-target="panel">
+    <div class="min-h-0">
+      <p class="reader-expand-text">
+        <%= blurb.presence || "This feed sends headlines only — no summary came with this one." %>
+      </p>
+      <div class="reader-expand-verbs">
+        <% if url %>
+          <%= link_to url, class: "btn btn-primary reader-expand-open", **ReaderHelper::OUTBOUND do %>
+            Open<span aria-hidden="true"> ↗</span>
+          <% end %>
+        <% end %>
+        <%= render "reader/verbs", item: item, filter: filter, size: :lg %>
+      </div>
+    </div>
   </div>
-
-  <time class="hidden w-12 shrink-0 text-right text-xs tabular-nums text-soft lg:block"
-        datetime="<%= item.published_on.iso8601 %>" title="<%= l(item.published_on, format: :long) %>">
-    <%= reader_age(item.published_on) %>
-  </time>
 </article>
