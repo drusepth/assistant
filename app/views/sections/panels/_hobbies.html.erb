@@ -2,7 +2,7 @@
     any lenses exist the page leads with the capture question; after, each
     hobby is a card carrying its engagement signal and its own river, and
     capture shrinks to a tile at the end of the grid. %>
-<% if panel.cards.any? %>
+<% if panel.rows.any? %>
   <div>
     <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <h2 class="text-sm font-medium text-soft">Your hobbies</h2>
@@ -23,6 +23,12 @@
     </div>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <%= render partial: "sections/hobby_card", collection: panel.cards, as: :card %>
+      <%# Content first, then the two housekeeping tiles: everything the
+          hobbies you are actually using have to say, then the names you
+          wrote down but haven't filled, then the way to write another. %>
+      <% if panel.quiet_lenses.any? %>
+        <%= render "sections/hobby_explore", lenses: panel.quiet_lenses %>
+      <% end %>
       <%= render "sections/hobby_add_tile", hobbies: section %>
     </div>
   </div>

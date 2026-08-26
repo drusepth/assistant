@@ -179,18 +179,17 @@ river moves inside the cards.**
 
 ```
 Hobbies
-  Your hobbies
-  ┌─ Baking ────────────┐ ┌─ Guitar ────────────┐ ┌─ Hiking ───────────┐
-  │ ● next: class Thu   │ │ ● 2 open tasks      │ │ ● quiet — dive in  │
+  Your hobbies                            [ Everything · 41 ]  Manage feeds →
+  ┌─ Baking ────────────┐ ┌─ Guitar ────────────┐ ┌─ Other Interests ──┐
+  │ ● next: class Thu   │ │ ● 2 open tasks      │ │ feeds with no hobby│
   │ ─────────────────── │ │ ─────────────────── │ │ ────────────────── │
-  │ 3 newest unread     │ │ 3 newest unread     │ │ (no feeds yet)     │
-  │ …                   │ │ …                   │ │ + follow a source  │
-  │ 12 unread →         │ │ 4 unread →          │ │                    │
+  │ 3 newest unread     │ │ 3 newest unread     │ │ 3 newest unread    │
+  │ …                   │ │ …                   │ │ …                  │
+  │ 12 unread →         │ │ 4 unread →          │ │ 41 → File these →  │
   └─────────────────────┘ └─────────────────────┘ └────────────────────┘
-  + add a hobby
-  ┌─ Other Interests ───┐                  Everything →   Manage feeds →
-  │ 41 unread           │
-  └─────────────────────┘
+  ┌─ Explore other hobbies ──────────────┐ ┌─ Add another hobby ───────┐
+  │ Hiking · Drawing · Gaming · Swimming │ │ [ name a hobby ]   [Add]  │
+  └──────────────────────────────────────┘ └───────────────────────────┘
 ```
 
 Rules that keep this from becoming a second reader:
@@ -201,8 +200,16 @@ Rules that keep this from becoming a second reader:
   layout.
 - **Three items, not ten.** The card is a taste and a doorway. Depth is one
   click away in two directions: the hobby's own page, or `/reader`.
-- **A hobby with no feeds gets the paste field**, not an empty box — the
-  invitation that lives in `_hobby_reader` today, per card.
+- **A card is for a hobby with something in it.** A household names hobbies
+  far faster than it fills them, so most of a real instance's grid was cards
+  saying "nothing planned yet" — which buried the two or three that had
+  something to show. Those become one line each in a single **Explore other
+  hobbies** card: still a doorway, at the size a doorway needs. "Something in
+  it" means feeds or engagement, never *unread*, because a card that vanished
+  the moment you finished reading it would rearrange the grid as you use it.
+- **No paste field on the hub.** Following a source belongs on a hobby's own
+  page, where somebody has already decided to spend time on it; here it was
+  nine copies of the same form.
 - **`.reader-line` density is reused**, not reinvented. The rows are the same
   partial at a smaller item count.
 

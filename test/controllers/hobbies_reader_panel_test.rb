@@ -15,22 +15,10 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     assert_match(/What do you do for fun/i, response.body)
   end
 
-  test "a hobby with no feeds invites a first source in its own card" do
-    lens = Hobbies::Lens.find_or_create!("Woodworking")
-
-    get section_path("hobbies")
-
-    assert_response :success
-    assert_match "Woodworking", response.body
-    assert_select "[data-hobby-card=?] summary", lens.slug, text: "+ follow a source"
-    assert_select "[data-hobby-card=?] form[action=?] input[name='feed[section_ids][]'][value=?]",
-      lens.slug, feeds_path, lens.id.to_s
-  end
-
-  # A household names hobbies faster than it follows sources, so the empty
-  # case is the common one — and nine open paste forms stacked down the page
-  # read as a broken screen rather than an invitation.
-  test "many empty hobbies stay closed invitations, and the live ones come first" do
+  # A household names hobbies far faster than it fills them, so the empty
+  # case is the common one — and a grid of cards saying "nothing planned
+  # yet" buries the two that have something to show.
+  test "hobbies with nothing in them share one Explore card instead of one each" do
     quiet = 5.times.map { |n| Hobbies::Lens.find_or_create!("Quiet #{n}") }
     live = Hobbies::Lens.find_or_create!("Woodworking")
     users(:one).feeds.create!(url: "https://example.com/wood.xml", sections: [ live ])
@@ -41,14 +29,58 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     get section_path("hobbies")
 
     page = Nokogiri::HTML(response.body)
-    assert_equal quiet.size, page.css("[data-hobby-card] details summary").size,
-      "every empty card's form is behind a disclosure"
-    assert_empty page.css("[data-hobby-card] input[type=url]").reject { |node| node.ancestors("details").any? },
-      "no paste field is open on arrival"
+    assert_equal [ live.slug, catch_all.slug ], page.css("[data-hobby-card]").map { |node| node["data-hobby-card"] },
+      "only the hobbies with something in them get a card"
 
-    slugs = page.css("[data-hobby-card]").map { |node| node["data-hobby-card"] }
-    assert_equal live.slug, slugs.first, "the card with something in it leads"
-    assert_equal catch_all.slug, slugs.last
+    explore = page.at_css("[data-hobby-explore]")
+    assert explore
+    assert_equal quiet.map(&:name).sort, explore.css("a").map { |link| link.text.strip }.sort
+    quiet.each { |lens| assert_equal 1, explore.css("a[href='#{section_path(lens.slug)}']").size }
+  end
+
+  # The hub is the high-level view; pasting a URL belongs on the page of a
+  # hobby somebody has already decided to spend time on.
+  test "the hub carries no follow-a-source field at all" do
+    Hobbies::Lens.find_or_create!("Woodworking")
+
+    get section_path("hobbies")
+
+    assert_select "[data-hobby-card] input[type=url]", false
+    assert_select "[data-hobby-explore] input[type=url]", false
+    assert_no_match(/follow a source/, response.body)
+  end
+
+  # A card that vanished the moment you finished reading would make the grid
+  # rearrange itself as you use it.
+  test "a hobby keeps its card once it has feeds, even with nothing unread" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    users(:one).feeds.create!(url: "https://example.com/wood.xml", sections: [ lens ])
+      .feed_items.create!(guid: "1", title: "Bench hooks", read_at: Time.current)
+
+    get section_path("hobbies")
+
+    assert_select "[data-hobby-card=?]", lens.slug
+    assert_match(/All caught up here/, response.body)
+  end
+
+  test "a hobby with a task but no feeds keeps its card, and shows no river" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    users(:one).tasks.create!(title: "Finish the bench hook").sections = [ lens ]
+
+    get section_path("hobbies")
+
+    assert_select "[data-hobby-card=?]", lens.slug
+    assert_match(/1 open task/, response.body)
+    assert_select "[data-hobby-explore]", false
+  end
+
+  test "an empty catch-all is not a card either" do
+    Hobbies::Lens.find_or_create!("Woodworking")
+    Hobbies::OtherInterests.find_or_create!
+
+    get section_path("hobbies")
+
+    assert_select "[data-hobby-card=?]", Hobbies::OtherInterests::SLUG, false
   end
 
   test "a hobby's card carries its newest unread and a link into that hobby's river" do
