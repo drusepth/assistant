@@ -321,4 +321,12 @@ And one rule about *reach* rather than fit:
   run page and any page hosting a conversation. Assistant turns go through
   `chat_body` (`ChatHelper`) — a deliberately tiny markdown subset over
   escaped text; user turns are printed verbatim.
+- Tooltips carry state, never a description (D-nav-signals). A bubble that
+  restates the label it is attached to is a no-op beside a labelled control
+  and a bare label beside an unlabelled one, so `data-tooltip-detail-value`
+  gets what is behind the door right now — a date, else a count, else
+  nothing at all, and never a filler line. `badge` is a state worth acting
+  on ("Overdue"), never a category name ("Section"). Anything hoverable that
+  loses its visible text (the collapsed rail) still needs its own
+  `aria-label`: a tooltip is not an accessible name.
 - Rebuild CSS with `bin/rails tailwindcss:build` (or `bin/dev` watches).
