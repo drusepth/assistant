@@ -1,6 +1,8 @@
 require "test_helper"
 
 class HobbiesControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup { sign_in_as users(:one) }
 
   test "create adds a hobby lens and returns to the Hobbies page" do
@@ -43,6 +45,36 @@ class HobbiesControllerTest < ActionDispatch::IntegrationTest
     assert_not Section.exists?(lens.id)
     assert_equal [ sections(:hobbies) ], task.reload.sections.to_a
     assert_not AccessGrant.exists?(grant.id)
+  end
+
+  # D-hobby-feeds §4: hobbies arrive over months, so a new one is a question
+  # about every feed already followed.
+  test "a new hobby asks which of the feeds you already follow belong to it" do
+    users(:one).feeds.create!(url: "https://example.com/wood.xml")
+
+    assert_enqueued_with(job: MapFeedsJob) { post hobbies_path, params: { name: "Woodworking" } }
+  end
+
+  test "with no feeds, or no model, a new hobby asks nobody anything" do
+    assert_no_enqueued_jobs(only: MapFeedsJob) { post hobbies_path, params: { name: "Woodworking" } }
+
+    users(:one).feeds.create!(url: "https://example.com/wood.xml")
+    users(:one).household.model_profile.update!(api_key: "")
+    assert_no_enqueued_jobs(only: MapFeedsJob) { post hobbies_path, params: { name: "Baking" } }
+  end
+
+  # Taggings cascade with the section, so removing a hobby can leave a feed
+  # with no lens at all — and the hub rests on every feed having one.
+  test "removing a hobby drops its feeds into the catch-all rather than stranding them" do
+    lens = Hobbies::Lens.find_or_create!("Guitar")
+    other_hobby = Hobbies::Lens.find_or_create!("Baking")
+    stranded = users(:one).feeds.create!(url: "https://example.com/guitar.xml", sections: [ lens ])
+    kept = users(:one).feeds.create!(url: "https://example.com/both.xml", sections: [ lens, other_hobby ])
+
+    delete hobby_path(lens)
+
+    assert_equal [ Hobbies::OtherInterests.find ], stranded.reload.sections.to_a
+    assert_equal [ other_hobby ], kept.reload.sections.to_a, "a feed that still has a hobby is left alone"
   end
 
   test "seeded sections cannot be destroyed" do

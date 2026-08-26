@@ -15,15 +15,27 @@ module Sections
       panel_class(section)&.new(section: section, viewer: viewer)
     end
 
-    # By slug first. Failing that, a parent may claim its user-created
-    # lenses as a class — `Sections::Panels::PeopleLens` for every group
-    # under People (D-people-circles) — since those slugs are named by the
-    # user and can't be known here. A parent that declares no such class
-    # keeps the old answer: no panel, generic page.
+    # By slug first. Failing that, a parent may claim its user-created lenses
+    # as one class, since those slugs are named by the user and can't be
+    # known here: `Panels::PeopleLens` for every group under People
+    # (D-people-circles), `Panels::HobbiesLens` for every hobby's river
+    # (D-hobby-feeds). A parent that declares no such class keeps the old
+    # answer: no panel, generic page.
+    #
+    # Two branches arrived at this fallback for their own section in the same
+    # week, which is the argument for it being here rather than in either.
     def self.panel_class(section)
-      "Sections::Panels::#{section.slug.camelize}".safe_constantize ||
-        (section.parent && "Sections::Panels::#{section.parent.slug.camelize}Lens".safe_constantize)
+      constant(section.slug) ||
+        (section.parent && constant("#{section.parent.slug}_lens"))
     end
+
+    # Lens slugs are `parameterize`d, so they hyphenate ("board-games") where
+    # a constant needs underscores — `camelize` alone leaves "Board-games"
+    # and silently finds nothing.
+    def self.constant(slug)
+      "Sections::Panels::#{slug.tr("-", "_").camelize}".safe_constantize
+    end
+    private_class_method :constant
 
     attr_reader :section, :viewer
 
@@ -41,6 +53,9 @@ module Sections
     # hides the roster grid this way — the Address Book is the roster (D-people-dashboard).
     def hidden_browse = []
 
-    def partial = "sections/panels/#{section.slug}"
+    # Named after the panel rather than the section: they are the same
+    # string for every seeded section (`Panels::Health` → `_health`), and a
+    # lens panel serves many sections at once.
+    def partial = "sections/panels/#{self.class.name.demodulize.underscore}"
   end
 end

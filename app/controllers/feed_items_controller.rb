@@ -27,14 +27,27 @@ class FeedItemsController < ApplicationController
     def act
       yield
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace(@item, partial: row_partial, locals: { item: @item }) }
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(row_id, partial: row_partial, locals: { item: @item })
+        end
         format.html { redirect_back fallback_location: reader_path }
       end
     end
 
+    # The same verbs act on two surfaces now: the river, and the hobby cards
+    # on the Hobbies hub (D-hobby-feeds). `surface` says which row asked, so
+    # one code path re-renders the right shape into the right id — a river
+    # row rendered into a hub card would be a full-width list line inside a
+    # three-line taste.
+    def hub? = params[:surface] == "hub"
+
+    def row_id = hub? ? helpers.dom_id(@item, :hub) : helpers.dom_id(@item)
+
     # `from` is the filter the row was rendered under, so the row knows
     # whether it still belongs where it is.
     def row_partial
+      return "sections/hobby_story" if hub?
+
       @item.read? && params[:from] == "unread" ? "reader/dismissed" : "reader/item"
     end
 end

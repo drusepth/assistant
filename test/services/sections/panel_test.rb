@@ -14,8 +14,24 @@ class Sections::PanelTest < ActiveSupport::TestCase
     assert_nil Sections::Panel.for(sections(:rights), users(:one))
   end
 
-  test "a custom hobby lens slug never resolves a panel" do
-    lens = Hobbies::Lens.find_or_create!("Board games")
+  # A user-created lens has a slug no class can be named after, so it falls
+  # back to its parent's lens panel (D-hobby-feeds) — that is how every hobby
+  # page gets a river without the controller learning about hobbies. The
+  # hyphen matters: lens slugs are parameterized, and `camelize` alone leaves
+  # "Board-games", which resolves to nothing at all.
+  test "a custom lens falls back to its parent's lens panel" do
+    hobby = Hobbies::Lens.find_or_create!("Board games")
+    panel = Sections::Panel.for(hobby, users(:one))
+
+    assert_equal "board-games", hobby.slug
+    assert_instance_of Sections::Panels::HobbiesLens, panel
+    assert_equal "sections/panels/hobbies_lens", panel.partial
+  end
+
+  # A parent that declares no lens class keeps the old answer.
+  test "a lens under a parent with no lens panel gets nothing" do
+    lens = Sections::Lens.find_or_create!("money", "Side hustle", fallback_slug: "money-lens")
+
     assert_nil Sections::Panel.for(lens, users(:one))
   end
 

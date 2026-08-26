@@ -5,12 +5,18 @@
 # code. Like tools, watchers are first-party only and this explicit slug
 # list is the whole registry.
 #
-# One sanctioned exception to SQL-only (D-career-web): job_scout fetches the user's
-# configured feeds and ranks postings with one model call. The write-surface
-# discipline is untouched — suggestions only, propose-don't-dispose.
+# Three sanctioned exceptions to SQL-only, each on the same terms — one
+# call, over a handful of rows rather than a firehose, for a judgment SQL
+# genuinely cannot make. job_scout (D-career-web) ranks fresh postings from
+# the user's configured feeds; subject_scout (docs/EDUCATION_PLAN.md §7)
+# covers the lenses its deterministic affinity map doesn't know;
+# hobby_from_feeds (D-hobby-feeds) reads the feeds nothing has filed and
+# asks whether they share a subject worth naming. All three leave the
+# write-surface discipline untouched: suggestions only, propose-don't-dispose.
 module Watcher
   SLUGS = %w[
     checkup_cadence stay_in_touch birthday_radar renewal_radar goal_stall neglected_hobby
+    hobby_from_feeds
     reviews_due subject_scout subject_stall rusty_radar pace_check
     same_day_sync stale_task on_this_day
     stub_anomaly raise_cadence interview_ahead application_follow_up real_terms_drift job_scout

@@ -13,7 +13,8 @@
 <% filter = local_assigns.fetch(:filter, nil) %>
 <% read_path = read_feed_item_path(item, from: filter) %>
 <article id="<%= dom_id(item) %>" class="reader-line group"
-         data-controller="reader" data-reader-url-value="<%= read_path %>">
+         data-controller="reader" data-reader-url-value="<%= read_path %>"
+         data-river-target="row">
   <%# The source column: fixed and truncated, so four hundred headlines all
       start at the same x. Below `lg` it moves into the meta line, where
       there is room for it. %>
@@ -30,7 +31,7 @@
     <h3 class="inline text-sm <%= item.read? ? "font-normal text-soft" : "font-semibold text-ink" %>">
       <% if url %>
         <%# Opening it is what marks it read — see reader_controller.js. %>
-        <%= link_to item.title, url, class: "hover:underline",
+        <%= link_to item.title, url, class: "hover:underline", title: item.title,
               data: { action: item.read? ? nil : "reader#markRead" }, **ReaderHelper::OUTBOUND %>
       <% else %>
         <%= item.title %>

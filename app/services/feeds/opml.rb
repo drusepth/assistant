@@ -87,6 +87,7 @@ module Feeds
       added = 0
       skipped = 0
       lenses = []
+      imported = []
 
       found.each do |entry|
         feed = user.feeds.new(url: entry[:url], label: entry[:label]&.truncate(200))
@@ -96,11 +97,19 @@ module Feeds
         if feed.save
           added += 1
           lenses |= [ lens.name ] if lens
+          # An import is the one place feeds arrive by the dozen, so this
+          # deliberately does *not* ask the model once per row: whatever no
+          # folder claimed lands in the catch-all now and Hobbies::MapFeeds
+          # claims it in batches afterwards (D-hobby-feeds).
+          imported << feed
           RefreshFeedJob.perform_later(feed)
         else
           skipped += 1
         end
       end
+
+      ::Hobbies::OtherInterests.absorb!(imported)
+      ::Hobbies::MapFeeds.enqueue(user)
 
       Result.new(added: added, skipped: skipped, lenses: lenses, error: nil)
     end

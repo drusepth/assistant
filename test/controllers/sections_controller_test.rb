@@ -244,16 +244,22 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
 
     get section_path("hobbies")
     assert_response :success
-    assert_match "Open mic night", response.body
-    assert_match "1 open task", response.body
+    # One short signal beside the name (D-hobby-feeds): the date, with the
+    # event's own title on hover. The full picture is on the lens page.
+    assert_select "[data-hobby-card=?] [title=?]", lens.slug, "Open mic night"
+    assert_match event.starts_at.strftime("%b %-d"), response.body
   end
 
-  test "a quiet hobby card invites diving back in" do
-    Hobbies::Lens.find_or_create!("Sandboarding")
+  # A hobby with nothing in it is a link in the Explore card rather than a
+  # card of its own (D-hobby-feeds); the rule is exercised properly in
+  # hobbies_reader_panel_test.
+  test "a quiet hobby is somewhere to go, not a card" do
+    lens = Hobbies::Lens.find_or_create!("Sandboarding")
 
     get section_path("hobbies")
     assert_response :success
-    assert_match "Nothing planned yet", response.body
+    assert_select "[data-hobby-explore] a[href=?]", section_path(lens.slug), text: lens.name
+    assert_select "[data-hobby-card=?]", lens.slug, false
   end
 
   test "a hobby lens page gets the parent's tools and a remove affordance" do

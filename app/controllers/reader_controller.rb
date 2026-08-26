@@ -14,6 +14,9 @@ class ReaderController < ApplicationController
     @feeds = Current.user.feeds.includes(:sections).order(:created_at)
     @lenses = Section.find_by(slug: "hobbies")&.children&.where(id: @feeds.flat_map(&:section_ids))&.order(:name) || []
     @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
+    # Only while there is nothing to read: a shelf above a river is clutter
+    # (D-hobby-feeds §7.1).
+    @starters = Feeds::Starters.groups if @feeds.none?
   end
 
   # "Mark everything I'm looking at as read" — the verb that keeps a river
@@ -30,7 +33,7 @@ class ReaderController < ApplicationController
     # that stamp is what keeps a feed nobody reads from being polled as if
     # somebody did — so do it here, in one statement.
     Feed.where(id: feed_ids).update_all(last_read_at: Time.current) if feed_ids.any?
-    redirect_back fallback_location: reader_path,
+    redirect_to return_to_path(request.referer.presence || reader_path),
       notice: count.positive? ? "#{helpers.pluralize(count, "item")} marked read." : "Nothing left to mark read."
   end
 

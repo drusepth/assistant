@@ -9,10 +9,17 @@
 # "Check all", an OPML import — hands the work to a job: a stranger's server
 # that hangs must never hold a web worker for half a minute.
 class FeedsController < ApplicationController
-  before_action :set_feed, only: %i[ edit update destroy refresh ]
+  before_action :set_feed, only: %i[ edit update destroy refresh refile ]
 
   def index
     @feeds = Current.user.feeds.includes(:sections).order(:created_at)
+    # The hobbies a stray feed can be filed under, and how many strays there
+    # are (D-hobby-feeds) — the catch-all itself is never an option, since
+    # it is where a feed lands rather than somewhere to put one.
+    @lenses = Hobbies::MapFeeds.askable_lenses
+    unfiled = @feeds.to_a.select { |feed| helpers.feed_unfiled?(feed) }
+    @unfiled_count = unfiled.size
+    @feeds = unfiled if params[:unfiled]
     @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
     @feed = Current.user.feeds.new
   end
@@ -27,6 +34,10 @@ class FeedsController < ApplicationController
 
     if @feed.save
       RefreshFeedJob.perform_later(@feed)
+      # Which hobbies is this? Asked in a job, or not at all on an instance
+      # with no model — either way the feed has a home before this request
+      # ends (D-hobby-feeds).
+      Feeds::Filing.call(@feed)
       redirect_to return_to_path(feeds_path), notice: "Following #{@feed.display_title}."
     else
       redirect_to return_to_path(feeds_path), alert: @feed.errors.full_messages.to_sentence
@@ -40,7 +51,10 @@ class FeedsController < ApplicationController
 
   def update
     if @feed.update(feed_params.except(:url))
-      redirect_to feeds_path, notice: "#{@feed.display_title} updated."
+      # `return_to` because this is also the filing picker on the feed list,
+      # and a correction made in a filtered list should hand that list back
+      # rather than the whole one.
+      redirect_to return_to_path(feeds_path), notice: "#{@feed.display_title} updated."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -57,6 +71,17 @@ class FeedsController < ApplicationController
   def refresh
     RefreshFeedJob.perform_later(@feed)
     redirect_back fallback_location: feeds_path, notice: "Checking #{@feed.display_title}…"
+  end
+
+  # "Re-file": ask the model again about a feed whose hobbies look wrong —
+  # or about one that was followed before a model was configured.
+  def refile
+    notice = if Feeds::Filing.refile(@feed)
+      "Re-filing #{@feed.display_title}…"
+    else
+      "No model is configured, so feeds are filed by hand — pick a hobby below."
+    end
+    redirect_back fallback_location: feeds_path, notice: notice
   end
 
   def refresh_all
@@ -80,10 +105,27 @@ class FeedsController < ApplicationController
     redirect_to feeds_path, notice: import_notice(result)
   end
 
+  # The starter shelf: whatever the user ticked, through the ordinary OPML
+  # path. Nothing here is followed unless it was ticked (D-hobby-feeds §7.1).
+  def starters
+    # A form with nothing ticked posts an empty string, not an empty list.
+    urls = Array(params[:urls]).map(&:to_s).reject(&:blank?)
+    return redirect_to feeds_path, alert: "Pick at least one to follow." if urls.empty?
+
+    result = Feeds::Starters.import(Current.user, urls, create_lenses: params[:create_lenses] == "1")
+    return redirect_to feeds_path, alert: result.error unless result.ok?
+
+    # Back where the shelf was — it appears on the reader, the feed list and
+    # the Hobbies hub, and landing somewhere else after ticking two boxes is
+    # its own small betrayal.
+    redirect_to return_to_path(feeds_path), notice: import_notice(result)
+  end
+
   private
     def set_feed
       @feed = Current.user.feeds.find(params[:id])
     end
+
 
     def import_notice(result)
       parts = [ "#{helpers.pluralize(result.added, "feed")} added" ]

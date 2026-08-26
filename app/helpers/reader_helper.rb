@@ -45,6 +45,14 @@ module ReaderHelper
     end
   end
 
+  # A feed nothing has claimed: it sits in the catch-all, or (briefly, while
+  # a classify job is in flight) nowhere at all. The feed list uses this to
+  # decide which rows get a filing picker and a Re-file verb — the two
+  # affordances that do nothing for a feed already filed under a hobby.
+  def feed_unfiled?(feed)
+    feed.sections.empty? || feed.sections.all? { |section| Hobbies::OtherInterests.catch_all?(section) }
+  end
+
   # An item's link goes to a stranger's site: new tab, no window handle back
   # into the app, and no referrer telling them which of our pages sent you.
   OUTBOUND = { target: "_blank", rel: "noopener noreferrer nofollow" }.freeze

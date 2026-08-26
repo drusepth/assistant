@@ -13,6 +13,11 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     Nokogiri::HTML(response.body).css("article h3").map { |node| node.text.strip }
   end
 
+  # The Hobbies row in the rail, which is where the unread pile rides now.
+  def hobbies_rail_link(page)
+    page.css("aside a[href='#{section_path("hobbies")}']").first
+  end
+
   def item(feed, title, **attributes)
     feed.feed_items.create!(
       guid: "#{feed.id}-#{title.parameterize}", title: title,
@@ -117,15 +122,21 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='task[title]'][value=?]", "Build a shop-made bench hook"
   end
 
-  test "the rail carries the unread count" do
+  # The reader is no longer a rail destination of its own (D-hobby-feeds):
+  # the river is what makes Hobbies different every day, so the pile rides
+  # that row.
+  test "the rail carries the unread count on Hobbies, and has no Reader row" do
     item(@feed, "Unread one")
     item(@feed, "Unread two")
     item(@feed, "Already read", read_at: Time.current)
 
     get reader_path
 
-    rail = Nokogiri::HTML(response.body).css("a[href='#{reader_path}']").first
-    assert_equal "2", rail.text.scan(/\d+/).last, "the pile behind the link is the reason to open it"
+    page = Nokogiri::HTML(response.body)
+    assert_empty page.css("a[href='#{reader_path}']").select { |link| link.ancestors("aside").any? },
+      "the reader is reached from the hub now, not from a rail row"
+    assert_equal "2", hobbies_rail_link(page).text.scan(/\d+/).last,
+      "the pile behind the row is the reason to open it"
   end
 
   test "a paused feed's unread items are not counted in the rail" do
@@ -134,8 +145,7 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
 
     get reader_path
 
-    rail = Nokogiri::HTML(response.body).css("a[href='#{reader_path}']").first
-    assert_no_match(/\d/, rail.text)
+    assert_no_match(/\d/, hobbies_rail_link(Nokogiri::HTML(response.body)).text)
   end
 
   test "marking everything read stamps the feeds, so the polling stays polite" do
@@ -164,6 +174,20 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match(/no feeds yet/i, response.body)
+  end
+
+  # No JS suite in this repo, so the assertion is the wiring — the same
+  # convention the mark-read-on-open controller has had since it shipped.
+  test "the river is wired for the keyboard, rows and all" do
+    item(@feed, "Bench hooks")
+
+    get reader_path
+
+    page = Nokogiri::HTML(response.body)
+    list = page.at_css("[data-controller=river]")
+    assert list, "j/k/o/m/s need a scope to run in"
+    assert list.css("[data-river-target=row]").any?
+    assert_match(/mark read/, page.at_css("kbd").parent.text)
   end
 
   test "the river pages rather than rendering everything at once" do

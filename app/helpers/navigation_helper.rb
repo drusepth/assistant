@@ -4,7 +4,6 @@ module NavigationHelper
     "Today" => { subtitle: "Current agenda", badge: "Today", shortcut: "⌘2" },
     "Calendar" => { subtitle: "Schedule & events", shortcut: "⌘3" },
     "Tasks" => { subtitle: "To-do items & priorities", shortcut: "⌘4" },
-    "Reader" => { subtitle: "Feeds from your hobbies" },
     "Address Book" => { subtitle: "Contacts & directory", badge: "Vault" },
     "Photos" => { subtitle: "Photo library & memories", badge: "Vault" },
     "Documents" => { subtitle: "Files & attachments", badge: "Vault" },
@@ -40,23 +39,35 @@ module NavigationHelper
     data[:tooltip_shortcut_value] = shortcut_text if shortcut_text.present?
 
     link_to path, class: "flex items-center gap-2.5 rounded-full px-3 py-2 text-sm #{classes}", data: data do
-      parts = [ icon(icon_name, css_class: "size-4.5 shrink-0"), tag.span(name, class: "nav-label") ]
-      if count.to_i.positive?
-        count_classes = active ? "bg-primary-50/25 text-primary-50" : "bg-canvas text-soft"
-        parts << tag.span(count, class: "nav-label ml-auto rounded-full px-1.5 text-xs tabular-nums #{count_classes}")
-      end
-      safe_join(parts)
+      safe_join([
+        icon(icon_name, css_class: "size-4.5 shrink-0"),
+        tag.span(name, class: "nav-label"),
+        nav_count(count, active)
+      ].compact)
     end
   end
 
+  # The pile behind a row, drawn the same way wherever it rides. Zero doesn't
+  # draw, and it carries `nav-label` so it disappears with the labels when
+  # the rail is collapsed rather than sitting alone beside an icon.
+  def nav_count(count, active)
+    return nil unless count.to_i.positive?
+
+    classes = active ? "bg-primary-50/25 text-primary-50" : "bg-canvas text-soft"
+    tag.span(count, class: "nav-label ml-auto rounded-full px-1.5 text-xs tabular-nums #{classes}")
+  end
+
   # One count per page render, memoized: the rail is on every page, and the
-  # reader's unread pile is not worth a query per link.
+  # reader's unread pile is not worth a query per link. It rides the Hobbies
+  # row rather than a Reader row of its own (D-hobby-feeds) — the river is
+  # what makes that section different every day, not a destination beside it.
   def reader_unread_count
     @reader_unread_count ||= FeedItem.where(feed: Current.user.feeds.active).unread.count
   end
 
   def section_nav_link(section)
     active = request.path == section_path(section.slug)
+    count = reader_unread_count if section.slug == "hobbies"
     classes = active ?
       "bg-primary-600 text-primary-50 font-semibold" :
       "text-ink hover:bg-canvas"
@@ -76,7 +87,7 @@ module NavigationHelper
       # sections apart, and a ragged column reads as broken.
       tag.span(class: "flex w-4.5 shrink-0 justify-center") do
         tag.span("", class: "size-2 rounded-full #{section_dot_classes(section)}")
-      end + tag.span(section.name, class: "nav-label")
+      end + tag.span(section.name, class: "nav-label") + nav_count(count, active).to_s
     end
   end
 

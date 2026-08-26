@@ -1,0 +1,27 @@
+<%# The hobbies with nothing in them yet (D-hobby-feeds), collected into one
+    card instead of one card each.
+
+    A household names hobbies far faster than it fills them, so on a real
+    instance most of the grid was cards saying "nothing planned yet" — which
+    buried the two or three that had something to show and made the page
+    read as empty when it wasn't. They are still worth listing: a name you
+    wrote down is a doorway you meant to walk through, and the link is what
+    the card was really for.
+
+    Locals: lenses. %>
+<div class="card p-5" data-hobby-explore>
+  <p class="text-sm font-semibold text-ink">Explore other hobbies</p>
+  <p class="mt-1 text-xs text-soft">
+    Nothing here yet — open one to plan a session, or follow the sites behind it.
+  </p>
+  <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+    <% lenses.each do |lens| %>
+      <li>
+        <%= link_to section_path(lens.slug), class: "flex items-center gap-2 text-sm text-ink hover:underline" do %>
+          <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(lens) %>" aria-hidden="true"></span>
+          <%= lens.name %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</div>

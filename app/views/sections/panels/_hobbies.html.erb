@@ -1,11 +1,37 @@
-<%# Hobby identity (D25): before any lenses exist the page leads with the
-    capture question; after, each hobby is a card with engagement signal
-    and capture shrinks to a tile at the end of the grid. %>
-<% if summaries.any? %>
+<%# Hobby identity (D25) with the reader folded in (D-hobby-feeds): before
+    any lenses exist the page leads with the capture question; after, each
+    hobby is a card carrying its engagement signal and its own river, and
+    capture shrinks to a tile at the end of the grid. %>
+<% if panel.rows.any? %>
   <div>
-    <h2 class="mb-3 text-sm font-medium text-soft">Your hobbies</h2>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <%= render partial: "sections/hobby_card", collection: summaries, as: :summary %>
+    <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <h2 class="text-sm font-medium text-soft">Your hobbies</h2>
+      <div class="flex items-center gap-3 text-xs">
+        <%# The everything-view: the dense chronological river across every
+            feed. It used to be a rail destination of its own, so this link
+            is now the whole way in — a small text link would be a
+            discoverability regression dressed as tidiness. %>
+        <%= link_to reader_path, class: "btn btn-secondary btn-sm" do %>
+          <%= icon(:rss, css_class: "size-4 shrink-0") %>
+          <span>Everything</span>
+          <% if panel.unread_count.positive? %>
+            <span class="rounded-full bg-canvas px-1.5 tabular-nums"><%= panel.unread_count %></span>
+          <% end %>
+        <% end %>
+        <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
+      </div>
+    </div>
+    <%# `items-start` so a card with one story is the height of one story: with
+        stretched rows, the shortest card in a row wears the tallest card's
+        whitespace, which is the same wasted space the signal line was. %>
+    <div class="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <%= render partial: "sections/hobby_card", collection: panel.cards, as: :card %>
+      <%# Content first, then the two housekeeping tiles: everything the
+          hobbies you are actually using have to say, then the names you
+          wrote down but haven't filled, then the way to write another. %>
+      <% if panel.quiet_lenses.any? %>
+        <%= render "sections/hobby_explore", lenses: panel.quiet_lenses %>
+      <% end %>
       <%= render "sections/hobby_add_tile", hobbies: section %>
     </div>
   </div>
@@ -13,7 +39,9 @@
   <%= render "sections/hobby_capture", hobbies: section %>
 <% end %>
 
-<%# The reader (D-feed-reader): the one thing on this page that is
-    different every day. It sits under the lenses because a hobby is what
-    you do, not what you read about it. %>
-<%= render "sections/hobby_reader", panel: panel %>
+<% if panel.starters.present? %>
+  <div class="card p-5">
+    <%= render "feeds/starters", starters: panel.starters,
+          heading: "Nothing to read here yet" %>
+  </div>
+<% end %>
