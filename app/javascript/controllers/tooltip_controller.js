@@ -1,13 +1,23 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Instant, styled JS tooltips for navigation and action triggers.
-// Renders rich floating UI with title, subtext, badges, and shortcut key hints.
+// Instant, styled tooltips for navigation and action triggers.
+//
+// The bubble carries the trigger's name and, when there is one, a `detail`
+// string: what is waiting behind that door right now (a date, a count, a
+// pile). Deliberately not a description — a tooltip that restates the label
+// is a no-op beside a labelled row and a bare label beside a collapsed one.
+//
+// The title is `aria-hidden` inside the bubble because the trigger's own
+// accessible name already says it; the bubble is wired up as the trigger's
+// description instead, so a screen reader hears the state and not the name
+// twice.
+let tooltipSequence = 0
+
 export default class extends Controller {
   static values = {
     title: String,
-    subtitle: String,
+    detail: String,
     badge: String,
-    shortcut: String,
     placement: { type: String, default: "right" }
   }
 
@@ -41,25 +51,20 @@ export default class extends Controller {
     const tooltip = document.createElement("div")
     tooltip.className = "tooltip-bubble fixed z-50 pointer-events-none opacity-0 scale-95 transition-all duration-100 ease-out"
     tooltip.setAttribute("role", "tooltip")
+    tooltip.id = `tooltip-${++tooltipSequence}`
 
     let innerHTML = `<div class="tooltip-card flex flex-col gap-1 rounded-xl bg-stone-900 px-3 py-2 text-stone-100 shadow-xl border border-stone-700/60 max-w-xs">`
-    
-    // Top row: Title + optional Kbd shortcut
-    innerHTML += `<div class="flex items-center justify-between gap-3 min-w-[120px]">`
-    innerHTML += `<span class="font-semibold text-xs text-stone-100 tracking-wide">${this.escapeHtml(title)}</span>`
-    if (this.shortcutValue) {
-      innerHTML += `<kbd class="inline-flex items-center justify-center rounded px-1.5 py-0.5 font-mono text-[10px] font-medium bg-stone-800 text-stone-300 border border-stone-700/70 shadow-xs">${this.escapeHtml(this.shortcutValue)}</kbd>`
-    }
-    innerHTML += `</div>`
 
-    // Subtitle / Badge row if present
-    if (this.subtitleValue || this.badgeValue) {
+    innerHTML += `<span class="font-semibold text-xs text-stone-100 tracking-wide min-w-[120px]" aria-hidden="true">${this.escapeHtml(title)}</span>`
+
+    // The state row: a chip for something that wants doing, then the line.
+    if (this.detailValue || this.badgeValue) {
       innerHTML += `<div class="flex items-center gap-2 pt-0.5 text-[11px] leading-tight text-stone-400">`
       if (this.badgeValue) {
-        innerHTML += `<span class="inline-flex items-center rounded-full bg-primary-500/20 px-1.5 py-0.5 text-[10px] font-medium text-primary-300 border border-primary-500/30">${this.escapeHtml(this.badgeValue)}</span>`
+        innerHTML += `<span class="inline-flex shrink-0 items-center rounded-full bg-primary-500/20 px-1.5 py-0.5 text-[10px] font-medium text-primary-300 border border-primary-500/30">${this.escapeHtml(this.badgeValue)}</span>`
       }
-      if (this.subtitleValue) {
-        innerHTML += `<span class="truncate">${this.escapeHtml(this.subtitleValue)}</span>`
+      if (this.detailValue) {
+        innerHTML += `<span>${this.escapeHtml(this.detailValue)}</span>`
       }
       innerHTML += `</div>`
     }
@@ -71,6 +76,7 @@ export default class extends Controller {
     tooltip.innerHTML = innerHTML
     document.body.appendChild(tooltip)
     this.tooltipEl = tooltip
+    this.element.setAttribute("aria-describedby", tooltip.id)
 
     this.positionTooltip()
 
@@ -124,6 +130,7 @@ export default class extends Controller {
 
   removeTooltip() {
     if (this.tooltipEl) {
+      this.element.removeAttribute("aria-describedby")
       this.tooltipEl.remove()
       this.tooltipEl = null
     }

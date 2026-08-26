@@ -1,0 +1,35 @@
+<%# The keys, on a sheet you can actually get to (`?`).
+
+    The hint line this replaces was `hidden sm:block` and sat *below* a
+    four-hundred row list, which is the one place on the page a reader will
+    never look — so four shortcuts nobody could discover were, in practice,
+    zero shortcuts. %>
+<div class="shortcut-sheet hidden" data-river-target="sheet"
+     data-action="click->river#toggleSheet" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+  <div class="shortcut-card" data-action="click->river#stop">
+    <h2 class="display mb-3 text-lg text-ink">Keys</h2>
+    <dl class="grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 text-sm">
+      <% {
+           "j / n" => "Next story",
+           "k / p" => "Previous story",
+           "Enter" => "Open it here",
+           "o" => "Open at the source",
+           "m" => "Mark read",
+           "s" => "Save",
+           "r" => "Check the feeds now",
+           "A" => "Mark this whole view read",
+           "1 / 2" => "Compact / comfortable",
+           "?" => "This sheet"
+         }.each do |keys, meaning| %>
+        <dt class="flex gap-1">
+          <% keys.split(" / ").each_with_index do |key, index| %>
+            <% if index.positive? %><span class="text-stone-400">/</span><% end %>
+            <kbd><%= key %></kbd>
+          <% end %>
+        </dt>
+        <dd class="text-soft"><%= meaning %></dd>
+      <% end %>
+    </dl>
+    <p class="mt-4 text-xs text-stone-500">Press <kbd>?</kbd> or <kbd>Esc</kbd> to close.</p>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<%# The river's controls, in one line where there were three.
+
+    The old bar stacked a filter row, a hobby row and a feed row, the last
+    two `overflow-x-auto whitespace-nowrap` — so on a phone they sheared off
+    at the viewport edge with no fade and no affordance, reading as a layout
+    bug rather than as an invitation to scroll. Between them and the title
+    they spent about 200px before the first headline, on a screen with 660.
+
+    Now: the three filters, which are three words and always worth showing,
+    and one scope control that *names the current selection* and opens the
+    picker. On a wide screen the picker is already open — it is the rail —
+    so the control is only here below `lg`. %>
+<div class="reader-toolbar" data-controller="sheet">
+  <div class="flex items-baseline gap-x-2">
+    <% ReaderHelper::FILTER_LABELS.each_with_index do |(key, label), index| %>
+      <%= reader_dot if index.positive? %>
+      <%= reader_filter_link label, { filter: key }, active: @river.filter == key %>
+    <% end %>
+  </div>
+
+  <% if @lenses.any? || @feeds.many? %>
+    <button type="button" class="reader-scope lg:hidden" data-action="sheet#open"
+            aria-haspopup="dialog">
+      <%= icon(:funnel, css_class: "size-3.5 shrink-0") %>
+      <span class="truncate"><%= reader_scope_label(@scope_feed, @scope_lens) %></span>
+    </button>
+
+    <%# The picker itself: a sheet from the bottom of the phone, which is
+        where a thumb is, rather than a row of links at the top of the page,
+        which is where it isn't. %>
+    <div class="sheet-backdrop hidden lg:hidden" data-sheet-target="panel"
+         data-action="click->sheet#backdrop" role="dialog" aria-modal="true" aria-label="Filter the river">
+      <div class="sheet">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="max-h-[65vh] overflow-y-auto overscroll-contain px-4 pb-6">
+          <%= render "reader/scopes" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
