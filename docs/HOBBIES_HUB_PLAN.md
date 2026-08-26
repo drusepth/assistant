@@ -244,10 +244,50 @@ all through `Hobbies::Lens.find_or_create!` so there is one seam rather than
 three. Plus the deletion fallback, per-feed "Re-file", and the backfill for a
 household that configures its model late.
 
-**W4 — the watcher.** When Other Interests keeps filling with feeds about the
+**W4 — starter feeds in the empty state (§7.1).** A hand-curated list of
+long-lived, publisher-run feeds offered — never subscribed — to a household
+with an empty reader.
+
+**W5 — the watcher.** When Other Interests keeps filling with feeds about the
 same thing, suggest the hobby (D20: agent proposes, user disposes). This is
 the honest version of the "we noticed you're into X" feature, and it operates
 on feeds — a handful of rows — rather than on the story firehose.
+
+W3, W4 and W5 are independent of each other once W2 exists; the order above is
+a guess at value, not a dependency chain.
+
+### 7.1 Starter feeds, and the promise they must not break
+
+A hub whose empty state is a blank paste field asks the user to already know
+what RSS is. A short starter list fixes that, and READER.md's first promise —
+*every source is one the user chose; no recommendations from strangers, no
+discovery feed* — draws the line it has to respect:
+
+- **Offered, never subscribed.** Nothing is followed at signup or in the FTUE.
+  The list is checkboxes; a feed is followed because somebody ticked it. A
+  stocked shelf, not a recommendation engine.
+- **Shown only when the reader is empty**, and reachable afterwards from
+  `/feeds` for somebody who wants a second look. It never appears above a
+  river that has anything in it.
+- **Static, offline, in the repo.** `config/starter_feeds.opml`, ordinary
+  OPML with the outline folders naming common hobbies. Nothing is fetched to
+  build the list, nothing is personalized, nothing is scored, and a
+  self-hoster can edit or delete the file.
+- **Ticked feeds go through `Feeds::Opml.import`**, which already skips
+  fetching, matches folders to existing lenses by name, dedupes by URL and
+  enqueues `RefreshFeedJob`. So the starter list needs no new fetch posture
+  and no new parse path — and with W2 in place, anything whose folder doesn't
+  match a hobby the user has still gets filed by the classifier rather than
+  landing in Other Interests by default.
+
+What earns a place on the list, in priority order: a **publisher-run URL**
+(never an aggregator or a FeedBurner proxy — that single point of failure is
+the Google Reader story this whole feature answers), no account or paywall, a
+decade of URL stability, politeness to poll, and coverage spread across the
+kinds of things people have hobbies about rather than a news firehose. Every
+URL is verified by hand before it ships and the file carries the date it was
+last checked; a starter that fails its first refresh is dropped from the list
+rather than left as a red row in a brand-new account.
 
 ## 8. Deliberately not doing (and what would change our minds)
 
@@ -262,7 +302,6 @@ on feeds — a handful of rows — rather than on the story firehose.
   feed under Money would work unchanged — but the classifier is restricted to
   Hobbies' children so a woodworking blog can't land under Health. Widening
   later is a prompt change and a second panel, not a schema change.
-- **Starter feeds.** The empty-state starter list drafted for this branch
-  (`config/starter_feeds.opml`, per-lens folders) gets better once W2 exists:
-  the OPML's folders name hobbies, and anything unmatched has a home. Sequence
-  it after W2.
+- **Auto-subscribing anything.** The starter list in §7.1 is offered, never
+  applied. A default subscription would make the first river something the app
+  chose, which is the thing READER.md's first promise exists to refuse.
