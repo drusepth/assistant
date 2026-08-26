@@ -227,34 +227,48 @@ deleted; one nav entry is.
 
 ## 7. Waves
 
-**W1 — the hub (no AI).** Per-hobby rivers in the hobby cards, the Other
+All five are built. What each one turned out to be, and the two places the
+building changed the design, are in the build log (`bin/status`).
+
+**W1 ✅ — the hub (no AI).** Per-hobby rivers in the hobby cards, the Other
 Interests lens and its card, `Panels::HobbiesLens` for per-hobby pages, the two
 through-links, the rail change. Every existing feed gets filed into Other
 Interests by a one-off backfill unless the user already tagged it. *After W1
 the whole redesign works, filed by hand.*
 
-**W2 — `Feeds::Classify`.** The model files a new subscription on add; the feed
+**W2 ✅ — `Feeds::Classify`.** The model files a new subscription on add; the feed
 row grows "Re-file"; `classified_at` distinguishes "the model passed on this"
 from "the model has never seen it". Tests for the no-model path and the
 injection path.
 
-**W3 — `Hobbies::MapFeeds` (§4).** Creating a hobby maps the existing feeds
+**W3 ✅ — `Hobbies::MapFeeds` (§4).** Creating a hobby maps the existing feeds
 onto it — from the capture chips, the add tile, and an OPML import's folders,
 all through `Hobbies::Lens.find_or_create!` so there is one seam rather than
 three. Plus the deletion fallback, per-feed "Re-file", and the backfill for a
 household that configures its model late.
 
-**W4 — starter feeds in the empty state (§7.1).** A hand-curated list of
+**W4 ✅ — starter feeds in the empty state (§7.1).** A hand-curated list of
 long-lived, publisher-run feeds offered — never subscribed — to a household
 with an empty reader.
 
-**W5 — the watcher.** When Other Interests keeps filling with feeds about the
+**W5 ✅ — the watcher.** When Other Interests keeps filling with feeds about the
 same thing, suggest the hobby (D20: agent proposes, user disposes). This is
 the honest version of the "we noticed you're into X" feature, and it operates
 on feeds — a handful of rows — rather than on the story firehose.
 
 W3, W4 and W5 are independent of each other once W2 exists; the order above is
 a guess at value, not a dependency chain.
+
+Two things the build changed. **`Sections::Panel#partial` now derives from the
+panel class** rather than the section slug — the same string for every seeded
+panel, and the only thing that can serve many sections at once, which a lens
+panel must. And **W5 needed a model call**, making it the second watcher off
+the SQL-only leash after `job_scout`: "these four feeds are all about birding"
+is not a question SQL can answer, and the answer that tried — keyword matching
+— is the one §2 cut. It stays cheap and rare by reading a handful of *feeds*
+rather than the story firehose, and its write surface is a suggestion whose
+accept opens Start-a-hobby: the lens is created by the tool the user ran, never
+by a watcher and never by a model's answer.
 
 ### 7.1 Starter feeds, and the promise they must not break
 

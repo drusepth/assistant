@@ -220,18 +220,23 @@ because their old reader had thirty folders is not an import, it's a mess.
 Nothing is fetched during an import: the feeds it names are checked by the
 ordinary background refresh afterwards.
 
-## Where this is going (D-hobby-feeds)
+## Where this went (D-hobby-feeds)
 
-`docs/HOBBIES_HUB_PLAN.md` folds this surface into the Hobbies hub: one river
-per hobby on the section page, `/reader` demoted from a rail destination to the
-everything-view you click through to, and feeds filed by the model at
-subscribe time rather than by hand. One thing stated above changes there, and
-it is argued in the plan: the reader gains a model call — one per
-*subscription*, never per story, so promise 3 survives intact (an instance with
-no API key still reads its feeds, it just files them by hand). Everything else
-holds, including the line about items not being `Sectionable`: filing still
-happens once, at the subscription, and a feed the model can't place under a
-hobby lands whole in one called Other Interests.
+`docs/HOBBIES_HUB_PLAN.md` folded this surface into the Hobbies hub, and it is
+built: one river per hobby card, a full river on each hobby's own page,
+`/reader` demoted from a rail destination to the everything-view you click
+through to, and feeds filed by the model at subscribe time rather than by hand.
+One thing stated above changed, and it is argued in the plan: the reader gained
+a model call — one per *subscription*, never per story, so promise 3 survives
+intact (an instance with no API key still reads its feeds, it just files them
+by hand). Everything else holds, including the line about items not being
+`Sectionable`: filing still happens once, at the subscription, and a feed the
+model can't place under a hobby lands whole in one called Other Interests.
+
+The empty state gained a starter shelf for the same reason discovery exists —
+a blank paste field asks the user to already know what RSS is — and it keeps
+promise 1 by being *offered*, never subscribed: a static list in the repo,
+nothing fetched to build it, every row a checkbox.
 
 ## What it doesn't do yet
 
