@@ -1,0 +1,15 @@
+<%= form_with model: trip, class: "space-y-4" do |form| %>
+  <%= form.field :name, placeholder: "Two months in Santa Fe" %>
+  <%= form.field :place_label, label_text: "Where", placeholder: "Santa Fe, New Mexico",
+        hint: "Free text — a city, a state, a country. It's the label the hub and calendar show." %>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :starts_on, as: :date_field %>
+    <%= form.field :ends_on, as: :date_field %>
+  </div>
+  <%= form.field :description, as: :text_area, label_text: "Notes",
+        hint: "The plan so far — everyone on the trip sees this." %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", trip.persisted? ? trip_path(trip) : section_path("travel"), class: "btn btn-ghost" %>
+  </div>
+<% end %>

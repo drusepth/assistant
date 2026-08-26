@@ -41,6 +41,32 @@ class TravelSectionTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", map_photos_path, count: 0
   end
 
+  test "the hub says where you'll be and what still isn't booked" do
+    trip = users(:one).trips.create!(name: "Idaho summer",
+      starts_on: Date.current - 10, ends_on: Date.current + 50)
+    trip.stays.create!(location: "Boise", booking_status: "booked",
+      check_in: Date.current - 10, check_out: Date.current + 20)
+    trip.stays.create!(location: "McCall", booking_status: "planned",
+      check_in: Date.current + 20, check_out: Date.current + 50)
+
+    get section_path("travel")
+    assert_response :success
+    assert_match "Where you&#39;ll be", response.body
+    assert_match "You're in Boise", response.body
+    assert_match "Still to book", response.body
+    assert_match "McCall", response.body
+  end
+
+  test "a companion's hub covers the household trip they were added to" do
+    trip = users(:two).trips.create!(name: "Shared trip",
+      starts_on: Date.current + 5, ends_on: Date.current + 30)
+    trip.memberships.create!(user: users(:one))
+
+    get section_path("travel")
+    assert_response :success
+    assert_match "Shared trip", response.body
+  end
+
   test "Travel is an ordinary section: items tag into it and browse there" do
     task = users(:one).tasks.create!(title: "Renew passport")
     task.sections << sections(:travel)

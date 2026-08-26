@@ -1,0 +1,44 @@
+<%= render Ui::PageHeaderComponent.new(title: "Post photos to the trip", subtitle: @trip.name) %>
+
+<div class="max-w-3xl">
+  <% if @photos.any? %>
+    <%= form_with url: trip_photo_posts_path(@trip) do %>
+      <p class="mb-3 text-sm text-soft">
+        Your photos from <%= @trip.period %>. Everyone on the trip will see the ones you post —
+        posting never shares where a photo was taken.
+      </p>
+      <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-6">
+        <% @photos.each do |photo| %>
+          <label class="group relative block aspect-square cursor-pointer overflow-hidden rounded-lg bg-stone-100">
+            <%= check_box_tag "photo_ids[]", photo.id, false,
+                  id: "photo_#{photo.id}", class: "peer absolute left-1.5 top-1.5 z-10 size-4 accent-primary-600" %>
+            <%= image_tag url_for(photo.image.variant(:thumb)), loading: "lazy", alt: photo.display_title,
+                  class: "size-full object-cover transition group-hover:scale-105 peer-checked:opacity-70 peer-checked:ring-4 peer-checked:ring-inset peer-checked:ring-primary-500" %>
+          </label>
+        <% end %>
+      </div>
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <%= submit_tag "Post selected", class: "btn btn-primary" %>
+        <%= link_to "Cancel", trip_path(@trip, anchor: "photos"), class: "btn btn-ghost" %>
+        <% if @pages > 1 %>
+          <span class="ml-auto flex items-center gap-2 text-sm text-soft">
+            <% if @page > 1 %>
+              <%= link_to "← Earlier", new_trip_photo_post_path(@trip, page: @page - 1), class: "btn btn-ghost btn-sm" %>
+            <% end %>
+            Page <%= @page %> of <%= @pages %> · <%= number_with_delimiter(@total) %> photos
+            <% if @page < @pages %>
+              <%= link_to "Later →", new_trip_photo_post_path(@trip, page: @page + 1), class: "btn btn-ghost btn-sm" %>
+            <% end %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <%= render Ui::EmptyStateComponent.new(title: "No photos to post",
+          description: "None of your photos are dated during this trip (or they're all posted already).") do |empty| %>
+      <% empty.with_action do %>
+        <%= link_to "Back to the trip", trip_path(@trip), class: "btn btn-secondary" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

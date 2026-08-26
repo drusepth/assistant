@@ -1,0 +1,5 @@
+<%= render Ui::PageHeaderComponent.new(title: "Add a stay", subtitle: @trip.name) %>
+
+<div class="max-w-xl">
+  <%= render "form", stay: @stay, trip: @trip %>
+</div>

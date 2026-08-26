@@ -1,0 +1,6 @@
+<%= render Ui::PageHeaderComponent.new(title: "Add #{@leg.kind_label.downcase == "travel" ? "travel" : "a #{@leg.kind_label.downcase}"}",
+      subtitle: @trip.name) %>
+
+<div class="max-w-xl">
+  <%= render "form", leg: @leg, trip: @trip %>
+</div>

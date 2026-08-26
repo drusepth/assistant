@@ -13,6 +13,21 @@ class CalendarController < ApplicationController
       span_end = [ (event.ends_at || event.starts_at).to_date, grid_range.last ].min
       (span_start..span_end).each { |day| (by_day[day] ||= []) << event }
     end
+
+    # Where you'll be (D-trip-spine): the stays on the viewer's trips — own
+    # and joined — as a band under the day number, so the month answers the
+    # nomad's question at a glance. Inclusive of the check-out day: you're
+    # physically there that morning. A day claimed by two stays is a
+    # double booking, and the band says so instead of quietly picking one.
+    stays = Stay.joins(:trip).merge(Trip.involving(Current.user))
+      .where(check_in: ..grid_range.last).where(check_out: grid_range.first..)
+      .includes(:trip).order(:check_in, :id)
+
+    @stays_by_day = stays.each_with_object({}) do |stay, by_day|
+      span_start = [ stay.check_in, grid_range.first ].max
+      span_end = [ stay.check_out, grid_range.last ].min
+      (span_start..span_end).each { |day| (by_day[day] ||= []) << stay }
+    end
   end
 
   private

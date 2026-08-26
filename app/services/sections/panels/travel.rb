@@ -1,25 +1,39 @@
 module Sections
   module Panels
-    # The Travel hub's lead panel (D-travel-facet, docs/TRAVEL.md).
+    # The Travel hub's lead panel (D-travel-facet, D-trip-spine;
+    # docs/TRAVEL.md, docs/TRIPS_PLAN.md).
     #
-    # Two things, in the order they matter: the trips you took, and the map
-    # of everywhere your camera has been. Both are read out of photos that
-    # were already in the library — the section earns its place on day one
-    # without asking the user to type anything.
+    # Three things, in the order a travelling household needs them: where
+    # you'll be next and what still isn't booked (the outlook), the trips
+    # themselves — planned ahead or found in the photos — and the map of
+    # everywhere your camera has been.
     #
-    # Neither is filtered to Travel-tagged items. Sections are lenses over
-    # one pool, and the honest lens for "where have I been" is every photo
-    # that knows where it was taken, not the subset somebody remembered to
-    # tag.
+    # Neither the map nor the detector is filtered to Travel-tagged items.
+    # Sections are lenses over one pool, and the honest lens for "where
+    # have I been" is every photo that knows where it was taken, not the
+    # subset somebody remembered to tag.
     class Travel < Panel
-      # More than this and the hub is a list rather than a hub; the rest are
-      # a click away.
-      TRIPS_SHOWN = 6
+      # More than this and the hub is a list rather than a hub; the rest
+      # are a click away.
+      PAST_TRIPS_SHOWN = 6
       SUGGESTIONS_SHOWN = 4
 
       def map = @map ||= Photos::Map.new(viewer.photos)
 
-      def trips = @trips ||= viewer.trips.recent.to_a
+      def outlook = @outlook ||= ::Travel::Outlook.new(viewer)
+
+      # Own trips plus household trips the viewer was added to
+      # (D-trip-companions) — the hub answers for the household's plans,
+      # not just the viewer's rows.
+      def trips = outlook.trips
+
+      def upcoming_trips
+        @upcoming_trips ||= trips.reject(&:past?).sort_by(&:starts_on)
+      end
+
+      def past_trips
+        @past_trips ||= trips.select(&:past?).sort_by(&:starts_on).reverse
+      end
 
       # Trips found in the photos that the user hasn't kept yet. A candidate
       # overlapping a saved trip is that trip, seen again — not a second
@@ -31,8 +45,8 @@ module Sections
           .first(SUGGESTIONS_SHOWN)
       end
 
-      def shown_trips = trips.first(TRIPS_SHOWN)
-      def more_trips = [ trips.size - TRIPS_SHOWN, 0 ].max
+      def shown_past_trips = past_trips.first(PAST_TRIPS_SHOWN)
+      def more_past_trips = [ past_trips.size - PAST_TRIPS_SHOWN, 0 ].max
 
       def unplaced_count = @unplaced_count ||= viewer.photos.where(latitude: nil).count
 
