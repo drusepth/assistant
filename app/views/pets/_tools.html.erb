@@ -1,0 +1,16 @@
+<%# Her Act zone (D18, applied to a primitive page): the pet tools with the
+    pet already chosen, which is the reason they live here rather than only in
+    the Health page's list. "My pet is missing" leads when it is needed and is
+    never buried in a menu — the whole argument for a crisis tool. %>
+<%= render Ui::CardComponent.new(title: "What the app can do") do %>
+  <div class="flex flex-wrap gap-2">
+    <%= link_to "Ask about #{pet.name}", new_tool_run_path("pet_care", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
+    <%= link_to "Prep for a vet visit", new_tool_run_path("vet_visit_prep", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
+    <%= link_to "Decode a vet estimate", new_tool_run_path("decode_vet_estimate", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
+    <%= link_to "Compare pet insurance", new_tool_run_path("compare_pet_insurance", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
+    <% if pet.vet.nil? %>
+      <%= link_to "Find a vet", new_tool_run_path("find_care", inputs: { specialty: "veterinarian for a #{pet.species_label.downcase}" }), class: "btn btn-secondary btn-sm" %>
+    <% end %>
+    <%= link_to "#{pet.name} is missing", new_tool_run_path("lost_pet", inputs: { pet_id: pet.id }), class: "btn btn-ghost btn-sm" %>
+  </div>
+<% end %>

@@ -16,6 +16,7 @@ module Tool
     interview_prep mock_interview check_pay_stub wage_claim tailor_application
     raise_case decode_offer lost_my_job plan_job_search
     find_my_next_move accommodation_request
+    pet_care vet_visit_prep decode_vet_estimate compare_pet_insurance new_pet lost_pet
   ].freeze
 
   module_function

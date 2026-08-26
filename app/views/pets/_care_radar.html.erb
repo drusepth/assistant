@@ -16,6 +16,11 @@
         <div class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
           <% if status.state == :booked %>
             <%= link_to "View appointment", event_path(status.next_visit), class: "text-primary-700 hover:underline" %>
+            <% if status.kind.clinical? %>
+              <%= link_to "Prep for this visit",
+                    new_tool_run_path("vet_visit_prep", inputs: { pet_id: pet.id, reason: status.next_visit.title }),
+                    class: "text-primary-700 hover:underline" %>
+            <% end %>
           <% else %>
             <% if status.state != :ok && status.kind.clinical? && pet.vet.nil? %>
               <%= link_to "Find a vet",

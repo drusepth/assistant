@@ -25,6 +25,10 @@ module Tool
       def required? = required
       def document? = kind == :document
       def person? = kind == :person
+      # A tool that takes a pet reads her species, age, weight, diet and
+      # meds from the record instead of asking (D-pet-primitive) — the
+      # `person`/`hobby` convention, applied to the household's other members.
+      def pet? = kind == :pet
       def hobby? = kind == :hobby
       def select? = kind == :select
       def checkboxes? = kind == :checkboxes
@@ -164,6 +168,44 @@ module Tool
         (@chosen_people ||= {})[input_name.to_s] ||=
           Person.visible_to(user).find_by(id: inputs[input_name]) ||
             raise(Llm::Error, "That person is gone or no longer shared with you.")
+      end
+
+      # The pet an input points at, through the visibility wall — same
+      # contract as chosen_document.
+      def chosen_pet(input_name = :pet_id)
+        return nil if inputs[input_name].blank?
+
+        (@chosen_pets ||= {})[input_name.to_s] ||=
+          Pet.visible_to(user).find_by(id: inputs[input_name]) ||
+            raise(Llm::Error, "That pet is gone or no longer shared with you.")
+      end
+
+      # What's known about a pet, assembled once for every pet tool
+      # (D-pet-primitive): the record, the diet with its history, her
+      # medications and her recent care. All of it read rather than asked
+      # for — the D16 rule, and the reason a `:pet` input is one dropdown.
+      def pet_context(pet, viewer: user)
+        parts = [ "Name: #{pet.name}", "Species: #{pet.species_label}" ]
+        parts << "Breed: #{pet.breed}" if pet.breed.present?
+        parts << "Sex: #{pet.sex}" if pet.sex.present?
+        parts << "Age: #{pet.age_phrase}" if pet.age_phrase
+        parts << "Weight: #{pet.weight_kg} kg" if pet.weight_kg
+        parts << "What the owner has noted:\n#{pet.notes.truncate(1_500)}" if pet.notes.present?
+
+        shelf = Pets::FoodShelf.new(pet)
+        current = shelf.current.map { |food| "- #{food.display_name} (#{food.form_label})#{", #{food.amount_per_day}#{food.unit} a day" if food.amount_per_day}, since #{food.started_on.iso8601}" }
+        parts << "Currently eating:\n#{current.join("\n")}" if current.any?
+        history = shelf.past.first(5).map { |food| "- #{food.display_name}: #{food.started_on.iso8601} to #{food.ended_on.iso8601}" }
+        parts << "Previously eaten (the diet history a vet asks for):\n#{history.join("\n")}" if history.any?
+
+        meds = pet.items(Note, viewer).medications.limit(10).map { |note| [ note.title, note.body ].compact.join(" — ") }
+        parts << "Medications on file:\n#{meds.map { |med| "- #{med}" }.join("\n")}" if meds.any?
+
+        care = pet.items(Event, viewer).where(starts_at: 24.months.ago..).order(:starts_at).limit(15)
+          .map { |event| "- #{event.starts_at.to_date.iso8601} — #{event.title}" }
+        parts << "Care on the calendar (past two years and upcoming):\n#{care.join("\n")}" if care.any?
+
+        parts.join("\n")
       end
 
       # What's known about a person, assembled once for every People tool

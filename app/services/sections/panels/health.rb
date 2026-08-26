@@ -3,7 +3,10 @@ module Sections
     # The Health lead panel (docs/HEALTH.md): care radar, household care,
     # Mind, medications, allergies, insurance & coverage.
     class Health < Panel
-      def hidden_tool_slugs = ::Health::PANEL_TOOL_SLUGS
+      # The panel's own tools, plus the pet tools until this household has a
+      # pet (::Pets.hidden_tool_slugs) — "Prep for a vet visit" on a petless
+      # Health page is noise.
+      def hidden_tool_slugs = ::Health::PANEL_TOOL_SLUGS + ::Pets.hidden_tool_slugs(viewer)
 
       def care_statuses
         @care_statuses ||= ::Health::CareRadar.new(viewer).statuses

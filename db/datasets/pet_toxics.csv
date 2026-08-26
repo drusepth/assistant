@@ -1,0 +1,16 @@
+item,species,severity,note,aliases
+chocolate,dog|cat,serious,"Theobromine and caffeine; darker and baking chocolate are far worse than milk.",cocoa|cacao|baking chocolate|dark chocolate
+xylitol,dog,emergency,"A sugar substitute in gum, mints, peanut butter and some baked goods. Causes a rapid, dangerous drop in blood sugar in dogs.",birch sugar|sugar-free gum|sugar free gum
+grapes,dog,serious,"Grapes, raisins, sultanas and currants have caused kidney failure in dogs; no safe amount is known.",raisins|sultanas|currants|grape
+onions,dog|cat,serious,"Onions, garlic, leeks and chives damage red blood cells — raw, cooked, powdered or in leftovers.",garlic|leeks|chives|onion powder|allium
+macadamia nuts,dog,serious,"Cause weakness, tremors and vomiting in dogs.",macadamia
+alcohol,dog|cat,emergency,"Including raw yeast dough, which ferments in the stomach.",beer|wine|liquor|ethanol|raw dough|yeast dough
+caffeine,dog|cat,serious,"Coffee, tea, energy drinks and the grounds in the bin.",coffee|espresso|tea|energy drink|coffee grounds
+lilies,cat,emergency,"True lilies and daylilies cause kidney failure in cats — the pollen and the vase water are enough.",lily|easter lily|daylily|tiger lily
+paracetamol,cat|dog,emergency,"Human painkiller. Cats cannot process it at all; never give human pain medicine to any pet without a vet's dose.",acetaminophen|tylenol|panadol
+ibuprofen,dog|cat,emergency,"Human anti-inflammatory; causes stomach ulcers and kidney damage in pets.",advil|nurofen|naproxen|aspirin
+antifreeze,dog|cat,emergency,"Ethylene glycol. Sweet-tasting, and a very small amount is fatal. Treat any suspicion as an emergency.",ethylene glycol|coolant
+rodenticide,dog|cat,emergency,"Rat and mouse bait, including a poisoned rodent the pet finds.",rat poison|mouse bait|warfarin|bromadiolone
+cannabis,dog|cat,serious,"Including edibles, which pair the drug with chocolate or xylitol.",marijuana|thc|weed|edibles
+raw dough,dog|cat,serious,"Rises in the stomach and ferments into alcohol.",bread dough|pizza dough
+cooked bones,dog|cat,caution,"Splinter. Cooked poultry bones are the usual culprit.",chicken bones|turkey bones|rib bones

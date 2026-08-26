@@ -22,6 +22,7 @@ module Watcher
     stub_anomaly raise_cadence interview_ahead application_follow_up real_terms_drift job_scout
     email_deadline email_reply_wanted email_no_reply email_unanswered
     budget_pace new_recurring_charge price_hike month_close email_receipt
+    pet_care_cadence pet_food_reorder
   ].freeze
 
   module_function

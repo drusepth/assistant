@@ -73,6 +73,17 @@
                 <%= link_to "add someone first", new_person_path, class: "text-primary-700 hover:underline" %>.
               </p>
             <% end %>
+          <% elsif input.pet? %>
+            <% if @pet_choices.any? %>
+              <%= select_tag "inputs[#{input.name}]",
+                    options_from_collection_for_select(@pet_choices, :id, :name, @tool_run.inputs[input.name]),
+                    include_blank: "Choose a pet…", class: "input", id: "inputs_#{input.name}" %>
+            <% else %>
+              <p class="hint">
+                No pets yet —
+                <%= link_to "add one first", new_pet_path, class: "text-primary-700 hover:underline" %>.
+              </p>
+            <% end %>
           <% elsif input.email_message? %>
             <% if @email_choices.any? %>
               <%= select_tag "inputs[#{input.name}]",

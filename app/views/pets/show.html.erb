@@ -83,6 +83,10 @@
       </dl>
     <% end %>
 
+    <% if @own && @pet.active? %>
+      <%= render "pets/tools", pet: @pet %>
+    <% end %>
+
     <% if @care_statuses.any? %>
       <%= render "pets/care_radar", pet: @pet, statuses: @care_statuses, health_section_id: @health_section_id %>
     <% end %>

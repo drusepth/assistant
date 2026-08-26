@@ -16,6 +16,10 @@ module Sections
       # only front door.
       def hidden_browse = %i[ events people ]
 
+      # The pets strip carries the care tools with the pet already chosen, so
+      # the Act zone shows only what a petless household could use.
+      def hidden_tool_slugs = ::Pets.hidden_tool_slugs(viewer)
+
       # The circle and every group as one uniform card (D-people-circles).
       def circle_cards = @circle_cards ||= ::People::Circles.for(viewer, section)
 
