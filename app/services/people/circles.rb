@@ -35,7 +35,14 @@ module People
     def cards = [ circle_card, *group_cards ]
 
     private
-      def groups = @groups ||= section.children.to_a
+      # Pet lenses are children of People too (D-pet-primitive) — but a pet
+      # is not a group of people, and her card is drawn by the pets strip.
+      def groups
+        @groups ||= begin
+          owned = Section.owned_lens_ids
+          section.children.reject { |child| owned.include?(child.id) }
+        end
+      end
 
       def circle_card
         people = viewer.people.circle.stalest_first.preload(:linked_user).with_attached_avatar.to_a

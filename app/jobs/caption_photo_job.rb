@@ -16,8 +16,9 @@ class CaptionPhotoJob < ApplicationJob
       caption_error: nil
     )
     # Untagged photos get filed automatically (D16); once the user has
-    # tagged one themselves, suggestions stay suggest-and-click.
-    photo.sections = photo.suggested_section_records if photo.sections.none?
+    # tagged one themselves, suggestions stay suggest-and-click. A suggested
+    # *pet* is never auto-applied — see Photo#auto_filable_section_records.
+    photo.sections = photo.auto_filable_section_records if photo.sections.none?
   rescue Llm::Error => e
     raise if will_retry?(e)
 

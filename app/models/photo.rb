@@ -132,6 +132,16 @@ class Photo < ApplicationRecord
     Section.where(slug: suggested_sections).order(:parent_id, :position) - sections
   end
 
+  # What the captioner may file *for* you, as opposed to offer. A lens a
+  # record owns is excluded: a model confidently tagging the neighbour's dog
+  # as Rex is the photo_people rule again (no face recognition, Q8's lesson),
+  # and a pet lens carries her whole page with it. It may suggest; a human
+  # applies (D-pet-primitive).
+  def auto_filable_section_records
+    owned = Section.owned_lens_ids
+    suggested_section_records.reject { |section| owned.include?(section.id) }
+  end
+
   private
     def image_must_be_attached_and_an_image
       return errors.add(:image, "must be attached") unless image.attached?

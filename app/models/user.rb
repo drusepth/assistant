@@ -12,6 +12,7 @@ class User < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :documents, dependent: :destroy
   has_many :people, dependent: :destroy
+  has_many :pets, dependent: :destroy
   has_many :goals, dependent: :destroy
   has_many :notes, dependent: :destroy
   has_many :photos, dependent: :destroy

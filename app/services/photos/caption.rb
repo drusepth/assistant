@@ -54,7 +54,17 @@ module Photos
         parts << "Title: #{@photo.title}" if @photo.title.present?
         parts << "Taken: #{@photo.taken_at.strftime("%B %-d, %Y")}"
         parts << "Available sections (slug — meaning):\n#{taxonomy}"
+        # Naming the household's pets is what lets "a golden retriever on a
+        # beach" reach the right lens. It can only ever produce a suggestion:
+        # a pet lens is never auto-applied (D-pet-primitive).
+        parts << "The household's pets (suggest one only if the animal in the photo is plainly that pet):\n#{pets}" if pets.present?
         parts.join("\n\n")
+      end
+
+      def pets
+        @pets ||= Pet.where(user_id: @photo.user_id).includes(:section)
+          .map { |pet| "#{pet.section.slug} — #{pet.name}, #{pet.species_label.downcase}#{", #{pet.breed}" if pet.breed.present?}" }
+          .join("\n")
       end
 
       def taxonomy

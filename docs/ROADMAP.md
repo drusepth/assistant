@@ -196,7 +196,7 @@ The gap: `/setup` creates the household, then drops you on an empty Dashboard. T
 1. **Pick your sections** — the seven top-level sections as cards, all pre-checked; unchecking writes explicit `user_sections` rows. No personas, no quiz — the sections *are* the personas.
 2. **Set the assistant's voice** — one screen explaining the trust ladder in two sentences, with a single choice: suggestions **Quiet** (default, weekly, in-app) or **Off** for now; per-section dials are pointed at, not configured here.
 3. **Connect a model** *(admin only, skippable)* — the existing provider picker, with the honest line that Organize works fine with no model at all.
-4. **Bring your life in** — three buttons that already exist: import contacts, import calendar, upload a document. Ends on the Dashboard.
+4. **Bring your life in** — buttons that already exist: import contacts, import calendar, upload a document, and (once pets landed) add a pet. Ends on the Dashboard. The pet is a *shortcut*, not a step and not a question on step 1: a pet is a whom while step 1 asks about sections (D-pet-primitive), and a "do you have pets?" screen is exactly the persona quiz this flow refuses. It hides itself once anyone in the household has added one, so the second member to onboard isn't asked to add the dog again.
 
 Every step skippable; the whole flow revisitable from Settings. Invited members get steps 1, 2, and 4 only.
 

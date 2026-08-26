@@ -22,7 +22,7 @@ module Admin
     # What "everything" means in the flash: the primitives plus their
     # containers. Runs, suggestions, grants, feeds and settings go with the
     # accounts too — they just aren't what anyone counts.
-    COUNTED_ASSOCIATIONS = %i[ events tasks documents people goals notes photos albums ].freeze
+    COUNTED_ASSOCIATIONS = %i[ events tasks documents people pets goals notes photos albums ].freeze
 
     module_function
 
@@ -38,13 +38,16 @@ module Admin
       users = household.users.to_a
       summary = summarize(users)
 
-      purge_attachments(household, users)
+      # Attached blobs are identified by diffing across the destroy (below),
+      # so the "before" side has to be read while the household still stands.
+      attached_before = attached_blob_ids
       # The error log keeps a foreign key to users but is not cascaded from
       # them — a failure outlives the account that hit it on purpose — so
       # these rows go first or the destroy below trips the constraint.
       AppError.where(user: users).delete_all
 
       household.destroy!
+      purge_detached_blobs(attached_before)
       clear_instance_leftovers
       # The mirror database has no foreign keys back to here
       # (D-mirror-database), so mail that belonged to the accounts just
@@ -66,14 +69,31 @@ module Admin
     # until a job runs — fine for one deleted document, wrong for a reset,
     # where the next screen claims a clean instance. Purge them here so the
     # storage panel reads zero the moment the redirect lands.
-    def purge_attachments(household, users)
-      household.banner.purge
+    #
+    # **Found, not listed** (D-purge-by-diff). This was a hand-written list of
+    # model names, and a hand-written list of every attachment in the app is a
+    # list that goes stale: by the time pets arrived it had already missed
+    # recipe images and every avatar. So instead: note which blobs are
+    # attached before the destroy, and purge whatever stopped being attached
+    # after it. A blob that *was* attached and now isn't was detached by this
+    # destroy — no model names anywhere, and nothing to keep in step.
+    #
+    # It is also strictly safer than the list it replaces. Another household's
+    # attached files are still attached afterwards, so they aren't in the
+    # difference; and a direct-upload blob sitting unattached mid-form was
+    # never in the "before" set, so an upload in flight elsewhere on the box
+    # survives — which is the trap `clear_instance_leftovers` has to gate its
+    # unattached sweep behind.
+    def attached_blob_ids = ActiveStorage::Attachment.distinct.pluck(:blob_id).to_set
 
-      users.each do |user|
-        user.documents.find_each { |document| document.file.purge }
-        user.photos.find_each { |photo| photo.image.purge }
-        user.export_archive.purge
-      end
+    def purge_detached_blobs(attached_before)
+      detached = attached_before - attached_blob_ids
+      return if detached.empty?
+
+      # `purge` and not `purge_later`: the whole point is that the bytes are
+      # gone before the redirect. The cascade's own purge_later jobs land on
+      # an already-purged blob and discard themselves (RecordNotFound).
+      ActiveStorage::Blob.where(id: detached).find_each(&:purge)
     end
 
     # Sections (including user-created lenses, D25) and the error log are

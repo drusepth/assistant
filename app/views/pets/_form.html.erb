@@ -1,0 +1,64 @@
+<%= form_with model: pet, class: "space-y-4" do |form| %>
+  <%= render "pets/photo_field", form: form, pet: pet %>
+  <%= form.field :name %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :species do %>
+      <%= form.select :species, Pet::SPECIES.map { |slug| [ Pet::SPECIES_LABELS[slug], slug ] } %>
+    <% end %>
+    <%= form.field :breed, placeholder: "Golden retriever, tabby, lop…" %>
+  </div>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :sex, placeholder: "Female, male, neutered male…" %>
+    <%= form.field :color, label_text: "Colour and markings", placeholder: "Black with a white chest" %>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :born_on, as: :date_field, label_text: "Date of birth" %>
+    <%= form.field :adopted_on, as: :date_field, label_text: "Adoption day",
+          hint: "The gotcha day — what the app celebrates when there's no known birthday." %>
+  </div>
+  <%# A rescue's date of birth is a vet's guess, and the app would rather say
+      "about 4" than print a birthday it was never really told. %>
+  <label class="flex items-start gap-2 text-sm">
+    <%= form.check_box :born_on_estimated, class: "mt-0.5" %>
+    <span class="text-soft">That date of birth is an estimate</span>
+  </label>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :weight_kg, as: :number_field, label_text: "Weight (kg)", step: "0.01",
+          hint: "The current number, for vet prep — not a log." %>
+    <%= form.field :microchip, label_text: "Microchip number" %>
+  </div>
+
+  <%= form.field :vet_id, label_text: "Vet", hint: "An ordinary contact, so you can call them from here." do %>
+    <%= form.collection_select :vet_id, Person.visible_to(Current.user).order(:name), :id, :name, include_blank: "No vet on file" %>
+  <% end %>
+
+  <%= form.field :notes, as: :text_area, hint: "Temperament, allergies, what the sitter needs to know." %>
+
+  <% if pet.persisted? %>
+    <%= render layout: "shared/advanced", locals: { hint: "The end of a life, or a rehoming." } do %>
+      <div class="space-y-4">
+        <p class="hint">Either date stops every reminder about <%= pet.name %> and moves her to Remembered. Nothing is deleted — her photos, papers and history stay exactly where they are.</p>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <%= form.field :died_on, as: :date_field, label_text: "Died" %>
+          <%= form.field :left_on, as: :date_field, label_text: "Rehomed" %>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <%# D9: sharing is a row someone created, never implied by living in the
+        same house. The box writes ordinary grants, listed in Settings. %>
+    <% if Current.user.household.users.where.not(id: Current.user.id).exists? %>
+      <label class="flex items-start gap-2 text-sm">
+        <%= check_box_tag :share_with_household, "1", true, class: "mt-0.5" %>
+        <span class="text-soft">Everyone in the household looks after this pet — share her, and everything filed under her name</span>
+      </label>
+    <% end %>
+  <% end %>
+
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit %>
+    <%= link_to "Cancel", pet.persisted? ? pet_path(pet) : section_path("people"), class: "btn btn-ghost" %>
+  </div>
+<% end %>

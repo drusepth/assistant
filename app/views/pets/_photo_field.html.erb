@@ -1,0 +1,20 @@
+<%# The face on every pet card — the same attachment, square variant and
+    initials fallback as a contact's (D-contact-photos), so an instance where
+    nobody uploads anything looks exactly as it did. %>
+<div class="space-y-1">
+  <%= form.label :avatar, "Photo" %>
+  <div class="flex items-start gap-4">
+    <%= render Ui::AvatarComponent.new(person: pet, size: :lg, tone: :sage) %>
+    <div class="min-w-56 flex-1 space-y-2">
+      <%= form.file_field :avatar, accept: "image/png, image/jpeg, image/webp, image/gif" %>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <p class="hint">Square works best — anything else is cropped to the middle. Up to <%= Pet::AVATAR_MAX_BYTES / 1.megabyte %> MB.</p>
+        <% if pet.persisted? && pet.avatar.attached? %>
+          <%= link_to "Remove photo", pet_avatar_path(pet), data: { turbo_method: :delete },
+                class: "text-xs font-medium text-primary-700 hover:underline" %>
+        <% end %>
+      </div>
+      <%= form.errors_for :avatar %>
+    </div>
+  </div>
+</div>

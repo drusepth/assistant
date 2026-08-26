@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_192325) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -435,6 +435,49 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_192325) do
     t.integer "user_id", null: false
     t.index ["linked_user_id"], name: "index_people_on_linked_user_id"
     t.index ["user_id"], name: "index_people_on_user_id"
+  end
+
+  create_table "pet_foods", force: :cascade do |t|
+    t.decimal "amount_per_day", precision: 8, scale: 2
+    t.string "brand"
+    t.datetime "created_at", null: false
+    t.date "ended_on"
+    t.string "form", default: "dry", null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.date "opened_on"
+    t.decimal "package_amount", precision: 10, scale: 2
+    t.integer "package_cost_cents"
+    t.string "package_unit", default: "g", null: false
+    t.integer "pet_id", null: false
+    t.date "started_on", null: false
+    t.string "unit", default: "g", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pet_id"], name: "index_pet_foods_on_pet_id"
+  end
+
+  create_table "pets", force: :cascade do |t|
+    t.date "adopted_on"
+    t.date "born_on"
+    t.boolean "born_on_estimated", default: false, null: false
+    t.string "breed"
+    t.string "color"
+    t.datetime "created_at", null: false
+    t.date "died_on"
+    t.date "left_on"
+    t.string "microchip"
+    t.string "name", null: false
+    t.text "notes"
+    t.integer "section_id", null: false
+    t.string "sex"
+    t.string "species", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "vet_id"
+    t.decimal "weight_kg", precision: 6, scale: 2
+    t.index ["section_id"], name: "index_pets_on_section_id", unique: true
+    t.index ["user_id"], name: "index_pets_on_user_id"
+    t.index ["vet_id"], name: "index_pets_on_vet_id"
   end
 
   create_table "photo_people", force: :cascade do |t|
@@ -934,6 +977,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_192325) do
   add_foreign_key "notification_channels", "users"
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
+  add_foreign_key "pet_foods", "pets"
+  add_foreign_key "pets", "people", column: "vet_id"
+  add_foreign_key "pets", "sections"
+  add_foreign_key "pets", "users"
   add_foreign_key "photo_people", "people"
   add_foreign_key "photo_people", "photos"
   add_foreign_key "photos", "users"

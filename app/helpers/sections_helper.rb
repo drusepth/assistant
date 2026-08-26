@@ -58,16 +58,22 @@ module SectionsHelper
       "#{status.next_visit.title} — #{status.next_visit_on.strftime("%b %-d, %Y")}, " \
         "#{distance_of_time_in_words(Date.current, status.next_visit_on)} away."
     when :ok
-      "Last #{status.kind.visit_noun} #{care_month(status.last_visit_on)} — " \
-        "nothing needed until around #{care_month(status.due_on)}."
+      "Last #{status.kind.visit_noun} #{care_date(status.last_visit_on, status.kind)} — " \
+        "nothing needed until around #{care_date(status.due_on, status.kind)}."
     when :due
-      "Last #{status.kind.visit_noun} #{care_month(status.last_visit_on)} — due since #{care_month(status.due_on)}."
+      "Last #{status.kind.visit_noun} #{care_date(status.last_visit_on, status.kind)} — due since #{care_date(status.due_on, status.kind)}."
     else
-      "No #{status.kind.visit_noun.pluralize} on record yet. Log your last one and the radar takes it from there."
+      "No #{status.kind.visit_noun.pluralize} on record yet. Log the last one and the radar takes it from there."
     end
   end
 
-  def care_month(date) = date.strftime("%b %Y")
+  # A yearly rhythm reads in months; a monthly or six-weekly one (a pet's
+  # parasite treatment, a groom — D-pet-care-radar) needs the day, or the
+  # month is half over before the line says anything.
+  def care_date(date, kind = nil)
+    kind&.short_cadence? ? date.strftime("%b %-d") : date.strftime("%b %Y")
+  end
+
 
   # The "Counts as" select on a health event (docs/HEALTH.md §3): the
   # user's word beats the keywords. Auto shows what classification would

@@ -69,16 +69,20 @@ capture, tool-created deadline events) feeds the radar for free.
   plain task instead of a tool — and switches the copy from "visit" to the
   kind's own name ("Last haircut Feb 2026"). Everything else — capture,
   classification, the "Counts as" override, muting and re-timing on the
-  Tune page, household care — is shared. Intervals are whole months, so a
-  six-week haircut rhythm rounds to two and reads due about two weeks
-  late; sub-month cadence waits for a second kind that wants it.
+  Tune page, household care — is shared. Intervals were whole months, so a
+  six-week haircut rhythm rounded to two and read due about two weeks late;
+  **that wait is over** — pet care wanted monthly parasite prevention and a
+  six-week groom, so a kind's `interval` is now a duration and `due_on` is
+  `last + interval` with no branch (D-pet-care-radar).
 - **Conservative classification.** "Dental checkup" is dental (specific
   kinds match before the generic), "Physical therapy" is not a physical,
   and an event the radar can't confidently place ("Therapy",
   "Cardiology follow-up") simply doesn't count — misclassifying would
   make the panel lie, and unknown is an honest, actionable state.
 - **Own events only** — a spouse's shared appointment is not your checkup
-  (the watcher's rule from M3.1, inherited).
+  (the watcher's rule from M3.1, inherited). Pet-tagged events are subtracted
+  too: "Rex — dental cleaning" is the dog's, and counting it would report you
+  on track (D-pet-care-radar).
 - **Every state has its next click**: booked → the appointment and
   "Prep for this visit" (doctor-visit-prep prefilled with it); due /
   not tracked → "Find a provider" (find-care, specialty prefilled) and
@@ -95,6 +99,13 @@ capture, tool-created deadline events) feeds the radar for free.
   word beat the classifier — including "Not routine care" for
   health-tagged events that aren't visits (refills use this
   automatically).
+- **A subject, not a user (D-pet-care-radar)**: the radar answers for a
+  `User` or a `Pet`, whose kinds come from a per-species registry
+  (`Pets::CareKinds`) and whose events are the ones tagged with her lens —
+  whoever booked them, because the spouse who drove the dog to the vet booked
+  the *dog's* visit. Species we don't know get one generic wellness kind and
+  nothing more. Pets join the household strip as rows with no login. Per-pet
+  tuning waits on `care_settings.subject` going polymorphic.
 - **Household care (D35)**: kids are users too. Each member's care lives
   on their own account; the parent's Health page shows a "Household
   care" strip of other members' radars computed over *exactly the events

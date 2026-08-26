@@ -1,0 +1,13 @@
+<%# A pet's lens (D-pet-primitive): the raw browse of everything tagged with
+    her, with her own page one link away. Two surfaces, two jobs — the pet
+    page is the dashboard, this is the filing cabinet. %>
+<% if panel.pet %>
+  <div class="card flex flex-wrap items-center gap-4 p-4">
+    <%= render Ui::AvatarComponent.new(person: panel.pet, size: :lg, tone: :sage) %>
+    <div class="min-w-0 flex-1">
+      <%= link_to panel.pet.name, pet_path(panel.pet), class: "text-sm font-semibold text-ink hover:text-primary-700" %>
+      <p class="text-xs text-soft"><%= panel.pet.descriptor.presence || "Everything filed under her name" %></p>
+    </div>
+    <%= link_to "Open #{panel.pet.name}'s page", pet_path(panel.pet), class: "btn btn-secondary" %>
+  </div>
+<% end %>
