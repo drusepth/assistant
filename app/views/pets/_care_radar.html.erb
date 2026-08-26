@@ -1,0 +1,33 @@
+<%# A pet's care radar (D-pet-care-radar) — the same four states as a
+    person's, over the events tagged with her lens. The next-clicks differ
+    where the care differs: a vet rather than a doctor, and a groom is upkeep
+    with no medical next step at all (D-nonclinical-care-kinds). %>
+<%= render Ui::CardComponent.new(
+      title: "Routine care",
+      subtitle: "Booked means you can stop thinking about it. Due means it's worth a call this week.") do %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <% statuses.each do |status| %>
+      <div class="space-y-2 rounded-xl bg-stone-100/70 p-4">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm font-medium text-ink"><%= status.kind.label %></span>
+          <span class="chip <%= care_state_chip_classes(status.state) %>"><%= care_state_label(status.state) %></span>
+        </div>
+        <p class="text-sm text-soft"><%= care_status_line(status) %></p>
+        <div class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+          <% if status.state == :booked %>
+            <%= link_to "View appointment", event_path(status.next_visit), class: "text-primary-700 hover:underline" %>
+          <% else %>
+            <% if status.state != :ok && status.kind.clinical? && pet.vet.nil? %>
+              <%= link_to "Find a vet",
+                    new_tool_run_path("find_care", inputs: { specialty: "#{status.kind.provider} for a #{pet.species_label.downcase}" }),
+                    class: "text-primary-700 hover:underline" %>
+            <% end %>
+            <%= link_to status.state == :unknown ? "Log the last one" : "Add appointment",
+                  new_event_path(title: status.kind.appointment_title, section_ids: [ pet.section_id, health_section_id ].compact),
+                  class: "text-primary-700 hover:underline" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -108,4 +108,26 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", section_path(@rex.section.slug), { count: 0 },
       "a pet is not a group — her card is her own"
   end
+
+  test "the pet page carries her radar, and a remembered pet's stops" do
+    event = users(:one).events.create!(title: "Rex — vaccinations", starts_at: 1.year.ago)
+    event.sections << @rex.section
+
+    get pet_path(@rex)
+    assert_select "h2", text: "Routine care"
+    assert_match "Vaccinations", response.body
+
+    @rex.update!(died_on: Date.current)
+    get pet_path(@rex)
+    assert_select "h2", { text: "Routine care", count: 0 }, "nothing nags about a pet who is gone"
+  end
+
+  test "pets join the Health page's household strip" do
+    event = users(:one).events.create!(title: "Rex — wellness exam", starts_at: 2.weeks.from_now)
+    event.sections << [ sections(:health), @rex.section ]
+
+    get section_path("health")
+    assert_select "a[href=?]", pet_path(@rex)
+    assert_match "Wellness exam", response.body
+  end
 end

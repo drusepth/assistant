@@ -83,6 +83,10 @@
       </dl>
     <% end %>
 
+    <% if @care_statuses.any? %>
+      <%= render "pets/care_radar", pet: @pet, statuses: @care_statuses, health_section_id: @health_section_id %>
+    <% end %>
+
     <% if @events.any? || @tasks.any? %>
       <%= render Ui::CardComponent.new(title: "Coming up", padded: false) do %>
         <div class="divide-y divide-edge">
@@ -97,6 +101,16 @@
     <%= render "pets/filing", pet: @pet %>
     <% if @own %>
       <%= render "shared/share_controls", subject: @pet %>
+    <% else %>
+      <%# Grants are per-grantor (D9), so a shared pet only becomes one shared
+          calendar when each member shares their own side. Nothing implies it;
+          this is the button that makes it one click. %>
+      <%= render Ui::CardComponent.new(title: "Your #{@pet.name} items",
+            subtitle: "#{@pet.name} was shared with you. What you file under her name is still private until you share it.") do %>
+        <%= button_to "Share my #{@pet.name} items with the household",
+              access_grants_path(subject_type: "Section", subject_id: @pet.section_id, everyone: 1),
+              method: :post, class: "btn btn-secondary btn-sm w-full" %>
+      <% end %>
     <% end %>
   </div>
 </div>

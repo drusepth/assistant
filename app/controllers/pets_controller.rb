@@ -7,6 +7,10 @@ class PetsController < ApplicationController
   def show
     @pet = Pet.visible_to(Current.user).includes(:section, :vet).find(params[:id])
     @own = @pet.user_id == Current.user.id
+    # A pet who has died or been rehomed keeps her page and her history; what
+    # stops is everything that would nag about her (D-pet-primitive).
+    @care_statuses = @pet.active? ? Health::CareRadar.new(@pet, viewer: Current.user).statuses : []
+    @health_section_id = Section.find_by(slug: "health")&.id
     @events = @pet.items(Event, Current.user).upcoming.includes(:sections, :user).limit(6)
     @tasks = @pet.items(Task, Current.user).open.includes(:sections, :user).limit(6)
   end

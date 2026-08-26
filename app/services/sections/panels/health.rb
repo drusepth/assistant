@@ -21,6 +21,18 @@ module Sections
         end
       end
 
+      # Pets are members of the household who can't log in
+      # (D-pet-care-radar), so they join this strip as rows without a login:
+      # the visibility wall is the pet's own grants rather than a member's
+      # sharing, and only pets still with us are tracked.
+      def pet_care
+        @pet_care ||= Pet.visible_to(viewer).active.includes(:section).filter_map do |pet|
+          tracked = ::Health::CareRadar.new(pet, viewer: viewer).statuses
+            .select { |status| status.last_visit || status.next_visit }
+          [ pet, tracked ] if tracked.any?
+        end
+      end
+
       def coverage_documents
         @coverage_documents ||= ::Health::Coverage.documents(viewer)
       end

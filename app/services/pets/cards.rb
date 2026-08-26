@@ -46,6 +46,8 @@ module Pets
       def next_thing(pet)
         if (event = next_events[pet.section_id])
           "#{event.title} · #{event.starts_at.strftime("%b %-d")}"
+        elsif (due = due_care[pet]).present?
+          "#{due.first.kind.label.downcase} due"
         elsif (celebration = celebration_within(pet))
           "#{celebration.last} #{celebration.first.strftime("%b %-d")}"
         end
@@ -62,6 +64,14 @@ module Pets
           .order(:starts_at)
           .group_by(&:lens_section_id)
           .transform_values(&:first)
+      end
+
+      # Care states come from the radar itself, so a card and the tiles on her
+      # page can never disagree about what's due.
+      def due_care
+        @due_care ||= pets.select(&:active?).index_with do |pet|
+          Health::CareRadar.new(pet, viewer: viewer).statuses.select { |status| status.state == :due }
+        end
       end
 
       def celebration_within(pet)
