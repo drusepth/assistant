@@ -99,6 +99,14 @@
         </div>
       <% end %>
     <% end %>
+
+    <% if @papers.any? || @own %>
+      <%= render "pets/papers", pet: @pet, papers: @papers %>
+    <% end %>
+
+    <% if @photos.any? %>
+      <%= render "pets/photos", pet: @pet, photos: @photos, memorial: @own && @pet.died? %>
+    <% end %>
   </div>
 
   <div class="space-y-6">

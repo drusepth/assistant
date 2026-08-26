@@ -109,6 +109,9 @@ Rails.application.routes.draw do
   resources :pets, except: :index do
     resource :avatar, only: %i[ destroy ], module: :pets
     resource :budget, only: %i[ create update ], controller: :pet_budgets
+    resource :album, only: [], controller: :pet_albums do
+      post :memorial
+    end
     resources :foods, only: %i[ create update ], controller: :pet_foods do
       member do
         patch :end_food

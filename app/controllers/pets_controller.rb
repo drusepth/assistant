@@ -14,6 +14,8 @@ class PetsController < ApplicationController
     @events = @pet.items(Event, Current.user).upcoming.includes(:sections, :user).limit(6)
     @tasks = @pet.items(Task, Current.user).open.includes(:sections, :user).limit(6)
     @shelf = Pets::FoodShelf.new(@pet)
+    @papers = Pets::Papers.for(@pet, Current.user)
+    @photos = @pet.items(Photo, Current.user).with_attached_image.order(taken_at: :desc, id: :desc).limit(12)
     # The money side is the owner's own: envelopes and the ledger are per-user
     # and private (BudgetCategory has no grants path), so a shared viewer sees
     # the shelf and not the bill.
