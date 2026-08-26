@@ -1,19 +1,24 @@
-<%# Hobby identity (D25): before any lenses exist the page leads with the
-    capture question; after, each hobby is a card with engagement signal
-    and capture shrinks to a tile at the end of the grid. %>
-<% if summaries.any? %>
+<%# Hobby identity (D25) with the reader folded in (D-hobby-feeds): before
+    any lenses exist the page leads with the capture question; after, each
+    hobby is a card carrying its engagement signal and its own river, and
+    capture shrinks to a tile at the end of the grid. %>
+<% if panel.cards.any? %>
   <div>
-    <h2 class="mb-3 text-sm font-medium text-soft">Your hobbies</h2>
+    <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <h2 class="text-sm font-medium text-soft">Your hobbies</h2>
+      <div class="flex items-baseline gap-3 text-xs">
+        <%# The everything-view: the dense chronological river across every
+            feed, which used to be a rail destination of its own. %>
+        <%= link_to panel.unread_count.positive? ? "Everything · #{panel.unread_count} unread" : "Everything",
+              reader_path, class: "reader-filter" %>
+        <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
+      </div>
+    </div>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <%= render partial: "sections/hobby_card", collection: summaries, as: :summary %>
+      <%= render partial: "sections/hobby_card", collection: panel.cards, as: :card %>
       <%= render "sections/hobby_add_tile", hobbies: section %>
     </div>
   </div>
 <% else %>
   <%= render "sections/hobby_capture", hobbies: section %>
 <% end %>
-
-<%# The reader (D-feed-reader): the one thing on this page that is
-    different every day. It sits under the lenses because a hobby is what
-    you do, not what you read about it. %>
-<%= render "sections/hobby_reader", panel: panel %>

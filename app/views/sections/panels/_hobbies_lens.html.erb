@@ -1,0 +1,39 @@
+<%# One hobby's river (D-hobby-feeds), on the hobby's own page. The hub card
+    is a taste; this is the screenful. Same rows as /reader — one line each,
+    the source, the headline, the age — because the density *is* the design
+    (docs/READER.md), and the everything-view is one link away. %>
+<%= render Ui::CardComponent.new(title: "From your feeds", padded: false) do |card| %>
+  <% card.with_actions do %>
+    <% if panel.feeds.any? %>
+      <%= link_to panel.unread_count.positive? ? "#{panel.unread_count} unread" : "All caught up",
+            reader_path(hobby: section.slug), class: "reader-filter" %>
+    <% end %>
+    <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
+  <% end %>
+
+  <% if panel.items.any? %>
+    <div class="divide-y divide-edge py-1">
+      <%= render partial: "reader/item", collection: panel.items, as: :item,
+            locals: { filter: "unread" } %>
+    </div>
+  <% elsif panel.feeds.any? %>
+    <p class="px-5 py-4 text-sm text-soft">
+      Nothing unread from <%= pluralize(panel.feeds.size, "feed") %> here — new items arrive on their own.
+      <%= link_to "See everything", reader_path(hobby: section.slug, filter: "all"), class: "reader-filter" %>
+    </p>
+  <% else %>
+    <div class="space-y-3 p-5">
+      <p class="text-sm text-soft">
+        Follow the sites, blogs, subreddits and channels behind <%= section.name %>. Paste any address —
+        the feed behind it gets found for you — and everything it publishes lands here, newest first.
+      </p>
+      <%= form_with model: Feed.new, url: feeds_path, class: "capture-row" do |form| %>
+        <%= hidden_field_tag :return_to, section_path(section.slug) %>
+        <%= form.hidden_field :section_ids, multiple: true, value: section.id %>
+        <%= form.url_field :url, class: "input min-w-0 flex-1",
+              placeholder: "example.com/blog · reddit.com/r/woodworking · a YouTube channel" %>
+        <%= form.submit "Follow", class: "btn btn-secondary" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

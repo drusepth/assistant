@@ -12,9 +12,22 @@ module Sections
   # should hide because the panel surfaces them with better context.
   class Panel
     def self.for(section, viewer)
-      "Sections::Panels::#{section.slug.camelize}".safe_constantize
-        &.new(section: section, viewer: viewer)
+      panel_class(section)&.new(section: section, viewer: viewer)
     end
+
+    # A section's own panel, or — for a user-created lens, whose slug no
+    # class can be named after — its parent's lens panel. Hobbies registers
+    # `Panels::HobbiesLens` and every hobby page gets a river (D-hobby-feeds);
+    # People's groups get the same seam the day they want one.
+    def self.panel_class(section)
+      constant(section.slug) ||
+        (section.parent && constant("#{section.parent.slug}_lens"))
+    end
+
+    def self.constant(slug)
+      "Sections::Panels::#{slug.tr("-", "_").camelize}".safe_constantize
+    end
+    private_class_method :constant
 
     attr_reader :section, :viewer
 
@@ -32,6 +45,9 @@ module Sections
     # hides the roster grid this way — the Address Book is the roster (D-people-dashboard).
     def hidden_browse = []
 
-    def partial = "sections/panels/#{section.slug}"
+    # Named after the panel rather than the section: they are the same
+    # string for every seeded section (`Panels::Health` → `_health`), and a
+    # lens panel serves many sections at once.
+    def partial = "sections/panels/#{self.class.name.demodulize.underscore}"
   end
 end

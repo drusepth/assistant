@@ -1,30 +1,82 @@
-<%# One hobby lens in the Hobbies grid: a doorway to the lens page with
-    just enough signal to pull the user back in — what's planned, what's
-    in flight, or an honest invitation when it's quiet. %>
-<%= link_to section_path(summary.section.slug), class: "card block p-5 transition hover:border-primary-300 hover:shadow-sm" do %>
-  <p class="flex items-center gap-2 text-sm font-semibold text-ink">
-    <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(summary.section) %>" aria-hidden="true"></span>
-    <%= summary.section.name %>
-  </p>
-  <% if summary.quiet? %>
-    <p class="mt-2 text-sm text-soft">Nothing planned yet — dive back in.</p>
-  <% else %>
-    <div class="mt-2 space-y-1 text-sm text-soft">
-      <% if summary.next_event %>
-        <p class="flex items-center gap-1.5">
-          <%= icon(:calendar, css_class: "size-4 shrink-0") %>
-          <span class="truncate"><%= summary.next_event.title %> · <%= summary.next_event.starts_at.strftime("%b %-d") %></span>
-        </p>
-      <% end %>
-      <% in_flight = [] %>
-      <% in_flight << pluralize(summary.open_tasks_count, "open task") if summary.open_tasks_count.positive? %>
-      <% in_flight << pluralize(summary.active_goals_count, "project") if summary.active_goals_count.positive? %>
-      <% if in_flight.any? %>
-        <p class="flex items-center gap-1.5">
-          <%= icon(:check_circle, css_class: "size-4 shrink-0") %>
-          <span><%= in_flight.join(" · ") %></span>
-        </p>
-      <% end %>
-    </div>
+<%# One hobby in the Hobbies grid (D25, D-hobby-feeds): a doorway to the lens
+    page with just enough signal to pull the user back in — what's planned,
+    what's in flight — and under it the hobby's own river.
+
+    The order is the argument: engagement first, reading second. A hobby is
+    what you do, not what you read about it (docs/HOBBIES.md's named trap),
+    and three stories is a taste rather than a second reader.
+
+    Not one big link_to any more: the story rows are links themselves, and a
+    link inside a link is invalid markup that browsers resolve by guessing.
+    Locals: card (Panels::Hobbies::Card). %>
+<% summary = card.summary %>
+<% river = card.river %>
+<div class="card flex flex-col p-5 transition hover:border-primary-300 hover:shadow-sm"
+     data-hobby-card="<%= summary.section.slug %>">
+  <%= link_to section_path(summary.section.slug), class: "group/hobby block" do %>
+    <p class="flex items-center gap-2 text-sm font-semibold text-ink group-hover/hobby:underline">
+      <span class="size-2 shrink-0 rounded-full <%= section_dot_classes(summary.section) %>" aria-hidden="true"></span>
+      <%= summary.section.name %>
+    </p>
+    <%# The catch-all says what it is rather than pretending to be quiet:
+        these are the feeds no hobby claimed yet. %>
+    <% if card.catch_all? %>
+      <p class="mt-2 text-sm text-soft">Feeds that don't belong to a hobby yet.</p>
+    <% elsif summary.quiet? %>
+      <p class="mt-2 text-sm text-soft">Nothing planned yet — dive back in.</p>
+    <% else %>
+      <div class="mt-2 space-y-1 text-sm text-soft">
+        <% if summary.next_event %>
+          <p class="flex items-center gap-1.5">
+            <%= icon(:calendar, css_class: "size-4 shrink-0") %>
+            <span class="truncate"><%= summary.next_event.title %> · <%= summary.next_event.starts_at.strftime("%b %-d") %></span>
+          </p>
+        <% end %>
+        <% in_flight = [] %>
+        <% in_flight << pluralize(summary.open_tasks_count, "open task") if summary.open_tasks_count.positive? %>
+        <% in_flight << pluralize(summary.active_goals_count, "project") if summary.active_goals_count.positive? %>
+        <% if in_flight.any? %>
+          <p class="flex items-center gap-1.5">
+            <%= icon(:check_circle, css_class: "size-4 shrink-0") %>
+            <span><%= in_flight.join(" · ") %></span>
+          </p>
+        <% end %>
+      </div>
+    <% end %>
   <% end %>
-<% end %>
+
+  <div class="mt-4 border-t border-edge pt-3 text-sm">
+    <% if river.items.any? %>
+      <ul class="space-y-1.5">
+        <% river.items.each do |item| %>
+          <li class="flex items-baseline gap-2">
+            <span class="min-w-0 flex-1 truncate">
+              <% if (url = reader_safe_url(item.url)) %>
+                <%= link_to item.title, url, class: "font-medium text-ink hover:underline", **ReaderHelper::OUTBOUND %>
+              <% else %>
+                <span class="font-medium text-ink"><%= item.title %></span>
+              <% end %>
+              <span class="text-xs text-soft"><%= item.source_name %></span>
+            </span>
+            <span class="shrink-0 text-xs tabular-nums text-soft"><%= reader_age(item.published_on) %></span>
+          </li>
+        <% end %>
+      </ul>
+      <p class="mt-3">
+        <%= link_to river.unread_count.positive? ? "#{river.unread_count} unread →" : "Open the river →",
+              reader_path(hobby: summary.section.slug), class: "reader-filter" %>
+      </p>
+    <% elsif river.any_feeds? %>
+      <p class="text-soft">All caught up here.</p>
+    <% else %>
+      <%# A hobby with no feeds gets the invitation, not an empty box. %>
+      <p class="text-xs text-soft">Follow the sites, blogs and channels behind this hobby.</p>
+      <%= form_with model: Feed.new, url: feeds_path, class: "mt-2 flex gap-2" do |form| %>
+        <%= hidden_field_tag :return_to, section_path("hobbies") %>
+        <%= form.hidden_field :section_ids, multiple: true, value: summary.section.id %>
+        <%= form.url_field :url, class: "input min-w-0 flex-1", placeholder: "example.com/blog" %>
+        <%= form.submit "Follow", class: "btn btn-secondary" %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

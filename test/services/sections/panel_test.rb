@@ -14,8 +14,16 @@ class Sections::PanelTest < ActiveSupport::TestCase
     assert_nil Sections::Panel.for(sections(:rights), users(:one))
   end
 
-  test "a custom hobby lens slug never resolves a panel" do
-    lens = Hobbies::Lens.find_or_create!("Board games")
-    assert_nil Sections::Panel.for(lens, users(:one))
+  # A user-created lens has a slug no class can be named after, so it falls
+  # back to its parent's lens panel (D-hobby-feeds) — that is how every hobby
+  # page gets a river without the controller learning about hobbies.
+  test "a custom lens falls back to its parent's lens panel, or to nothing" do
+    hobby = Hobbies::Lens.find_or_create!("Board games")
+    panel = Sections::Panel.for(hobby, users(:one))
+    assert_instance_of Sections::Panels::HobbiesLens, panel
+    assert_equal "sections/panels/hobbies_lens", panel.partial
+
+    group = Sections::Lens.find_or_create!("people", "Book club", fallback_slug: "group")
+    assert_nil Sections::Panel.for(group, users(:one)), "People has no lens panel yet"
   end
 end
