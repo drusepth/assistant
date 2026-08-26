@@ -61,10 +61,12 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Draft a dispute letter", response.body
   end
 
-  test "education leads with the learn-something tool" do
+  test "education's panel surfaces the two doors instead of the tool cards it hides (D37)" do
     get section_path("education")
     assert_response :success
-    assert_match "Learn something", response.body
+    assert_match "The school shelf", response.body
+    assert_match "Learn anything", response.body
+    assert_no_match "tools/learn_something/run", response.body, "the panel hides the card it surfaces with better context"
   end
 
   test "the empty state offers capture pre-tagged with the section" do
