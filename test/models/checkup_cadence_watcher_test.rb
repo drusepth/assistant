@@ -44,6 +44,15 @@ class CheckupCadenceWatcherTest < ActiveSupport::TestCase
     assert_equal [ sections(:health) ], suggestion.sections.to_a
   end
 
+  test "an overdue haircut nudges into a task, never the find-a-doctor tool" do
+    health_event "Haircut", 5.months.ago
+
+    suggestion = @watcher.scan.sole
+    assert_equal "Book a haircut", suggestion.title
+    assert_match(/your last haircut was/i, suggestion.body)
+    assert_equal({ "task" => { "title" => "Book a haircut" } }, suggestion.action)
+  end
+
   test "per-kind history beats the generic nudge even when the last year is silent" do
     health_event "Annual physical", 14.months.ago
 

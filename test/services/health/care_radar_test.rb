@@ -14,10 +14,29 @@ class Health::CareRadarTest < ActiveSupport::TestCase
     assert_nil radar.classify("Cardiology follow-up")
   end
 
+  test "haircuts classify without swallowing the clinical kinds" do
+    radar = Health::CareRadar.new(@user)
+    assert_equal "haircut", radar.classify("Haircut").key
+    assert_equal "haircut", radar.classify("Hair appointment").key
+    assert_equal "haircut", radar.classify("Barber, 4pm").key
+    assert_equal "haircut", radar.classify("Hair salon").key
+    assert_nil radar.classify("Nail salon")
+    assert_equal "checkup", radar.classify("Annual physical").key, "grooming can't shadow a checkup"
+  end
+
+  test "a haircut is tracked like any kind, but non-clinically" do
+    health_event "Haircut", 4.months.ago
+
+    haircut = Health::CareRadar.new(@user).statuses.find { |status| status.kind.key == "haircut" }
+    assert_equal :due, haircut.state, "2 months is the default rhythm"
+    assert_not haircut.kind.clinical?
+    assert_equal "haircut", haircut.kind.visit_noun
+  end
+
   test "statuses cover every kind in display order, unknown without history" do
     statuses = Health::CareRadar.new(@user).statuses
 
-    assert_equal %w[checkup dental vision], statuses.map { |status| status.kind.key }
+    assert_equal %w[checkup dental vision haircut], statuses.map { |status| status.kind.key }
     assert statuses.all? { |status| status.state == :unknown }
   end
 
@@ -74,8 +93,9 @@ class Health::CareRadarTest < ActiveSupport::TestCase
     health_event "Dental cleaning", 8.months.ago
 
     statuses = Health::CareRadar.new(@user).statuses
-    assert_equal %w[checkup dental], statuses.map { |status| status.kind.key }
-    assert_equal :ok, statuses.last.state, "8 months ago is on track at a 12-month rhythm"
+    assert_equal %w[checkup dental haircut], statuses.map { |status| status.kind.key }
+    dental = statuses.find { |status| status.kind.key == "dental" }
+    assert_equal :ok, dental.state, "8 months ago is on track at a 12-month rhythm"
   end
 
   test "a custom kind classifies by its label and gets its own status" do

@@ -25,15 +25,25 @@ module Watcher
 
     private
       # Accepting opens the find-care tool prefilled with the right kind of
-      # provider — the reconnect/stay-in-touch convention.
+      # provider — the reconnect/stay-in-touch convention. A non-clinical
+      # kind (haircut) has no business in a find-a-doctor tool: it accepts
+      # into a plain task instead.
       def propose_kind(status)
         propose(
           fingerprint: "#{status.kind.key}/#{period}",
           title: status.kind.book_title,
-          body: "Your last #{status.kind.label.downcase} visit was #{status.last_visit_on.strftime("%B %Y")} — " \
+          body: "Your last #{status.kind.history_phrase} was #{status.last_visit_on.strftime("%B %Y")} — " \
                 "about every #{status.kind.interval_months} months is the usual rhythm, and nothing's booked yet.",
-          action: { "tool" => { "slug" => "find_care", "inputs" => { "specialty" => status.kind.provider } } }
+          action: book_action(status.kind)
         )
+      end
+
+      def book_action(kind)
+        if kind.clinical?
+          { "tool" => { "slug" => "find_care", "inputs" => { "specialty" => kind.provider } } }
+        else
+          { "task" => { "title" => kind.book_title } }
+        end
       end
 
       def propose_generic

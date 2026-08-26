@@ -58,11 +58,12 @@ module SectionsHelper
       "#{status.next_visit.title} — #{status.next_visit_on.strftime("%b %-d, %Y")}, " \
         "#{distance_of_time_in_words(Date.current, status.next_visit_on)} away."
     when :ok
-      "Last visit #{care_month(status.last_visit_on)} — nothing needed until around #{care_month(status.due_on)}."
+      "Last #{status.kind.visit_noun} #{care_month(status.last_visit_on)} — " \
+        "nothing needed until around #{care_month(status.due_on)}."
     when :due
-      "Last visit #{care_month(status.last_visit_on)} — due since #{care_month(status.due_on)}."
+      "Last #{status.kind.visit_noun} #{care_month(status.last_visit_on)} — due since #{care_month(status.due_on)}."
     else
-      "No visits on record yet. Log your last one and the radar takes it from there."
+      "No #{status.kind.visit_noun.pluralize} on record yet. Log your last one and the radar takes it from there."
     end
   end
 

@@ -53,12 +53,25 @@ and everything that feeds the calendar (CalDAV sync, imports, quick
 capture, tool-created deadline events) feeds the radar for free.
 
 - **Kinds registry** (in the service): checkup / 12mo, dental / 6mo,
-  vision / 24mo — label, provider (seeds find-care), appointment title
-  (seeds event capture), interval, match patterns. Adding a kind is one
-  registry entry; per-user kinds/intervals (skin checks, gyn, kids'
-  well-visits per member) are the obvious next rung and would need real
-  storage — deliberately deferred until the three-kind version proves the
-  panel.
+  vision / 24mo, haircut / 2mo — label, provider (seeds find-care),
+  appointment title (seeds event capture), interval, match patterns.
+  Adding a kind is one registry entry; per-user kinds/intervals (skin
+  checks, gyn, kids' well-visits per member) are the obvious next rung and
+  would need real storage — deliberately deferred until the three-kind
+  version proves the panel.
+- **Non-clinical kinds (D-nonclinical-care-kinds)**: the haircut is the
+  first thing on the radar that isn't health — it's there because it's the
+  same shape (a recurring appointment on a rhythm, whose question is "when
+  was the last one, is one booked?"), and the radar is already the answer
+  to that shape. A `clinical: false` flag on the kind turns off exactly the
+  medical next-clicks — no "Find a provider" (find-care finds *doctors*),
+  no "Prep for this visit", and the cadence watcher's nudge accepts into a
+  plain task instead of a tool — and switches the copy from "visit" to the
+  kind's own name ("Last haircut Feb 2026"). Everything else — capture,
+  classification, the "Counts as" override, muting and re-timing on the
+  Tune page, household care — is shared. Intervals are whole months, so a
+  six-week haircut rhythm rounds to two and reads due about two weeks
+  late; sub-month cadence waits for a second kind that wants it.
 - **Conservative classification.** "Dental checkup" is dental (specific
   kinds match before the generic), "Physical therapy" is not a physical,
   and an event the radar can't confidently place ("Therapy",
