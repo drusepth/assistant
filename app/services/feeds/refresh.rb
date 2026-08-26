@@ -33,10 +33,11 @@ module Feeds
       return failure("that address stopped being a feed") unless parsed
 
       added, updated, touched = ingest(parsed)
-      # The stories that don't belong to this feed's hobbies but do belong to
-      # one of the user's (D-story-matching): matched here, at ingest, in
-      # plain Ruby — no model, no network, nothing the publisher waits for.
-      match(touched)
+      # A broad feed's stories are about many things, so which of the user's
+      # hobbies each one belongs to is a question about the story rather
+      # than about the feed (D-story-matching). It is asked in a job: a
+      # model call has no claim on a refresh's patience.
+      route(touched)
       adopt_metadata(parsed)
       record_success(page, parsed)
       prune
@@ -85,14 +86,10 @@ module Feeds
         [ added, updated, touched ]
       end
 
-      # Never at the cost of the refresh: a rule that raises is a bug worth
-      # recording, not a feed that stops updating.
-      def match(items)
-        return if items.empty?
+      def route(items)
+        return if items.empty? || !@feed.broad?
 
-        Match.for_feed(@feed, items)
-      rescue StandardError => e
-        AppError.record(e, source: "Feeds::Match", user: @feed.user, context: { feed: @feed.id })
+        RouteStories.enqueue(@feed.user)
       end
 
       def attributes_for(entry)

@@ -29,7 +29,7 @@ class User < ApplicationRecord
   has_many :feeds, dependent: :destroy
   has_many :feed_items, through: :feeds
   has_many :spotted_hobbies, dependent: :destroy
-  has_many :watchlists, dependent: :destroy
+  has_many :hobby_briefs, dependent: :destroy
   has_many :linked_accounts, dependent: :destroy
   has_many :email_sender_rules, dependent: :destroy
   has_many :notification_channels, dependent: :destroy

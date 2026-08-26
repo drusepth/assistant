@@ -19,11 +19,12 @@ class FeedItemsController < ApplicationController
   def unsave = act { @item.unsave! }
 
   # "This isn't Birding" (D-story-matching): the correcting verb on a story
-  # a watchlist carried into a hobby its feed isn't filed under. It leaves
-  # the row's place with a send-off and an Undo, like every other verb here
-  # that takes something off a list.
-  def reject = act { @rejected = reject_match }
-  def unreject = act { restore_match }
+  # the model routed into a hobby its feed isn't filed under. It leaves the
+  # row's place with a send-off and an Undo, like every other verb here that
+  # takes something off a list — and the rejection becomes an example the
+  # next batch is shown.
+  def reject = act { @rejected = reject_routing }
+  def unreject = act { restore_routing }
 
   private
     # Items are reachable only through the user's own feeds.
@@ -47,24 +48,25 @@ class FeedItemsController < ApplicationController
     # would shut the thing the reader just opened.
     def expanded? = params[:from] == "expand"
 
-    # The match named in the params, if this user really has one there.
-    # `matches` is the live scope, so a second click on a row somebody left
+    # The routing named in the params, if this user really has one there.
+    # `routings` is the live scope, so a second click on a row somebody left
     # open finds nothing and changes nothing.
-    def reject_match
-      match = @item.matches.find_by(section_id: params[:section_id])
-      Feeds::Watchlists::Corrections.reject!(match, Current.user) if match
+    def reject_routing
+      routing = @item.routings.find_by(section_id: params[:section_id])
+      routing&.reject!
+      routing
     end
 
-    def restore_match
-      match = FeedItemMatch.rejected.find_by(feed_item_id: @item.id, section_id: params[:section_id])
-      Feeds::Watchlists::Corrections.restore!(match) if match
+    def restore_routing
+      routing = StoryRouting.rejected.find_by(feed_item_id: @item.id, section_id: params[:section_id])
+      routing&.update!(rejected_at: nil)
     end
 
     def row_locals
       locals = { item: @item }
       locals[:filter] = params[:from] unless hub? || expanded?
       locals[:expanded] = true if expanded?
-      locals[:match] = @rejected if @rejected
+      locals[:routing] = @rejected if @rejected
       # The lens the row was being read under, so the re-rendered row knows
       # which chips repeat the page it is on.
       locals[:section] = lens if lens && !@rejected
@@ -93,7 +95,7 @@ class FeedItemsController < ApplicationController
       # A rejected row is no longer part of the river it is sitting in, so
       # it gets the same send-off a mark-read leaves rather than a row that
       # silently lost its tell.
-      return "reader/unmatched" if @rejected
+      return "reader/unrouted" if @rejected
 
       @item.read? && params[:from] == "unread" ? "reader/dismissed" : "reader/item"
     end

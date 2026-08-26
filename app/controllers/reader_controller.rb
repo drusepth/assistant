@@ -13,10 +13,10 @@ class ReaderController < ApplicationController
     @page = @river.page(offset: params[:offset].to_i.clamp(0, 10_000))
     @feeds = Current.user.feeds.includes(:sections).order(:created_at)
     @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
-    # A hobby's pile is its feeds' unread *plus* the stories matched into it
+    # A hobby's pile is its feeds' unread *plus* the stories routed into it
     # (D-story-matching) — so a hobby whose own feeds are quiet still has a
     # count, and a hobby with no feeds at all still has a row.
-    @matched_counts = matched_counts
+    @routed_counts = routed_counts
     @lenses = lenses
     # The rail and the phone's scope sheet render the same tree, so it is
     # grouped once here: feeds under the hobby they were filed under
@@ -79,16 +79,16 @@ class ReaderController < ApplicationController
     end
 
     # Every hobby with a feed filed under it, plus every hobby something has
-    # been matched into.
+    # been routed into.
     def lenses
       hobbies = Section.find_by(slug: "hobbies")
       return [] unless hobbies
 
-      hobbies.children.where(id: @feeds.flat_map(&:section_ids) | @matched_counts.keys).order(:name)
+      hobbies.children.where(id: @feeds.flat_map(&:section_ids) | @routed_counts.keys).order(:name)
     end
 
-    def matched_counts
-      FeedItemMatch.live.joins(:feed_item)
+    def routed_counts
+      StoryRouting.live.joins(:feed_item)
         .where(feed_items: { read_at: nil, feed_id: @feeds.map(&:id) })
         .group(:section_id).distinct.count(:feed_item_id)
     end

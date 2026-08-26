@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_223817) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -255,20 +255,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
     t.index ["user_id"], name: "index_events_on_user_id"
   end
 
-  create_table "feed_item_matches", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "feed_item_id", null: false
-    t.datetime "rejected_at"
-    t.integer "section_id", null: false
-    t.string "source", default: "match", null: false
-    t.json "terms", default: [], null: false
-    t.datetime "updated_at", null: false
-    t.index ["feed_item_id", "section_id"], name: "index_feed_item_matches_on_feed_item_id_and_section_id", unique: true
-    t.index ["feed_item_id"], name: "index_feed_item_matches_on_feed_item_id"
-    t.index ["section_id", "rejected_at"], name: "index_feed_item_matches_on_section_id_and_rejected_at"
-    t.index ["section_id"], name: "index_feed_item_matches_on_section_id"
-  end
-
   create_table "feed_items", force: :cascade do |t|
     t.string "author"
     t.datetime "created_at", null: false
@@ -276,6 +262,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
     t.string "guid", null: false
     t.datetime "published_at"
     t.datetime "read_at"
+    t.datetime "routed_at"
     t.datetime "saved_at"
     t.text "summary"
     t.string "title", null: false
@@ -283,6 +270,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
     t.string "url"
     t.index ["feed_id", "guid"], name: "index_feed_items_on_feed_id_and_guid", unique: true
     t.index ["feed_id", "published_at"], name: "index_feed_items_on_feed_id_and_published_at"
+    t.index ["feed_id", "routed_at"], name: "index_feed_items_on_feed_id_and_routed_at"
     t.index ["feed_id"], name: "index_feed_items_on_feed_id"
     t.index ["read_at"], name: "index_feed_items_on_read_at"
     t.index ["saved_at"], name: "index_feed_items_on_saved_at"
@@ -290,6 +278,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
 
   create_table "feeds", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.boolean "broad"
     t.datetime "classified_at"
     t.datetime "created_at", null: false
     t.text "description"
@@ -322,6 +311,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_goals_on_user_id"
+  end
+
+  create_table "hobby_briefs", force: :cascade do |t|
+    t.datetime "authored_at"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.boolean "enabled", default: true, null: false
+    t.integer "section_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["section_id"], name: "index_hobby_briefs_on_section_id"
+    t.index ["user_id", "section_id"], name: "index_hobby_briefs_on_user_id_and_section_id", unique: true
+    t.index ["user_id"], name: "index_hobby_briefs_on_user_id"
   end
 
   create_table "households", force: :cascade do |t|
@@ -659,6 +661,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
     t.index ["user_id"], name: "index_spotted_hobbies_on_user_id"
   end
 
+  create_table "story_routings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "feed_item_id", null: false
+    t.string "reason"
+    t.datetime "rejected_at"
+    t.integer "section_id", null: false
+    t.string "source", default: "model", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feed_item_id", "section_id"], name: "index_story_routings_on_feed_item_id_and_section_id", unique: true
+    t.index ["feed_item_id"], name: "index_story_routings_on_feed_item_id"
+    t.index ["section_id", "rejected_at"], name: "index_story_routings_on_section_id_and_rejected_at"
+    t.index ["section_id"], name: "index_story_routings_on_section_id"
+  end
+
   create_table "study_logs", force: :cascade do |t|
     t.integer "activity", default: 0, null: false
     t.datetime "created_at", null: false
@@ -848,23 +864,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
     t.index ["user_id"], name: "index_vault_events_on_user_id"
   end
 
-  create_table "watchlists", force: :cascade do |t|
-    t.datetime "authored_at"
-    t.datetime "created_at", null: false
-    t.json "dropped", default: [], null: false
-    t.json "negatives", default: [], null: false
-    t.json "resumed_feed_ids", default: [], null: false
-    t.integer "section_id", null: false
-    t.string "source", default: "hand", null: false
-    t.json "suspended_feed_ids", default: [], null: false
-    t.json "terms", default: [], null: false
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["section_id"], name: "index_watchlists_on_section_id"
-    t.index ["user_id", "section_id"], name: "index_watchlists_on_user_id_and_section_id", unique: true
-    t.index ["user_id"], name: "index_watchlists_on_user_id"
-  end
-
   add_foreign_key "access_grants", "users", column: "grantee_id"
   add_foreign_key "access_grants", "users", column: "grantor_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -891,11 +890,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
   add_foreign_key "emergency_contacts", "users", column: "contact_user_id"
   add_foreign_key "events", "goals"
   add_foreign_key "events", "users"
-  add_foreign_key "feed_item_matches", "feed_items"
-  add_foreign_key "feed_item_matches", "sections"
   add_foreign_key "feed_items", "feeds"
   add_foreign_key "feeds", "users"
   add_foreign_key "goals", "users"
+  add_foreign_key "hobby_briefs", "sections"
+  add_foreign_key "hobby_briefs", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "job_feeds", "users"
@@ -926,6 +925,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"
   add_foreign_key "spotted_hobbies", "users"
+  add_foreign_key "story_routings", "feed_items"
+  add_foreign_key "story_routings", "sections"
   add_foreign_key "study_logs", "subjects"
   add_foreign_key "study_logs", "topics"
   add_foreign_key "study_logs", "users"
@@ -946,6 +947,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_205829) do
   add_foreign_key "vault_events", "users"
   add_foreign_key "vault_events", "users", column: "actor_id"
   add_foreign_key "vault_events", "users", column: "subject_user_id"
-  add_foreign_key "watchlists", "sections"
-  add_foreign_key "watchlists", "users"
 end

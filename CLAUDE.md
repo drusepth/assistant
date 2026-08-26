@@ -71,6 +71,17 @@ Every item is **multi-taggable** by section (e.g., "Mom's cardiology appointment
 
 Single **OpenAI-compatible chat-completions adapter** behind a provider picker in Settings: OpenAI, Anthropic (Claude), and Google (Gemini) — each an API key + model name, the latter two over the providers' own OpenAI-compatibility endpoints — plus Chroma Golem (key only; router-style) and a custom endpoint (any OpenAI-compatible base URL — Ollama, OpenRouter, Groq). Presets may carry per-provider quirks the adapter absorbs (`json_mode:`, `max_tokens:`) but never a second code path (D-provider-presets). **Local models are the recommended answer and the UI argues for them** — an `allow_cloud_models` toggle (default on) gates every `cloud: true` preset, and the picker groups self-run endpoints ahead of hosted ones (D-local-first-models). Local models work today through the self-hosted endpoint (Ollama, llama.cpp, LM Studio); first-class one-click local setup is still to come. Security/encryption hardening deliberately deferred until the foundation is built.
 
+## One standing rule about classification
+
+**Keyword and pattern matching is never how this app decides what something
+*is*** (D-no-keyword-logic). When the question is "what is this about", the
+model classifies — batched, over a bounded set, validated into a closed set of
+rows we already have. Make it affordable by asking about *less*, never by
+swapping in a cheaper mechanism that answers a different question. With no
+model configured, such a feature is off and says so rather than guessing. This
+does not touch deterministic work (parsing, dates, arithmetic, search, or the
+user's own explicit rules).
+
 ## Tech stack
 
 Rails 8.1 · Ruby 3.3 · SQLite · Solid Queue/Cache/Cable · Hotwire (Turbo + Stimulus) · Propshaft + importmaps · Minitest + fixtures · Kamal + Dockerfile. Run tests with `bin/rails test`; lint with `bin/rubocop`.
@@ -96,7 +107,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/TRAVEL.md` — the Travel section: why it's a lens and not a page, the self-drawn world map of geotagged photos (no tiles, no geocoder, owner-only per Q14), and what the hub grows next (D-travel-facet)
 - `docs/READER.md` — the feed reader: Google Reader's shape over feeds the user chose, chronological on purpose (why the ranking and votes were built and then cut), the politeness rules for the one part of the app that polls strangers' servers, and the hostile-input handling for stranger XML (D-feed-reader)
 - `docs/HOBBIES_HUB_PLAN.md` — folding the reader into the Hobbies hub: one river per hobby, why the model classifies each *feed* (one call per subscription) and never a story, and why everything it can't place lands in one real lens called Other Interests (D-hobby-feeds), and why the hobbies it suggests are clusters spotted in what you actually read (D-hobby-spotting)
-- `docs/STORY_ROUTING_PLAN.md` — the broad feed problem: how the birding stories inside a general news feed reach the Birding hub without a model call per story — a watchlist the model writes once per hobby and the user can edit, matched offline at ingest, with the one amendment to "an item's tags are its feed's tags" (D-story-matching)
+- `docs/STORY_ROUTING_PLAN.md` — the broad feed problem: how the birding stories inside a general news feed reach the Birding hub — the model reads them, batched, but only from feeds it called *broad*, with the one amendment to "an item's tags are its feed's tags" (D-story-matching). §10 is the record of the term-matching version that was built here first and replaced (D-no-keyword-logic)
 - `docs/PASSWORDS_PLAN.md` — the password vault: per-user envelope encryption, sharing, TOTP, import/export, and the agent-access bridge (D-passwords-vault, D-vault-crypto)
 - `docs/DIARY_PLAN.md` — the diary: a second sealed container behind the keyring — everything encrypted but the date, the per-user diary-key tier, the recovery gate, emergency-access exclusion, and the extraction of the vault machinery into `VaultSealed` (D-diary-vault, D-vault-sealed). **Adding a third sealed container?** Include `VaultSealed`, add it to `VaultSealed::CONTAINERS` and to `VaultSession::COOKIES` (a name *and* a path — never widen an existing one), and nothing else.
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence

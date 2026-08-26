@@ -307,10 +307,10 @@
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
-  /* A chip for something the app inferred rather than something the user
-     filed (D-story-matching): outlined instead of filled, so a match never
-     wears the same weight as a decision. */
-  .chip-matched {
+  /* A chip for something the model decided rather than something the user
+     filed (D-story-matching): outlined instead of filled, so a judgment
+     never wears the same weight as a decision. */
+  .chip-inferred {
     @apply border border-dashed border-edge text-soft;
   }
 

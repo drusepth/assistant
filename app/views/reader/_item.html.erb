@@ -32,7 +32,7 @@
   # It decides which chips repeat the page and which one earns its place.
   lens_slug = local_assigns[:section]&.slug || params[:hobby]
   chips = reader_chips(item, current_slug: lens_slug)
-  match = reader_match(item, lens_slug)
+  routing = reader_routing(item, lens_slug)
   blurb = item.blurb(320)
 %>
 <article id="<%= dom_id(item) %>"
@@ -52,14 +52,14 @@
     <%# On a wide screen the source gets its own fixed column, so four
         hundred headlines all start at the same x. Below `lg` it drops into
         the signal line under the headline, where it costs no height. %>
-    <%# The wide-screen tell for a matched row (D-story-matching). The chips
+    <%# The wide-screen tell for a routed row (D-story-matching). The chips
         below live on the phone's signal line, which is `lg:hidden`, so on a
         laptop a story carried in by a word would otherwise look exactly like
         one whose feed belongs here. A funnel in the source column costs no
         height and answers the only question the row raises. %>
     <span class="reader-src flex items-center gap-1">
-      <% if match %>
-        <span title="Matched on <%= match.because %>" class="shrink-0 text-stone-400">
+      <% if routing %>
+        <span title="<%= reader_routing_title(routing) %>" class="shrink-0 text-stone-400">
           <%= icon(:funnel, css_class: "size-3") %>
         </span>
       <% end %>
@@ -92,14 +92,14 @@
         <span aria-hidden="true">·</span>
         <span class="tabular-nums"><%= reader_age(item.published_on) %></span>
         <% chips.each do |chip| %>
-          <span class="chip <%= chip.matched? ? "chip-matched" : section_chip_classes(chip.section) %>"
+          <span class="chip <%= chip.routed? ? "chip-inferred" : section_chip_classes(chip.section) %>"
                 title="<%= chip.title %>"><%= chip.section.name %></span>
         <% end %>
         <%# Already under this hobby's own title, so the chip would only
             repeat the page. What is not obvious is *why* a story from a
             feed filed elsewhere is here, and that is what this says. %>
-        <% if match %>
-          <span class="chip chip-matched" title="Matched on <%= match.because %>">matched</span>
+        <% if routing %>
+          <span class="chip chip-inferred" title="<%= reader_routing_title(routing) %>">added here</span>
         <% end %>
       </div>
     </div>
@@ -109,7 +109,7 @@
         into doing, which is the whole point of the section — was the one
         nobody discovered. %>
     <div class="reader-verbs">
-      <%= render "reader/verbs", item: item, filter: filter, match: match %>
+      <%= render "reader/verbs", item: item, filter: filter, routing: routing %>
     </div>
 
     <time class="reader-age" datetime="<%= item.published_on.iso8601 %>"
@@ -135,7 +135,7 @@
             Open<span aria-hidden="true"> ↗</span>
           <% end %>
         <% end %>
-        <%= render "reader/verbs", item: item, filter: filter, match: match, size: :lg %>
+        <%= render "reader/verbs", item: item, filter: filter, routing: routing, size: :lg %>
       </div>
     </div>
   </div>

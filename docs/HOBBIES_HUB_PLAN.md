@@ -329,18 +329,16 @@ rather than left as a red row in a brand-new account.
 
 ## 8. Deliberately not doing (and what would change our minds)
 
-- **Per-story classification.** Cut for the reasons in §2, and still cut. What
-  would revisit it: a local-model story where a small classifier runs on-box
-  for free, or a batched pass (≤25 items a call, off by default) if users
-  report that broad feeds are the majority of their river and Other Interests
-  has become a second inbox.
-- **Keyword/vocabulary routing.** Cut permanently — *a vocabulary we ship*.
-  Enumerating the topic space is a promise we can't keep. A vocabulary the
-  **model writes per hobby from the user's own reading**, tested against their
-  own river and editable on the hobby page, is a different object with a
-  different failure mode, and it is how the stranded stories inside a broad
-  feed reach their hobby: `docs/STORY_ROUTING_PLAN.md` (D-story-matching).
-  Calls scale with hobbies, not stories, so §2's arithmetic never appears.
+- **Per-story classification.** ~~Cut~~ **built**, once the arithmetic was
+  re-checked: it was right about classifying *every* story and wrong about the
+  conclusion. The feed's own filing call now also says whether the feed is
+  broad, so only broad feeds' stories are read — batched, once each, capped
+  per run. `docs/STORY_ROUTING_PLAN.md` (D-story-matching).
+- **Keyword/vocabulary routing.** Cut permanently, and now cut in general
+  rather than here: a vocabulary of words for a subject fails silently on
+  everything nobody enumerated, whoever writes it — us, or the model on the
+  user's behalf. The second version was built and replaced for exactly that
+  reason (D-no-keyword-logic).
 - **Feeds on non-hobby sections.** The plumbing is section-generic — a CFPB
   feed under Money would work unchanged — but the classifier is restricted to
   Hobbies' children so a woodworking blog can't land under Health. Widening

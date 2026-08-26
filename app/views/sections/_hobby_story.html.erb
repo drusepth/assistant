@@ -30,8 +30,8 @@
       <span class="text-xs text-soft">
         <%# Same question, same answer, one size down: a hub card carrying a
             story from a feed filed elsewhere says why (D-story-matching). %>
-        <% if (match = reader_match(item, local_assigns[:section]&.slug)) %>
-          <span title="Matched on <%= match.because %>" aria-hidden="true">⌄</span>
+        <% if (routing = reader_routing(item, local_assigns[:section]&.slug)) %>
+          <span title="<%= reader_routing_title(routing) %>" aria-hidden="true">⌄</span>
         <% end %>
         <%= item.source_name %>
       </span>

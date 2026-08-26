@@ -19,39 +19,32 @@ module Sections
       def items = row.items
       def unread_count = row.unread_count
 
-      # What counts as this hobby, as words (D-story-matching): the rule
-      # that carries a broad feed's stories in here without the feed
-      # itself moving. Unsaved until the first word — a hobby nobody has
-      # written a rule for shouldn't cost a row.
-      def watchlist = @watchlist ||= ::Watchlist.for(viewer, section)
+      # What this hobby means, in the user's own words (D-story-matching):
+      # the sentence the router reads when it decides whether a broad feed's
+      # story belongs here. Unsaved until somebody edits it or the model
+      # drafts one — a hobby nobody has described shouldn't cost a row.
+      def brief = @brief ||= ::HobbyBrief.for(viewer, section)
 
-      # The catch-all has no rule: it is where a story lands when nothing
+      # The catch-all has no brief: it is where a story lands when nothing
       # claims it, so routing *into* it would mean nothing.
-      def watchlist? = !::Hobbies::OtherInterests.catch_all?(section)
+      def brief? = !::Hobbies::OtherInterests.catch_all?(section)
 
-      def matched_this_week
-        return 0 unless watchlist.persisted?
-
-        @matched_this_week ||= watchlist.matches.live.since(1.week.ago).count
+      def routed_this_week
+        @routed_this_week ||= brief.routings.live.since(1.week.ago).count
       end
 
-      # The feeds this rule flooded, paired with the words that did it.
-      def suspensions
-        return [] unless watchlist.persisted? && watchlist.suspended_feed_ids.any?
-
-        @suspensions ||= watchlist.suspended_feeds.map do |feed|
-          row = watchlist.dropped.find { |entry| entry["feed_id"] == feed.id }
-          Suspension.new(feed: feed, terms: row&.dig("term"))
-        end
+      # What the user has taken back out. It is not a rule that changed —
+      # these titles are shown to the model as examples next time.
+      def corrections
+        @corrections ||= brief.routings.rejected.joins(:feed_item)
+          .order(rejected_at: :desc).limit(3).pluck(:title)
       end
+
+      # The broad feeds whose stories get read one at a time. A household
+      # with none of them is paying nothing and should be told so.
+      def broad_feeds = @broad_feeds ||= viewer.feeds.active.where(broad: true).to_a
 
       def model? = viewer.household.model_profile&.configured?
-
-      # Words asked for and refused, with why — a dropped word is explained
-      # rather than missing.
-      def refused = watchlist.dropped.reject { |row| row["kind"] == "flood" }
-
-      Suspension = Struct.new(:feed, :terms, keyword_init: true)
     end
   end
 end

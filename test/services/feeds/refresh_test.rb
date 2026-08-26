@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Feeds::RefreshTest < ActiveSupport::TestCase
+class Feeds::RefreshTest < ActiveJob::TestCase
   PUBLIC_DNS = Class.new { def getaddresses(_host) = [ "93.184.216.34" ] }.new
 
   setup do
@@ -181,20 +181,19 @@ class Feeds::RefreshTest < ActiveSupport::TestCase
     assert_not FeedItem.exists?(doomed.first.id), "the oldest read items go first"
   end
 
-  # Matching rides the refresh (D-story-matching §3.2): the story is filed
-  # into the hobby it is about as it arrives, in plain Ruby, with nothing
-  # fetched and nobody asked.
-  test "a story matching a hobby's words joins that hobby as it lands" do
-    birding = Hobbies::Lens.find_or_create!("Birding")
-    @feed.sections = [ Hobbies::OtherInterests.find_or_create! ]
-    Watchlist.create!(user: @user, section: birding, terms: %w[ warbler ])
-    stub_feed(item(title: "Rare warbler on the marsh") + item(title: "Council approves budget"))
+  # Routing rides the refresh (D-story-matching), but only as far as the
+  # queue: reading the stories is a model call, and a publisher's poll has
+  # no business waiting on a provider.
+  test "a broad feed's new stories send the router to work; a focused one doesn't" do
+    Hobbies::Lens.find_or_create!("Birding")
+    @feed.update!(broad: true, sections: [ Hobbies::OtherInterests.find_or_create! ])
+    stub_feed(item(title: "Rare warbler on the marsh"))
 
-    Feeds::Refresh.call(@feed)
-
-    filed = @feed.feed_items.find_by(title: "Rare warbler on the marsh")
-    assert_equal [ birding ], filed.matched_sections.to_a
-    assert_empty @feed.feed_items.find_by(title: "Council approves budget").matched_sections
+    assert_enqueued_with(job: RouteStoriesJob) { Feeds::Refresh.call(@feed) }
     assert_equal [ Hobbies::OtherInterests.find ], @feed.reload.sections.to_a, "the feed itself never moves"
+
+    @feed.update!(broad: false)
+    @feed.feed_items.destroy_all
+    assert_no_enqueued_jobs(only: RouteStoriesJob) { Feeds::Refresh.call(@feed) }
   end
 end

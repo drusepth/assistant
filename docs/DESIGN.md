@@ -65,7 +65,7 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
      folding back into the pill at `sm` (see Narrow screens)
    - `.input`, `.label`, `.hint`, `.field-error` — the form set
    - `.card`, `.chip`
-   - `.chip-matched` — a chip for what the app inferred, not what the user
+   - `.chip-inferred` — a chip for what the model decided, not what the user
      filed: outlined rather than filled (see D-story-matching)
    - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a
      recommendation or caveat that belongs to the form, not the request
