@@ -98,6 +98,7 @@ Tailwind CSS v4 (standalone binary, no Node) + ViewComponent + a default `Applic
 - `docs/HOBBIES_HUB_PLAN.md` — folding the reader into the Hobbies hub: one river per hobby, why the model classifies each *feed* (one call per subscription) and never a story, and why everything it can't place lands in one real lens called Other Interests (D-hobby-feeds)
 - `docs/PASSWORDS_PLAN.md` — the password vault: per-user envelope encryption, sharing, TOTP, import/export, and the agent-access bridge (D-passwords-vault, D-vault-crypto)
 - `docs/DIARY_PLAN.md` — the diary: a second sealed container behind the keyring — everything encrypted but the date, the per-user diary-key tier, the recovery gate, emergency-access exclusion, and the extraction of the vault machinery into `VaultSealed` (D-diary-vault, D-vault-sealed). **Adding a third sealed container?** Include `VaultSealed`, add it to `VaultSealed::CONTAINERS` and to `VaultSession::COOKIES` (a name *and* a path — never widen an existing one), and nothing else.
+- `docs/PETS_PLAN.md` — pets, blended into the existing hubs rather than given one of their own: why a pet is a *whom* and not a section, the `Pet` record plus a section lens per pet that makes "about Rex" an ordinary tag (D-pet-primitive), the care radar generalized from user to subject (D-pet-care-radar), and the food shelf that computes a reorder date and a budget line (D-pet-food-shelf)
 - `docs/ARCHITECTURE.md` — schema, visibility model, adapter design, build sequence
 - `docs/DESIGN.md` — design language: tokens, atoms, components, conventions
 
