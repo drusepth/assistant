@@ -267,8 +267,21 @@ same thing, suggest the hobby (D20: agent proposes, user disposes). This is
 the honest version of the "we noticed you're into X" feature, and it operates
 on feeds — a handful of rows — rather than on the story firehose.
 
+**W6 ✅ — the chips are the same signal, quietly (D-hobby-spotting).** W5's one
+model call moved into `Hobbies::Spotter`, which stores every candidate rather
+than only the one the nudge says out loud, and the hub's "Add another hobby"
+chips lead with those names instead of a static list that was identical on
+every instance. Two things changed in the reading: the evidence is now what the
+user has **read** in the last 90 days rather than whatever a feed most recently
+published — a subscription says you were curious once, an opened story says it
+stuck — and the candidate's supporting feed ids are kept, so naming the hobby
+files them in the same request instead of paying `MapFeeds` a second call to
+re-derive an answer we are already holding. §2's line is untouched: no story is
+classified, `FeedItem` is still not `Sectionable`, and the sample read is the
+handful of stories the user chose to open.
+
 W3, W4 and W5 are independent of each other once W2 exists; the order above is
-a guess at value, not a dependency chain.
+a guess at value, not a dependency chain. W6 needs W5.
 
 Two things the build changed. **`Sections::Panel#partial` now derives from the
 panel class** rather than the section slug — the same string for every seeded

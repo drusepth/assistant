@@ -38,6 +38,24 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     quiet.each { |lens| assert_equal 1, explore.css("a[href='#{section_path(lens.slug)}']").size }
   end
 
+  # The chips used to be the same four names on every instance forever
+  # (D-hobby-spotting); now what the spotter read out of this household's
+  # own feeds leads them, and the caption says where it came from.
+  test "a spotted hobby leads the add tile's chips, marked as coming from the feeds" do
+    Hobbies::Lens.find_or_create!("Woodworking")
+    users(:one).spotted_hobbies.create!(name: "Birding", reason: "Two of your feeds are about birds.")
+
+    get section_path("hobbies")
+
+    page = Nokogiri::HTML(response.body)
+    chips = page.css("form.button_to button.chip")
+    assert_equal "Birding", chips.first.text.strip
+    assert_equal "Two of your feeds are about birds.", chips.first["title"]
+    assert chips.first.at_css("svg"), "a spotted chip wears the feed mark; a starter name doesn't"
+    assert_nil chips.last.at_css("svg")
+    assert_match "Spotted in what you've been reading.", response.body
+  end
+
   # The hub is the high-level view; pasting a URL belongs on the page of a
   # hobby somebody has already decided to spend time on.
   test "the hub carries no follow-a-source field at all" do

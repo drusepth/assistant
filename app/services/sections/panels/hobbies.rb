@@ -48,6 +48,12 @@ module Sections
 
       def feeds = @feeds ||= viewer.feeds.active.to_a
 
+      # What the capture offers (D-hobby-spotting): hobbies spotted in this
+      # user's own reading first, then the broad starter names. The chips
+      # are read here rather than computed in the view, because a hub tile
+      # is a section feature and section features live in the panel (D37).
+      def suggestions = @suggestions ||= ::Hobbies::Suggestions.for(viewer, section)
+
       # The stocked shelf, only while there is nothing to read at all
       # (D-hobby-feeds §7.1): a household with one feed has found the paste
       # field and doesn't need it.

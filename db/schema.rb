@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_185546) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_200242) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -633,6 +633,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_185546) do
     t.index ["user_id"], name: "index_spending_rules_on_user_id"
   end
 
+  create_table "spotted_hobbies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.json "feed_ids", default: [], null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.text "reason"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "name"], name: "index_spotted_hobbies_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_spotted_hobbies_on_user_id"
+  end
+
   create_table "study_logs", force: :cascade do |t|
     t.integer "activity", default: 0, null: false
     t.datetime "created_at", null: false
@@ -880,6 +892,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_185546) do
   add_foreign_key "spending_accounts", "users"
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"
+  add_foreign_key "spotted_hobbies", "users"
   add_foreign_key "study_logs", "subjects"
   add_foreign_key "study_logs", "topics"
   add_foreign_key "study_logs", "users"

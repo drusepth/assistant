@@ -95,17 +95,4 @@ module SectionsHelper
       "Nothing yet"
     end
   end
-
-  # Chip suggestions for the hobby capture card — a broad, cheap-to-start
-  # spread, minus the lenses the household already has.
-  HOBBY_SUGGESTIONS = [
-    "Reading", "Cooking", "Baking", "Gardening", "Drawing", "Photography",
-    "Gaming", "Board games", "Hiking", "Running", "Guitar", "Knitting",
-    "Woodworking", "Writing"
-  ].freeze
-
-  def hobby_suggestions(hobbies_section)
-    taken = hobbies_section.children.map { |child| child.name.downcase }
-    HOBBY_SUGGESTIONS.reject { |name| taken.include?(name.downcase) }
-  end
 end

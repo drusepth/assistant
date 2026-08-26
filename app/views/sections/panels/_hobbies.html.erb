@@ -32,11 +32,11 @@
       <% if panel.quiet_lenses.any? %>
         <%= render "sections/hobby_explore", lenses: panel.quiet_lenses %>
       <% end %>
-      <%= render "sections/hobby_add_tile", hobbies: section %>
+      <%= render "sections/hobby_add_tile", suggestions: panel.suggestions.first(4) %>
     </div>
   </div>
 <% else %>
-  <%= render "sections/hobby_capture", hobbies: section %>
+  <%= render "sections/hobby_capture", suggestions: panel.suggestions %>
 <% end %>
 
 <% if panel.starters.present? %>
