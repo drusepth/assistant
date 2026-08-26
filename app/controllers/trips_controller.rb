@@ -12,9 +12,7 @@ class TripsController < ApplicationController
   end
 
   def new
-    @trip = Current.user.trips.new(starts_on: params[:starts_on], ends_on: params[:ends_on])
-  rescue Date::Error
-    @trip = Current.user.trips.new
+    @trip = Current.user.trips.new(starts_on: params[:starts_on].presence, ends_on: params[:ends_on].presence)
   end
 
   # Two births (D-trip-spine). Keeping a trip the detector spotted sends

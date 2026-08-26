@@ -15,6 +15,7 @@ class Photo < ApplicationRecord
 
   has_many :album_photos, dependent: :destroy
   has_many :albums, through: :album_photos
+  has_many :trip_photos, dependent: :destroy
   has_many :photo_people, dependent: :destroy
   has_many :people, through: :photo_people
 

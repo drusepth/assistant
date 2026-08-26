@@ -74,6 +74,36 @@ class TripPlanningTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "stays and legs can be reworked and removed as plans change" do
+    trip = create_trip
+    stay = trip.stays.create!(location: "Boise", check_in: "2026-09-01", check_out: "2026-09-30")
+    leg = trip.legs.create!(kind: "flight", starts_on: "2026-09-01", origin: "AUS", destination: "BOI")
+
+    get new_trip_stay_path(trip)
+    assert_response :success
+    get edit_stay_path(stay)
+    assert_response :success
+    get edit_leg_path(leg)
+    assert_response :success
+
+    patch leg_path(leg), params: { trip_leg: { kind: "flight", starts_on: "2026-09-02",
+      origin: "AUS", destination: "BOI", booking_status: "booked" } }
+    assert_redirected_to trip_path(trip, anchor: "itinerary")
+    assert leg.reload.booked?
+    assert_equal Date.new(2026, 9, 2), leg.starts_on
+
+    assert_difference("Stay.count", -1) { delete stay_path(stay) }
+    assert_difference("TripLeg.count", -1) { delete leg_path(leg) }
+  end
+
+  test "a new stay's check-in defaults to where the last one ended" do
+    trip = create_trip
+    trip.stays.create!(location: "Boise", check_in: "2026-09-01", check_out: "2026-09-10")
+
+    get new_trip_stay_path(trip)
+    assert_select "input[name='stay[check_in]'][value='2026-09-10']"
+  end
+
   test "the owner adds and removes companions; a companion can leave" do
     trip = create_trip
     post trip_companions_path(trip), params: { trip_membership: { user_id: users(:two).id } }

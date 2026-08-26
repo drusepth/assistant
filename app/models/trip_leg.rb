@@ -17,7 +17,6 @@ class TripLeg < ApplicationRecord
   validate :ends_on_after_starts_on
 
   scope :by_date, -> { order(:starts_on, :id) }
-  scope :from_day, ->(day) { where("COALESCE(ends_on, starts_on) >= ?", day) }
 
   KIND_LABELS = {
     "flight" => "Flight", "drive" => "Drive", "train" => "Train", "bus" => "Bus",

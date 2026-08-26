@@ -22,8 +22,6 @@ class Stay < ApplicationRecord
   validate :check_out_after_check_in
 
   scope :by_date, -> { order(:check_in, :id) }
-  scope :current_on, ->(day) { where(check_in: ..day).where("check_out >= ?", day) }
-  scope :from_day, ->(day) { where("check_out >= ?", day) }
 
   KIND_LABELS = {
     "airbnb" => "Airbnb", "hotel" => "Hotel", "vacation_rental" => "Vacation rental",

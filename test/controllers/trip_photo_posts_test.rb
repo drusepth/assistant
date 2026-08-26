@@ -64,6 +64,12 @@ class TripPhotoPostsTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "deleting a posted photo takes the post with it" do
+    post trip_photo_posts_path(@trip), params: { photo_ids: [ @photo.id ] }
+
+    assert_difference("TripPhoto.count", -1) { @photo.destroy! }
+  end
+
   test "an outsider gets nothing" do
     sign_in_as users(:outsider)
     get new_trip_photo_post_path(@trip)

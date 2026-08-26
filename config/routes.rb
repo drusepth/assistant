@@ -29,6 +29,8 @@ Rails.application.routes.draw do
   patch "health/care-settings" => "care_settings#update"
   delete "health/care-settings/:kind_key" => "care_settings#destroy", as: :care_setting
   post "health/medications" => "medications#create", as: :medications
+  post "health/allergies" => "allergies#create", as: :allergies
+  delete "health/allergies/:id" => "allergies#destroy", as: :allergy
 
   post "career/win" => "career#create_win", as: :career_win
   post "career/comp_change" => "career#create_comp_change", as: :career_comp_change
