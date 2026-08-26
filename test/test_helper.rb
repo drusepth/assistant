@@ -4,6 +4,7 @@ require "rails/test_help"
 require "webmock/minitest"
 require_relative "test_helpers/session_test_helper"
 require_relative "test_helpers/vault_test_helper"
+require_relative "test_helpers/pet_test_helper"
 require_relative "test_helpers/fake_imap_client"
 
 # The vault's real KDF/keygen params exist to be slow; the suite shouldn't

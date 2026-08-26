@@ -20,6 +20,22 @@ module Sections
         )
     end
 
+    # Always a new lens, even when one of that name exists. Groups are
+    # find-or-create — typing "Church" twice means the same church — but a
+    # record that *owns* its lens can never share one: two dogs called Rex
+    # (usually one remembered and one new) are two pets, two pages and two
+    # sets of tags, so the second takes `rex-2` (D-pet-primitive).
+    def create!(parent_slug, name, fallback_slug:)
+      name = normalized(name)
+      raise ArgumentError, "a lens needs a name" if name.blank?
+
+      parent = Section.find_by!(slug: parent_slug)
+      parent.children.create!(
+        name: name, slug: available_slug(name, fallback_slug), custom: true,
+        position: (parent.children.maximum(:position) || 0) + 1
+      )
+    end
+
     # The existing lens a free-typed name refers to, if any — tools use
     # this to narrow their context without ever creating lenses as a side
     # effect.

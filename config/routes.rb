@@ -104,6 +104,11 @@ Rails.application.routes.draw do
     end
     resource :avatar, only: %i[ destroy ], module: :people
   end
+  # Pets are members of the household, not a section (D-pet-primitive): their
+  # cards live on the People page, so there is no index here.
+  resources :pets, except: :index do
+    resource :avatar, only: %i[ destroy ], module: :pets
+  end
   resources :goals do
     member do
       patch :complete

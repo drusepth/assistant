@@ -45,6 +45,15 @@ module Sections
       def address_book_size
         @address_book_size ||= Person.visible_to(viewer).count
       end
+
+      # Pets are members of the household (D-pet-primitive), so their cards
+      # sit on this page rather than in a section of their own. Zero pets is
+      # zero pixels — the partial draws nothing but the add tile.
+      def pet_cards = @pet_cards ||= ::Pets::Cards.new(viewer)
+
+      def pets = pet_cards.active_cards
+
+      def remembered_pets = pet_cards.gone_cards
     end
   end
 end
