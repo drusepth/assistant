@@ -26,13 +26,27 @@ class NoteTest < ActiveSupport::TestCase
     assert_equal [ cats, zinc ], users(:one).notes.allergies.by_severity.to_a
   end
 
-  test "except_allergies keeps the plain notes, whose kind is NULL" do
+  test "a note with no stated kind is plain, not NULL" do
+    note = users(:one).notes.create!(title: "Groceries", body: "milk")
+
+    assert_equal Note::PLAIN, note.kind, "the plain case is named, never NULL (D-flavor-columns-not-null)"
+    assert note.plain?
+  end
+
+  test "except_allergies keeps the plain notes" do
     plain = users(:one).notes.create!(title: "Groceries", body: "milk")
     med = users(:one).notes.create!(kind: Note::MEDICATION, title: "Lisinopril", body: "one daily")
     users(:one).notes.create!(kind: Note::ALLERGY, title: "Latex", body: "rash")
 
     assert_equal [ plain, med ].sort_by(&:id), users(:one).notes.except_allergies.order(:id).to_a,
-      "`kind != 'allergy'` alone is NULL for a plain note, so it would drop every one"
+      "were kind NULL for a plain note, `kind != 'allergy'` would drop every one of them"
+  end
+
+  test "a kind the app does not know is refused" do
+    note = users(:one).notes.new(title: "Groceries", body: "milk", kind: "grocery_list")
+
+    assert_not note.valid?
+    assert_includes note.errors[:kind], "is not included in the list"
   end
 
   test "the two structured kinds keep to their own scopes" do

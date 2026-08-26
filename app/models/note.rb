@@ -5,26 +5,30 @@ class Note < ApplicationRecord
 
   AUTO_SORT_JOB = CategorizeNoteJob
 
-  # A structured flavor of note (nil = plain). "medication" is the first
-  # (docs/HEALTH.md §7): the med list is notes, so it exports, shares, and
-  # feeds tool context like everything else. "allergy" is the second (§8),
-  # on the same terms.
+  # A structured flavor of note. "medication" is the first (docs/HEALTH.md
+  # §7): the med list is notes, so it exports, shares, and feeds tool context
+  # like everything else. "allergy" is the second (§8), on the same terms.
+  # The plain case is named rather than left NULL (D-flavor-columns-not-null),
+  # so negated queries like except_allergies below mean what they say.
+  PLAIN = "plain".freeze
   MEDICATION = "medication".freeze
   ALLERGY = "allergy".freeze
+  KINDS = [ PLAIN, MEDICATION, ALLERGY ].freeze
+
+  scope :plain, -> { where(kind: PLAIN) }
   scope :medications, -> { where(kind: MEDICATION) }
   scope :allergies, -> { where(kind: ALLERGY) }
-  # Everything but the allergies, for surfaces that list them separately.
-  # Spelled with an explicit NULL arm because a plain note's kind is NULL,
-  # and `kind != 'allergy'` is NULL — not true — for every one of them.
-  scope :except_allergies, -> { where(kind: nil).or(where.not(kind: ALLERGY)) }
+  scope :except_allergies, -> { where.not(kind: ALLERGY) }
 
   # Allergy severity, worst first — the order the card and the prep sheet
   # list them in, because that is the order they matter in.
   SEVERITIES = %w[ severe moderate mild ].freeze
 
   validates :body, presence: true
+  validates :kind, inclusion: { in: KINDS }
   validates :severity, inclusion: { in: SEVERITIES }, allow_nil: true
 
+  def plain? = kind == PLAIN
   def medication? = kind == MEDICATION
   def allergy? = kind == ALLERGY
   def severe? = severity == "severe"
