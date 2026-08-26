@@ -1,0 +1,115 @@
+<%# One line of the Address Book (D-address-book-directory). Deliberately a
+    second Person shape beside `people/_person` rather than a redesign of it:
+    that one is a card in a lens grid (the section page renders it two-up in
+    a narrow column), this one is a directory line whose whole job is to
+    carry the addresses. Same primitive, two honest shapes.
+
+    The reachable facts are links, not labels: on this page "email Rosa" and
+    "call Rosa" are the task, so they are one click, and there is no separate
+    row of verbs duplicating what the text already does. %>
+<% own = person.user_id == Current.user.id %>
+<% groups = person.sections.reject { |section| section.slug == "people" } %>
+<% birthday = person.next_birthday %>
+<% birthday_soon = birthday && birthday <= Date.current + 30 %>
+
+<div class="item-row group flex flex-wrap items-center gap-x-3 gap-y-1.5 px-2.5 py-2 sm:flex-nowrap sm:px-3"
+     data-directory-target="row"
+     data-directory-haystack="<%= directory_haystack(person) %>">
+  <%= link_to person, class: "shrink-0", tabindex: -1, "aria-hidden": true do %>
+    <%= render Ui::AvatarComponent.new(person: person, size: :md) %>
+  <% end %>
+
+  <div class="min-w-0 flex-1 sm:w-52 sm:flex-none lg:w-60">
+    <%= link_to person.name, person,
+          class: "block truncate text-sm font-semibold text-ink group-hover:text-primary-700" %>
+    <div class="flex min-w-0 items-center gap-1.5 text-xs text-soft">
+      <%# The circle mark rides beside the relationship, and takes its place
+          when there isn't one: a lone dot on a line of its own reads as a
+          rendering accident rather than as meaning. %>
+      <% if person.relationship.present? %>
+        <span class="truncate"><%= person.relationship %></span>
+        <% if person.keep_in_touch? %>
+          <span class="shrink-0 text-primary-700" title="In your circle" aria-label="In your circle">●</span>
+        <% end %>
+      <% elsif person.keep_in_touch? %>
+        <span class="shrink-0 text-primary-700">In your circle</span>
+      <% end %>
+      <% if groups.any? %>
+        <span class="flex min-w-0 shrink gap-1 overflow-hidden">
+          <% groups.first(2).each do |group| %>
+            <%# `name`, never `qualified_name`: the card is already inside
+                People and the prefix is the loudest thing on the row. %>
+            <%= link_to group.name, section_path(group.slug),
+                  class: "chip shrink-0 bg-stone-100 px-2 py-0 text-[0.6875rem] text-stone-600 hover:bg-stone-200" %>
+          <% end %>
+          <% if groups.size > 2 %>
+            <span class="chip shrink-0 bg-stone-100 px-2 py-0 text-[0.6875rem] text-stone-600"
+                  title="<%= groups.drop(2).map(&:name).to_sentence %>">+<%= groups.size - 2 %></span>
+          <% end %>
+        </span>
+      <% end %>
+      <% unless own %>
+        <%= render Ui::UserLabelComponent.new(user: person.user, css_class: "shrink-0 text-xs text-soft") do %>
+          from <%= person.user.name %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# On a phone this wraps onto its own line, indented under the name
+      (size-10 avatar + gap-3); from `sm` it is the middle column. Both slots
+      render even when empty, so that in a list where half the contacts have
+      no email the phone numbers still line up under each other — which is
+      the entire reason a directory is set in columns. %>
+  <div class="flex w-full min-w-0 items-baseline gap-x-4 gap-y-0.5 pl-13 text-xs sm:w-auto sm:flex-1 sm:pl-0 sm:text-sm">
+    <span class="min-w-0 flex-1 truncate">
+      <% if person.email.present? %>
+        <%= mail_to person.email, nil, class: "text-soft hover:text-primary-700 hover:underline",
+              title: "Email #{person.name}" %>
+      <% elsif person.phone.blank? %>
+        <%# Honest rather than blank: a contact with no way to contact them is
+            the one thing an address book should say out loud. %>
+        <span class="text-soft/60 italic">no contact details</span>
+      <% end %>
+    </span>
+    <span class="shrink-0 sm:w-36">
+      <% if person.phone.present? %>
+        <%= phone_to person.phone, nil, class: "whitespace-nowrap tabular-nums text-soft hover:text-primary-700 hover:underline",
+              title: "Call #{person.name}" %>
+      <% end %>
+    </span>
+  </div>
+
+  <%# Both right-hand slots hold their width whoever the row belongs to, so a
+      contact shared in from a spouse doesn't knock the columns beside it out
+      of line. Their contents are the owner's alone: last-contact is the
+      owner's own signal (Q8) and `log_contact` only ever writes their record. %>
+  <div class="hidden w-36 shrink-0 text-right text-xs lg:block">
+    <% if own %>
+      <% if birthday_soon %>
+        <span class="inline-flex items-center gap-1 whitespace-nowrap text-primary-800"
+              title="Birthday <%= birthday_phrase(person) %>">
+          <%= icon(:cake, css_class: "size-3.5") %><%= birthday.strftime("%b %-d") %>
+        </span>
+      <% elsif person.last_contacted_on %>
+        <span class="whitespace-nowrap text-soft" title="<%= contact_recency_phrase(person) %>">
+          <%= time_ago_in_words(person.last_contacted_on) %> ago
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# Furniture, not content: the one verb here that isn't already a link in
+      the row. Hidden until the pointer is on the row, so a list you are
+      scanning stays quiet. Absent entirely on a phone, where there is no
+      hover to hide behind and it would cost every row a third line for
+      something the person's own page already offers. %>
+  <div class="reader-verbs hidden justify-end sm:flex sm:w-24">
+    <% if own %>
+      <%= button_to log_contact_person_path(person), method: :patch, class: "reader-verb", form_class: "contents",
+            title: contact_recency_phrase(person) do %>
+        Log contact
+      <% end %>
+    <% end %>
+  </div>
+</div>
