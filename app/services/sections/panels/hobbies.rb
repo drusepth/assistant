@@ -16,12 +16,20 @@ module Sections
       # Engagement signal and river for the same lens, zipped so the card
       # partial reads one object. Summaries are batched by Sections::Summary
       # and the rivers by Hobbies::Rivers; neither asks per card.
+      #
+      # Hobbies with feeds come first, and the catch-all is always last. A
+      # household names hobbies faster than it follows sources, so taxonomy
+      # order buries the three cards that have something in them under nine
+      # that don't. Deliberately *not* sorted by unread count: a grid whose
+      # cards trade places every morning is one nobody learns the shape of.
       def cards
         @cards ||= begin
           rivers = ::Hobbies::Rivers.for(viewer, lenses).index_by { |row| row.section.id }
-          Sections::Summary.for(viewer, lenses).map do |summary|
+          rows = Sections::Summary.for(viewer, lenses).map do |summary|
             Card.new(summary: summary, river: rivers.fetch(summary.section.id))
           end
+          live, quiet = rows.reject(&:catch_all?).partition { |card| card.river.any_feeds? }
+          live + quiet + rows.select(&:catch_all?)
         end
       end
 

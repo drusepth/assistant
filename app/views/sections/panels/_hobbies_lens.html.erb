@@ -8,6 +8,13 @@
       <%= link_to panel.unread_count.positive? ? "#{panel.unread_count} unread" : "All caught up",
             reader_path(hobby: section.slug), class: "reader-filter" %>
     <% end %>
+    <%# Scoped to this hobby, and it asks first — the river's rule, since
+        mark-all-read is the one verb here with no undo. %>
+    <% if panel.unread_count.positive? %>
+      <%= button_to "Mark all read", reader_read_all_path(hobby: section.slug, return_to: section_path(section.slug)),
+            class: "reader-filter", form_class: "contents",
+            form: { data: { turbo_confirm: "Mark everything in #{section.name} as read?" } } %>
+    <% end %>
     <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
   <% end %>
 

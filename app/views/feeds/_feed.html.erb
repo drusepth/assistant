@@ -15,6 +15,13 @@
       <% feed.sections.each do |section| %>
         <span class="chip <%= section_chip_classes(section) %>"><%= section.name %></span>
       <% end %>
+      <%# Why it is in the catch-all matters, because it is what says whether
+          Re-file will do anything: a feed the model has never seen is one
+          answer away from a hobby, and one it has already considered needs
+          a hobby to exist first (D-hobby-feeds). %>
+      <% if feed_unfiled?(feed) %>
+        <span>· <%= feed.classified? ? "no hobby matched" : "not filed yet" %></span>
+      <% end %>
       <% unless feed.active? %><span>· paused</span><% end %>
       <% if !feed.healthy? %>
         <span class="text-primary-800">· failing — <%= feed.last_error %></span>
@@ -26,11 +33,32 @@
     </p>
   </div>
 
+  <%# Filing a stray feed where you noticed it was stray. The Edit page can
+      do this too, but "notice it, open a form, find the picker, save" is
+      three screens away from the row that told you, and this is the one
+      correction the classifier will actually make people want. %>
+  <% if feed_unfiled?(feed) && lenses.any? %>
+    <%= form_with model: feed, url: feed_path(feed), method: :patch, class: "flex shrink-0 items-baseline gap-1.5" do |form| %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
+      <%# One hobby, submitted as the one-element array `section_ids` expects:
+          a multi-select in a list row is a scroll box, and filing a stray is
+          a one-decision job. Anything more goes through Edit. %>
+      <%= form.select :section_ids, options_from_collection_for_select(lenses, :id, :name),
+            { include_blank: "File under…" },
+            { name: "feed[section_ids][]", class: "input py-1 text-xs",
+              "aria-label": "File #{feed.display_title} under a hobby" } %>
+      <%= form.submit "File", class: "btn btn-secondary btn-sm" %>
+    <% end %>
+  <% end %>
+
   <div class="reader-verbs">
-    <%# "Re-file" asks the model again (D-hobby-feeds) — the door back for a
-        feed whose hobby the model got wrong, and the way a household that
-        configured a model late files what it already follows. %>
-    <%= button_to "Re-file", refile_feed_path(feed), class: "reader-verb", form_class: "contents" %>
+    <%# "Re-file" asks the model again (D-hobby-feeds), and only appears
+        where it can change something: a filed feed's row has enough verbs
+        on it already, and Edit is where second thoughts about a hobby the
+        user chose belong. %>
+    <% if feed_unfiled?(feed) %>
+      <%= button_to "Re-file", refile_feed_path(feed), class: "reader-verb", form_class: "contents" %>
+    <% end %>
     <%= button_to "Check", refresh_feed_path(feed), class: "reader-verb", form_class: "contents" %>
     <%= link_to "Edit", edit_feed_path(feed), class: "reader-verb" %>
     <%= button_to "Unfollow", feed_path(feed), method: :delete, class: "reader-verb",

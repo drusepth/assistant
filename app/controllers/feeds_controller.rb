@@ -13,6 +13,13 @@ class FeedsController < ApplicationController
 
   def index
     @feeds = Current.user.feeds.includes(:sections).order(:created_at)
+    # The hobbies a stray feed can be filed under, and how many strays there
+    # are (D-hobby-feeds) — the catch-all itself is never an option, since
+    # it is where a feed lands rather than somewhere to put one.
+    @lenses = Hobbies::MapFeeds.askable_lenses
+    unfiled = @feeds.to_a.select { |feed| helpers.feed_unfiled?(feed) }
+    @unfiled_count = unfiled.size
+    @feeds = unfiled if params[:unfiled]
     @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
     @feed = Current.user.feeds.new
   end
@@ -44,7 +51,10 @@ class FeedsController < ApplicationController
 
   def update
     if @feed.update(feed_params.except(:url))
-      redirect_to feeds_path, notice: "#{@feed.display_title} updated."
+      # `return_to` because this is also the filing picker on the feed list,
+      # and a correction made in a filtered list should hand that list back
+      # rather than the whole one.
+      redirect_to return_to_path(feeds_path), notice: "#{@feed.display_title} updated."
     else
       render :edit, status: :unprocessable_entity
     end

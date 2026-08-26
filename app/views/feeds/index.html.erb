@@ -44,10 +44,19 @@
 </details>
 
 <% if @feeds.any? %>
-  <p class="mb-1 px-3 text-xs text-soft"><%= pluralize(@feeds.size, "feed") %></p>
+  <%# "File these feeds" from the hub's catch-all card lands here, narrowed
+      to the strays — the list you came to fix rather than the whole one. %>
+  <p class="mb-1 flex items-baseline justify-between gap-3 px-3 text-xs text-soft">
+    <span><%= pluralize(@feeds.size, "feed") %><%= " with no hobby" if params[:unfiled] %></span>
+    <% if params[:unfiled] %>
+      <%= link_to "Show all feeds", feeds_path, class: "reader-filter" %>
+    <% elsif @unfiled_count.positive? %>
+      <%= link_to "#{@unfiled_count} with no hobby", feeds_path(unfiled: 1), class: "reader-filter" %>
+    <% end %>
+  </p>
   <div class="card divide-y divide-edge py-1">
     <%= render partial: "feeds/feed", collection: @feeds, as: :feed,
-          locals: { unread_counts: @unread_counts } %>
+          locals: { unread_counts: @unread_counts, lenses: @lenses } %>
   </div>
 <% else %>
   <p class="px-3 py-8 text-center text-sm text-soft">

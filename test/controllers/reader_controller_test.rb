@@ -176,6 +176,20 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     assert_match(/no feeds yet/i, response.body)
   end
 
+  # No JS suite in this repo, so the assertion is the wiring — the same
+  # convention the mark-read-on-open controller has had since it shipped.
+  test "the river is wired for the keyboard, rows and all" do
+    item(@feed, "Bench hooks")
+
+    get reader_path
+
+    page = Nokogiri::HTML(response.body)
+    list = page.at_css("[data-controller=river]")
+    assert list, "j/k/o/m/s need a scope to run in"
+    assert list.css("[data-river-target=row]").any?
+    assert_match(/mark read/, page.at_css("kbd").parent.text)
+  end
+
   test "the river pages rather than rendering everything at once" do
     (Feeds::River::PER_PAGE + 3).times { |n| item(@feed, "Item #{n}", published_at: n.hours.ago) }
 

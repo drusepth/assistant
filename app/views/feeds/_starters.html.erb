@@ -18,9 +18,12 @@
 
   <%= form_with url: starters_feeds_path, class: "space-y-3" do %>
     <%= hidden_field_tag :return_to, request.path %>
-    <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+    <%# Columns rather than a grid: the groups are different heights (one
+        cooking feed, three reading ones), and a grid row is as tall as its
+        tallest cell — which is how a short list grows a hole in the middle. %>
+    <div class="gap-x-6 sm:columns-2">
       <% starters.each do |folder, entries| %>
-        <div>
+        <div class="mb-3 break-inside-avoid">
           <p class="text-xs font-medium uppercase tracking-wide text-stone-500"><%= folder %></p>
           <% entries.each do |entry| %>
             <label class="flex items-baseline gap-2 py-0.5 text-sm">

@@ -421,6 +421,27 @@
   .reader-verb {
     @apply cursor-pointer whitespace-nowrap text-xs text-soft underline-offset-2 hover:text-ink hover:underline;
   }
+  /* The keyboard's cursor in the river (river_controller.js). A left rule
+     rather than a background: at this density a filled row competes with
+     the unread weighting that carries the list, and the eye only needs to
+     know where it is. */
+  [data-river-current] {
+    @apply relative bg-stone-100;
+  }
+  [data-river-current]::before {
+    @apply absolute inset-y-0 left-0 w-0.5 bg-primary-600 content-[''];
+  }
+  /* A keyboard reader can't hover, so the selected row shows its verbs —
+     which is also how anybody discovers that `m` and `s` are the two of
+     them worth a key. */
+  [data-river-current] .reader-verbs {
+    @apply opacity-100;
+  }
+  /* A key in a hint line, at hint size. */
+  kbd {
+    @apply rounded border border-edge bg-canvas px-1 font-mono text-[0.65rem] text-soft;
+  }
+
   /* The compact filter bar above the list: small text links with a dot
      between, where a row of pills would outweigh the list it filters. */
   .reader-filter {

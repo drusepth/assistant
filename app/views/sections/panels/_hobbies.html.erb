@@ -6,11 +6,18 @@
   <div>
     <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <h2 class="text-sm font-medium text-soft">Your hobbies</h2>
-      <div class="flex items-baseline gap-3 text-xs">
+      <div class="flex items-center gap-3 text-xs">
         <%# The everything-view: the dense chronological river across every
-            feed, which used to be a rail destination of its own. %>
-        <%= link_to panel.unread_count.positive? ? "Everything · #{panel.unread_count} unread" : "Everything",
-              reader_path, class: "reader-filter" %>
+            feed. It used to be a rail destination of its own, so this link
+            is now the whole way in — a small text link would be a
+            discoverability regression dressed as tidiness. %>
+        <%= link_to reader_path, class: "btn btn-secondary btn-sm" do %>
+          <%= icon(:rss, css_class: "size-4 shrink-0") %>
+          <span>Everything</span>
+          <% if panel.unread_count.positive? %>
+            <span class="rounded-full bg-canvas px-1.5 tabular-nums"><%= panel.unread_count %></span>
+          <% end %>
+        <% end %>
         <%= link_to "Manage feeds", feeds_path, class: "reader-filter" %>
       </div>
     </div>

@@ -1,0 +1,34 @@
+<%# One story on a hobby card (D-hobby-feeds). Its own partial because the
+    server re-renders exactly this row when the story is opened or undone —
+    the hub is a reading surface now, and a reading surface that can't mark
+    anything read makes "unread" mean "not explicitly dismissed", which is
+    the thing docs/READER.md's rule exists to prevent.
+
+    Two states, one id: the story, and the line left behind when it goes.
+    Locals: item. %>
+<li id="<%= dom_id(item, :hub) %>"
+    <% unless item.read? %>data-controller="reader"
+    data-reader-url-value="<%= read_feed_item_path(item, surface: "hub") %>"<% end %>
+    class="flex items-baseline gap-2">
+  <% if item.read? %>
+    <span class="min-w-0 flex-1 truncate text-xs text-soft">
+      <span aria-hidden="true">✓</span>
+      Marked read — <span class="text-stone-500"><%= item.title %></span>
+    </span>
+    <%= button_to "Undo", unread_feed_item_path(item, surface: "hub"), method: :patch,
+          class: "reader-verb shrink-0", form_class: "contents" %>
+  <% else %>
+    <span class="min-w-0 flex-1 truncate">
+      <% if (url = reader_safe_url(item.url)) %>
+        <%# Opening it is what marks it read — the same one code path the
+            river uses (reader_controller.js). %>
+        <%= link_to item.title, url, class: "font-medium text-ink hover:underline",
+              title: item.title, data: { action: "reader#markRead" }, **ReaderHelper::OUTBOUND %>
+      <% else %>
+        <span class="font-medium text-ink" title="<%= item.title %>"><%= item.title %></span>
+      <% end %>
+      <span class="text-xs text-soft"><%= item.source_name %></span>
+    </span>
+    <span class="shrink-0 text-xs tabular-nums text-soft"><%= reader_age(item.published_on) %></span>
+  <% end %>
+</li>

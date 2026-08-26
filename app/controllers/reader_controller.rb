@@ -33,7 +33,7 @@ class ReaderController < ApplicationController
     # that stamp is what keeps a feed nobody reads from being polled as if
     # somebody did — so do it here, in one statement.
     Feed.where(id: feed_ids).update_all(last_read_at: Time.current) if feed_ids.any?
-    redirect_back fallback_location: reader_path,
+    redirect_to return_to_path(request.referer.presence || reader_path),
       notice: count.positive? ? "#{helpers.pluralize(count, "item")} marked read." : "Nothing left to mark read."
   end
 

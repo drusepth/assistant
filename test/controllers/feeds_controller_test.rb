@@ -86,6 +86,55 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # Filing a stray where you noticed it was stray (D-hobby-feeds).
+  test "the feed list files a stray feed inline, and says why it is stray" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    feed = users(:one).feeds.create!(url: "https://example.com/wood.xml", label: "Wood")
+    feed.sections = [ Hobbies::OtherInterests.find_or_create! ]
+
+    get feeds_path
+    assert_match(/not filed yet/, response.body)
+    assert_select "select[name='feed[section_ids][]']"
+
+    patch feed_path(feed), params: { feed: { section_ids: [ lens.id ] }, return_to: feeds_path(unfiled: 1) }
+
+    assert_equal [ lens ], feed.reload.sections.to_a
+    assert_redirected_to feeds_path(unfiled: 1)
+  end
+
+  test "a filed feed gets neither the picker nor Re-file" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    users(:one).feeds.create!(url: "https://example.com/wood.xml", sections: [ lens ])
+
+    get feeds_path
+
+    assert_select "select[name='feed[section_ids][]']", false
+    assert_no_match(/Re-file/, response.body)
+  end
+
+  test "the list narrows to the strays, and says how many there are" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    filed = users(:one).feeds.create!(url: "https://example.com/wood.xml", label: "Filed", sections: [ lens ])
+    stray = users(:one).feeds.create!(url: "https://example.com/news.xml", label: "Stray")
+    stray.sections = [ Hobbies::OtherInterests.find_or_create! ]
+
+    get feeds_path
+    assert_match "1 with no hobby", response.body
+
+    get feeds_path(unfiled: 1)
+    assert_match stray.display_title, response.body
+    assert_no_match filed.display_title, response.body
+  end
+
+  test "a feed the model considered and passed on says so" do
+    feed = users(:one).feeds.create!(url: "https://example.com/news.xml", classified_at: Time.current)
+    feed.sections = [ Hobbies::OtherInterests.find_or_create! ]
+
+    get feeds_path
+
+    assert_match(/no hobby matched/, response.body)
+  end
+
   # D-hobby-feeds §7.1: offered, never subscribed.
   test "the starter shelf appears only while there is nothing to read" do
     get feeds_path

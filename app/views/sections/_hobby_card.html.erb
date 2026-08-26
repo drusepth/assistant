@@ -6,8 +6,8 @@
     what you do, not what you read about it (docs/HOBBIES.md's named trap),
     and three stories is a taste rather than a second reader.
 
-    Not one big link_to any more: the story rows are links themselves, and a
-    link inside a link is invalid markup that browsers resolve by guessing.
+    Not one big link_to: the story rows are links themselves, and a link
+    inside a link is invalid markup that browsers resolve by guessing.
     Locals: card (Panels::Hobbies::Card). %>
 <% summary = card.summary %>
 <% river = card.river %>
@@ -45,38 +45,39 @@
     <% end %>
   <% end %>
 
-  <div class="mt-4 border-t border-edge pt-3 text-sm">
-    <% if river.items.any? %>
-      <ul class="space-y-1.5">
-        <% river.items.each do |item| %>
-          <li class="flex items-baseline gap-2">
-            <span class="min-w-0 flex-1 truncate">
-              <% if (url = reader_safe_url(item.url)) %>
-                <%= link_to item.title, url, class: "font-medium text-ink hover:underline", **ReaderHelper::OUTBOUND %>
-              <% else %>
-                <span class="font-medium text-ink"><%= item.title %></span>
-              <% end %>
-              <span class="text-xs text-soft"><%= item.source_name %></span>
-            </span>
-            <span class="shrink-0 text-xs tabular-nums text-soft"><%= reader_age(item.published_on) %></span>
-          </li>
-        <% end %>
-      </ul>
-      <p class="mt-3">
-        <%= link_to river.unread_count.positive? ? "#{river.unread_count} unread →" : "Open the river →",
-              reader_path(hobby: summary.section.slug), class: "reader-filter" %>
-      </p>
-    <% elsif river.any_feeds? %>
-      <p class="text-soft">All caught up here.</p>
-    <% else %>
-      <%# A hobby with no feeds gets the invitation, not an empty box. %>
-      <p class="text-xs text-soft">Follow the sites, blogs and channels behind this hobby.</p>
-      <%= form_with model: Feed.new, url: feeds_path, class: "mt-2 flex gap-2" do |form| %>
-        <%= hidden_field_tag :return_to, section_path("hobbies") %>
-        <%= form.hidden_field :section_ids, multiple: true, value: summary.section.id %>
-        <%= form.url_field :url, class: "input min-w-0 flex-1", placeholder: "example.com/blog" %>
-        <%= form.submit "Follow", class: "btn btn-secondary" %>
+  <%# `mt-auto` so the footers line up across a row of cards whose hobbies
+      have different amounts to say. %>
+  <div class="mt-auto pt-4 text-sm">
+    <div class="border-t border-edge pt-3">
+      <% if river.items.any? %>
+        <ul class="space-y-1.5">
+          <%= render partial: "sections/hobby_story", collection: river.items, as: :item %>
+        </ul>
+        <p class="mt-3 flex items-baseline justify-between gap-3">
+          <%= link_to river.unread_count.positive? ? "#{river.unread_count} unread →" : "Open the river →",
+                reader_path(hobby: summary.section.slug), class: "reader-filter" %>
+          <% if card.catch_all? %>
+            <%= link_to "File these feeds", feeds_path(unfiled: 1), class: "reader-filter" %>
+          <% end %>
+        </p>
+      <% elsif river.any_feeds? %>
+        <p class="text-soft">All caught up here.</p>
+      <% else %>
+        <%# A hobby with no feeds gets an invitation — but a *closed* one.
+            Nine hobbies with nothing in them used to mean nine identical
+            paste forms stacked down the page, which reads as a broken
+            screen rather than an invitation. Disclosure rather than
+            Stimulus: the browser has had this element for a decade. %>
+        <details class="group/follow">
+          <summary class="reader-filter list-none">+ follow a source</summary>
+          <%= form_with model: Feed.new, url: feeds_path, class: "mt-2 flex gap-2" do |form| %>
+            <%= hidden_field_tag :return_to, section_path("hobbies") %>
+            <%= form.hidden_field :section_ids, multiple: true, value: summary.section.id %>
+            <%= form.url_field :url, class: "input min-w-0 flex-1", placeholder: "example.com/blog" %>
+            <%= form.submit "Follow", class: "btn btn-secondary" %>
+          <% end %>
+        </details>
       <% end %>
-    <% end %>
+    </div>
   </div>
 </div>

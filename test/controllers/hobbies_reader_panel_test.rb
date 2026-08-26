@@ -16,13 +16,39 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
   end
 
   test "a hobby with no feeds invites a first source in its own card" do
-    Hobbies::Lens.find_or_create!("Woodworking")
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
 
     get section_path("hobbies")
 
     assert_response :success
     assert_match "Woodworking", response.body
-    assert_match(/Follow the sites, blogs and channels behind this hobby/, response.body)
+    assert_select "[data-hobby-card=?] summary", lens.slug, text: "+ follow a source"
+    assert_select "[data-hobby-card=?] form[action=?] input[name='feed[section_ids][]'][value=?]",
+      lens.slug, feeds_path, lens.id.to_s
+  end
+
+  # A household names hobbies faster than it follows sources, so the empty
+  # case is the common one — and nine open paste forms stacked down the page
+  # read as a broken screen rather than an invitation.
+  test "many empty hobbies stay closed invitations, and the live ones come first" do
+    quiet = 5.times.map { |n| Hobbies::Lens.find_or_create!("Quiet #{n}") }
+    live = Hobbies::Lens.find_or_create!("Woodworking")
+    users(:one).feeds.create!(url: "https://example.com/wood.xml", sections: [ live ])
+      .feed_items.create!(guid: "1", title: "Bench hooks")
+    catch_all = Hobbies::OtherInterests.find_or_create!
+    users(:one).feeds.create!(url: "https://example.com/news.xml", sections: [ catch_all ])
+
+    get section_path("hobbies")
+
+    page = Nokogiri::HTML(response.body)
+    assert_equal quiet.size, page.css("[data-hobby-card] details summary").size,
+      "every empty card's form is behind a disclosure"
+    assert_empty page.css("[data-hobby-card] input[type=url]").reject { |node| node.ancestors("details").any? },
+      "no paste field is open on arrival"
+
+    slugs = page.css("[data-hobby-card]").map { |node| node["data-hobby-card"] }
+    assert_equal live.slug, slugs.first, "the card with something in it leads"
+    assert_equal catch_all.slug, slugs.last
   end
 
   test "a hobby's card carries its newest unread and a link into that hobby's river" do
@@ -72,6 +98,28 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
       "the catch-all is the floor of the grid, not a hobby under O"
   end
 
+  # docs/READER.md's rule: opening an article marks it read. The hub is a
+  # reading surface now, so it has to keep the rule the river keeps.
+  test "a story opened from a hobby card marks itself read, in place" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    feed = users(:one).feeds.create!(url: "https://example.com/wood.xml", sections: [ lens ])
+    item = feed.feed_items.create!(guid: "1", title: "Bench hooks", url: "https://example.com/1")
+
+    get section_path("hobbies")
+    row = Nokogiri::HTML(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(item, :hub)}")
+    assert_equal "reader", row["data-controller"]
+    assert_equal read_feed_item_path(item, surface: "hub"), row["data-reader-url-value"]
+    assert_equal "reader#markRead", row.at_css("a")["data-action"]
+
+    patch read_feed_item_path(item, surface: "hub"), as: :turbo_stream
+
+    assert item.reload.read?
+    assert_match ActionView::RecordIdentifier.dom_id(item, :hub), response.body
+    assert_match(/Marked read/, response.body)
+    assert_no_match(/reader-line/, response.body,
+      "a river row rendered into a card would be the wrong shape")
+  end
+
   test "the hub links out to the everything-view and to the feed list" do
     Hobbies::Lens.find_or_create!("Woodworking")
 
@@ -116,6 +164,24 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "form[action=?] input[name='feed[section_ids][]'][value=?]", feeds_path, lens.id.to_s
+  end
+
+  test "a hobby page clears its own pile, and only its own" do
+    lens = Hobbies::Lens.find_or_create!("Woodworking")
+    other = Hobbies::Lens.find_or_create!("Baking")
+    mine = users(:one).feeds.create!(url: "https://example.com/wood.xml", sections: [ lens ])
+      .feed_items.create!(guid: "1", title: "Bench hooks")
+    elsewhere = users(:one).feeds.create!(url: "https://example.com/bake.xml", sections: [ other ])
+      .feed_items.create!(guid: "2", title: "Sourdough starters")
+
+    get section_path(lens.slug)
+    assert_select "form[action=?]", reader_read_all_path(hobby: lens.slug, return_to: section_path(lens.slug))
+
+    post reader_read_all_path(hobby: lens.slug, return_to: section_path(lens.slug))
+
+    assert_redirected_to section_path(lens.slug)
+    assert mine.reload.read?
+    assert_not elsewhere.reload.read?
   end
 
   test "the catch-all lens is not removable from its own page" do
