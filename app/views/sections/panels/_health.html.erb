@@ -26,18 +26,22 @@
           </div>
           <p class="text-sm text-soft"><%= care_status_line(status) %></p>
           <div class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+            <%# The medical next-clicks (visit prep, find-care) belong to
+                clinical kinds only — a haircut needs neither. %>
             <% if status.state == :booked %>
               <%= link_to "View appointment", event_path(status.next_visit), class: "text-primary-700 hover:underline" %>
-              <%= link_to "Prep for this visit",
-                    new_tool_run_path("doctor_visit_prep", inputs: { reason: status.next_visit.title }),
-                    class: "text-primary-700 hover:underline" %>
+              <% if status.kind.clinical? %>
+                <%= link_to "Prep for this visit",
+                      new_tool_run_path("doctor_visit_prep", inputs: { reason: status.next_visit.title }),
+                      class: "text-primary-700 hover:underline" %>
+              <% end %>
             <% else %>
-              <% if status.state != :ok %>
+              <% if status.state != :ok && status.kind.clinical? %>
                 <%= link_to "Find a provider",
                       new_tool_run_path("find_care", inputs: { specialty: status.kind.provider }),
                       class: "text-primary-700 hover:underline" %>
               <% end %>
-              <%= link_to status.state == :unknown ? "Log a past visit" : "Add appointment",
+              <%= link_to status.state == :unknown ? "Log a past #{status.kind.visit_noun}" : "Add appointment",
                     new_event_path(title: status.kind.appointment_title, section_ids: [ section.id ]),
                     class: "text-primary-700 hover:underline" %>
             <% end %>

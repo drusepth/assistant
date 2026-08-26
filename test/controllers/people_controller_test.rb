@@ -114,4 +114,43 @@ class PeopleControllerTest < ActionDispatch::IntegrationTest
     def contact_photo
       fixture_file_upload("photo.jpg", "image/jpeg")
     end
+
+  # D-people-circles: the circle's full view is the Address Book filtered,
+  # not a fourth People surface.
+  test "the address book filters to your circle" do
+    users(:one).people.create!(name: "Circle Sam", keep_in_touch: true)
+    users(:one).people.create!(name: "Rolodex Rex")
+
+    get people_path
+    assert_match "Circle Sam", response.body
+    assert_match "Rolodex Rex", response.body
+
+    get people_path(circle: "1")
+    assert_match "Circle Sam", response.body
+    assert_no_match "Rolodex Rex", response.body
+  end
+
+  test "the circle filter is yours alone, even for shared contacts" do
+    theirs = users(:two).people.create!(name: "Shared Sal", keep_in_touch: true)
+    AccessGrant.create!(grantor: users(:two), grantee: users(:one), subject: theirs)
+    users(:one).people.create!(name: "Circle Sam", keep_in_touch: true)
+
+    get people_path(circle: "1")
+    assert_match "Circle Sam", response.body
+    assert_no_match "Shared Sal", response.body,
+      "you don't tend your spouse's circle (D-people-dashboard)"
+  end
+
+  test "the person page offers the groups they could join, and the ones they're in" do
+    group = People::Group.find_or_create!("Book club")
+    person = users(:one).people.create!(name: "Rosa")
+
+    get person_path(person)
+    assert_match "Groups", response.body
+    assert_select "form[action=?]", people_memberships_path
+
+    person.sections << group
+    get person_path(person)
+    assert_select "form[action=?]", people_membership_path(section_id: group.id, person_id: person.id)
+  end
 end

@@ -1,0 +1,50 @@
+# Curriculum commons (D-curriculum-commons).
+key: reading-writing
+title: Reading & writing
+description: >
+  Understanding what you read and being understood when you write — the two
+  skills every other subject stands on, for a kid building them or an adult
+  the first system failed.
+strands:
+  - title: Reading with understanding
+    topics:
+      - title: Main idea and detail
+        summary: Say what a passage is about in one sentence and point to the lines that carry it.
+      - title: Inference
+        summary: Read what a text implies but doesn't say, and defend the inference from the words on the page.
+      - title: Vocabulary from context
+        summary: Work out an unfamiliar word from its surroundings instead of stopping at it.
+      - title: Author's purpose and bias
+        summary: Tell informing from persuading from selling, and notice what a text wants from you.
+      - title: Reading longer works
+        summary: Hold characters, structure, and theme across a whole book and talk about it.
+  - title: Writing clearly
+    topics:
+      - title: Strong sentences
+        summary: Write sentences that say one thing well — concrete subjects, active verbs, no fog.
+      - title: Paragraphs that build
+        summary: Open with a point, support it, and hand off to the next paragraph on purpose.
+      - title: Explaining something you know
+        summary: Write instructions or an explanation a stranger could actually follow.
+      - title: Making an argument
+        summary: State a claim, give evidence, meet the strongest objection, and land the conclusion.
+      - title: Telling a story
+        summary: Order events, control pacing, and put the reader in the scene.
+      - title: Revising your own work
+        summary: Reread your draft as a stranger, cut what doesn't earn its place, and tighten what's left.
+  - title: Grammar & mechanics
+    topics:
+      - title: Sentence boundaries
+        summary: End sentences where they end — no run-ons, no fragments, on purpose either way.
+      - title: Agreement and tense
+        summary: Keep subjects with their verbs and time consistent across a passage.
+      - title: Punctuation that carries meaning
+        summary: Use commas, apostrophes, and quotation marks so the reader hears what you meant.
+  - title: Research & sources
+    topics:
+      - title: Finding and judging sources
+        summary: Locate information and rate whether its source would know and would tell you straight.
+      - title: Taking notes and citing
+        summary: Capture what a source says without copying it, and credit it so others can check.
+      - title: Writing from sources
+        summary: Weave multiple sources into your own argument without losing your own voice.

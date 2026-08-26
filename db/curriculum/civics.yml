@@ -1,0 +1,49 @@
+# Curriculum commons (D-curriculum-commons). Jurisdiction-neutral: the
+# examples default to a national/state/local pattern; the model localizes
+# through the household's region where one is set.
+key: civics
+title: Civics & how power works
+description: >
+  How the government around you is put together, what it may and may not do
+  to you, and every lever an ordinary person can actually pull.
+strands:
+  - title: Foundations
+    topics:
+      - title: Why constitutions exist
+        summary: Explain what a constitution is for and what happens where power has no rules.
+      - title: Separation of powers
+        summary: Explain why lawmaking, enforcing, and judging are split and what each branch checks.
+      - title: Federal, state, and local layers
+        summary: Say which level of government owns a given problem and why it matters practically.
+  - title: The three branches
+    topics:
+      - title: How a bill becomes law
+        summary: Trace an idea through committees, votes, and signature — and where it usually dies.
+      - title: Checks and balances in action
+        summary: Explain vetoes, overrides, judicial review, and confirmation with real examples.
+      - title: Courts and how a case moves
+        summary: Follow a dispute from filing to appeal, and tell criminal from civil.
+  - title: Rights & the law
+    topics:
+      - title: Your basic rights
+        summary: Know the core protections — speech, due process, equal protection — and their real limits.
+      - title: Rights in an encounter
+        summary: Know what you must, may, and never have to do when officials come asking.
+      - title: How rights get enforced
+        summary: Explain complaints, lawsuits, and appeals — the machinery that makes a right real.
+  - title: Elections & participation
+    topics:
+      - title: How elections work
+        summary: Registration, ballots, districts, and how votes become seats — including the odd cases.
+      - title: Reading political information
+        summary: Evaluate campaign claims, polls, and news with the same tests as any evidence.
+      - title: Beyond voting
+        summary: Public comment, petitions, boards, and organizing — the levers between elections.
+  - title: Everyday civics
+    topics:
+      - title: Local government and you
+        summary: Know who decides zoning, schools, and policing where you live, and when they meet.
+      - title: Navigating public agencies
+        summary: Get what you're entitled to from an agency — forms, appeals, and written records.
+      - title: Taxes and what they buy
+        summary: Follow where public money comes from and where it goes, close enough to argue about it.

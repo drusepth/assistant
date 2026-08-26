@@ -15,15 +15,23 @@ module Sections
       panel_class(section)&.new(section: section, viewer: viewer)
     end
 
-    # A section's own panel, or — for a user-created lens, whose slug no
-    # class can be named after — its parent's lens panel. Hobbies registers
-    # `Panels::HobbiesLens` and every hobby page gets a river (D-hobby-feeds);
-    # People's groups get the same seam the day they want one.
+    # By slug first. Failing that, a parent may claim its user-created lenses
+    # as one class, since those slugs are named by the user and can't be
+    # known here: `Panels::PeopleLens` for every group under People
+    # (D-people-circles), `Panels::HobbiesLens` for every hobby's river
+    # (D-hobby-feeds). A parent that declares no such class keeps the old
+    # answer: no panel, generic page.
+    #
+    # Two branches arrived at this fallback for their own section in the same
+    # week, which is the argument for it being here rather than in either.
     def self.panel_class(section)
       constant(section.slug) ||
         (section.parent && constant("#{section.parent.slug}_lens"))
     end
 
+    # Lens slugs are `parameterize`d, so they hyphenate ("board-games") where
+    # a constant needs underscores — `camelize` alone leaves "Board-games"
+    # and silently finds nothing.
     def self.constant(slug)
       "Sections::Panels::#{slug.tr("-", "_").camelize}".safe_constantize
     end

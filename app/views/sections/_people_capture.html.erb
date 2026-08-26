@@ -3,7 +3,7 @@
     roster. Each answer sets keep_in_touch; the Address Book keeps everyone
     else. %>
 <%= render Ui::CardComponent.new(
-      title: circle.any? ? "Add someone to your circle" : "Who do you want to stay close to?",
+      title: circle_size.positive? ? "Add someone to your circle" : "Who do you want to stay close to?",
       subtitle: "This page is about the relationships you're tending — your full address book stays in the vault."
     ) do %>
   <div class="space-y-3">
@@ -17,7 +17,7 @@
             placeholder: candidates.any? ? "…or add someone new" : "Name someone…" %>
       <%= submit_tag "Add", class: "btn btn-primary" %>
     <% end %>
-    <% if candidates.none? && circle.none? %>
+    <% if candidates.none? && circle_size.zero? %>
       <p class="hint">
         Or <%= link_to "import your address book", new_people_import_path, class: "text-primary-700 hover:underline" %>
         and pick from it here.

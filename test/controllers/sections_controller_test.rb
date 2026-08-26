@@ -61,10 +61,12 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Draft a dispute letter", response.body
   end
 
-  test "education leads with the learn-something tool" do
+  test "education's panel surfaces the two doors instead of the tool cards it hides (D37)" do
     get section_path("education")
     assert_response :success
-    assert_match "Learn something", response.body
+    assert_match "The school shelf", response.body
+    assert_match "Learn anything", response.body
+    assert_no_match "tools/learn_something/run", response.body, "the panel hides the card it surfaces with better context"
   end
 
   test "the empty state offers capture pre-tagged with the section" do
@@ -96,6 +98,21 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match event_path(booked), response.body
     assert_match "Due", response.body
     assert_match "Log a past visit", response.body, "the untracked checkup kind offers past-visit capture"
+  end
+
+  test "the haircut tile tracks like any kind but offers no medical next-click" do
+    users(:one).events.create!(title: "Haircut", starts_at: 5.months.ago, all_day: true)
+      .sections << sections(:health)
+
+    get section_path("health")
+    assert_response :success
+    assert_match "Haircut", response.body
+    assert_match "Last haircut", response.body
+    assert_no_match(
+      Regexp.new(Regexp.escape(new_tool_run_path("find_care", inputs: { specialty: "barber or hair stylist" }))),
+      response.body,
+      "find-care finds doctors, not barbers"
+    )
   end
 
   test "the coverage card lists plan-shaped documents and offers the insurance tools prefilled" do
@@ -328,6 +345,48 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     get section_path("people")
     assert_match "Start a group", response.body
     assert_match "D&amp;D table", response.body
+  end
+
+  # D-people-circles: groups and the circle are one grid of one card, so a
+  # group carries faces, a count and a next thing — not a bare chip.
+  test "the circles grid draws every collection of people as a card" do
+    group = People::Group.find_or_create!("Book club")
+    users(:one).people.create!(name: "Rosa").sections << group
+    users(:one).people.create!(name: "Circle Sam", keep_in_touch: true)
+
+    get section_path("people")
+    assert_response :success
+
+    assert_match "Your people", response.body
+    assert_match "Only you", response.body, "the circle card says it isn't shared with the household"
+    assert_match "Book club", response.body
+    assert_match "1 person · nothing planned yet", response.body
+    assert_select "a[href=?]", people_path(circle: "1"), { count: 1 },
+      "the circle card opens the full circle"
+    assert_select "a[href=?]", section_path(group.slug)
+    assert_no_match "People · Book club", response.body,
+      "a card is inside People already — the qualified name was noise"
+  end
+
+  test "every card can add someone, and a group card can plan something" do
+    People::Group.find_or_create!("Book club")
+
+    get section_path("people")
+    assert_select "form[action=?]", people_memberships_path
+    assert_select "form[action=?]", people_circle_path
+    assert_match "Plan something", response.body
+  end
+
+  test "a group page leads with its members and the way to add one" do
+    group = People::Group.find_or_create!("Book club")
+    users(:one).people.create!(name: "Rosa", relationship: "neighbor").sections << group
+
+    get section_path(group.slug)
+    assert_response :success
+    assert_match "Members", response.body
+    assert_match "Rosa", response.body
+    assert_select "form[action=?]", people_memberships_path
+    assert_select "form[action=?]", people_membership_path(section_id: group.id, person_id: Person.find_by(name: "Rosa").id)
   end
 
   test "other sections keep their filtered person lists" do

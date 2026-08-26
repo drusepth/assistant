@@ -1,0 +1,53 @@
+# Curriculum commons (D-curriculum-commons). NGSS-informed, jurisdiction-neutral.
+key: science-foundations
+title: Science foundations
+description: >
+  How the physical and living world works, and — first — how we know:
+  science as a method you can run yourself, not a list of facts to accept.
+strands:
+  - title: How science works
+    topics:
+      - title: Questions, hypotheses, and fair tests
+        summary: Turn a question into a testable claim and design a test that could prove it wrong.
+      - title: Measurement and error
+        summary: Measure carefully, report uncertainty, and know why two measurements disagree.
+      - title: Reading a scientific claim
+        summary: Tell a controlled result from an anecdote, and a correlation from a cause.
+  - title: Matter & energy
+    topics:
+      - title: Atoms and states of matter
+        summary: Explain solids, liquids, and gases as the same particles behaving differently.
+      - title: Chemical vs. physical change
+        summary: Tell melting from burning, and spot the signs a new substance was made.
+      - title: Forces and motion
+        summary: Use pushes, pulls, friction, and gravity to predict how things move.
+      - title: Energy and its transformations
+        summary: Follow energy as it changes form — motion, heat, light, chemical — without disappearing.
+      - title: Electricity and circuits
+        summary: Build and reason about simple circuits, and know what current, voltage, and resistance mean.
+  - title: Life
+    topics:
+      - title: Cells and what living things share
+        summary: Explain what makes something alive and what all living things are built from.
+      - title: Inheritance and variation
+        summary: Explain why offspring resemble their parents but never exactly.
+      - title: Evolution by natural selection
+        summary: Explain how variation plus selection reshapes populations over generations.
+      - title: Ecosystems
+        summary: Trace energy and matter through food webs and predict what a change ripples into.
+  - title: Earth & space
+    topics:
+      - title: Weather and climate
+        summary: Tell today's weather from a climate trend, and read both from data.
+      - title: The restless Earth
+        summary: Explain earthquakes, volcanoes, and mountains with plate tectonics.
+      - title: The Earth in space
+        summary: Explain day, night, seasons, moon phases, and eclipses with a ball and a lamp.
+  - title: The human body
+    topics:
+      - title: Body systems working together
+        summary: Explain how circulation, respiration, and digestion keep each other running.
+      - title: Germs, immunity, and vaccines
+        summary: Explain what makes you sick, how the body fights back, and how vaccines train it.
+      - title: Nutrition and the evidence
+        summary: Read a nutrition claim against how the body actually uses food.

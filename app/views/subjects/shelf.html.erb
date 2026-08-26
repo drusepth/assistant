@@ -1,0 +1,35 @@
+<%# The school shelf (D-curriculum-commons): the open curriculum library.
+    Enrolling copies an outline into your own tree — the shelf itself is
+    never shared state, and the YAML behind it is yours to edit. %>
+<%= render Ui::PageHeaderComponent.new(title: "The school shelf") %>
+
+<div class="space-y-6">
+  <p class="max-w-prose text-sm text-soft">
+    Core subjects with the syllabus already drawn — informed by public school
+    standards, owned by nobody, yours to reshape once enrolled. Placement finds
+    where you actually are; nothing here assumes a grade level.
+  </p>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <% @courses.each do |course| %>
+      <div class="card flex flex-col gap-2">
+        <p class="font-semibold text-ink"><%= course.title %></p>
+        <p class="flex-1 text-sm text-soft"><%= course.description %></p>
+        <p class="text-xs text-soft"><%= pluralize(course.strands.size, "strand") %> · <%= pluralize(course.topic_count, "topic") %></p>
+        <div>
+          <% if @enrolled_keys.include?(course.key) %>
+            <span class="chip bg-sage-200 text-sage-800">Enrolled</span>
+          <% else %>
+            <%= button_to "Start this subject", subjects_path(commons_key: course.key), class: "btn btn-primary btn-sm" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <p class="text-sm text-soft">
+    After something the shelf doesn't carry?
+    <%= link_to "Learn anything", new_subject_path, class: "underline decoration-edge underline-offset-2 hover:text-ink" %> —
+    name a topic and get your own curriculum.
+  </p>
+</div>

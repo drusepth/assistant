@@ -16,14 +16,33 @@ class Sections::PanelTest < ActiveSupport::TestCase
 
   # A user-created lens has a slug no class can be named after, so it falls
   # back to its parent's lens panel (D-hobby-feeds) — that is how every hobby
-  # page gets a river without the controller learning about hobbies.
-  test "a custom lens falls back to its parent's lens panel, or to nothing" do
+  # page gets a river without the controller learning about hobbies. The
+  # hyphen matters: lens slugs are parameterized, and `camelize` alone leaves
+  # "Board-games", which resolves to nothing at all.
+  test "a custom lens falls back to its parent's lens panel" do
     hobby = Hobbies::Lens.find_or_create!("Board games")
     panel = Sections::Panel.for(hobby, users(:one))
+
+    assert_equal "board-games", hobby.slug
     assert_instance_of Sections::Panels::HobbiesLens, panel
     assert_equal "sections/panels/hobbies_lens", panel.partial
+  end
 
-    group = Sections::Lens.find_or_create!("people", "Book club", fallback_slug: "group")
-    assert_nil Sections::Panel.for(group, users(:one)), "People has no lens panel yet"
+  # A parent that declares no lens class keeps the old answer.
+  test "a lens under a parent with no lens panel gets nothing" do
+    lens = Sections::Lens.find_or_create!("money", "Side hustle", fallback_slug: "money-lens")
+
+    assert_nil Sections::Panel.for(lens, users(:one))
+  end
+
+  # D-people-circles: group slugs are whatever the user typed, so People
+  # claims its lenses by parent instead.
+  test "a group lens resolves its parent's lens panel" do
+    group = People::Group.find_or_create!("Book club")
+    panel = Sections::Panel.for(group, users(:one))
+
+    assert_instance_of Sections::Panels::PeopleLens, panel
+    assert_equal "sections/panels/people_lens", panel.partial
+    assert_equal group, panel.section
   end
 end

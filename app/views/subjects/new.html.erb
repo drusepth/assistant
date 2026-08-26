@@ -1,0 +1,8 @@
+<%= render Ui::PageHeaderComponent.new(title: "Learn anything") %>
+<div class="max-w-xl space-y-4">
+  <div class="card p-6"><%= render "form", subject: @subject %></div>
+  <p class="text-sm text-soft">
+    Looking for the fundamentals? <%= link_to "Browse the school shelf", curriculum_shelf_path, class: "underline decoration-edge underline-offset-2 hover:text-ink" %> —
+    core subjects with a syllabus already drawn.
+  </p>
+</div>

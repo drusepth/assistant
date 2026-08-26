@@ -1,0 +1,47 @@
+<%# One collection of people (D-people-circles): the circle and every group
+    lens render through this same card — faces, name, one line of signal,
+    and actions that end in contact. The tile can't be one big link the way
+    a hobby card is: it carries its own links and a form, and an <a> inside
+    an <a> is invalid markup and a broken touch target. So the title is the
+    link and `group-hover:` carries the whole-card affordance. %>
+<div class="card group flex flex-col gap-3 border-edge p-4 transition hover:border-primary-300 hover:shadow-sm">
+  <%# The signal line already says there's nobody — the empty stack just
+      holds the row so a new group lines up with the cards beside it. %>
+  <%= render Ui::AvatarStackComponent.new(
+        people: card.members, total: card.member_count, size: :md, ghost: true) %>
+
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <%= link_to card.name, card.path, class: "text-sm font-semibold text-ink group-hover:text-primary-700" %>
+      <% if card.private %>
+        <%# They look alike; they are not the same thing. The circle is a
+            per-user flag, a group is household-shared taxonomy — say so
+            rather than let matching boxes imply matching privacy (D9). %>
+        <span class="chip whitespace-nowrap bg-stone-100 text-stone-600"
+              title="Your circle is yours alone — groups are shared with your household">Only you</span>
+      <% end %>
+    </div>
+    <p class="mt-0.5 text-xs text-soft"><%= card.signal %></p>
+  </div>
+
+  <%# The capture folds away in a <details> — no JS, and the closed card
+      stays a scannable tile rather than a form. %>
+  <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-edge pt-2.5 text-xs font-semibold">
+    <details class="min-w-0 [&[open]]:w-full">
+      <summary class="cursor-pointer list-none text-primary-700 hover:underline [&::-webkit-details-marker]:hidden">
+        Add someone
+      </summary>
+      <div class="mt-2 w-full font-normal">
+        <%= render "sections/circle_add_person",
+              url: card.circle? ? people_circle_path : people_memberships_path,
+              section: card.section, candidates: candidates,
+              label: card.circle? ? "Add to your circle" : "Add to #{card.name}" %>
+      </div>
+    </details>
+
+    <% unless card.circle? %>
+      <%= link_to "Plan something", new_tool_run_path("get_together", inputs: { who: card.name }),
+            class: "text-primary-700 hover:underline" %>
+    <% end %>
+  </div>
+</div>

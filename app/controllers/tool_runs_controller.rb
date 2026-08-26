@@ -103,6 +103,14 @@ class ToolRunsController < ApplicationController
       if @tool.inputs.any?(&:email_message?)
         @email_choices = EmailMessage.where(user_id: Current.user.id).newest_first.limit(50)
       end
+      # The curriculum spine's pickers (D-education-spine): own leaves only —
+      # a quiz or a tutor session is the learner's, never a grantee's.
+      if @tool.inputs.any?(&:topic?)
+        @topic_choices = Topic.where(subject: Current.user.subjects.active)
+          .where.not(id: Topic.where.not(parent_id: nil).select(:parent_id))
+          .includes(:subject).ordered.group_by(&:subject)
+      end
+      @study_subject_choices = Current.user.subjects.active.order(:title) if @tool.inputs.any?(&:study_subject?)
     end
 
     # `new` accepts the same params so "Run again" and next-step links can

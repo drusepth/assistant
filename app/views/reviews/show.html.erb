@@ -1,0 +1,59 @@
+<%# The daily review (docs/EDUCATION_PLAN.md §5): card-at-a-time, built for
+    a phone held one-handed. Reveal is a <details> — no JS between the
+    learner and the answer — and the quartet's sublabels are the honest
+    FSRS intervals each button means. %>
+<%= render Ui::PageHeaderComponent.new(title: "Review") %>
+
+<% if @item %>
+  <div class="mx-auto max-w-xl space-y-4">
+    <div class="flex items-center justify-between text-sm text-soft">
+      <span class="chip bg-sage-200 text-sage-800">
+        <%= @item.topic.subject.title %><% if @item.topic.parent %> · <%= @item.topic.parent.title %><% end %>
+      </span>
+      <span><%= pluralize(@due_count, "card") %> due</span>
+    </div>
+
+    <div class="card space-y-4 p-6 text-center">
+      <p class="text-lg font-semibold text-ink" style="text-wrap: balance"><%= @item.prompt %></p>
+
+      <details class="group">
+        <summary class="btn btn-secondary cursor-pointer list-none">Show the answer</summary>
+        <div class="mt-4 space-y-4">
+          <% if @item.answer.present? %>
+            <p class="rounded-2xl bg-sage-100 p-4 text-sm text-sage-800"><%= @item.answer %></p>
+          <% elsif @item.do_this? %>
+            <p class="rounded-2xl bg-sage-100 p-4 text-sm text-sage-800">Do it for real, then grade how it went.</p>
+          <% else %>
+            <p class="rounded-2xl bg-sage-100 p-4 text-sm text-sage-800">Grade yourself against what you'd have accepted from a student.</p>
+          <% end %>
+          <div class="grid grid-cols-4 gap-2">
+            <%= button_to grade_review_path(@item, rating: :again), class: "btn btn-alert btn-touch w-full flex-col gap-0" do %>
+              Again<span class="text-[0.65rem] font-medium opacity-75"><%= @preview["again"] %></span>
+            <% end %>
+            <%= button_to grade_review_path(@item, rating: :hard), class: "btn btn-secondary btn-touch w-full flex-col gap-0" do %>
+              Hard<span class="text-[0.65rem] font-medium opacity-75"><%= @preview["hard"] %></span>
+            <% end %>
+            <%= button_to grade_review_path(@item, rating: :good), class: "btn btn-primary btn-touch w-full flex-col gap-0" do %>
+              Good<span class="text-[0.65rem] font-medium opacity-75"><%= @preview["good"] %></span>
+            <% end %>
+            <%= button_to grade_review_path(@item, rating: :easy), class: "btn btn-secondary btn-touch w-full flex-col gap-0" do %>
+              Easy<span class="text-[0.65rem] font-medium opacity-75"><%= @preview["easy"] %></span>
+            <% end %>
+          </div>
+          <p class="text-xs text-soft">Honest grades make honest schedules — “Again” costs minutes, not shame.</p>
+        </div>
+      </details>
+    </div>
+
+    <p class="text-center text-xs text-soft">Cards mix across your subjects on purpose — interleaving beats blocks.</p>
+  </div>
+<% else %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "All clear",
+        description: "Nothing is due. The schedule brings each card back just before you'd forget it — showing up is the whole job."
+      ) do |empty| %>
+    <% empty.with_action do %>
+      <%= link_to "Back to Education", section_path("education"), class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+<% end %>

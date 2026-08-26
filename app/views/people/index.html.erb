@@ -7,8 +7,28 @@
   <% end %>
 <% end %>
 
+<%# The circle's full view lives here rather than as its own page
+    (D-people-circles): roster views belong with the roster. %>
+<% if @circle_size.positive? %>
+  <div class="mb-4 flex flex-wrap gap-2">
+    <%= link_to "Everyone", people_path,
+          class: "chip #{@circle_only ? "bg-stone-100 text-stone-700" : "bg-primary-100 text-primary-800"}" %>
+    <%= link_to "Your circle · #{@circle_size}", people_path(circle: "1"),
+          class: "chip #{@circle_only ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-700"}" %>
+  </div>
+<% end %>
+
 <% if @people.any? %>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"><%= render @people %></div>
+<% elsif @circle_only %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "No one in your circle yet",
+        description: "Your circle is the handful of relationships you're actively tending — the People page is where you pick them."
+      ) do |empty| %>
+    <% empty.with_action do %>
+      <%= link_to "Go to People", section_path("people"), class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
 <% else %>
   <%= render Ui::EmptyStateComponent.new(
         title: "No people yet",
