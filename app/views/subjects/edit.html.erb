@@ -1,0 +1,9 @@
+<%= render Ui::PageHeaderComponent.new(title: "Edit subject") %>
+<div class="max-w-xl space-y-4">
+  <div class="card p-6"><%= render "form", subject: @subject %></div>
+  <div class="card p-6">
+    <p class="text-sm text-soft">Removing a subject deletes its syllabus, review cards, and study log. What was learned stays learned — but the record of it goes.</p>
+    <%= button_to "Remove this subject", subject_path(@subject), method: :delete, class: "btn btn-danger mt-3",
+          data: { turbo_confirm: "Remove #{@subject.title} and its whole record?" } %>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+fractions_strand:
+  subject: algebra
+  title: Fractions, decimals & percentages
+  position: 1
+
+fractions_compare:
+  subject: algebra
+  parent: fractions_strand
+  title: Comparing unlike denominators
+  summary: Tell which of two fractions is bigger by making their denominators agree.
+  mastery: practicing
+  position: 1
+
+fractions_arithmetic:
+  subject: algebra
+  parent: fractions_strand
+  title: Fraction arithmetic
+  mastery: unseen
+  position: 2
+
+percentages:
+  subject: algebra
+  parent: fractions_strand
+  title: Percentages in the wild
+  mastery: mastered
+  mastery_evidence: quiz
+  mastered_on: <%= 3.weeks.ago.to_date %>
+  position: 3
+
+forces_strand:
+  subject: physics
+  title: Forces & momentum
+  position: 1
+
+friction:
+  subject: physics
+  parent: forces_strand
+  title: Friction & grip
+  mastery: rusty
+  mastery_evidence: quiz
+  mastered_on: <%= 2.months.ago.to_date %>
+  position: 1
+
+momentum:
+  subject: physics
+  parent: forces_strand
+  title: Momentum in an ollie
+  mastery: unseen
+  position: 2
+
+bob_veto:
+  subject: bob_civics
+  title: Checks and balances in action
+  mastery: learning
+  position: 1

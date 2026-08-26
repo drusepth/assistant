@@ -1,0 +1,132 @@
+<%# The personal school's front page (docs/EDUCATION_PLAN.md §5): the hub
+    reads do → continue → begin → oversee → prove, phone-first. No streaks,
+    no XP — the only number that pulls is what's due. %>
+<%= turbo_stream_from Current.user, :subjects %>
+
+<%# ── Do: the one-glance answer to "what do I study right now" ─────────── %>
+<% if panel.resume_entries.any? || panel.reviews_due_count.positive? %>
+  <%= render Ui::CardComponent.new(title: "Today's studying") do %>
+    <div class="space-y-2">
+      <% if panel.reviews_due_count.positive? %>
+        <%= link_to reviews_path, class: "btn btn-primary btn-touch w-full" do %>
+          Review — <%= panel.reviews_due_count %> due · ~<%= panel.review_minutes %> min
+        <% end %>
+      <% end %>
+      <% panel.resume_entries.each do |subject, topic| %>
+        <div class="item-row flex flex-wrap items-center gap-3 rounded-2xl bg-canvas p-3" id="<%= dom_id(topic, :resume) %>">
+          <%= mastery_dot(topic) %>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold text-ink"><%= topic.title %></p>
+            <p class="truncate text-xs text-soft"><%= subject.title %><%= " · pick up where you left off" if topic.practicing? || topic.learning? %></p>
+          </div>
+          <div class="row-actions">
+            <%= link_to topic.unseen? ? "Start" : "Resume",
+                  new_tool_run_path("tutor", inputs: { topic: "#{topic.title} (#{subject.title})", topic_id: topic.id }),
+                  class: "btn btn-secondary btn-sm" %>
+          </div>
+        </div>
+      <% end %>
+      <p class="text-xs text-soft">20 focused minutes most days beats three hours on Sunday.</p>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ── Continue: the subjects, progress as a state mix, never a grade ───── %>
+<% if panel.own_subjects.any? || panel.paused_subjects.any? %>
+  <div>
+    <h2 class="mb-3 text-sm font-medium text-soft">Your subjects</h2>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <% panel.own_subjects.each do |subject| %>
+        <%= link_to subject_path(subject), class: "card block space-y-2 transition hover:shadow-md", id: dom_id(subject, :hub) do %>
+          <div class="flex items-start justify-between gap-2">
+            <p class="min-w-0 flex-1 font-semibold text-ink"><%= subject.title %></p>
+            <% if subject.rusty_topics.any? %>
+              <span class="chip bg-primary-100 text-primary-800 flex-none"><%= pluralize(subject.rusty_topics.size, "rusty topic") %></span>
+            <% end %>
+          </div>
+          <% if subject.building_tree? %>
+            <p class="text-sm text-soft">Your assistant is drafting the curriculum…</p>
+          <% else %>
+            <%= mastery_bar(subject) %>
+            <p class="text-xs text-soft"><%= mastery_mix_sentence(subject) %></p>
+            <% if (topic = subject.current_topic) %>
+              <p class="truncate text-xs text-soft">Next: <%= topic.title %></p>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+    <% if panel.paused_subjects.any? %>
+      <p class="mt-3 text-xs text-soft">
+        On the shelf:
+        <% panel.paused_subjects.each_with_index do |subject, index| %><%= ", " if index.positive? %><%= link_to subject.title, subject_path(subject), class: "underline decoration-edge underline-offset-2 hover:text-ink" %><% end %>
+      </p>
+    <% end %>
+  </div>
+<% end %>
+
+<%# ── Begin: two doors, one shape (D-curriculum-commons) — plus what the
+      other lenses suggest, reason in plain sight, dismissals that stick. %>
+<%= render Ui::CardComponent.new(title: "Start something new") do %>
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <%= link_to curriculum_shelf_path, class: "block rounded-2xl bg-canvas p-4 transition hover:shadow-md" do %>
+      <p class="font-semibold text-ink">The school shelf</p>
+      <p class="mt-0.5 text-sm text-soft">Core subjects — math, writing, science, civics, money, computers.</p>
+    <% end %>
+    <%= link_to new_subject_path, class: "block rounded-2xl bg-canvas p-4 transition hover:shadow-md" do %>
+      <p class="font-semibold text-ink">Learn anything</p>
+      <p class="mt-0.5 text-sm text-soft">Name a topic — get your own curriculum, taught your way.</p>
+    <% end %>
+  </div>
+  <% if panel.suggested_subjects.any? %>
+    <div class="mt-3 space-y-2">
+      <% panel.suggested_subjects.each do |suggestion| %>
+        <div class="rounded-2xl bg-canvas" id="<%= dom_id(suggestion, :hub) %>">
+          <%= render suggestion %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ── Oversee: only where grants made it exist (D9) ────────────────────── %>
+<% if panel.shared_subjects.any? %>
+  <%= render Ui::CardComponent.new(title: "Household learning", subtitle: "What each learner chose to share — nothing more") do %>
+    <div class="space-y-3">
+      <% panel.shared_subjects.each do |learner, subjects| %>
+        <div class="rounded-2xl bg-canvas p-3">
+          <%= render Ui::UserLabelComponent.new(user: learner, css_class: "text-sm font-semibold text-ink") %>
+          <div class="mt-2 space-y-1.5">
+            <% subjects.each do |subject| %>
+              <%= link_to subject_path(subject), class: "flex items-center gap-3" do %>
+                <span class="min-w-0 flex-1 truncate text-sm text-ink"><%= subject.title %></span>
+                <span class="w-24 flex-none sm:w-32"><%= mastery_bar(subject) %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ── Prove: the record drawer (D-learning-record) — quiet, load-bearing. %>
+<% if panel.own_subjects.any? || panel.finished_subjects.any? || panel.minutes_this_year.positive? %>
+  <%= render Ui::CardComponent.new(title: "The record", subtitle: "Evidence of the work — yours to print and file") do %>
+    <p class="text-sm text-ink">
+      <%= (panel.minutes_this_year / 60.0).round %> hours logged this year ·
+      <%= pluralize(panel.mastered_this_year, "topic") %> mastered
+    </p>
+    <% if panel.finished_subjects.any? %>
+      <p class="mt-1 text-xs text-soft">
+        Finished:
+        <% panel.finished_subjects.each_with_index do |subject, index| %><%= ", " if index.positive? %><%= link_to subject.title, subject_path(subject), class: "underline decoration-edge underline-offset-2 hover:text-ink" %><% end %>
+      </p>
+    <% end %>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <%= link_to "Portfolio", new_tool_run_path("progress_report", inputs: { artifact: "portfolio" }), class: "btn btn-secondary btn-sm" %>
+      <%= link_to "Transcript", new_tool_run_path("progress_report", inputs: { artifact: "transcript" }), class: "btn btn-secondary btn-sm" %>
+      <%= link_to "Hours log", new_tool_run_path("progress_report", inputs: { artifact: "hours_log" }), class: "btn btn-secondary btn-sm" %>
+    </div>
+  <% end %>
+<% end %>

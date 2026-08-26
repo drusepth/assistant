@@ -1,0 +1,51 @@
+# Curriculum commons (D-curriculum-commons). The subject the target user
+# was never taught on purpose. Cross-lens by nature: the Money section's
+# real data is this course's best example material.
+key: financial-literacy
+title: Financial literacy
+description: >
+  The money mechanics nobody teaches the 99% — cash flow, credit, debt,
+  and the defenses — taught with your own numbers where you've tracked them.
+strands:
+  - title: Cash flow
+    topics:
+      - title: Where the money goes
+        summary: Track a month honestly and name fixed, variable, and invisible spending.
+      - title: Building a budget that survives
+        summary: Plan next month's dollars before they arrive, with slack built in for real life.
+      - title: Paychecks and what's taken out
+        summary: Read every line of a pay stub and catch when one is wrong.
+  - title: Banking & credit
+    topics:
+      - title: Accounts, fees, and interest
+        summary: Choose and use accounts without paying fees you didn't agree to think about.
+      - title: How credit scores actually work
+        summary: Name what moves a score, what doesn't, and check your own report for free.
+      - title: Credit cards without the trap
+        summary: Explain grace periods, minimum payments, and what a balance really costs.
+  - title: Debt
+    topics:
+      - title: The real price of borrowing
+        summary: Compute total cost of a loan from rate and term, and compare offers on one number.
+      - title: Getting out from under
+        summary: Order debts for payoff, know your rights with collectors, and what settles vs. sticks.
+      - title: The predatory patterns
+        summary: Recognize payday loans, rent-to-own, and buy-here-pay-here for what they cost.
+  - title: Saving & investing
+    topics:
+      - title: Compound interest, both directions
+        summary: Compute how money grows saved and shrinks borrowed — the one formula that runs both.
+      - title: The emergency fund
+        summary: Size and place the cushion that keeps a bad week from becoming a bad year.
+      - title: Investing without being sold to
+        summary: Explain index funds, fees, and risk well enough to ignore a salesman.
+      - title: Retirement accounts
+        summary: Know the tax-advantaged buckets, the match that's free money, and the early-exit costs.
+  - title: Defense
+    topics:
+      - title: Insurance — what it's for
+        summary: Decide what's worth insuring, read a policy's exclusions, and file a claim that sticks.
+      - title: Scams and how they hook
+        summary: Recognize the urgency-secrecy-payment pattern every scam shares, in every costume.
+      - title: Taxes without fear
+        summary: Know what's taxable, what's deductible, when to file, and where free help lives.

@@ -1,0 +1,49 @@
+# Curriculum commons (D-curriculum-commons). For the household member the
+# digital world was built around, and the one it left behind — same tree,
+# different placement.
+key: digital-literacy
+title: Digital literacy
+description: >
+  Using computers and the internet with confidence and on your own terms —
+  from the mouse to the misinformation, judgment included.
+strands:
+  - title: Confident basics
+    topics:
+      - title: Files, folders, and where things live
+        summary: Save, find, organize, and back up your own files instead of losing them to the desktop.
+      - title: Getting unstuck
+        summary: Read an error message, search it well, and try the safe things first.
+      - title: Passwords and accounts
+        summary: Use a password manager, unique passwords, and second factors — and why each matters.
+  - title: Judging what you read
+    topics:
+      - title: Who is telling me this?
+        summary: Trace a claim to its source and rate whether that source would know and would say.
+      - title: Search as a skill
+        summary: Ask a search engine precise questions and recognize ads and SEO chum in the results.
+      - title: Manipulated media and AI content
+        summary: Spot edited images, out-of-context clips, and machine-written text — and verify before sharing.
+  - title: Safety & privacy
+    topics:
+      - title: What you give away
+        summary: Know what apps, sites, and devices collect, and turn off what you never agreed to.
+      - title: Scams, phishing, and the urgency test
+        summary: Recognize the message that wants speed and secrecy, and verify out-of-band every time.
+      - title: Kids and screens
+        summary: Set up a household's devices with guardrails you chose, not defaults someone sold you.
+  - title: Making things
+    topics:
+      - title: Writing documents that look right
+        summary: Produce a clean letter, flyer, or report with styles instead of spaces.
+      - title: Spreadsheets that answer questions
+        summary: Put data in rows, ask it questions with formulas, and chart what it says.
+      - title: Communicating well online
+        summary: Write email and messages that get answered, and know what never belongs in either.
+  - title: How it all works
+    topics:
+      - title: What the internet actually is
+        summary: Explain what happens between typing an address and seeing a page, in plain words.
+      - title: Your data's journey
+        summary: Explain where "the cloud" is, who can see what, and what self-hosting changes.
+      - title: A first taste of programming
+        summary: Write a small script that does a chore, and see that code is instructions, not magic.
