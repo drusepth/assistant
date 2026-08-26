@@ -22,3 +22,10 @@
 <% else %>
   <%= render "sections/hobby_capture", hobbies: section %>
 <% end %>
+
+<% if panel.starters.present? %>
+  <div class="card p-5">
+    <%= render "feeds/starters", starters: panel.starters,
+          heading: "Nothing to read here yet" %>
+  </div>
+<% end %>

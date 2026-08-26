@@ -22,6 +22,12 @@
       ) do |empty| %>
     <% empty.with_action { link_to "Add your first feed", feeds_path, class: "btn btn-primary" } %>
   <% end %>
+
+  <% if @starters.present? %>
+    <div class="card mt-4 p-5">
+      <%= render "feeds/starters", starters: @starters %>
+    </div>
+  <% end %>
 <% else %>
   <%# One toolbar line per axis, and only the axes that have more than one
       answer: a filter row for a household with one feed is furniture. %>

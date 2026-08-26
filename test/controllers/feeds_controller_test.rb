@@ -86,6 +86,39 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # D-hobby-feeds §7.1: offered, never subscribed.
+  test "the starter shelf appears only while there is nothing to read" do
+    get feeds_path
+    assert_match(/Not sure where to start/, response.body)
+    assert_no_difference("Feed.count") { get reader_path }
+
+    users(:one).feeds.create!(url: "https://example.com/mine.xml")
+
+    get feeds_path
+    assert_no_match(/Not sure where to start/, response.body)
+    get reader_path
+    assert_no_match(/Not sure where to start/, response.body)
+  end
+
+  test "ticking starters follows those and returns to where the shelf was" do
+    picks = Feeds::Starters.entries.first(2).map(&:url)
+
+    assert_difference "Feed.count", 2 do
+      post starters_feeds_path, params: { urls: picks, create_lenses: "1", return_to: section_path("hobbies") }
+    end
+
+    assert_redirected_to section_path("hobbies")
+    assert_equal picks.sort, users(:one).feeds.pluck(:url).sort
+  end
+
+  test "submitting the shelf with nothing ticked says so and follows nothing" do
+    assert_no_difference "Feed.count" do
+      post starters_feeds_path, params: { urls: [] }
+    end
+
+    assert_match(/Pick at least one/, flash[:alert])
+  end
+
   test "an address with no feed explains itself and saves nothing" do
     stub_request(:get, %r{https://example\.com}).to_return(body: "<html>nope</html>", headers: { "Content-Type" => "text/html" })
 

@@ -95,6 +95,22 @@ class FeedsController < ApplicationController
     redirect_to feeds_path, notice: import_notice(result)
   end
 
+  # The starter shelf: whatever the user ticked, through the ordinary OPML
+  # path. Nothing here is followed unless it was ticked (D-hobby-feeds §7.1).
+  def starters
+    # A form with nothing ticked posts an empty string, not an empty list.
+    urls = Array(params[:urls]).map(&:to_s).reject(&:blank?)
+    return redirect_to feeds_path, alert: "Pick at least one to follow." if urls.empty?
+
+    result = Feeds::Starters.import(Current.user, urls, create_lenses: params[:create_lenses] == "1")
+    return redirect_to feeds_path, alert: result.error unless result.ok?
+
+    # Back where the shelf was — it appears on the reader, the feed list and
+    # the Hobbies hub, and landing somewhere else after ticking two boxes is
+    # its own small betrayal.
+    redirect_to return_to_path(feeds_path), notice: import_notice(result)
+  end
+
   private
     def set_feed
       @feed = Current.user.feeds.find(params[:id])

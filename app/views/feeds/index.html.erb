@@ -54,4 +54,7 @@
     Nothing followed yet. Start with one source per hobby — the place you already check —
     and tag each feed with the hobby it belongs to.
   </p>
+  <div class="card p-5">
+    <%= render "feeds/starters", starters: Feeds::Starters.groups %>
+  </div>
 <% end %>

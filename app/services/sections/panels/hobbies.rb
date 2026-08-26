@@ -27,6 +27,11 @@ module Sections
 
       def feeds = @feeds ||= viewer.feeds.active.to_a
 
+      # The stocked shelf, only while there is nothing to read at all
+      # (D-hobby-feeds §7.1): a household with one feed has found the paste
+      # field and doesn't need it.
+      def starters = feeds.empty? ? ::Feeds::Starters.groups : nil
+
       def unread_count = @unread_count ||= cards.sum { |card| card.river.unread_count }
 
       Card = Struct.new(:summary, :river, keyword_init: true) do

@@ -1,0 +1,46 @@
+<%# The stocked shelf (D-hobby-feeds §7.1): a short, hand-curated list of
+    publisher-run feeds, shown only while there is nothing to read.
+
+    Offered, never subscribed. Nothing here is followed at signup or in the
+    FTUE, and nothing is personalized, scored, or fetched to build the list —
+    every row is a checkbox somebody ticks. That is the line READER.md's
+    first promise draws: the sources are the ones the user chose.
+
+    Locals: starters (grouped by folder); optional heading. %>
+<div class="space-y-3">
+  <div>
+    <p class="text-sm font-medium text-ink"><%= local_assigns.fetch(:heading, "Not sure where to start?") %></p>
+    <p class="text-xs text-soft">
+      A few sources that have been publishing for years, each straight from the site itself.
+      Tick the ones you want — nothing is followed until you do.
+    </p>
+  </div>
+
+  <%= form_with url: starters_feeds_path, class: "space-y-3" do %>
+    <%= hidden_field_tag :return_to, request.path %>
+    <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+      <% starters.each do |folder, entries| %>
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wide text-stone-500"><%= folder %></p>
+          <% entries.each do |entry| %>
+            <label class="flex items-baseline gap-2 py-0.5 text-sm">
+              <%= check_box_tag "urls[]", entry.url, false, id: "starter-#{entry.url.parameterize}",
+                    class: "size-3.5 shrink-0 accent-primary-600" %>
+              <span class="min-w-0">
+                <span class="text-ink"><%= entry.title %></span>
+                <span class="text-xs text-soft"><%= URI.parse(entry.url).host.to_s.delete_prefix("www.") rescue nil %></span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <label class="flex items-center gap-2 text-xs text-soft">
+      <%= check_box_tag :create_lenses, "1", true, class: "size-3.5 accent-primary-600" %>
+      Make a hobby for each group I pick
+    </label>
+
+    <%= submit_tag "Follow the ones I ticked", class: "btn btn-secondary btn-sm" %>
+  <% end %>
+</div>

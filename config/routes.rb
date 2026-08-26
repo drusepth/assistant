@@ -233,6 +233,9 @@ Rails.application.routes.draw do
       # The reading list leaves in the format every other reader can read.
       get :export
       post :import
+      # The empty state's stocked shelf (D-hobby-feeds §7.1) — offered,
+      # never subscribed.
+      post :starters
     end
   end
   resources :feed_items, only: [] do

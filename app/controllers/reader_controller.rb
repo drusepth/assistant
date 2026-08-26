@@ -14,6 +14,9 @@ class ReaderController < ApplicationController
     @feeds = Current.user.feeds.includes(:sections).order(:created_at)
     @lenses = Section.find_by(slug: "hobbies")&.children&.where(id: @feeds.flat_map(&:section_ids))&.order(:name) || []
     @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
+    # Only while there is nothing to read: a shelf above a river is clutter
+    # (D-hobby-feeds §7.1).
+    @starters = Feeds::Starters.groups if @feeds.none?
   end
 
   # "Mark everything I'm looking at as read" — the verb that keeps a river

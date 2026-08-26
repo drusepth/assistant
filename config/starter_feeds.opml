@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Starter feeds (D-hobby-feeds §7.1) — offered when a household's reader is
+  empty, and never subscribed to on anybody's behalf. A blank paste field
+  asks the user to already know what RSS is; this is a stocked shelf, not a
+  recommendation engine, and every row is a checkbox somebody has to tick.
+
+  What earns a place here, in priority order:
+
+    1. a publisher-run URL. Never an aggregator or a FeedBurner proxy —
+       a feed that lives on somebody else's redirector is the Google Reader
+       failure mode this whole feature exists to answer;
+    2. no account, no key, no paywall on the feed itself;
+    3. a decade of URL stability, since this file ships in the repo and rots
+       silently otherwise;
+    4. politeness to poll, because this list multiplies by every self-hoster
+       who ticks it;
+    5. spread across the kinds of things people have hobbies about, rather
+       than a news firehose.
+
+  The folders are hobby names, which is what makes this work: Feeds::Opml
+  matches a folder to an existing lens by name, so a household that already
+  has a Cooking hobby files these on the way in, and the classifier
+  (Feeds::Classify) handles the rest.
+
+  Verify before shipping a change: script/check_starter_feeds.rb fetches
+  every URL here and reports what moved. Last verified: never — this list
+  was assembled offline and needs one pass on a box with network access.
+-->
+<opml version="2.0">
+  <head>
+    <title>Starter feeds</title>
+  </head>
+  <body>
+    <outline text="Reading" title="Reading">
+      <outline type="rss" text="Atlas Obscura" title="Atlas Obscura"
+               xmlUrl="https://www.atlasobscura.com/feeds/latest" htmlUrl="https://www.atlasobscura.com"/>
+      <outline type="rss" text="Smithsonian Magazine" title="Smithsonian Magazine"
+               xmlUrl="https://www.smithsonianmag.com/rss/latest_articles/" htmlUrl="https://www.smithsonianmag.com"/>
+      <outline type="rss" text="Quanta Magazine" title="Quanta Magazine"
+               xmlUrl="https://api.quantamagazine.org/feed/" htmlUrl="https://www.quantamagazine.org"/>
+    </outline>
+
+    <outline text="Cooking" title="Cooking">
+      <outline type="rss" text="Serious Eats" title="Serious Eats"
+               xmlUrl="https://www.seriouseats.com/feeds/all" htmlUrl="https://www.seriouseats.com"/>
+    </outline>
+
+    <outline text="Science" title="Science">
+      <outline type="rss" text="NASA" title="NASA"
+               xmlUrl="https://www.nasa.gov/feed/" htmlUrl="https://www.nasa.gov"/>
+      <outline type="rss" text="Phys.org" title="Phys.org"
+               xmlUrl="https://phys.org/rss-feed/" htmlUrl="https://phys.org"/>
+    </outline>
+
+    <outline text="Technology" title="Technology">
+      <outline type="rss" text="Ars Technica" title="Ars Technica"
+               xmlUrl="https://feeds.arstechnica.com/arstechnica/index" htmlUrl="https://arstechnica.com"/>
+    </outline>
+
+    <outline text="Comics" title="Comics">
+      <outline type="rss" text="xkcd" title="xkcd"
+               xmlUrl="https://xkcd.com/rss.xml" htmlUrl="https://xkcd.com"/>
+    </outline>
+
+    <outline text="Health" title="Health">
+      <outline type="rss" text="Harvard Health Blog" title="Harvard Health Blog"
+               xmlUrl="https://www.health.harvard.edu/blog/feed" htmlUrl="https://www.health.harvard.edu/blog"/>
+    </outline>
+
+    <outline text="Money" title="Money">
+      <outline type="rss" text="CFPB Blog" title="CFPB Blog"
+               xmlUrl="https://www.consumerfinance.gov/about-us/blog/feed/" htmlUrl="https://www.consumerfinance.gov"/>
+    </outline>
+
+    <outline text="News" title="News">
+      <outline type="rss" text="BBC World News" title="BBC World News"
+               xmlUrl="https://feeds.bbci.co.uk/news/world/rss.xml" htmlUrl="https://www.bbc.co.uk/news"/>
+      <outline type="rss" text="NPR News" title="NPR News"
+               xmlUrl="https://feeds.npr.org/1001/rss.xml" htmlUrl="https://www.npr.org"/>
+      <outline type="rss" text="The Guardian — World" title="The Guardian — World"
+               xmlUrl="https://www.theguardian.com/world/rss" htmlUrl="https://www.theguardian.com/world"/>
+      <outline type="rss" text="ProPublica" title="ProPublica"
+               xmlUrl="https://www.propublica.org/feeds/propublica/main" htmlUrl="https://www.propublica.org"/>
+    </outline>
+  </body>
+</opml>
