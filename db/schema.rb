@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_185546) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -397,7 +397,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_073728) do
   create_table "notes", force: :cascade do |t|
     t.text "body", null: false
     t.datetime "created_at", null: false
-    t.string "kind"
+    t.string "kind", default: "plain", null: false
+    t.string "severity"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false

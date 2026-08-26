@@ -45,9 +45,11 @@ Six tables, deliberately boring. Every primitive `belongs_to :user` (its owner) 
 | `Document` | title, description, extracted_text, summary + Active Storage `file` | extracted_text/summary filled by the AI pipeline later |
 | `Person` | name, relationship, email, phone, birthday, notes, linked_user FK (opt) | Contacts + context |
 | `Goal` | title, description, status (active/done), target_on, broken_down_at | Lives inside the Tasks section (D17); `BreakDownGoalJob` plans it into scheduled tasks; auto-done when the last step completes; has_many tasks/events (nullify). Situations (D7) = a Goal + spawned multi-tagged Tasks/Events |
-| `Note` | title (opt), body | The memory layer's inspectable form |
+| `Note` | title (opt), body, kind (plain/medication/allergy), severity (opt) | The memory layer's inspectable form; `kind` gives it structured flavors without a new table (D36, D-allergy-notes) |
 
 **`Sectionable`** — `section_taggings` (polymorphic join to `sections`, unique per item+section) gives multi-tagging and the `in_section(section)` scope. Cross-cutting views are just unscoped queries; section pages are `in_section` queries. No section ever owns a table.
+
+**Flavor columns are NOT NULL (D-flavor-columns-not-null).** A column naming which *sort* of row this is — `kind`, `kind_key`, `status`, `group` — is `null: false` with the plain case spelled out (`notes.kind` "plain", `credentials.kind` "login", `feeds.kind` "rss"). NULL as shorthand for "the ordinary one" is a trap: `kind != 'allergy'` is NULL, not true, for a NULL kind, so one negated query silently drops every plain row. `SchemaConventionsTest` enforces it against the live schema. A genuinely optional attribute whose absence is meaningful (`notes.severity` = "not sure") is not a flavor column and stays nullable.
 
 **`Visible`** — ownership + the sharing model, below.
 
