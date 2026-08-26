@@ -95,10 +95,13 @@ module Pets
         Date.new(year, date.month, date.day - 1)
       end
 
+      # Her age is the one part of the descriptor that stops being true, so a
+      # remembered card is built from the parts rather than by editing the
+      # sentence the living cards use.
       def remembered_phrase(pet)
         date = pet.died_on || pet.left_on
         verb = pet.died? ? "" : "Rehomed "
-        [ pet.descriptor.presence&.sub(/ · [^·]*old\z/, ""), "#{verb}#{date.strftime("%B %Y")}" ].compact.join(" · ")
+        [ pet.species_label, pet.breed.presence, "#{verb}#{date.strftime("%B %Y")}" ].compact.join(" · ")
       end
   end
 end

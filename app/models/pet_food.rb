@@ -20,7 +20,10 @@ class PetFood < ApplicationRecord
   }.freeze
 
   # Weight units convert; "cans" and "scoops" don't, so a bag measured in cans
-  # is fed in cans or the arithmetic is refused rather than guessed.
+  # is fed in cans or the arithmetic is refused rather than guessed. The bag
+  # and the daily amount carry their own units, because a sack is sold in
+  # kilos and fed in grams — one shared unit made the owner do that conversion,
+  # and getting it wrong produced a confident "runs out today".
   UNITS = %w[ g kg oz lb cans scoops cups ].freeze
   GRAMS = { "g" => 1.0, "kg" => 1000.0, "oz" => 28.3495, "lb" => 453.592 }.freeze
 
@@ -28,7 +31,7 @@ class PetFood < ApplicationRecord
 
   validates :name, presence: true
   validates :form, inclusion: { in: FORMS }
-  validates :unit, inclusion: { in: UNITS }
+  validates :unit, :package_unit, inclusion: { in: UNITS }
   validates :started_on, presence: true
   validates :amount_per_day, :package_amount,
     numericality: { greater_than: 0 }, allow_nil: true
@@ -42,16 +45,21 @@ class PetFood < ApplicationRecord
   def display_name = [ brand.presence, name ].compact.join(" ")
 
   # How long one package lasts, or nil when the numbers can't say — a bag in
-  # kilos fed in scoops is two different measurements, and converting them
+  # cans fed in scoops is two different measurements, and converting them
   # would be inventing a density.
+  #
+  # Under a day is also nil rather than zero: a "bag" that doesn't last a day
+  # is a mis-entry (12 kilos typed as 12 grams), and the honest answer to a
+  # mis-entry is no reorder date at all, not one that says today.
   def days_per_package
     return nil if amount_per_day.blank? || package_amount.blank?
 
-    daily = in_grams(amount_per_day)
-    package = in_grams(package_amount)
+    daily = in_grams(amount_per_day, unit)
+    package = in_grams(package_amount, package_unit)
     return nil if daily.nil? || package.nil? || daily.zero?
 
-    (package / daily).floor
+    days = (package / daily).floor
+    days.positive? ? days : nil
   end
 
   # When to reorder, counted from when this bag was opened. No opened_on means
@@ -74,10 +82,30 @@ class PetFood < ApplicationRecord
     (package_cost_cents * (30.44 / days)).round
   end
 
+  # "300g a day out of a 12kg bag" — said once, so the row and the watcher
+  # phrase it the same way.
+  def daily_phrase
+    return nil if amount_per_day.blank?
+
+    "#{format_amount(amount_per_day)}#{unit} a day"
+  end
+
+  def package_phrase
+    return nil if package_amount.blank?
+
+    "#{format_amount(package_amount)}#{package_unit}"
+  end
+
   private
-    # Weight units share a scale; counted units don't convert to anything.
-    def in_grams(amount)
+    # Weight units share a scale; counted units don't convert to anything, so
+    # a mismatched pair (a bag in cans, a daily amount in grams) simply has no
+    # answer.
+    def in_grams(amount, unit)
       factor = GRAMS[unit]
       factor && (amount.to_f * factor)
+    end
+
+    def format_amount(amount)
+      ActiveSupport::NumberHelper.number_to_rounded(amount, precision: 2, strip_insignificant_zeros: true)
     end
 end

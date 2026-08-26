@@ -10,11 +10,7 @@ class PetFoodsController < ApplicationController
     food.started_on ||= Date.current
 
     if food.save
-      # Superseding, not replacing: the old row keeps its dates so the diet
-      # history stays readable.
-      @pet.pet_foods.current.where.not(id: food.id).where(form: food.form)
-        .update_all(ended_on: Date.current) if params[:replaces_current].present?
-
+      supersede_current(food) if params[:replaces_current].present?
       redirect_to @pet, notice: "#{food.display_name} added to #{@pet.name}'s shelf."
     else
       redirect_to @pet, alert: food.errors.full_messages.to_sentence
@@ -59,6 +55,14 @@ class PetFoodsController < ApplicationController
   end
 
   private
+    # Superseding, not replacing: the old row keeps its dates, which is what
+    # makes the diet history readable. Same form only — a new dry food does
+    # not end the supplements.
+    def supersede_current(food)
+      @pet.pet_foods.current.where.not(id: food.id).where(form: food.form)
+        .update_all(ended_on: Date.current)
+    end
+
     def set_pet
       @pet = Current.user.pets.find(params[:pet_id])
     end
@@ -71,7 +75,7 @@ class PetFoodsController < ApplicationController
 
     def food_params
       params.expect(pet_food: [ :name, :brand, :form, :amount_per_day, :unit, :package_amount,
-        :package_cost, :started_on, :opened_on, :notes ]).tap do |attrs|
+        :package_unit, :package_cost, :started_on, :opened_on, :notes ]).tap do |attrs|
         # Money is typed in currency and stored in cents — no floats in money
         # math anywhere (MoneyHelper's rule).
         cost = attrs.delete(:package_cost)

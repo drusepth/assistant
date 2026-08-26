@@ -39,6 +39,13 @@ class Pet < ApplicationRecord
   # What she eats, and what she ate (D-pet-food-shelf).
   has_many :pet_foods, dependent: :destroy
 
+  # Her lens goes with her, by whatever path she goes: the controller, a
+  # removed household member cascading through `users.pets`, or the console.
+  # Doing this in the controller left an empty "Rex" section under People
+  # every time a member was removed. Tagged items survive and keep their
+  # other tags — the section_taggings go with the section, as for any lens.
+  after_destroy { section&.destroy }
+
   validates :name, presence: true
   validates :species, inclusion: { in: SPECIES }
   validates :weight_kg, numericality: { greater_than: 0, less_than: 2_000 }, allow_nil: true

@@ -409,6 +409,17 @@ app says nothing rather than something wrong. The form prefills today where
 the value is on screen and can be cleared — a default the user can see beats a
 default behind their back.
 
+**Three deletion paths, found by asking what else deletes this.** Removing a
+contact who was a pet's vet died on a foreign key (`Person has_many :patients,
+dependent: :nullify` — the address book is not a claim about the dog).
+Removing a *household member* destroyed their pets but left every lens behind,
+because the lens cleanup lived in the controller rather than on the model; it
+is an `after_destroy` now, so every path removes both. And a bag and a daily
+amount shared one unit column, so a 12 kg sack entered as "12" with the daily
+amount in grams produced a confident reorder date of *today* — the bag carries
+its own `package_unit`, and a package that would not last a day now says
+nothing at all rather than something wrong.
+
 **Panels curate the Act zone, so the controller never learned about pets.**
 `Tool.for_section` flows a tool registered on a parent down to every child,
 which put "My pet is missing" on the book club's page and "Prep for a vet

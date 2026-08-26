@@ -10,8 +10,8 @@ class PetBudgetsController < ApplicationController
   # Creates the Pets envelope if it isn't there, and offers the food shelf's
   # arithmetic as its target — never over a target the user set by hand (D16).
   def create
-    category = Current.user.budget_categories.active.find_by("LOWER(name) = ?", Pets::CostOfCare::CATEGORY_NAME.downcase)
-    category ||= Current.user.budget_categories.create!(name: Pets::CostOfCare::CATEGORY_NAME, group: "needs")
+    category = Pets::CostOfCare.category_for(Current.user) ||
+      Current.user.budget_categories.create!(name: Pets::CostOfCare::CATEGORY_NAME, group: "needs")
 
     planned = planned_food_cents
     if planned&.positive? && !category.target_hand_set?
@@ -26,7 +26,7 @@ class PetBudgetsController < ApplicationController
   # recategorize button writes, made from the page where you know the answer.
   def update
     matcher = params[:matcher].to_s.strip
-    category = Current.user.budget_categories.active.find_by("LOWER(name) = ?", Pets::CostOfCare::CATEGORY_NAME.downcase)
+    category = Pets::CostOfCare.category_for(Current.user)
     return redirect_to(@pet, alert: "Make the Pets envelope first.") if category.nil?
     return redirect_to(@pet, alert: "Which shop? Type the name as it appears on the statement.") if matcher.blank?
 

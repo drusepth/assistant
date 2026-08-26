@@ -53,12 +53,10 @@ class PetsController < ApplicationController
   end
 
   # Removing the pet removes her lens, which is the only way that lens goes
-  # (GroupsController refuses it). Tagged items survive and keep their other
-  # tags — the section_taggings go with the section, as they do for any lens.
+  # (GroupsController refuses it). The cascade lives on the model, so every
+  # path removes both — this one only says so.
   def destroy
-    section = @pet.section
     @pet.destroy!
-    section.destroy!
     redirect_to section_path("people"), notice: "#{@pet.name} removed. Everything filed under her name kept its other tags."
   end
 

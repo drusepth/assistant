@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_192648) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -448,6 +448,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_192648) do
     t.date "opened_on"
     t.decimal "package_amount", precision: 10, scale: 2
     t.integer "package_cost_cents"
+    t.string "package_unit", default: "g", null: false
     t.integer "pet_id", null: false
     t.date "started_on", null: false
     t.string "unit", default: "g", null: false

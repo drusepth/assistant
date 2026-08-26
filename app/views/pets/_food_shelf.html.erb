@@ -59,15 +59,21 @@
             <%= form.field :name, label_text: "Food", placeholder: "Adult chicken & rice" %>
             <%= form.field :brand, placeholder: "Who makes it" %>
           </div>
-          <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <%= form.field :form do %>
               <%= form.select :form, PetFood::FORMS.map { |slug| [ PetFood::FORM_LABELS[slug], slug ] } %>
             <% end %>
             <%= form.field :amount_per_day, as: :number_field, label_text: "A day", step: "0.01" %>
-            <%= form.field :unit do %>
+            <%= form.field :unit, label_text: "in" do %>
               <%= form.select :unit, PetFood::UNITS %>
             <% end %>
+            <%# The bag carries its own unit: a sack is sold in kilos and fed
+                in grams, and making the owner convert produced a confident
+                wrong reorder date rather than an error. %>
             <%= form.field :package_amount, as: :number_field, label_text: "Bag size", step: "0.01" %>
+            <%= form.field :package_unit, label_text: "in" do %>
+              <%= form.select :package_unit, PetFood::UNITS %>
+            <% end %>
           </div>
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <%= form.field :package_cost, as: :number_field, label_text: "Price a bag", step: "0.01" %>

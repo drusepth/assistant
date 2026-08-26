@@ -24,7 +24,13 @@ module Pets
 
     attr_reader :user
 
-    def category = @category ||= user.budget_categories.active.find_by("LOWER(name) = ?", CATEGORY_NAME.downcase)
+    # The envelope, if it exists. One lookup, so the card, the create button
+    # and the rule form can't disagree about which row they mean.
+    def self.category_for(user)
+      user.budget_categories.active.find_by("LOWER(name) = ?", CATEGORY_NAME.downcase)
+    end
+
+    def category = @category ||= self.class.category_for(user)
 
     def ledger? = SpendingTransaction.where(user_id: user.id).exists?
 

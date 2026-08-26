@@ -5,7 +5,7 @@ module PetsHelper
   # (D-pet-food-shelf).
   def pet_food_line(food)
     parts = []
-    parts << "#{number_with_precision(food.amount_per_day, precision: 2, strip_insignificant_zeros: true)}#{food.unit} a day" if food.amount_per_day
+    parts << food.daily_phrase if food.daily_phrase
     if (runs_out = food.runs_out_on)
       days = (runs_out - Date.current).to_i
       parts << if days.negative? then "bag ran out #{runs_out.strftime("%b %-d")}"
@@ -13,7 +13,7 @@ module PetsHelper
       else "bag lasts to about #{runs_out.strftime("%b %-d")}"
       end
     elsif food.days_per_package
-      parts << "a bag lasts about #{pluralize(food.days_per_package, "day")}"
+      parts << "a #{food.package_phrase} bag lasts about #{pluralize(food.days_per_package, "day")}"
     end
     parts << "#{money_amount(food.monthly_cost_cents)} a month" if food.monthly_cost_cents
     parts << "since #{food.started_on.strftime("%b %Y")}" if parts.empty?

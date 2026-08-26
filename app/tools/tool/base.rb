@@ -193,7 +193,7 @@ module Tool
         parts << "What the owner has noted:\n#{pet.notes.truncate(1_500)}" if pet.notes.present?
 
         shelf = Pets::FoodShelf.new(pet)
-        current = shelf.current.map { |food| "- #{food.display_name} (#{food.form_label})#{", #{food.amount_per_day}#{food.unit} a day" if food.amount_per_day}, since #{food.started_on.iso8601}" }
+        current = shelf.current.map { |food| "- #{food.display_name} (#{food.form_label})#{", #{food.daily_phrase}" if food.daily_phrase}, since #{food.started_on.iso8601}" }
         parts << "Currently eating:\n#{current.join("\n")}" if current.any?
         history = shelf.past.first(5).map { |food| "- #{food.display_name}: #{food.started_on.iso8601} to #{food.ended_on.iso8601}" }
         parts << "Previously eaten (the diet history a vet asks for):\n#{history.join("\n")}" if history.any?

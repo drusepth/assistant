@@ -22,7 +22,7 @@ module Admin
     # What "everything" means in the flash: the primitives plus their
     # containers. Runs, suggestions, grants, feeds and settings go with the
     # accounts too — they just aren't what anyone counts.
-    COUNTED_ASSOCIATIONS = %i[ events tasks documents people goals notes photos albums ].freeze
+    COUNTED_ASSOCIATIONS = %i[ events tasks documents people pets goals notes photos albums ].freeze
 
     module_function
 
