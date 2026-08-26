@@ -5,11 +5,19 @@ class PeopleController < ApplicationController
   # the circle card on the People page links here filtered rather than to a
   # fourth People surface. Circle mode is own-people-only, because the flag
   # is the owner's intent (D-people-dashboard).
+  #
+  # Alphabetical in every mode, circle included (D-address-book-directory):
+  # a directory is the one list whose order the reader already knows before
+  # it loads, and staleness has its own surface — the People page's Reach
+  # out rows — where recency order is the point rather than a surprise.
   def index
-    @circle_only = params[:circle].present?
-    @circle_size = Current.user.people.circle.count
-    scope = @circle_only ? Current.user.people.circle.stalest_first : Person.visible_to(Current.user).order(:name)
-    @people = scope.includes(:sections, :user).with_attached_avatar
+    @directory = People::Directory.new(Current.user,
+      query: params[:q], circle: params[:circle].present?, group_slug: params[:group])
+    # Still assigned for the view's filter row and for anything that renders
+    # the roster's shape; the directory owns the querying.
+    @circle_only = @directory.circle?
+    @circle_size = @directory.circle_size
+    @people = @directory.people
   end
 
   def show
@@ -24,8 +32,11 @@ class PeopleController < ApplicationController
       .with_attached_image.order(taken_at: :desc, id: :desc).limit(12)
   end
 
+  # `name:` carries a search that came up empty straight into the form
+  # (D-address-book-directory): you looked for Rosa, we don't have Rosa, the
+  # next thing you want is Rosa with her name already typed.
   def new
-    @person = Current.user.people.new
+    @person = Current.user.people.new(name: params[:name])
   end
 
   def create

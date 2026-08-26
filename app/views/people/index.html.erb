@@ -1,4 +1,14 @@
-<%= render Ui::PageHeaderComponent.new(title: "People", subtitle: "Contacts and what matters about them") do |header| %>
+<%# The Address Book (D-address-book-directory): a directory, not a
+    dashboard. The People section page answers "who should I reach out to";
+    this one answers "how do I reach Rosa", and the two questions want
+    completely different pages. Named for the thing the nav already calls it.
+
+    The full circle view lives here rather than as its own page
+    (D-people-circles): roster views belong with the roster. %>
+<% content_for :title, "Address Book" %>
+
+<%= render Ui::PageHeaderComponent.new(title: "Address Book",
+      subtitle: "Everyone you know, and how to reach them") do |header| %>
   <% header.with_actions do %>
     <%= link_to "Import", new_people_import_path, class: "btn btn-secondary" %>
     <%= link_to new_person_path, class: "btn btn-primary" do %>
@@ -7,38 +17,145 @@
   <% end %>
 <% end %>
 
-<%# The circle's full view lives here rather than as its own page
-    (D-people-circles): roster views belong with the roster. %>
-<% if @circle_size.positive? %>
-  <div class="mb-4 flex flex-wrap gap-2">
-    <%= link_to "Everyone", people_path,
-          class: "chip #{@circle_only ? "bg-stone-100 text-stone-700" : "bg-primary-100 text-primary-800"}" %>
-    <%= link_to "Your circle · #{@circle_size}", people_path(circle: "1"),
-          class: "chip #{@circle_only ? "bg-primary-100 text-primary-800" : "bg-stone-100 text-stone-700"}" %>
-  </div>
-<% end %>
+<div data-controller="directory" data-action="keydown@window->directory#hotkey"
+     data-directory-roster-value="<%= @directory.roster_size %>">
+  <%# Search first, because after an import it is the only thing on this page
+      that works. It submits for real (so it deep-links, and so it still
+      finds a match inside a note when JS is off) but the filtering you feel
+      is the keystroke one, below. An empty address book gets none of this
+      furniture — there is nothing to search and nothing to count. %>
+  <% if @directory.roster_size.positive? %>
+    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <%= form_with url: people_path, method: :get, class: "relative min-w-0 flex-1" do |form| %>
+        <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-soft">
+          <%= icon(:magnifying_glass, css_class: "size-4") %>
+        </span>
+        <%= form.search_field :q, value: @directory.query, autocomplete: "off",
+              placeholder: "Search names, emails, phone numbers, addresses…",
+              class: "input w-full pl-10", "aria-label": "Search your address book",
+              data: { directory_target: "input", action: "input->directory#filter keydown.esc->directory#clear keydown.enter->directory#open" } %>
+        <%= form.hidden_field :circle, value: "1" if @directory.circle? %>
+        <%= form.hidden_field :group, value: @directory.group.slug if @directory.group %>
+      <% end %>
+      <p class="shrink-0 text-xs text-soft sm:text-right" data-directory-target="count">
+        <%= directory_count_phrase(@directory) %>
+      </p>
+    </div>
+  <% end %>
 
-<% if @people.any? %>
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"><%= render @people %></div>
-<% elsif @circle_only %>
-  <%= render Ui::EmptyStateComponent.new(
-        title: "No one in your circle yet",
-        description: "Your circle is the handful of relationships you're actively tending — the People page is where you pick them."
-      ) do |empty| %>
-    <% empty.with_action do %>
-      <%= link_to "Go to People", section_path("people"), class: "btn btn-primary" %>
-    <% end %>
+  <%# One filter row over one axis — who is in the list — rather than the two
+      lonely chips this page used to carry. Groups only appear once they hold
+      somebody: a chip that leads to an empty page is worse than no chip. %>
+  <% if @circle_size.positive? || @directory.group_chips.any? %>
+    <div class="mb-4 flex flex-wrap gap-1.5">
+      <%= link_to "Everyone", people_path(q: @directory.query.presence),
+            class: directory_chip_class(!@directory.circle? && @directory.group.nil?) %>
+      <% if @circle_size.positive? %>
+        <%= link_to people_path(circle: "1", q: @directory.query.presence),
+              class: directory_chip_class(@directory.circle?),
+              title: "The handful of relationships you're actively tending" do %>
+          Your circle <span class="opacity-60"><%= @circle_size %></span>
+        <% end %>
+      <% end %>
+      <% @directory.group_chips.each do |group, count| %>
+        <%= link_to people_path(group: group.slug, q: @directory.query.presence),
+              class: directory_chip_class(@directory.group == group) do %>
+          <%= group.name %> <span class="opacity-60"><%= count %></span>
+        <% end %>
+      <% end %>
+    </div>
   <% end %>
-<% else %>
-  <%= render Ui::EmptyStateComponent.new(
-        title: "No people yet",
-        description: "Friends, family, doctors, landlords, caseworkers — keep track of who matters and what matters about them."
-      ) do |empty| %>
-    <% empty.with_action do %>
-      <div class="flex flex-wrap justify-center gap-2">
-        <%= link_to "Import your address book", new_people_import_path, class: "btn btn-primary" %>
-        <%= link_to "Add a person", new_person_path, class: "btn btn-secondary" %>
+
+  <% if @people.any? %>
+    <div class="flex items-start gap-3">
+      <div class="card min-w-0 flex-1">
+        <div class="item-stack">
+          <% @directory.letters.each do |letter| %>
+            <%# The letter heading and its rows are one group so the instant
+                filter can hide a heading whose people all just vanished. %>
+            <div data-directory-target="group" data-directory-letter="<%= letter.key %>">
+              <h2 class="stack-label scroll-mt-6" id="<%= letter.anchor %>"><%= letter.label %></h2>
+              <div class="mt-1 flex flex-col gap-1">
+                <%= render partial: "people/directory_row", collection: letter.people, as: :person %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <%# Shown by the instant filter alone — the server's own empty result
+            renders the state below instead. %>
+        <p class="hidden px-4 py-10 text-center text-sm text-soft" data-directory-target="empty">
+          Nobody here matches that.
+        </p>
       </div>
+
+      <%# The one affordance a paper address book has that no app copies. Only
+          worth its column once the list is long enough to need landmarks. %>
+      <% if @people.size > 12 %>
+        <nav class="sticky top-6 hidden shrink-0 flex-col items-center self-start rounded-full bg-surface px-1 py-2 lg:flex"
+             aria-label="Jump to a letter">
+          <% (People::Directory::LETTERS + [ People::Directory::OTHER ]).each do |key| %>
+            <% present = @directory.letter_present?(key) %>
+            <% classes = "flex size-5 items-center justify-center rounded-full text-[0.625rem] font-semibold leading-none transition-opacity" %>
+            <% if present %>
+              <%= link_to key, "##{People::Directory::Letter.new(key: key).anchor}",
+                    class: "#{classes} text-soft hover:bg-primary-100 hover:text-primary-800",
+                    data: { directory_target: "rail", directory_letter: key } %>
+            <% else %>
+              <span class="<%= classes %> text-soft/30" aria-hidden="true"
+                    data-directory-target="rail" data-directory-letter="<%= key %>"><%= key %></span>
+            <% end %>
+          <% end %>
+        </nav>
+      <% end %>
+    </div>
+
+  <% elsif @directory.query.present? %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "No one matches “#{@directory.query}”",
+          description: "Nothing in your address book has that name, address, or number in it."
+        ) do |empty| %>
+      <% empty.with_action do %>
+        <div class="flex flex-wrap justify-center gap-2">
+          <%# The likeliest next move after a search that misses: the person
+              you were looking for, with the name you already typed. %>
+          <%= link_to "Add “#{@directory.query}”", new_person_path(name: @directory.query), class: "btn btn-primary" %>
+          <%= link_to "Clear search", people_path, class: "btn btn-secondary" %>
+        </div>
+      <% end %>
+    <% end %>
+
+  <% elsif @directory.circle? %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "No one in your circle yet",
+          description: "Your circle is the handful of relationships you're actively tending — the People page is where you pick them."
+        ) do |empty| %>
+      <% empty.with_action do %>
+        <%= link_to "Go to People", section_path("people"), class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+
+  <% elsif @directory.group %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "No one in #{@directory.group.name} yet",
+          description: "Groups fill up from the People page, or from a person's own page."
+        ) do |empty| %>
+      <% empty.with_action do %>
+        <%= link_to "Go to People", section_path("people"), class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+
+  <% else %>
+    <%= render Ui::EmptyStateComponent.new(
+          title: "No people yet",
+          description: "Friends, family, doctors, landlords, caseworkers — keep track of who matters and what matters about them."
+        ) do |empty| %>
+      <% empty.with_action do %>
+        <div class="flex flex-wrap justify-center gap-2">
+          <%= link_to "Import your address book", new_people_import_path, class: "btn btn-primary" %>
+          <%= link_to "Add a person", new_person_path, class: "btn btn-secondary" %>
+        </div>
+      <% end %>
     <% end %>
   <% end %>
-<% end %>
+</div>
