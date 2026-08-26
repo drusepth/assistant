@@ -57,6 +57,19 @@
       </p>
     <% end %>
 
+    <% booked_cents, planned_cents = @trip.booked_cost_cents, @trip.planned_cost_cents %>
+    <% if booked_cents.positive? || planned_cents.positive? %>
+      <p class="border-t border-edge px-4 py-3 text-sm text-soft">
+        <% if booked_cents.positive? %>
+          Booked: <span class="font-semibold text-ink"><%= money_amount(booked_cents) %></span>
+        <% end %>
+        <% if planned_cents.positive? %>
+          <%= "·" if booked_cents.positive? %>
+          Still to book: <span class="font-semibold text-ink"><%= money_amount(planned_cents) %></span>
+        <% end %>
+      </p>
+    <% end %>
+
     <% unless @trip.past? %>
       <% gaps = @trip.lodging_gaps %>
       <% if @trip.stays.any? && gaps.any? %>
@@ -77,6 +90,35 @@
           <p class="callout-title">No lodging on this trip yet</p>
         </div>
       <% end %>
+    <% end %>
+  <% end %>
+
+  <%# The itinerary on the basemap (D-stay-pins): pins from typed stay
+      locations matched against the local gazetteer — no photos read, so
+      every traveller sees it, planned trips included. %>
+  <% if @itinerary_map&.any? %>
+    <%= render Ui::CardComponent.new(title: "The route") do %>
+      <%= render Ui::ItineraryMapComponent.new(map: @itinerary_map) %>
+      <p class="mt-3 text-sm text-soft">
+        Stays in order, from where they say they are — a pin lands only when a stay's location
+        names a real town. Amber pins aren't booked yet.
+      </p>
+    <% end %>
+  <% end %>
+
+  <%# A planned trip whose dates have photos can earn the box the detector
+      would have given it (D-trip-spine) — after which the map and camera
+      roll below light up like any found trip's. %>
+  <% if @placeable %>
+    <%= render Ui::CardComponent.new(title: "Give this trip its map") do %>
+      <p class="text-sm text-soft">
+        Your photos from these dates know where they were taken. Placing the trip draws its box
+        on the map from them — recomputed from the photos themselves, like every trip — and its
+        photos attach from then on.
+      </p>
+      <div class="mt-4">
+        <%= button_to "Place this trip from my photos", place_trip_path(@trip), class: "btn btn-secondary btn-sm" %>
+      </div>
     <% end %>
   <% end %>
 

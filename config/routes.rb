@@ -208,6 +208,9 @@ Rails.application.routes.draw do
   # membership, not AccessGrant (D-trip-companions) — but everything
   # derived from photo coordinates on a trip stays owner-only under Q14.
   resources :trips do
+    member do
+      post :place
+    end
     resources :stays, shallow: true, except: %i[ index show ]
     resources :legs, controller: "trip_legs", shallow: true, except: %i[ index show ]
     # shallow_prefix keeps the un-nested helpers namespaced (trip_comment_path,

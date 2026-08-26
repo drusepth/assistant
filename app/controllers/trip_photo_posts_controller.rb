@@ -6,15 +6,20 @@
 class TripPhotoPostsController < ApplicationController
   include TripAccess
 
-  PICKER_LIMIT = 200
+  PICKER_PAGE = 120
 
   def new
     @trip = find_trip_as_traveler(params[:trip_id])
     already = @trip.trip_photos.where(user: Current.user).pluck(:photo_id)
-    @photos = Current.user.photos.with_attached_image
+    candidates = Current.user.photos
       .where(taken_at: @trip.starts_on.beginning_of_day..@trip.ends_on.end_of_day)
       .where.not(id: already)
-      .order(taken_at: :asc, id: :asc).limit(PICKER_LIMIT)
+    @page = [ params[:page].to_i, 1 ].max
+    @total = candidates.count
+    @pages = [ (@total.to_f / PICKER_PAGE).ceil, 1 ].max
+    @page = @pages if @page > @pages
+    @photos = candidates.with_attached_image
+      .order(taken_at: :asc, id: :asc).offset((@page - 1) * PICKER_PAGE).limit(PICKER_PAGE)
   end
 
   def create

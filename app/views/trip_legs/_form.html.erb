@@ -19,7 +19,11 @@
   </div>
   <%= form.field :departs_at, as: :datetime_local_field, label_text: "Departure time (optional)" %>
   <%= form.field :carrier, label_text: "Airline / company (optional)", placeholder: "Southwest, Hertz…" %>
-  <%= form.field :confirmation_code, label_text: "Confirmation code (optional)" %>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :confirmation_code, label_text: "Confirmation code (optional)" %>
+    <%= form.field :cost, as: :number_field, label_text: "Cost (optional)", step: "0.01", min: "0",
+          placeholder: "420.00" %>
+  </div>
   <%= form.field :url, as: :url_field, label_text: "Booking link (optional)", placeholder: "https://…" %>
   <%= form.field :notes, as: :text_area %>
   <div class="flex items-center gap-2 pt-2">

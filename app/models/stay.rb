@@ -7,6 +7,8 @@
 # check-out, so back-to-back stays (check out of Austin the morning you
 # check into Denver) leave no phantom gap between them.
 class Stay < ApplicationRecord
+  include HasCost
+
   belongs_to :trip
 
   enum :kind, {
@@ -22,6 +24,13 @@ class Stay < ApplicationRecord
   validate :check_out_after_check_in
 
   scope :by_date, -> { order(:check_in, :id) }
+
+  # Coordinates come from the typed location matched against the local
+  # gazetteer (D-stay-pins) — never from photos, never from the network —
+  # so the itinerary map is ordinary shared trip data, not a Q14 surface.
+  # A location the gazetteer has never heard of pins nothing, which is the
+  # honest answer.
+  before_save :locate_from_gazetteer, if: :will_save_change_to_location?
 
   KIND_LABELS = {
     "airbnb" => "Airbnb", "hotel" => "Hotel", "vacation_rental" => "Vacation rental",
@@ -46,7 +55,15 @@ class Stay < ApplicationRecord
     end
   end
 
+  def located? = latitude.present? && longitude.present?
+
   private
+    def locate_from_gazetteer
+      match = Datasets::Places.current.named(location)
+      self.latitude = match&.latitude
+      self.longitude = match&.longitude
+    end
+
     def check_out_after_check_in
       return if check_in.blank? || check_out.blank? || check_out > check_in
 

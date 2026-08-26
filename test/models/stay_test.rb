@@ -20,6 +20,29 @@ class StayTest < ActiveSupport::TestCase
     assert_equal 4, stay.nights
   end
 
+  test "a stay pins itself from its typed location, and re-pins when it changes" do
+    stay = @trip.stays.create!(location: "Boise", check_in: "2026-09-01", check_out: "2026-09-05")
+    assert stay.located?
+    assert_in_delta 43.6, stay.latitude.to_f, 0.5
+
+    stay.update!(location: "Lisbon, Portugal")
+    assert_in_delta 38.7, stay.latitude.to_f, 0.5
+
+    stay.update!(location: "The A-frame on Route 9")
+    assert_not stay.located?, "an unknown place honestly pins nothing"
+  end
+
+  test "cost forgives symbols and stores cents, or nothing" do
+    stay = @trip.stays.new(cost: "$1,240.50")
+    assert_equal 124_050, stay.cost_cents
+
+    stay.cost = "not a number"
+    assert_nil stay.cost_cents
+
+    stay.cost = ""
+    assert_nil stay.cost_cents
+  end
+
   test "display name falls back to the kind and the place" do
     stay = @trip.stays.new(location: "Boise", kind: "airbnb")
     assert_equal "Airbnb in Boise", stay.display_name

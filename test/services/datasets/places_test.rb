@@ -47,6 +47,24 @@ class Datasets::PlacesTest < ActiveSupport::TestCase
     assert_operator match.distance_km, :<=, Datasets::Places::NEAR_KM
   end
 
+  test "named finds a place by typed text, biggest population winning a bare name" do
+    match = Datasets::Places.current.named("Portland")
+    assert_equal "United States", match.country
+    assert_in_delta 45.52, match.latitude, 0.1, "a bare Portland is Oregon's"
+
+    assert_equal "Australia", Datasets::Places.current.named("Portland, Australia").country
+  end
+
+  test "named ignores a qualifier it can't use, and admits what it doesn't know" do
+    # The file knows countries, not states — "Boise, Idaho" still finds Boise.
+    match = Datasets::Places.current.named("Boise, Idaho")
+    assert_equal "Boise", match.name
+
+    assert_nil Datasets::Places.current.named("The A-frame on Route 9")
+    assert_nil Datasets::Places.current.named("")
+    assert_nil Datasets::Places.new(path: nil).named("Lisbon")
+  end
+
   test "a missing gazetteer is an unnamed map, never an error" do
     empty = Datasets::Places.new(path: nil)
 

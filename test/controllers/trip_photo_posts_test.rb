@@ -70,6 +70,12 @@ class TripPhotoPostsTest < ActionDispatch::IntegrationTest
     assert_difference("TripPhoto.count", -1) { @photo.destroy! }
   end
 
+  test "a page number past the end clamps instead of blanking" do
+    get new_trip_photo_post_path(@trip, page: 99)
+    assert_response :success
+    assert_match "photo_#{@photo.id}", response.body
+  end
+
   test "an outsider gets nothing" do
     sign_in_as users(:outsider)
     get new_trip_photo_post_path(@trip)

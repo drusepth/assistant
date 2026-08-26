@@ -43,6 +43,17 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[title='Boise · Idaho']", text: "Boise", count: 2 # check-in Tue Mar 10 + Mon Mar 16
   end
 
+  test "a day two stays both claim turns the band amber and says so" do
+    trip = users(:one).trips.create!(name: "Idaho", starts_on: "2026-03-01", ends_on: "2026-03-31")
+    trip.stays.create!(location: "Boise", check_in: "2026-03-10", check_out: "2026-03-14")
+    trip.stays.create!(location: "McCall", check_in: "2026-03-12", check_out: "2026-03-20")
+
+    get calendar_path(year: 2026, month: 3)
+    assert_response :success
+    # Mar 12-14: both stays cover them (check-out day inclusive on the band).
+    assert_select "a[title^='Double-booked']", count: 3, text: "2 places"
+  end
+
   test "no travel band for trips you aren't on" do
     trip = users(:two).trips.create!(name: "Idaho", starts_on: "2026-03-01", ends_on: "2026-03-31")
     trip.stays.create!(location: "Boise", check_in: "2026-03-10", check_out: "2026-03-14")

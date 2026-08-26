@@ -99,6 +99,12 @@ class Trip < ApplicationRecord
     nights.slice_when { |night, following| following != night + 1 }.map { |run| run.first..run.last }
   end
 
+  # What the itinerary costs (D-trip-costs), split by the same bit
+  # everything else tracks: booked is committed money, planned is money
+  # still waiting on somebody to click "book".
+  def booked_cost_cents = itinerary_cost_cents(:booked?)
+  def planned_cost_cents = itinerary_cost_cents(:planned?)
+
   # Ruby filters, not scopes, so a page that preloaded stays and legs pays
   # no extra queries. A drive in your own car never counts as unbooked.
   def unbooked_stays = stays.select(&:planned?)
@@ -138,6 +144,10 @@ class Trip < ApplicationRecord
   def map_bounds = { south: south.to_f, west: west.to_f, north: north.to_f, east: east.to_f }
 
   private
+    def itinerary_cost_cents(predicate)
+      (stays.to_a + legs.to_a).select(&predicate).sum { |item| item.cost_cents.to_i }
+    end
+
     def ends_on_after_starts_on
       return if starts_on.blank? || ends_on.blank? || ends_on >= starts_on
 

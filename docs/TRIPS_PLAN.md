@@ -27,9 +27,14 @@ photos):
 - **Planned ahead** (new): a typed name, `place_label`, dates and description.
   No box, so no derived photos — `placed?` gates every coordinate-derived
   feature — and the page is an itinerary until you're back. When you *are*
-  back, the detector will offer the same span as a found trip; keeping both
-  is prevented by the overlap check, and deriving the box *into* the planned
-  trip is Wave 2 work.
+  back and the dates have located photos, the trip page offers **"Place this
+  trip from my photos"**: `Travel::Trips#covering` finds the detector
+  candidates overlapping the trip's own dates, and the box, cover and label
+  are stored from them — recomputed server-side like every number a trip
+  ever holds, owner-only like the rest of the coordinate-derived surface.
+  Placed, the planned trip *becomes* the found trip: one record, one
+  history, photos attaching from then on. The overlap check keeps the
+  detector from ever offering the same span as a second trip.
 
 `phase` (upcoming / underway / past) is computed from the dates, never stored.
 
@@ -42,10 +47,13 @@ track: `booking_status`, planned or booked.
 - **`Stay`** — where you sleep. Location (free text — it's the label the hub
   and the calendar show), kind (Airbnb / hotel / vacation rental / friends &
   family / camping), check-in/check-out dates, listing URL, confirmation code,
-  notes. Nights are **half-open**: a stay covers check-in up to but not
+  cost, notes. Nights are **half-open**: a stay covers check-in up to but not
   including check-out, so checking out of Austin the morning you check into
   Denver leaves no phantom gap, and `Trip#lodging_gaps` can honestly list the
-  nights nobody has covered.
+  nights nobody has covered. Saving a stay also matches its typed location
+  against the local gazetteer (`Datasets::Places#named` — **D-stay-pins**)
+  and stores coordinates when it names a real town, which is what lets the
+  itinerary draw (§4) with zero network and zero photos read.
 - **`TripLeg`** — how you move. Kind (flight / drive / train / bus / ferry /
   car rental), date, optional return date (a rental's drop-off), optional
   departure time (flights), origin/destination, carrier, confirmation code.
@@ -57,6 +65,16 @@ track: `booking_status`, planned or booked.
 `Trip#timeline` merges both chronologically (legs before stays on a shared
 day — you fly in before you check in) and is the trip page's lead card, each
 row wearing its booked/not-booked chip.
+
+**Costs** (**D-trip-costs**): a booking's price is a fact about the
+reservation, like its confirmation code — so stays and legs carry
+`cost_cents` (integer cents, the house money rule; `HasCost` exposes a
+forgiving decimal `cost` for forms) and the itinerary card totals them
+split by the booking bit: booked is committed money, planned is money still
+waiting on somebody to click "book". This is deliberately *not* the Money
+integration — when budgeting grows into its full standalone tool, the
+outlook's committed-cost-by-month is what should feed it (a trip's wider
+spending stays the Money lens over its dates, per the data model).
 
 ## 3. Sharing: membership, and the Q14 line
 
@@ -89,7 +107,26 @@ from photo coordinates ever crosses users.
   chronological run, and the **warnings** — any stay or leg still planned
   (not booked) inside a 45-day booking lead, any run of uncovered nights
   inside the lead, any itinerary with no lodging at all. Two months out is a
-  plan; six weeks out is a booking somebody needs to make.
+  plan; six weeks out is a booking somebody needs to make. Two more warning
+  kinds ride the same list:
+  - **Double bookings.** Two stays claiming the same night — whatever trips
+    they belong to — means somebody is paying twice or misread a date.
+    Every still-fixable overlap warns, and the calendar band turns amber on
+    the contested days ("2 places") instead of quietly picking one.
+  - **The nights between chained trips.** Trip A ends, trip B starts one to
+    three nights later: those nights are the drive, they belong to neither
+    trip's own gap check, and somebody has to sleep somewhere. Both trips
+    need at least one stay to count as "being planned", any trip's stay can
+    cover the road night (a Salt Lake City stopover filed on either trip
+    clears it), and a longer break is going home between trips — nobody's
+    problem. The drive never has to be its own trip.
+- **The route map** (**D-stay-pins**): a trip with located stays draws
+  them as numbered pins on the self-drawn basemap, joined by a route line,
+  amber where unbooked. `Travel::ItineraryMap` rides `Photos::Map`'s
+  `bounds:` seam over an *empty* photo scope — the window logic, both
+  basemaps and the gazetteer lettering come free, and no photo is read,
+  which is why every traveller on a shared trip sees it (typed-location
+  coordinates are ordinary trip data; EXIF coordinates are Q14's).
 - **The hub's "Where you'll be" card** renders the outlook: "You're in Boise
   through Jul 1", the Still-to-book callout (each line links into the trip's
   itinerary), the next-moves list. Below it, "Your trips" splits into
@@ -107,30 +144,23 @@ from photo coordinates ever crosses users.
 
 ## 5. What's deliberately next (and not yet built)
 
+(The first wave of this list — placement, stays on the map, the cross-trip
+road check — landed with D-stay-pins/D-trip-costs and moved up into §§1–4.)
 Roughly in expected order of demand:
 
-1. **The planned trip earns its box.** When a planned trip's dates have
-   located photos ("Use my photos to place this trip"), derive the box the
-   detector would have — the planned trip and the found trip become one
-   record with one history. Until then the overlap check just keeps the
-   detector from offering a duplicate.
-2. **Stays on the map.** `Datasets::Places` can match a stay's location text
-   by name (the same file, a name index instead of a band index), giving
-   stays coordinates with zero network — a planned trip could draw its
-   itinerary as pins on the same self-drawn basemap, and a route line
-   between stays is the cross-country drive at a glance.
-3. **Travel tools (Q9 Tier A).** A packing list from dates + destinations is
+1. **Travel tools (Q9 Tier A).** A packing list from dates + destinations is
    honest (no live data); "find flights" is not. Renewal radar already keys
    off "renew"/"expir" for passports.
-4. **Money as a lens, not a field.** Stays and legs deliberately carry no
-   cost column yet; a trip's budget is Money-tagged items over the trip's
-   dates — the lens the data model already gives us. Wait for a real want.
-5. **A cross-trip "on the road" check** — lodging gaps *between* consecutive
-   trips (the outlook currently checks within each trip). The nomad answer
-   may simply be "make the drive its own short trip", so wait and see.
-6. **Agent-mode watchers** (Milestone 3): the outlook's warnings are exactly
+2. **The budget hub reads travel.** When budgeting grows into its full
+   standalone tool, the outlook's committed and still-to-book costs by
+   month are the feed (see §2) — a trip's wider spending stays the Money
+   lens over its dates.
+3. **Agent-mode watchers** (Milestone 3): the outlook's warnings are exactly
    what a `Watcher::BookingRadar` would surface as suggestions; the service
    is already viewer-scoped and date-parameterised for it.
+4. **A denser gazetteer for stay pins.** `named` can only pin towns the
+   file holds; the admin import path (docs/TRAVEL.md §2) already accepts a
+   denser places.csv without a release, and stay pins inherit it for free.
 
 ## 6. Files
 
@@ -143,6 +173,9 @@ Roughly in expected order of demand:
 | Comments | `app/models/trip_comment.rb`, `TripCommentsController` |
 | Posted photos | `app/models/trip_photo.rb`, `TripPhotoPostsController`, the trip-post branch in `Photo.extra_visibility_clauses` |
 | Outlook | `app/services/travel/outlook.rb` |
+| Route map | `app/services/travel/itinerary_map.rb`, `Ui::ItineraryMapComponent`, `Datasets::Places#named` |
+| Placement | `Travel::Trips#covering`, `TripsController#place` |
+| Costs | `app/models/concerns/has_cost.rb`, the rollup in `trips/show` |
 | Hub panel | `app/services/sections/panels/travel.rb`, `app/views/sections/panels/_travel.html.erb` |
 | Calendar band | `CalendarController#show`, `app/views/calendar/show.html.erb` |
 | Access rule | `app/controllers/concerns/trip_access.rb` |

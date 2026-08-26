@@ -10,11 +10,7 @@
     The forward view a moving household actually runs on: the stay you're
     in, the next few moves, and the bookings nobody has made yet. %>
 <% if outlook.any? %>
-  <%= render Ui::CardComponent.new(title: "Where you'll be") do |card| %>
-    <% card.with_actions do %>
-      <%= link_to "Plan a trip", new_trip_path, class: "btn btn-ghost btn-sm" %>
-    <% end %>
-
+  <%= render Ui::CardComponent.new(title: "Where you'll be") do %>
     <% if outlook.current_stay %>
       <p class="text-sm text-ink">
         <span class="font-semibold">You're in <%= outlook.current_stay.location %></span>

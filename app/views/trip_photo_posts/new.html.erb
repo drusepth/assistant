@@ -17,9 +17,20 @@
           </label>
         <% end %>
       </div>
-      <div class="mt-4 flex items-center gap-2">
+      <div class="mt-4 flex flex-wrap items-center gap-2">
         <%= submit_tag "Post selected", class: "btn btn-primary" %>
         <%= link_to "Cancel", trip_path(@trip, anchor: "photos"), class: "btn btn-ghost" %>
+        <% if @pages > 1 %>
+          <span class="ml-auto flex items-center gap-2 text-sm text-soft">
+            <% if @page > 1 %>
+              <%= link_to "← Earlier", new_trip_photo_post_path(@trip, page: @page - 1), class: "btn btn-ghost btn-sm" %>
+            <% end %>
+            Page <%= @page %> of <%= @pages %> · <%= number_with_delimiter(@total) %> photos
+            <% if @page < @pages %>
+              <%= link_to "Later →", new_trip_photo_post_path(@trip, page: @page + 1), class: "btn btn-ghost btn-sm" %>
+            <% end %>
+          </span>
+        <% end %>
       </div>
     <% end %>
   <% else %>

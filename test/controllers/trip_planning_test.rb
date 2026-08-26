@@ -144,6 +144,32 @@ class TripPlanningTest < ActionDispatch::IntegrationTest
     assert_difference("TripComment.count", -1) { delete trip_comment_path(others) }
   end
 
+  test "the itinerary draws its route once stays name real places" do
+    trip = create_trip(starts_on: "2026-09-01", ends_on: "2026-10-31")
+    trip.stays.create!(location: "Boise", check_in: "2026-09-01", check_out: "2026-10-01",
+      booking_status: "booked")
+    trip.stays.create!(location: "Portland", check_in: "2026-10-01", check_out: "2026-10-31")
+
+    get trip_path(trip)
+    assert_response :success
+    assert_match "The route", response.body
+    assert_select "a[title*='Boise']", minimum: 1
+    assert_select "line", count: 1
+  end
+
+  test "the itinerary card totals what's booked and what's still to book" do
+    trip = create_trip
+    trip.stays.create!(location: "Boise", check_in: "2026-09-01", check_out: "2026-10-31",
+      booking_status: "booked", cost: "1850")
+    trip.legs.create!(kind: "car_rental", starts_on: "2026-09-01", booking_status: "planned", cost: "420.50")
+
+    get trip_path(trip)
+    assert_match "Booked:", response.body
+    assert_match "$1,850.00", response.body
+    assert_match "Still to book:", response.body
+    assert_match "$420.50", response.body
+  end
+
   test "the trips index groups by phase" do
     create_trip(name: "Ahead", starts_on: "2026-09-01", ends_on: "2026-10-31")
     create_trip(name: "Now", starts_on: "2026-06-01", ends_on: "2026-06-30")

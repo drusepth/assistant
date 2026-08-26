@@ -15,7 +15,11 @@
     <%= form.field :check_out, as: :date_field %>
   </div>
   <%= form.field :url, as: :url_field, label_text: "Listing or booking link (optional)", placeholder: "https://…" %>
-  <%= form.field :confirmation_code, label_text: "Confirmation code (optional)" %>
+  <div class="grid grid-cols-2 gap-3">
+    <%= form.field :confirmation_code, label_text: "Confirmation code (optional)" %>
+    <%= form.field :cost, as: :number_field, label_text: "Cost (optional)", step: "0.01", min: "0",
+          placeholder: "1850.00" %>
+  </div>
   <%= form.field :notes, as: :text_area, hint: "Door codes, parking, host quirks — everyone on the trip sees this." %>
   <div class="flex items-center gap-2 pt-2">
     <%= form.submit %>

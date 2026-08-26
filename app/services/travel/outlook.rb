@@ -15,6 +15,10 @@ module Travel
     # warning rather than a plan. Two months out is a plan; six weeks out
     # is a booking somebody needs to make.
     BOOKING_LEAD_DAYS = 45
+    # Two trips this close together are one continuous run — the nights
+    # between them are the drive, and somebody has to sleep somewhere. A
+    # longer gap is going home between trips, which is nobody's problem.
+    CHAIN_GAP_NIGHTS = 3
     MOVES_SHOWN = 8
 
     Warning = Data.define(:trip, :message)
@@ -51,7 +55,8 @@ module Travel
     end
 
     def warnings
-      @warnings ||= unbooked_warnings + gap_warnings + lodging_missing_warnings
+      @warnings ||= conflict_warnings + unbooked_warnings + gap_warnings +
+        between_trip_warnings + lodging_missing_warnings
     end
 
     def any? = current_stay.present? || next_moves.any? || warnings.any?
@@ -79,9 +84,7 @@ module Travel
             .select { |gap| gap.last >= today && within_lead?(gap.first) }
             .map do |gap|
               nights = (gap.last - gap.first).to_i + 1
-              span = gap.first == gap.last ? gap.first.strftime("%b %-d") :
-                "#{gap.first.strftime("%b %-d")} – #{gap.last.strftime("%b %-d")}"
-              Warning.new(trip:, message: "#{trip.name}: nowhere to sleep #{span} (#{nights == 1 ? "1 night" : "#{nights} nights"})")
+              Warning.new(trip:, message: "#{trip.name}: nowhere to sleep #{night_span(gap.first, gap.last)} (#{nights == 1 ? "1 night" : "#{nights} nights"})")
             end
         end
       end
@@ -89,6 +92,48 @@ module Travel
       def lodging_missing_warnings
         active_trips.select { |trip| trip.stays.none? && trip.timeline.any? && within_lead?(trip.starts_on) }
           .map { |trip| Warning.new(trip:, message: "#{trip.name} has no lodging yet") }
+      end
+
+      # Two stays claiming the same night is a double booking — somebody is
+      # paying twice or somebody misread a date, and either way it needs
+      # eyes now, not at check-in. Every still-fixable overlap warns,
+      # whatever trips the two stays belong to.
+      def conflict_warnings
+        stays = active_trips.flat_map { |trip| trip.stays.to_a }.sort_by { |stay| [ stay.check_in, stay.id ] }
+        stays.combination(2).filter_map do |first, second|
+          overlap_start = [ first.check_in, second.check_in ].max
+          overlap_end = [ first.check_out, second.check_out ].min
+          next if overlap_start >= overlap_end || overlap_end <= today
+
+          Warning.new(trip: first.trip,
+            message: "Double-booked: #{first.display_name} and #{second.display_name} overlap #{night_span(overlap_start, overlap_end - 1)}")
+        end
+      end
+
+      # The nights between two trips that chain (docs/TRIPS_PLAN.md §4):
+      # trip A ends, trip B starts a night or three later, and those nights
+      # belong to neither trip's own gap check. Only trips being actively
+      # planned chain — both need at least one stay — and any trip's stay
+      # can cover the road night, so the drive never has to be its own trip.
+      def between_trip_warnings
+        all_stays = trips.flat_map { |trip| trip.stays.to_a }
+        trips.sort_by(&:starts_on).each_cons(2).filter_map do |first, second|
+          nights_between = (second.starts_on - first.ends_on).to_i
+          next unless nights_between.between?(1, CHAIN_GAP_NIGHTS)
+          next if first.stays.none? || second.stays.none?
+
+          nights = (first.ends_on...second.starts_on).reject { |night| all_stays.any? { |stay| stay.covers?(night) } }
+          next if nights.empty? || nights.last < today || !within_lead?(nights.first)
+
+          Warning.new(trip: second,
+            message: "Nowhere to sleep between #{first.name} and #{second.name} (#{night_span(nights.first, nights.last)}, #{nights.size == 1 ? "1 night" : "#{nights.size} nights"})")
+        end
+      end
+
+      def night_span(first, last)
+        return first.strftime("%b %-d") if first == last
+
+        "#{first.strftime("%b %-d")} – #{last.strftime("%b %-d")}"
       end
   end
 end

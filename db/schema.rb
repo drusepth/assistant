@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_185546) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_192325) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -638,9 +638,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_185546) do
     t.date "check_in", null: false
     t.date "check_out", null: false
     t.string "confirmation_code"
+    t.integer "cost_cents"
     t.datetime "created_at", null: false
     t.string "kind", default: "airbnb", null: false
+    t.decimal "latitude", precision: 10, scale: 6
     t.string "location", null: false
+    t.decimal "longitude", precision: 10, scale: 6
     t.string "name"
     t.text "notes"
     t.integer "trip_id", null: false
@@ -785,6 +788,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_185546) do
     t.string "booking_status", default: "planned", null: false
     t.string "carrier"
     t.string "confirmation_code"
+    t.integer "cost_cents"
     t.datetime "created_at", null: false
     t.datetime "departs_at"
     t.string "destination"

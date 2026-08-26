@@ -105,6 +105,42 @@ class TripsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to section_path("travel")
   end
 
+  test "a planned trip whose dates have photos can earn its box" do
+    live_at_home
+    3.times { |day| place(LISBON, on: Date.new(2024, 3, 10 + day)) }
+    trip = users(:one).trips.create!(name: "Lisbon, planned ahead",
+      starts_on: "2024-03-09", ends_on: "2024-03-14")
+
+    get trip_path(trip)
+    assert_match "Give this trip its map", response.body
+
+    post place_trip_path(trip)
+    assert_redirected_to trip
+    trip.reload
+    assert trip.placed?
+    assert_in_delta LISBON.first, trip.south.to_f, 0.5
+    assert_equal 3, trip.photos.count, "its photos attach the moment it's placed"
+    assert trip.cover_photo_id.present?
+  end
+
+  test "placing is owner-only and needs photos to place from" do
+    live_at_home
+    trip = users(:one).trips.create!(name: "Nowhere yet", starts_on: "2024-03-09", ends_on: "2024-03-14")
+
+    get trip_path(trip)
+    assert_no_match "Give this trip its map", response.body
+
+    post place_trip_path(trip)
+    assert_redirected_to trip
+    assert_not trip.reload.placed?
+    assert_match "carry a location", flash[:alert]
+
+    trip.memberships.create!(user: users(:two))
+    sign_in_as users(:two)
+    post place_trip_path(trip)
+    assert_response :not_found
+  end
+
   private
     def live_at_home
       20.times { |day| place(HOME, on: Date.new(2024, 1, 1) + day) }

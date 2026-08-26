@@ -55,6 +55,54 @@ module Travel
       assert_equal stay, Outlook.new(@user, today: TODAY).current_stay
     end
 
+    test "two stays claiming the same night is a double booking, and it warns" do
+      trip = @user.trips.create!(name: "Idaho", starts_on: "2026-06-01", ends_on: "2026-08-31")
+      trip.stays.create!(location: "Boise", check_in: "2026-07-01", check_out: "2026-07-10",
+        booking_status: "booked")
+      trip.stays.create!(location: "McCall", check_in: "2026-07-08", check_out: "2026-07-20",
+        booking_status: "booked")
+
+      messages = Outlook.new(@user, today: TODAY).warnings.map(&:message)
+      assert messages.any? { |m| m.include?("Double-booked") && m.include?("Jul 8 – Jul 9") }, messages.inspect
+    end
+
+    test "an overlap already behind you doesn't warn" do
+      trip = @user.trips.create!(name: "Idaho", starts_on: "2026-06-01", ends_on: "2026-08-31")
+      trip.stays.create!(location: "Boise", check_in: "2026-06-01", check_out: "2026-06-05")
+      trip.stays.create!(location: "McCall", check_in: "2026-06-03", check_out: "2026-06-08")
+
+      messages = Outlook.new(@user, today: TODAY).warnings.map(&:message)
+      assert messages.none? { |m| m.include?("Double-booked") }, messages.inspect
+    end
+
+    test "the nights between two chained trips warn — the drive never has to be its own trip" do
+      first = @user.trips.create!(name: "Idaho", starts_on: "2026-05-01", ends_on: "2026-06-30")
+      first.stays.create!(location: "Boise", check_in: "2026-05-01", check_out: "2026-06-30",
+        booking_status: "booked")
+      second = @user.trips.create!(name: "New Mexico", starts_on: "2026-07-03", ends_on: "2026-08-31")
+      second.stays.create!(location: "Santa Fe", check_in: "2026-07-03", check_out: "2026-08-31",
+        booking_status: "booked")
+
+      messages = Outlook.new(@user, today: TODAY).warnings.map(&:message)
+      assert messages.any? { |m| m.include?("between Idaho and New Mexico") && m.include?("3 nights") },
+        messages.inspect
+
+      # A road stay on either trip covers the drive and clears the warning.
+      first.stays.create!(location: "Salt Lake City", check_in: "2026-06-30", check_out: "2026-07-03",
+        booking_status: "booked")
+      assert Outlook.new(@user, today: TODAY).warnings.none? { |w| w.message.include?("between Idaho") }
+    end
+
+    test "a real break between trips is going home, not a gap" do
+      first = @user.trips.create!(name: "Idaho", starts_on: "2026-05-01", ends_on: "2026-06-20")
+      first.stays.create!(location: "Boise", check_in: "2026-05-01", check_out: "2026-06-20")
+      second = @user.trips.create!(name: "New Mexico", starts_on: "2026-07-15", ends_on: "2026-08-31")
+      second.stays.create!(location: "Santa Fe", check_in: "2026-07-15", check_out: "2026-08-31")
+
+      messages = Outlook.new(@user, today: TODAY).warnings.map(&:message)
+      assert messages.none? { |m| m.include?("between") }, messages.inspect
+    end
+
     test "a past trip contributes nothing" do
       trip = @user.trips.create!(name: "Done", starts_on: "2026-01-01", ends_on: "2026-02-01")
       trip.stays.create!(location: "Old", check_in: "2026-01-01", check_out: "2026-02-01",

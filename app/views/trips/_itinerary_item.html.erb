@@ -16,10 +16,13 @@
     </p>
     <p class="truncate text-sm text-soft">
       <% if stay %>
-        <%= pluralize(item.nights, "night") %><%= " · #{item.location}" if item.name.present? %><%= " · ##{item.confirmation_code}" if item.confirmation_code.present? %>
+        <%= [ pluralize(item.nights, "night"), item.name.present? ? item.location : nil,
+              item.confirmation_code.present? ? "##{item.confirmation_code}" : nil,
+              item.cost_cents ? money_amount(item.cost_cents) : nil ].compact_blank.join(" · ") %>
       <% else %>
         <%= [ item.departure_time, item.carrier.presence,
-              item.confirmation_code.present? ? "##{item.confirmation_code}" : nil ].compact_blank.join(" · ").presence || item.kind_label %>
+              item.confirmation_code.present? ? "##{item.confirmation_code}" : nil,
+              item.cost_cents ? money_amount(item.cost_cents) : nil ].compact_blank.join(" · ").presence || item.kind_label %>
       <% end %>
     </p>
     <% if item.notes.present? %>

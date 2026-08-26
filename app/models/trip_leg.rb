@@ -3,6 +3,8 @@
 # Like a stay, a leg's whole job is to answer "is this booked yet?" while
 # the trip is still ahead of you.
 class TripLeg < ApplicationRecord
+  include HasCost
+
   belongs_to :trip
 
   enum :kind, {

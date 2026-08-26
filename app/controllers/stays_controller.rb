@@ -54,6 +54,6 @@ class StaysController < ApplicationController
 
     def stay_params
       params.expect(stay: [ :location, :name, :kind, :booking_status, :check_in, :check_out,
-                            :url, :confirmation_code, :notes ])
+                            :url, :confirmation_code, :cost, :notes ])
     end
 end

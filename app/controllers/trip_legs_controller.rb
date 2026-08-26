@@ -48,6 +48,6 @@ class TripLegsController < ApplicationController
 
     def leg_params
       params.expect(trip_leg: [ :kind, :booking_status, :starts_on, :ends_on, :departs_at,
-                                :origin, :destination, :carrier, :confirmation_code, :url, :notes ])
+                                :origin, :destination, :carrier, :confirmation_code, :cost, :url, :notes ])
     end
 end

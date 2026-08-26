@@ -55,6 +55,13 @@ module Travel
       @candidates ||= home ? runs.filter_map { |rows| candidate_for(rows) } : []
     end
 
+    # The candidates overlapping a date range — what places a planned trip
+    # once its dates have photos (D-trip-spine): the same detection, keyed
+    # to the trip's own dates instead of offered as something new.
+    def covering(starts_on, ends_on)
+      candidates.select { |candidate| candidate.starts_on <= ends_on && candidate.ends_on >= starts_on }
+    end
+
     private
       # Photos far enough from home to be somewhere else, grouped into runs
       # of days no more than GAP_DAYS apart.
