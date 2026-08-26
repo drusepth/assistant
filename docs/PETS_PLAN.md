@@ -14,6 +14,9 @@ Decisions here are logged as **D-pet-primitive**, **D-pet-care-radar**, and
 **D-pet-food-shelf**. Open questions are **Q-pet-metrics** and
 **Q-pet-sitter**.
 
+**Status: built, W1–W5** (2026-08). §11 records what the build changed about
+the plan — four things, all of them found by writing the code.
+
 ---
 
 ## 1. What we're building and why
@@ -376,3 +379,42 @@ about the pets the vet has never seen.
 | Guardrails | `app/services/datasets/pet_toxics.rb`, `db/datasets/pet_toxics.csv` |
 | Watchers | `app/watchers/watcher/pet_care_cadence.rb`, `pet_food_reorder.rb` |
 | Registries touched | `Tool::SLUGS`, `Watcher::SLUGS`, `routes.rb`, `User has_many`, `ICON_PATHS`, fixtures |
+
+---
+
+## 11. What the build changed
+
+Four corrections, kept because each of them was invisible from the plan and
+obvious from the code.
+
+**A pet's lens is created, never found.** `Sections::Lens.find_or_create!` is
+right for a group — typing "Church" twice means the same church — and wrong
+for a record that *owns* its lens: the second dog called Rex tried to take the
+first one's section and hit the unique index. `Sections::Lens.create!` joins
+it, and the second Rex takes `rex-2`. The case is not hypothetical, and it is
+not usually two live dogs: it is one remembered and one new.
+
+**A pet's care is whoever booked it.** The plan inherited "own events only"
+from HEALTH.md without noticing it inverts for animals. A spouse's shared
+appointment is not your checkup — but the spouse who drove the dog to the vet
+booked the *dog's* visit, and there is only one dog. A pet's radar therefore
+reads every visible event tagged with her lens, and a shared pet's page grew
+the reciprocal share button, because grants are per-grantor and one shared
+calendar takes each member sharing their own side.
+
+**No opened date, no reorder claim.** The plan had the food shelf counting a
+bag from `started_on`, which drifts the reorder date a bag further out every
+month. `opened_on` is its own column, blank is allowed, and blank means the
+app says nothing rather than something wrong. The form prefills today where
+the value is on screen and can be cleared — a default the user can see beats a
+default behind their back.
+
+**Panels curate the Act zone, so the controller never learned about pets.**
+`Tool.for_section` flows a tool registered on a parent down to every child,
+which put "My pet is missing" on the book club's page and "Prep for a vet
+visit" on a petless Health page. The gate is `Pets.hidden_tool_slugs` read by
+four panels (D37's `hidden_tool_slugs`), and the shared three files stayed
+shut. The one shared file that did change is `Sections::Panel`, which grew the
+owned-lens rung the plan predicted, plus `Section#removable?` — because
+without it the generic "Remove this group" button sat on Rex's lens page and
+would have orphaned her.

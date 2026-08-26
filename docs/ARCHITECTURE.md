@@ -46,6 +46,9 @@ Six tables, deliberately boring. Every primitive `belongs_to :user` (its owner) 
 | `Person` | name, relationship, email, phone, birthday, notes, linked_user FK (opt) | Contacts + context |
 | `Goal` | title, description, status (active/done), target_on, broken_down_at | Lives inside the Tasks section (D17); `BreakDownGoalJob` plans it into scheduled tasks; auto-done when the last step completes; has_many tasks/events (nullify). Situations (D7) = a Goal + spawned multi-tagged Tasks/Events |
 | `Note` | title (opt), body, kind (plain/medication/allergy), severity (opt) | The memory layer's inspectable form; `kind` gives it structured flavors without a new table (D36, D-allergy-notes) |
+| `Pet` | name, species, breed, dates, microchip, vet FK (opt), section FK, died_on/left_on | A member of the household who can't log in (D-pet-primitive). Each pet **owns a custom lens** under People, which is what makes "about Rex" an ordinary section tag — so pets need no link table, and never became a section of their own |
+
+**Lenses a record owns (`Section::LENS_OWNERS`).** A custom section is usually the user's own (a hobby, a group), but a `Pet` holds one: created and renamed with her, resolved to her panel by `Sections::Panel`, and not removable on its own (`Section#removable?`) — Rex's lens is Rex's, and removing the pet is what removes it. Adding a second such model is one entry in that list plus a `Panels::<Model>Lens`.
 
 **`Sectionable`** — `section_taggings` (polymorphic join to `sections`, unique per item+section) gives multi-tagging and the `in_section(section)` scope. Cross-cutting views are just unscoped queries; section pages are `in_section` queries. No section ever owns a table.
 
