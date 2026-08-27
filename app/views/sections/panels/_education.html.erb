@@ -37,7 +37,7 @@
     <h2 class="mb-3 text-sm font-medium text-soft">Your subjects</h2>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <% panel.own_subjects.each do |subject| %>
-        <%= link_to subject_path(subject), class: "card block space-y-2 transition hover:shadow-md", id: dom_id(subject, :hub) do %>
+        <%= link_to subject_path(subject), class: "card block space-y-2 p-5 transition hover:shadow-md", id: dom_id(subject, :hub) do %>
           <div class="flex items-start justify-between gap-2">
             <p class="min-w-0 flex-1 font-semibold text-ink"><%= subject.title %></p>
             <% if subject.rusty_topics.any? %>

@@ -12,7 +12,7 @@
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
     <% @courses.each do |course| %>
-      <div class="card flex flex-col gap-2">
+      <div class="card flex flex-col gap-2 p-5">
         <p class="font-semibold text-ink"><%= course.title %></p>
         <p class="flex-1 text-sm text-soft"><%= course.description %></p>
         <p class="text-xs text-soft"><%= pluralize(course.strands.size, "strand") %> · <%= pluralize(course.topic_count, "topic") %></p>

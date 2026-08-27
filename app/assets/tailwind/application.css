@@ -300,9 +300,25 @@
   }
 
   /* Surface sits above the canvas (sand on cream), so a card needs no
-     border to separate from the page — the tonal step does it. */
+     border to separate from the page — the tonal step does it.
+
+     The atom carries no padding on purpose: a card full of rows wants its
+     rows flush against the fold, so the inset belongs to whatever fills the
+     card. `Ui::Card` supplies it (`p-5`) for the common case; a card written
+     by hand supplies its own. A card that pads nothing and holds text is the
+     bug this leaves open — text welded to the fold reads as a stylesheet
+     that failed to load — so `.card-flush` below is how a card says the
+     omission was deliberate, and a test holds the line. */
   .card {
     @apply rounded-2xl border border-transparent bg-surface;
+  }
+  /* "My children carry the padding." A no-op that exists to be read: by a
+     person, who learns the flush edge was chosen, and by the pin in
+     `test/integration/design_atoms_test.rb`, which otherwise can't tell a
+     deliberate flush card from a forgotten one. `divide-y` and `item-stack`
+     lists say the same thing by being themselves and don't need it. */
+  .card-flush {
+    @apply p-0;
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
