@@ -16,22 +16,29 @@ class ReminderTest < ActiveSupport::TestCase
   def create_event(**attributes) = Time.use_zone(@zone) { @user.events.create!(**attributes) }
   def update_event(event, **attributes) = Time.use_zone(@zone) { event.update!(**attributes) }
 
+  # The same trap one argument to the left: a date in these tests is a day on
+  # the *user's* calendar, and the box's `Date.current` is a different day
+  # from Chicago's for five hours of every night. Reading "tomorrow" off one
+  # clock while the model writes it off the other is a suite that fails in
+  # the evening and passes by morning.
+  def local_today = Time.current.in_time_zone(@zone).to_date
+
   test "an absolute reminder is composed in the household's zone, not the box's" do
     reminder = @user.reminders.create!(body: "Call the pharmacy",
-      deliver_on: Date.current + 1, deliver_time: "16:00")
+      deliver_on: local_today + 1, deliver_time: "16:00")
 
     assert_equal 16, reminder.deliver_at.in_time_zone(@zone).hour
     assert_equal "4:00 PM", reminder.local_deliver_at.strftime("%-l:%M %p")
   end
 
   test "a day with no time means the morning, not midnight" do
-    reminder = @user.reminders.create!(body: "Call the pharmacy", deliver_on: Date.current + 1)
+    reminder = @user.reminders.create!(body: "Call the pharmacy", deliver_on: local_today + 1)
 
     assert_equal Reminder::DEFAULT_HOUR, reminder.local_deliver_at.hour
   end
 
   test "a relative reminder counts back from the event it hangs on" do
-    event = create_event(title: "Dentist", starts_date: Date.current + 2, starts_time: "14:00")
+    event = create_event(title: "Dentist", starts_date: local_today + 2, starts_time: "14:00")
     reminder = @user.reminders.create!(subject: event, lead_minutes: 60)
 
     assert_equal event.starts_at - 1.hour, reminder.deliver_at
@@ -39,7 +46,7 @@ class ReminderTest < ActiveSupport::TestCase
   end
 
   test "moving the event moves the reminder with it" do
-    event = create_event(title: "Dentist", starts_date: Date.current + 2, starts_time: "14:00")
+    event = create_event(title: "Dentist", starts_date: local_today + 2, starts_time: "14:00")
     reminder = @user.reminders.create!(subject: event, lead_minutes: 60)
 
     update_event(event, starts_time: "16:00")
@@ -48,8 +55,8 @@ class ReminderTest < ActiveSupport::TestCase
   end
 
   test "an absolute reminder stays put when its event moves" do
-    event = create_event(title: "Dentist", starts_date: Date.current + 2, starts_time: "14:00")
-    reminder = @user.reminders.create!(subject: event, deliver_on: Date.current + 1, deliver_time: "09:00")
+    event = create_event(title: "Dentist", starts_date: local_today + 2, starts_time: "14:00")
+    reminder = @user.reminders.create!(subject: event, deliver_on: local_today + 1, deliver_time: "09:00")
     original = reminder.deliver_at
 
     update_event(event, starts_time: "16:00")
@@ -58,7 +65,7 @@ class ReminderTest < ActiveSupport::TestCase
   end
 
   test "a relative reminder retires when the date it counted back from is gone" do
-    task = @user.tasks.create!(title: "File the appeal", due_on: Date.current + 3)
+    task = @user.tasks.create!(title: "File the appeal", due_on: local_today + 3)
     reminder = @user.reminders.create!(subject: task, lead_minutes: 1440)
 
     task.update!(due_on: nil)
@@ -67,7 +74,7 @@ class ReminderTest < ActiveSupport::TestCase
   end
 
   test "an all-day event counts back from the start of the day, not midnight" do
-    event = create_event(title: "Anniversary", starts_date: Date.current + 2)
+    event = create_event(title: "Anniversary", starts_date: local_today + 2)
     assert event.all_day?
 
     reminder = @user.reminders.create!(subject: event, lead_minutes: 60)
@@ -79,33 +86,33 @@ class ReminderTest < ActiveSupport::TestCase
     task = @user.tasks.create!(title: "Call the landlord")
     assert_nil task.remind_from
 
-    reminder = @user.reminders.create!(subject: task, deliver_on: Date.current + 1, deliver_time: "10:00")
+    reminder = @user.reminders.create!(subject: task, deliver_on: local_today + 1, deliver_time: "10:00")
 
     assert_equal 10, reminder.local_deliver_at.hour
   end
 
   test "the message is code-built from the user's own words and a clock reading" do
-    event = create_event(title: "Dentist", starts_date: Date.current + 1, starts_time: "14:00")
+    event = create_event(title: "Dentist", starts_date: local_today + 1, starts_time: "14:00")
     reminder = @user.reminders.create!(subject: event, lead_minutes: 60)
 
     assert_equal "Reminder: Dentist — tomorrow at 2:00 PM", reminder.message
   end
 
   test "a standalone reminder's message is just what the user wrote" do
-    reminder = @user.reminders.create!(body: "Call the pharmacy", deliver_on: Date.current + 1)
+    reminder = @user.reminders.create!(body: "Call the pharmacy", deliver_on: local_today + 1)
 
     assert_equal "Reminder: Call the pharmacy", reminder.message
   end
 
   test "a reminder cannot be set in the past, or on someone else's item" do
-    assert_not @user.reminders.new(body: "Too late", deliver_on: Date.current - 1).valid?
+    assert_not @user.reminders.new(body: "Too late", deliver_on: local_today - 1).valid?
 
-    other_event = users(:two).events.create!(title: "Theirs", starts_date: Date.current + 1, starts_time: "09:00")
+    other_event = users(:two).events.create!(title: "Theirs", starts_date: local_today + 1, starts_time: "09:00")
     assert_not @user.reminders.new(subject: other_event, lead_minutes: 60).valid?
   end
 
   test "deleting the item takes its reminders with it" do
-    event = create_event(title: "Dentist", starts_date: Date.current + 2, starts_time: "14:00")
+    event = create_event(title: "Dentist", starts_date: local_today + 2, starts_time: "14:00")
     @user.reminders.create!(subject: event, lead_minutes: 60)
 
     assert_difference -> { Reminder.count }, -1 do

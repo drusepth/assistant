@@ -22,6 +22,12 @@ module Tool
     # short prompts its audience reaches for ("Quiz me"); empty means none.
     class_attribute :quick_replies, instance_accessor: false, default: []
 
+    # Where a subject-bound chat (D30) is *read*. A task's conversation is a
+    # panel on the task page, so links to it go there; a note's quiz is a
+    # session of its own — the note page starts one and lists the past ones,
+    # but the transcript lives on the run page.
+    class_attribute :hosted_on_subject, instance_accessor: false, default: false
+
     TRANSCRIPT_WINDOW = 30
 
     # The wrap-up affordance's copy. A chat whose recap lands somewhere

@@ -398,6 +398,12 @@ D19 contract; chat tools ride ChatBase (D29).
   questions from the topic summary and its review items, graded in
   conversation, verdict proposed at the end. Passing is what `practicing →
   mastered` means; the misses mint review items aimed at the gap.
+- **`quiz_note`** (new, chat — D-note-quiz). The same gate, pointed outside
+  the syllabus: any Note carries a **Quiz me on this** button, bound to the
+  note through `tool_runs.subject` rather than a form input. A note a quiz
+  filed is a report card, not material, so a quiz on one points past itself
+  at the topic and the cards the earlier quiz minted — and finishing it makes
+  the same three writes `quiz_me` does, through the same helpers.
 - **`explain_this`** (new, chat). The homework-tonight door, deliberately
   outside the curriculum spine: paste anything — the worksheet question, the
   confusing paragraph — get it explained at your level, Socratic rules in

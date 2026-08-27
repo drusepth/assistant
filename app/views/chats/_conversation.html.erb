@@ -1,7 +1,9 @@
 <%# One row in the conversation index (D-chat-index). A subject-bound chat
-    (D30) links to its task's page, which is its home — the run page for one
-    would be a conversation about nothing. %>
-<% path = conversation.subject ? url_for(conversation.subject) : tool_run_path(conversation.run) %>
+    (D30) links to its item's page when that page is where it's read — a task
+    hosts its conversation as a panel, so the run page for one would be a
+    conversation about nothing. A note's quiz (D-note-quiz) is the other way
+    round: the note starts it, the run page holds it. %>
+<% path = conversation.subject && conversation.tool.hosted_on_subject ? url_for(conversation.subject) : tool_run_path(conversation.run) %>
 
 <%= link_to path, class: "flex items-start gap-3 px-4 py-3 transition-colors hover:bg-canvas" do %>
   <span class="mt-1.5 size-2.5 shrink-0 rounded-full <%= chat_dot_classes(conversation.tool) %>"></span>

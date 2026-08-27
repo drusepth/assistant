@@ -1,7 +1,12 @@
 module ApplicationHelper
-  def auto_sort_enabled?
+  # Is there a model behind the AI features on this page at all? Features
+  # that would otherwise guess are off without one, and say so (CLAUDE.md's
+  # standing rule), so views ask this before offering them.
+  def model_configured?
     Current.user.household.model_profile&.configured?
   end
+
+  alias_method :auto_sort_enabled?, :model_configured?
 
   # What shared/_section_picker offers: the sections this user actually
   # switched on (D4) plus their subsections, and anything already applied so
