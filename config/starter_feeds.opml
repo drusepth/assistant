@@ -594,8 +594,8 @@
     <outline text="Lego" title="Lego">
       <outline type="rss" text="The Brothers Brick" title="The Brothers Brick"
                xmlUrl="https://www.brothers-brick.com/feed/" htmlUrl="https://www.brothers-brick.com"/>
-      <outline type="rss" text="New Elementary" title="New Elementary"
-               xmlUrl="https://www.newelementary.com/feeds/posts/default" htmlUrl="https://www.newelementary.com"/>
+      <outline type="rss" text="Jay's Brick Blog" title="Jay's Brick Blog"
+               xmlUrl="https://jaysbrickblog.com/feed/" htmlUrl="https://jaysbrickblog.com"/>
     </outline>
 
     <outline text="Music" title="Music">
@@ -794,7 +794,7 @@
 
     <outline text="Fishing" title="Fishing">
       <outline type="rss" text="Gink and Gasoline" title="Gink and Gasoline"
-               xmlUrl="https://ginkandgasoline.com/feed/" htmlUrl="https://ginkandgasoline.com"/>
+               xmlUrl="https://www.ginkandgasoline.com/feed/" htmlUrl="https://ginkandgasoline.com"/>
       <outline type="rss" text="MidCurrent" title="MidCurrent"
                xmlUrl="https://midcurrent.com/feed/" htmlUrl="https://midcurrent.com"/>
     </outline>
