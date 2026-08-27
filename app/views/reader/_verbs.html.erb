@@ -24,6 +24,17 @@
         class: klass, form_class: "contents" %>
 <% end %>
 
+<%# The one verb a routed row needs (D-story-matching): the model put this
+    story here, and it can be wrong. Rejecting takes the row out of the
+    hobby and remembers — the tombstone keeps a re-read from putting it
+    back, and the story becomes one of the examples the next batch is shown
+    for this hobby. That is the whole correction loop, because there are no
+    rules here to correct. %>
+<% if local_assigns[:routing] %>
+  <%= button_to "Not this", reject_feed_item_path(item, section_id: routing.section_id), method: :patch,
+        class: klass, form_class: "contents" %>
+<% end %>
+
 <%# The point of the whole section (docs/HOBBIES.md): a river that ends in
     doing something, not in a better-groomed reading list. %>
 <%= link_to "Task", new_task_path(title: item.title, section_ids: item.feed.section_ids),

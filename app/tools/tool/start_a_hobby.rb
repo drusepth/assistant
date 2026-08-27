@@ -29,9 +29,19 @@ module Tool
       # The lens exists before the model call, so the breakdown can file
       # steps under it too.
       lens = Hobbies::Lens.find_or_create!(inputs[:hobby])
-      # A hobby is a question about the feeds already followed (D-hobby-feeds
-      # §4) — the same one the add tile asks, since a hobby can start here.
+      # The nudge's accept lands here (D-hobby-spotting), so this is where
+      # the feeds it was spotted from get claimed — "naming it files those
+      # feeds under it" is a promise the suggestion's body makes.
+      Hobbies::Spotter.claim!(user, lens)
+      # A hobby is still a question about the feeds already followed
+      # (D-hobby-feeds §4) — the same one the add tile asks, since a hobby
+      # can start here.
       Hobbies::MapFeeds.enqueue(user, [ lens ])
+      # And the stories about it inside feeds that are about something else
+      # (D-story-matching): describe the hobby, then re-read the recent past.
+      Feeds::Briefs::Author.enqueue(user, lens)
+      Feeds::RouteStories.resweep!(user)
+      Feeds::RouteStories.enqueue(user)
       goal = plan_goal!(title: "Get into #{lens.name}", brief: BRIEF, description: inputs[:about].presence)
       goal.sections = (goal.sections.to_a + [ lens ]).uniq
     end

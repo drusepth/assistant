@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_223817) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -262,6 +262,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
     t.string "guid", null: false
     t.datetime "published_at"
     t.datetime "read_at"
+    t.datetime "routed_at"
     t.datetime "saved_at"
     t.text "summary"
     t.string "title", null: false
@@ -269,6 +270,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
     t.string "url"
     t.index ["feed_id", "guid"], name: "index_feed_items_on_feed_id_and_guid", unique: true
     t.index ["feed_id", "published_at"], name: "index_feed_items_on_feed_id_and_published_at"
+    t.index ["feed_id", "routed_at"], name: "index_feed_items_on_feed_id_and_routed_at"
     t.index ["feed_id"], name: "index_feed_items_on_feed_id"
     t.index ["read_at"], name: "index_feed_items_on_read_at"
     t.index ["saved_at"], name: "index_feed_items_on_saved_at"
@@ -276,6 +278,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
 
   create_table "feeds", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.boolean "broad"
     t.datetime "classified_at"
     t.datetime "created_at", null: false
     t.text "description"
@@ -308,6 +311,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_goals_on_user_id"
+  end
+
+  create_table "hobby_briefs", force: :cascade do |t|
+    t.datetime "authored_at"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.boolean "enabled", default: true, null: false
+    t.integer "section_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["section_id"], name: "index_hobby_briefs_on_section_id"
+    t.index ["user_id", "section_id"], name: "index_hobby_briefs_on_user_id_and_section_id", unique: true
+    t.index ["user_id"], name: "index_hobby_briefs_on_user_id"
   end
 
   create_table "households", force: :cascade do |t|
@@ -676,6 +692,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
     t.index ["user_id"], name: "index_spending_rules_on_user_id"
   end
 
+  create_table "spotted_hobbies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.json "feed_ids", default: [], null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.text "reason"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "name"], name: "index_spotted_hobbies_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_spotted_hobbies_on_user_id"
+  end
+
   create_table "stays", force: :cascade do |t|
     t.string "booking_status", default: "planned", null: false
     t.date "check_in", null: false
@@ -694,6 +722,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
     t.string "url"
     t.index ["trip_id", "check_in"], name: "index_stays_on_trip_id_and_check_in"
     t.index ["trip_id"], name: "index_stays_on_trip_id"
+  end
+
+  create_table "story_routings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "feed_item_id", null: false
+    t.string "reason"
+    t.datetime "rejected_at"
+    t.integer "section_id", null: false
+    t.string "source", default: "model", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feed_item_id", "section_id"], name: "index_story_routings_on_feed_item_id_and_section_id", unique: true
+    t.index ["feed_item_id"], name: "index_story_routings_on_feed_item_id"
+    t.index ["section_id", "rejected_at"], name: "index_story_routings_on_section_id_and_rejected_at"
+    t.index ["section_id"], name: "index_story_routings_on_section_id"
   end
 
   create_table "study_logs", force: :cascade do |t|
@@ -967,6 +1009,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
   add_foreign_key "feed_items", "feeds"
   add_foreign_key "feeds", "users"
   add_foreign_key "goals", "users"
+  add_foreign_key "hobby_briefs", "sections"
+  add_foreign_key "hobby_briefs", "users"
   add_foreign_key "invitations", "households"
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "job_feeds", "users"
@@ -1000,7 +1044,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_195802) do
   add_foreign_key "spending_accounts", "users"
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"
+  add_foreign_key "spotted_hobbies", "users"
   add_foreign_key "stays", "trips"
+  add_foreign_key "story_routings", "feed_items"
+  add_foreign_key "story_routings", "sections"
   add_foreign_key "study_logs", "subjects"
   add_foreign_key "study_logs", "topics"
   add_foreign_key "study_logs", "users"

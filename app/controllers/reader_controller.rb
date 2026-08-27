@@ -12,8 +12,12 @@ class ReaderController < ApplicationController
     )
     @page = @river.page(offset: params[:offset].to_i.clamp(0, 10_000))
     @feeds = Current.user.feeds.includes(:sections).order(:created_at)
-    @lenses = Section.find_by(slug: "hobbies")&.children&.where(id: @feeds.flat_map(&:section_ids))&.order(:name) || []
     @unread_counts = FeedItem.where(feed: @feeds).unread.group(:feed_id).count
+    # A hobby's pile is its feeds' unread *plus* the stories routed into it
+    # (D-story-matching) — so a hobby whose own feeds are quiet still has a
+    # count, and a hobby with no feeds at all still has a row.
+    @routed_counts = routed_counts
+    @lenses = lenses
     # The rail and the phone's scope sheet render the same tree, so it is
     # grouped once here: feeds under the hobby they were filed under
     # (D-hobby-feeds), catch-all last because it is where things land rather
@@ -72,6 +76,21 @@ class ReaderController < ApplicationController
       # as if somebody did.
       Feed.where(id: feed_ids).update_all(last_read_at: Time.current) if feed_ids.any?
       render json: { count: count }
+    end
+
+    # Every hobby with a feed filed under it, plus every hobby something has
+    # been routed into.
+    def lenses
+      hobbies = Section.find_by(slug: "hobbies")
+      return [] unless hobbies
+
+      hobbies.children.where(id: @feeds.flat_map(&:section_ids) | @routed_counts.keys).order(:name)
+    end
+
+    def routed_counts
+      StoryRouting.live.joins(:feed_item)
+        .where(feed_items: { read_at: nil, feed_id: @feeds.map(&:id) })
+        .group(:section_id).distinct.count(:feed_item_id)
     end
 
     def hobby_lens

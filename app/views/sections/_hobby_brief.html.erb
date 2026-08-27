@@ -1,0 +1,60 @@
+<%# How stories reach this hobby (D-story-matching §5).
+    
+    Its predecessor was a list of words matched against headlines. This is
+    the same ownership without the rule: a sentence saying what the hobby
+    means, which the model reads when it judges a story out of a feed that
+    is mostly about something else. Nothing here is compared to anything —
+    which is why it can be written in a person's own voice, argued with,
+    and left blank.
+
+    Locals: panel, section. %>
+<%= render Ui::CardComponent.new(
+      title: "How stories reach #{section.name}",
+      subtitle: "Your feeds that publish about many things get read story by story, and the ones " \
+                "about #{section.name} join this river. The feeds themselves don't move."
+    ) do |card| %>
+  <% if panel.model? %>
+    <% card.with_actions do %>
+      <%= button_to "Suggest a sentence", author_hobby_brief_path(section_id: section.id),
+            class: "reader-filter", form_class: "contents" %>
+    <% end %>
+  <% end %>
+
+  <%= form_with url: hobby_brief_path, method: :patch, class: "space-y-3" do |form| %>
+    <%= hidden_field_tag :section_id, section.id %>
+    <div>
+      <%= label_tag :description, "What #{section.name} means", class: "label" %>
+      <%= text_area_tag :description, panel.brief.description, rows: 2, class: "input",
+            placeholder: "Local birds, identifying them, optics and where to go — not the band Warbler Records." %>
+      <p class="hint">A sentence, not a list of words. It is what the model is told when it reads a story.</p>
+    </div>
+
+    <label class="flex items-center gap-2 text-sm">
+      <%= check_box_tag :enabled, "1", panel.brief.enabled, class: "size-4" %>
+      <span>Read broad feeds for <%= section.name %></span>
+    </label>
+
+    <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
+  <% end %>
+
+  <div class="mt-4 space-y-1 text-xs text-soft">
+    <% if panel.broad_feeds.none? %>
+      <p>None of your feeds publish about many subjects yet, so nothing is being read story by story.</p>
+    <% elsif panel.routed_this_week.positive? %>
+      <p>
+        <%= pluralize(panel.routed_this_week, "story") %> joined this week, from
+        <%= pluralize(panel.broad_feeds.size, "broad feed") %>.
+        Wrong one? “Not this” on the row takes it out and tells the model.
+      </p>
+    <% else %>
+      <p>Nothing joined this week, from <%= pluralize(panel.broad_feeds.size, "broad feed") %>.</p>
+    <% end %>
+
+    <% if panel.corrections.any? %>
+      <p>
+        You've turned down <%= panel.corrections.map { |title| "“#{truncate(title, length: 48)}”" }.to_sentence %>.
+        They're shown to the model as examples of what <%= section.name %> isn't.
+      </p>
+    <% end %>
+  </div>
+<% end %>

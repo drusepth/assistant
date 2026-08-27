@@ -59,10 +59,39 @@ module ReaderHelper
   # item is texture rather than information, and the catch-all lens is on
   # every item by construction (D-hobby-feeds) — so it never shows, the lens
   # you have already filtered to never shows, and at most one does.
+  # A chip either says where the row is filed or that the model *routed* it
+  # here (D-story-matching) — and a routed chip carries the model's own
+  # sentence, because "why is this Guardian story in Birding" has to be
+  # answerable on the row itself.
+  Chip = Struct.new(:section, :routing) do
+    def routed? = routing.present?
+    def title = routed? ? "Added to #{section.name}#{" — #{routing.because}" if routing.because}" : nil
+  end
+
   def reader_chips(item, current_slug: nil)
-    item.feed.sections.reject { |section|
+    filed = item.feed.sections.reject { |section|
       Hobbies::OtherInterests.catch_all?(section) || section.slug == current_slug
-    }.first(1)
+    }.first(1).map { |section| Chip.new(section, nil) }
+
+    routed = item.routings.reject { |routing| routing.section.slug == current_slug }
+      .first(1).map { |routing| Chip.new(routing.section, routing) }
+
+    (filed + routed).first(2)
+  end
+
+  # What the tell says on hover: the hobby, and the model's own sentence
+  # about this story when it wrote one.
+  def reader_routing_title(routing)
+    [ "Added to #{routing.section.name}", routing.because ].compact.join(" — ")
+  end
+
+  # The routing for the river you are already looking at. Its chip would
+  # only repeat the page's own title, so the row wears a shorter tell and
+  # the one verb a routed story needs.
+  def reader_routing(item, slug)
+    return nil if slug.blank?
+
+    item.routings.find { |routing| routing.section.slug == slug }
   end
 
   # The day a row belongs under in the river's spine. Four hundred items

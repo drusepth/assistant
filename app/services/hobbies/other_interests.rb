@@ -56,6 +56,24 @@ module Hobbies
       orphans
     end
 
+    # The inverse of `absorb!`, and the one write both the classifier and a
+    # newly-named hobby share: a real lens claims feeds. Add-only — whatever
+    # a human filed by hand stays — plus the one mechanical drop, because
+    # Other Interests means "no hobby" and the two are mutually exclusive by
+    # definition (D-hobby-feeds §4). Returns the feeds that actually moved.
+    def claim!(feeds, lenses)
+      lenses = Array(lenses).reject { |lens| catch_all?(lens) }
+      return [] if lenses.empty?
+
+      Array(feeds).select do |feed|
+        gained = lenses - feed.sections.to_a
+        next false if gained.empty?
+
+        feed.sections = (feed.sections.to_a + gained).reject { |lens| catch_all?(lens) }
+        true
+      end
+    end
+
     private_class_method def self.create!
       parent = Section.find_by!(slug: "hobbies")
       parent.children.create!(

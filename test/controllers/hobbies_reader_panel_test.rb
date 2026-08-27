@@ -38,6 +38,24 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     quiet.each { |lens| assert_equal 1, explore.css("a[href='#{section_path(lens.slug)}']").size }
   end
 
+  # The chips used to be the same four names on every instance forever
+  # (D-hobby-spotting); now what the spotter read out of this household's
+  # own feeds leads them, and the caption says where it came from.
+  test "a spotted hobby leads the add tile's chips, marked as coming from the feeds" do
+    Hobbies::Lens.find_or_create!("Woodworking")
+    users(:one).spotted_hobbies.create!(name: "Birding", reason: "Two of your feeds are about birds.")
+
+    get section_path("hobbies")
+
+    page = Nokogiri::HTML(response.body)
+    chips = page.css("form.button_to button.chip")
+    assert_equal "Birding", chips.first.text.strip
+    assert_equal "Two of your feeds are about birds.", chips.first["title"]
+    assert chips.first.at_css("svg"), "a spotted chip wears the feed mark; a starter name doesn't"
+    assert_nil chips.last.at_css("svg")
+    assert_match "Spotted in what you've been reading.", response.body
+  end
+
   # The hub is the high-level view; pasting a URL belongs on the page of a
   # hobby somebody has already decided to spend time on.
   test "the hub carries no follow-a-source field at all" do
@@ -247,5 +265,70 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
     assert Hobbies::OtherInterests.find, "the invariant is protected at the controller layer"
+  end
+
+  # How a hobby's river gets fed out of feeds filed elsewhere is a sentence
+  # on the hobby's own page (D-story-matching §5) — a person's words, not a
+  # rule, and there whether or not a model ever drafted one.
+  test "a hobby's page says how stories reach it, and the catch-all doesn't" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    HobbyBrief.create!(user: users(:one), section: birding,
+                       description: "Local birds and optics — not the band Warbler Records.")
+
+    get section_path(birding.slug)
+
+    assert_response :success
+    assert_match "How stories reach Birding", response.body
+    assert_match "not the band Warbler Records", response.body
+
+    get section_path(Hobbies::OtherInterests.find_or_create!.slug)
+
+    assert_response :success
+    assert_no_match(/How stories reach/, response.body)
+  end
+
+  test "the page says what routing has done lately, and what was turned down" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    other = Hobbies::OtherInterests.find_or_create!
+    feed = users(:one).feeds.create!(url: "https://example.com/news.xml", broad: true,
+                                     sections: [ other ])
+    kept = feed.feed_items.create!(guid: "1", title: "A rare visitor on the marsh")
+    StoryRouting.create!(feed_item: kept, section: birding, reason: "a rare bird")
+    turned_down = feed.feed_items.create!(guid: "2", title: "Warbler Records signs a band")
+    StoryRouting.create!(feed_item: turned_down, section: birding, rejected_at: Time.current)
+
+    get section_path(birding.slug)
+
+    assert_match "1 story joined this week", response.body
+    assert_match "Warbler Records signs a band", response.body
+    assert_match "examples of what Birding isn", response.body
+  end
+
+  test "with no broad feeds the page says nothing is being read story by story" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+
+    get section_path(birding.slug)
+
+    assert_match "None of your feeds publish about many subjects yet", response.body
+  end
+
+  # The reader's rail counts what clicking it shows (D-story-matching), and
+  # a hobby with no feeds of its own still gets a row there.
+  test "the reader's hobby rows count routed stories too" do
+    birding = Hobbies::Lens.find_or_create!("Birding")
+    other = Hobbies::OtherInterests.find_or_create!
+    feed = users(:one).feeds.create!(url: "https://example.com/news.xml", broad: true,
+                                     sections: [ other ])
+    story = feed.feed_items.create!(guid: "1", title: "Rare warbler on the coast")
+    StoryRouting.create!(feed_item: story, section: birding, reason: "a rare bird")
+
+    get reader_path
+
+    assert_response :success
+    page = Nokogiri::HTML(response.body)
+    row = page.css("a.reader-scope-row").find { |link| link.text.include?("Birding") }
+    assert row, "a hobby fed only by routed stories still has a row"
+    assert_match "1", row.text
+    assert_match "routed stories only", response.body
   end
 end

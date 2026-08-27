@@ -20,8 +20,11 @@ class ClassifyFeedJob < ApplicationJob
     # An empty answer is an answer: most feeds on the open web are not about
     # anybody's hobby, and saying so is what the catch-all is for.
     feed.sections = result.sections.presence || [ Hobbies::OtherInterests.find_or_create! ]
-    feed.update!(classified_at: Time.current)
+    # `broad` decides whether this feed's stories are ever read one at a
+    # time (D-story-matching); it is the same answer, from the same call.
+    feed.update!(classified_at: Time.current, broad: result.broad)
     broadcast(feed)
+    Feeds::RouteStories.enqueue(feed.user) if result.broad
   rescue Llm::Error => e
     raise if will_retry?(e)
 
