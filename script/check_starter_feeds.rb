@@ -54,7 +54,34 @@ def check(entry)
     Outcome.new(entry, :ok, "#{parsed.entries.size} items")
   end
 rescue StandardError => e
-  Outcome.new(entry, :failed, "#{entry.url} (#{e.message})")
+  Outcome.new(entry, classify(e.message), "#{entry.url} (#{e.message})")
+end
+
+# The distinction the second full run forced, and the one that decides
+# whether this job can ever be green.
+#
+# A 403 to an automated fetch is the publisher declining to serve robots
+# from a datacenter — Cloudflare and Wordfence do it by policy, and the same
+# URL answers a home connection fine. It is not evidence that the row is
+# wrong, and failing on it would mean the shelf could only ever hold feeds
+# whose publishers tolerate GitHub's IP ranges, which is a worse list than
+# the one we want. Same for a 5xx and a timeout: the address may be perfect
+# and the far end simply isn't talking to us today.
+#
+# What *is* evidence the row is wrong: a 404, a host that doesn't resolve, a
+# certificate that doesn't verify, a body that isn't a feed, a feed with
+# nothing in it. Those fail the build, because those a human has to fix.
+#
+# REFUSED still prints, and a REFUSED *rate* above the ceiling below fails —
+# so this can't quietly become "the check passes because nothing answers".
+REFUSED_CEILING = 0.20
+
+def classify(message)
+  case message
+  when /HTTP (401|402|403|405|406|429)/, /HTTP 5\d\d/ then :refused
+  when /Timeout/ then :refused
+  else :broken
+  end
 end
 
 # One queue per host so the pool can't put two fetches on the same publisher
@@ -70,7 +97,7 @@ workers = Array.new(jobs) do
     while (group = queue.pop)
       group.each do |entry|
         outcome = check(entry)
-        if [ :failed, :not_a_feed ].include?(outcome.status)
+        if [ :broken, :refused, :not_a_feed ].include?(outcome.status)
           sleep RETRY_PAUSE
           outcome = check(entry)
         end
@@ -88,26 +115,34 @@ while (outcome = results.pop)
 end
 # Broken first, then moved, then the quiet ones: a run with seventy things
 # to fix should not open with two hundred lines of OK.
-ORDER = { failed: 0, not_a_feed: 0, empty: 0, moved: 1, ok: 2 }.freeze
+ORDER = { broken: 0, not_a_feed: 0, empty: 0, refused: 1, moved: 2, ok: 3 }.freeze
 outcomes.sort_by! do |outcome|
   [ ORDER.fetch(outcome.status), outcome.entry.folder.to_s, outcome.entry.title.to_s ]
 end
 
-labels = { ok: "OK", moved: "MOVED", not_a_feed: "NOT A FEED", empty: "NO ITEMS", failed: "FAILED" }
+labels = { ok: "OK", moved: "MOVED", not_a_feed: "NOT A FEED", empty: "NO ITEMS",
+            broken: "BROKEN", refused: "REFUSED" }
 outcomes.each do |outcome|
   puts format("%-28s %-11s %s", outcome.entry.title.truncate(28), labels[outcome.status], outcome.detail)
 end
 
-moved = outcomes.count { |outcome| outcome.status == :moved }
-broken = outcomes.count { |outcome| [ :not_a_feed, :empty, :failed ].include?(outcome.status) }
+counts = outcomes.group_by(&:status).transform_values(&:size)
+counts.default = 0
+broken = counts[:broken] + counts[:not_a_feed] + counts[:empty]
+refused_rate = counts[:refused].fdiv(outcomes.size)
 
-puts "\n#{outcomes.size} checked · #{outcomes.size - moved - broken} OK · #{moved} moved · #{broken} broken"
+puts "\n#{outcomes.size} checked · #{counts[:ok]} OK · #{counts[:moved]} moved · " \
+     "#{counts[:refused]} refused (#{(refused_rate * 100).round}%) · #{broken} broken"
+
 if broken.positive?
   abort "\nBroken rows have no business on the shelf — fix the URL or drop the row."
-elsif moved.positive? && strict
+elsif refused_rate > REFUSED_CEILING
+  abort "\n#{(refused_rate * 100).round}% refused, over the #{(REFUSED_CEILING * 100).round}% ceiling — " \
+        "that is a fetcher problem, not #{counts[:refused]} publishers having a bad day."
+elsif counts[:moved].positive? && strict
   abort "\nA moved feed should be written down at the address it settled on (--strict)."
-elsif moved.positive?
-  puts "Moved rows still work, but the file should be updated to where they landed."
 else
+  puts "Moved rows still work; the file should be updated to where they landed." if counts[:moved].positive?
+  puts "Refused rows are publishers turning away datacenter traffic — the URL is fine." if counts[:refused].positive?
   puts "All good."
 end

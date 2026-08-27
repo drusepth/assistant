@@ -362,8 +362,17 @@ Breadth changes the shape of the thing three ways over:
   `script/check_starter_feeds.rb` fetches every row through the ordinary
   `Web::Fetch` + `Feeds::Parse` path and exits non-zero on anything that
   isn't a feed; `.github/workflows/starter-feeds.yml` runs it weekly and on
-  any PR touching the file. It retries each failure once (one timeout in
-  three hundred fetches is weather) and never runs two fetches at the
+  any PR touching the file. **Refused is not the same as wrong**, and the
+  distinction is what makes the job green-able: a 403, a 5xx or a timeout is
+  a publisher declining to serve robots from a datacenter — Cloudflare and
+  Wordfence do it by policy and the same URL answers a home connection fine
+  — so those are printed, counted, and not fatal. A 404, a host that doesn't
+  resolve, a certificate that doesn't verify, a body that isn't a feed, or a
+  feed with nothing in it *is* evidence the row is wrong, and fails the
+  build. A REFUSED *rate* over 20% fails too, so this can never quietly
+  become "the check passes because nothing answers" — which is exactly what
+  it caught the first time it ran with no network. It retries each failure
+  once (one timeout in three hundred fetches is weather) and never runs two fetches at the
   same host at once — this list multiplies by every self-hoster who ticks it.
   It is the only job in CI that talks to the open web, which is why it is
   path-filtered off every unrelated PR.

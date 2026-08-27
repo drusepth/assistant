@@ -91,8 +91,6 @@
                xmlUrl="https://www.smbc-comics.com/comic/rss" htmlUrl="https://www.smbc-comics.com"/>
       <outline type="rss" text="The Oatmeal" title="The Oatmeal"
                xmlUrl="https://theoatmeal.com/feed/rss" htmlUrl="https://theoatmeal.com"/>
-      <outline type="rss" text="Poorly Drawn Lines" title="Poorly Drawn Lines"
-               xmlUrl="https://poorlydrawnlines.com/feed/" htmlUrl="https://poorlydrawnlines.com"/>
       <outline type="rss" text="Questionable Content" title="Questionable Content"
                xmlUrl="https://www.questionablecontent.net/QCRSS.xml" htmlUrl="https://www.questionablecontent.net"/>
     </outline>
@@ -134,8 +132,8 @@
     </outline>
 
     <outline text="BBQ &amp; Grilling" title="BBQ &amp; Grilling">
-      <outline type="rss" text="AmazingRibs" title="AmazingRibs"
-               xmlUrl="https://amazingribs.com/feed/" htmlUrl="https://amazingribs.com"/>
+      <outline type="rss" text="Barbecue Bible" title="Barbecue Bible"
+               xmlUrl="https://barbecuebible.com/feed/" htmlUrl="https://barbecuebible.com"/>
       <outline type="rss" text="Hey Grill Hey" title="Hey Grill Hey"
                xmlUrl="https://heygrillhey.com/feed/" htmlUrl="https://heygrillhey.com"/>
     </outline>
@@ -152,15 +150,15 @@
     <outline text="Nutrition" title="Nutrition">
       <outline type="rss" text="NutritionFacts.org" title="NutritionFacts.org"
                xmlUrl="https://nutritionfacts.org/feed/" htmlUrl="https://nutritionfacts.org"/>
-      <outline type="rss" text="Food Insight" title="Food Insight"
-               xmlUrl="https://ific.org/feed/" htmlUrl="https://foodinsight.org"/>
+      <outline type="rss" text="The Nutrition Source" title="The Nutrition Source"
+               xmlUrl="https://nutritionsource.hsph.harvard.edu/feed/" htmlUrl="https://nutritionsource.hsph.harvard.edu"/>
     </outline>
 
     <outline text="Coffee" title="Coffee">
       <outline type="rss" text="Sprudge" title="Sprudge"
                xmlUrl="https://sprudge.com/feed" htmlUrl="https://sprudge.com"/>
-      <outline type="rss" text="Perfect Daily Grind" title="Perfect Daily Grind"
-               xmlUrl="https://perfectdailygrind.com/feed/" htmlUrl="https://perfectdailygrind.com"/>
+      <outline type="rss" text="Daily Coffee News" title="Daily Coffee News"
+               xmlUrl="https://dailycoffeenews.com/feed/" htmlUrl="https://dailycoffeenews.com"/>
     </outline>
 
     <outline text="Tea" title="Tea">
@@ -199,10 +197,6 @@
     </outline>
 
     <outline text="Gardening" title="Gardening">
-      <outline type="rss" text="A Way to Garden" title="A Way to Garden"
-               xmlUrl="https://awaytogarden.com/feed/" htmlUrl="https://awaytogarden.com"/>
-      <outline type="rss" text="Garden Rant" title="Garden Rant"
-               xmlUrl="https://gardenrant.com/feed/" htmlUrl="https://gardenrant.com"/>
       <outline type="rss" text="Fine Gardening" title="Fine Gardening"
                xmlUrl="https://www.finegardening.com/feed" htmlUrl="https://www.finegardening.com"/>
       <outline type="rss" text="Garden Betty" title="Garden Betty"
@@ -242,8 +236,6 @@
                xmlUrl="https://www.archdaily.com/rss/" htmlUrl="https://www.archdaily.com"/>
       <outline type="rss" text="Dezeen" title="Dezeen"
                xmlUrl="https://www.dezeen.com/feed/" htmlUrl="https://www.dezeen.com"/>
-      <outline type="rss" text="Architizer" title="Architizer"
-               xmlUrl="https://architizer.com/feed/" htmlUrl="https://architizer.com"/>
     </outline>
 
     <outline text="Minimalism" title="Minimalism">
@@ -281,8 +273,8 @@
     <outline text="Electronics" title="Electronics">
       <outline type="rss" text="Hackaday" title="Hackaday"
                xmlUrl="https://hackaday.com/blog/feed/" htmlUrl="https://hackaday.com"/>
-      <outline type="rss" text="EEVblog" title="EEVblog"
-               xmlUrl="https://www.eevblog.com/feed/" htmlUrl="https://www.eevblog.com"/>
+      <outline type="rss" text="EDN" title="EDN"
+               xmlUrl="https://www.edn.com/feed/" htmlUrl="https://www.edn.com"/>
     </outline>
 
     <outline text="Amateur Radio" title="Amateur Radio">
@@ -317,7 +309,7 @@
       <outline type="rss" text="Muddy Colors" title="Muddy Colors"
                xmlUrl="https://muddycolors.com/feed/" htmlUrl="https://www.muddycolors.com"/>
       <outline type="rss" text="Lines and Colors" title="Lines and Colors"
-               xmlUrl="https://www.linesandcolors.com/feed/" htmlUrl="https://www.linesandcolors.com"/>
+               xmlUrl="https://linesandcolors.com/feed/" htmlUrl="https://www.linesandcolors.com"/>
     </outline>
 
     <outline text="Art &amp; Design" title="Art &amp; Design">
@@ -340,8 +332,8 @@
     </outline>
 
     <outline text="Fashion &amp; Style" title="Fashion &amp; Style">
-      <outline type="rss" text="Die, Workwear!" title="Die, Workwear!"
-               xmlUrl="https://dieworkwear.com/feed/" htmlUrl="https://dieworkwear.com"/>
+      <outline type="rss" text="Permanent Style" title="Permanent Style"
+               xmlUrl="https://www.permanentstyle.com/feed" htmlUrl="https://www.permanentstyle.com"/>
       <outline type="rss" text="Put This On" title="Put This On"
                xmlUrl="https://putthison.com/feed/" htmlUrl="https://putthison.com"/>
     </outline>
@@ -440,8 +432,8 @@
     <outline text="Archaeology" title="Archaeology">
       <outline type="rss" text="Archaeology Magazine" title="Archaeology Magazine"
                xmlUrl="https://archaeology.org/feed/" htmlUrl="https://www.archaeology.org"/>
-      <outline type="rss" text="HeritageDaily" title="HeritageDaily"
-               xmlUrl="https://www.heritagedaily.com/feed" htmlUrl="https://www.heritagedaily.com"/>
+      <outline type="rss" text="Live Science" title="Live Science"
+               xmlUrl="https://www.livescience.com/feeds.xml" htmlUrl="https://www.livescience.com"/>
     </outline>
 
     <outline text="Environment &amp; Climate" title="Environment &amp; Climate">
@@ -509,8 +501,8 @@
     </outline>
 
     <outline text="AI &amp; Machine Learning" title="AI &amp; Machine Learning">
-      <outline type="rss" text="Berkeley AI Research" title="Berkeley AI Research"
-               xmlUrl="https://bair.berkeley.edu/blog/feed.xml" htmlUrl="https://bair.berkeley.edu/blog"/>
+      <outline type="rss" text="Import AI" title="Import AI"
+               xmlUrl="https://importai.substack.com/feed" htmlUrl="https://importai.substack.com"/>
       <outline type="rss" text="The Gradient" title="The Gradient"
                xmlUrl="https://thegradient.pub/rss/" htmlUrl="https://thegradient.pub"/>
     </outline>
@@ -602,8 +594,8 @@
     <outline text="Lego" title="Lego">
       <outline type="rss" text="The Brothers Brick" title="The Brothers Brick"
                xmlUrl="https://www.brothers-brick.com/feed/" htmlUrl="https://www.brothers-brick.com"/>
-      <outline type="rss" text="Brickset" title="Brickset"
-               xmlUrl="https://brickset.com/articles/feed" htmlUrl="https://brickset.com"/>
+      <outline type="rss" text="New Elementary" title="New Elementary"
+               xmlUrl="https://www.newelementary.com/feeds/posts/default" htmlUrl="https://www.newelementary.com"/>
     </outline>
 
     <outline text="Music" title="Music">
@@ -619,9 +611,9 @@
 
     <outline text="Guitar" title="Guitar">
       <outline type="rss" text="Guitar World" title="Guitar World"
-               xmlUrl="https://www.guitarworld.com/feeds/all" htmlUrl="https://www.guitarworld.com"/>
+               xmlUrl="https://www.guitarworld.com/feeds.xml" htmlUrl="https://www.guitarworld.com"/>
       <outline type="rss" text="Guitar Player" title="Guitar Player"
-               xmlUrl="https://www.guitarplayer.com/feeds/all" htmlUrl="https://www.guitarplayer.com"/>
+               xmlUrl="https://www.guitarplayer.com/feeds.xml" htmlUrl="https://www.guitarplayer.com"/>
     </outline>
 
     <outline text="Classical Music" title="Classical Music">
@@ -711,8 +703,6 @@
     </outline>
 
     <outline text="Health" title="Health">
-      <outline type="rss" text="Harvard Health Blog" title="Harvard Health Blog"
-               xmlUrl="https://www.health.harvard.edu/blog/feed/" htmlUrl="https://www.health.harvard.edu/blog"/>
       <outline type="rss" text="KFF Health News" title="KFF Health News"
                xmlUrl="https://kffhealthnews.org/feed/" htmlUrl="https://kffhealthnews.org"/>
       <outline type="rss" text="NIH News in Health" title="NIH News in Health"
@@ -744,7 +734,7 @@
       <outline type="rss" text="Escape Collective" title="Escape Collective"
                xmlUrl="https://escapecollective.com/rss/" htmlUrl="https://escapecollective.com"/>
       <outline type="rss" text="Cycling Weekly" title="Cycling Weekly"
-               xmlUrl="https://www.cyclingweekly.com/feeds/all" htmlUrl="https://www.cyclingweekly.com"/>
+               xmlUrl="https://www.cyclingweekly.com/feeds.xml" htmlUrl="https://www.cyclingweekly.com"/>
       <outline type="rss" text="BikeSnobNYC" title="BikeSnobNYC"
                xmlUrl="https://bikesnobnyc.com/feed/" htmlUrl="https://bikesnobnyc.com"/>
     </outline>
@@ -803,8 +793,8 @@
     </outline>
 
     <outline text="Fishing" title="Fishing">
-      <outline type="rss" text="Orvis News" title="Orvis News"
-               xmlUrl="https://news.orvis.com/feed/" htmlUrl="https://news.orvis.com"/>
+      <outline type="rss" text="Gink and Gasoline" title="Gink and Gasoline"
+               xmlUrl="https://ginkandgasoline.com/feed/" htmlUrl="https://ginkandgasoline.com"/>
       <outline type="rss" text="MidCurrent" title="MidCurrent"
                xmlUrl="https://midcurrent.com/feed/" htmlUrl="https://midcurrent.com"/>
     </outline>
@@ -935,8 +925,8 @@
     </outline>
 
     <outline text="Genealogy" title="Genealogy">
-      <outline type="rss" text="The Genealogy Guys" title="The Genealogy Guys"
-               xmlUrl="https://genealogyguys.com/feed/" htmlUrl="https://genealogyguys.com"/>
+      <outline type="rss" text="Family Tree Magazine" title="Family Tree Magazine"
+               xmlUrl="https://familytreemagazine.com/feed/" htmlUrl="https://familytreemagazine.com"/>
       <outline type="rss" text="Amy Johnson Crow" title="Amy Johnson Crow"
                xmlUrl="https://www.amyjohnsoncrow.com/feed/" htmlUrl="https://www.amyjohnsoncrow.com"/>
     </outline>
@@ -962,8 +952,6 @@
     </outline>
 
     <outline text="Education" title="Education">
-      <outline type="rss" text="Edutopia" title="Edutopia"
-               xmlUrl="https://www.edutopia.org/rss.xml" htmlUrl="https://www.edutopia.org"/>
       <outline type="rss" text="Larry Ferlazzo" title="Larry Ferlazzo"
                xmlUrl="https://larryferlazzo.edublogs.org/feed/" htmlUrl="https://larryferlazzo.edublogs.org"/>
       <outline type="rss" text="Cult of Pedagogy" title="Cult of Pedagogy"
@@ -1004,7 +992,7 @@
 
     <outline text="Frugality" title="Frugality">
       <outline type="rss" text="Frugalwoods" title="Frugalwoods"
-               xmlUrl="https://www.frugalwoods.com/feed/" htmlUrl="https://www.frugalwoods.com"/>
+               xmlUrl="https://frugalwoods.com/feed/" htmlUrl="https://www.frugalwoods.com"/>
       <outline type="rss" text="The Frugal Girl" title="The Frugal Girl"
                xmlUrl="https://www.thefrugalgirl.com/feed/" htmlUrl="https://www.thefrugalgirl.com"/>
     </outline>

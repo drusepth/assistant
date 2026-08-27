@@ -25,6 +25,14 @@ on:
       - app/services/feeds/starters.rb
       - .github/workflows/starter-feeds.yml
 
+# A PR that touches the shelf re-runs this on every push (GitHub matches the
+# paths filter against the whole PR diff, not the last commit), so a docs
+# commit on the same branch starts a second full sweep of 300 strangers'
+# servers. Cancel the one it superseded.
+concurrency:
+  group: starter-feeds-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
