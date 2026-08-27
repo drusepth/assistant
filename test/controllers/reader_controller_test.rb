@@ -269,6 +269,11 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the river is grouped under a day spine" do
+    # A fixed clock, because the spine's whole job is naming the day: for the
+    # two hours after local midnight "2 hours ago" is yesterday, and the
+    # assertion below would be wrong about the code rather than the code
+    # being wrong. A Thursday midday, so "3 days ago" is a plain weekday.
+    travel_to Time.zone.local(2026, 8, 27, 12)
     item(@feed, "Today's", published_at: 2.hours.ago)
     item(@feed, "Older", published_at: 3.days.ago)
 
