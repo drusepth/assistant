@@ -8,7 +8,7 @@
 <div class="max-w-3xl space-y-4">
   <% @thread.each do |message| %>
     <% current = message.id == @message.id %>
-    <div class="card <%= "ring-1 ring-primary-300" if current && @thread.size > 1 %>">
+    <div class="card p-5 <%= "ring-1 ring-primary-300" if current && @thread.size > 1 %>">
       <div class="flex flex-wrap items-center gap-2 text-sm">
         <span class="font-medium text-ink">
           <%= message.outbound? ? "You" : (message.from_name.presence || message.from_email) %>

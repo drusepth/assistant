@@ -300,9 +300,25 @@
   }
 
   /* Surface sits above the canvas (sand on cream), so a card needs no
-     border to separate from the page — the tonal step does it. */
+     border to separate from the page — the tonal step does it.
+
+     The atom carries no padding on purpose: a card full of rows wants its
+     rows flush against the fold, so the inset belongs to whatever fills the
+     card. `Ui::Card` supplies it (`p-5`) for the common case; a card written
+     by hand supplies its own. A card that pads nothing and holds text is the
+     bug this leaves open — text welded to the fold reads as a stylesheet
+     that failed to load — so `.card-flush` below is how a card says the
+     omission was deliberate, and a test holds the line. */
   .card {
     @apply rounded-2xl border border-transparent bg-surface;
+  }
+  /* "My children carry the padding." A no-op that exists to be read: by a
+     person, who learns the flush edge was chosen, and by the pin in
+     `test/integration/design_atoms_test.rb`, which otherwise can't tell a
+     deliberate flush card from a forgotten one. `divide-y` and `item-stack`
+     lists say the same thing by being themselves and don't need it. */
+  .card-flush {
+    @apply p-0;
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
@@ -1055,6 +1071,65 @@
       10%, 80% { opacity: 1; }
       100% { opacity: 0; }
     }
+  }
+
+  /* The waiting bars — what a run in progress looks like while the model
+     works, where a spinner would otherwise go.
+
+     A row of rounded columns, wall to wall across whatever holds them, all
+     standing on one baseline and riding one wave: every bar runs the same
+     1.4s keyframe, each offset by a fourteenth of the period, so a crest
+     walks across the row and wraps into itself with no seam — the loop has
+     no start and no end to catch the eye on. Only `transform` animates
+     (nothing that reflows), because this can sit on screen for a minute at
+     a time on a phone.
+
+     Full width is done in the flex box rather than in the bar count, so one
+     markup fits a phone and a `max-w-3xl` card both: each bar is `flex-1`
+     off a zero basis but capped at 10px, and `justify-between` spends the
+     slack a wide card leaves on the gaps. Bars stay bar-shaped instead of
+     fattening into slabs, and the row still reaches both edges.
+
+     The phase repeats every 14 bars, which is why the offsets are written
+     as `14n` rather than one rule per column: a caller picks whatever
+     count suits (28 = two crests) and the wave keeps its shape. The same
+     rules carry the *resting* scale, sampled off the keyframe at that
+     phase, because the app-wide reduced-motion floor at the foot of this
+     file collapses the animation to a single 0.01ms pass — what it falls
+     back to should still read as a wave frozen mid-travel rather than a
+     row of identical sticks. This one *wants* the floor: a decoration that
+     says "still working" has nothing to say that the sentence under it
+     doesn't, so it doesn't opt out the way `.celebrate-banner` does. */
+  .working-bars {
+    @apply flex h-10 w-full items-end justify-between gap-1 sm:h-12 sm:gap-1.5;
+  }
+  .working-bar {
+    @apply h-full max-w-2.5 flex-1 rounded-full;
+    background: linear-gradient(180deg, var(--color-primary-400), var(--color-primary-600));
+    /* Anchored down: the column grows off the baseline the row stands on,
+       rather than opening out from its own middle. */
+    transform-origin: bottom;
+    animation: working-bar 1.4s ease-in-out infinite;
+    will-change: transform;
+  }
+  .working-bar:nth-child(14n + 1)  { transform: scaleY(0.28); animation-delay: 0s; }
+  .working-bar:nth-child(14n + 2)  { transform: scaleY(0.32); animation-delay: -0.1s; }
+  .working-bar:nth-child(14n + 3)  { transform: scaleY(0.42); animation-delay: -0.2s; }
+  .working-bar:nth-child(14n + 4)  { transform: scaleY(0.56); animation-delay: -0.3s; }
+  .working-bar:nth-child(14n + 5)  { transform: scaleY(0.72); animation-delay: -0.4s; }
+  .working-bar:nth-child(14n + 6)  { transform: scaleY(0.86); animation-delay: -0.5s; }
+  .working-bar:nth-child(14n + 7)  { transform: scaleY(0.96); animation-delay: -0.6s; }
+  .working-bar:nth-child(14n + 8)  { transform: scaleY(1);    animation-delay: -0.7s; }
+  .working-bar:nth-child(14n + 9)  { transform: scaleY(0.96); animation-delay: -0.8s; }
+  .working-bar:nth-child(14n + 10) { transform: scaleY(0.86); animation-delay: -0.9s; }
+  .working-bar:nth-child(14n + 11) { transform: scaleY(0.72); animation-delay: -1s; }
+  .working-bar:nth-child(14n + 12) { transform: scaleY(0.56); animation-delay: -1.1s; }
+  .working-bar:nth-child(14n + 13) { transform: scaleY(0.42); animation-delay: -1.2s; }
+  .working-bar:nth-child(14n)      { transform: scaleY(0.32); animation-delay: -1.3s; }
+
+  @keyframes working-bar {
+    0%, 100% { transform: scaleY(0.28); }
+    50% { transform: scaleY(1); }
   }
 }
 
