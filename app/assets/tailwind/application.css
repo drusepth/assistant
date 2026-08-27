@@ -436,14 +436,20 @@
   .reader-src {
     @apply hidden w-28 shrink-0 truncate text-xs text-soft lg:block xl:w-36;
   }
-  /* Two lines at most on a phone, one cut line on a laptop. The clamp lives
-     on the heading rather than on the link inside it, because `line-clamp`
-     makes its element a `-webkit-box` — on the link, the saved star beside it
-     is pushed onto a line of its own; on the heading, star and title are
-     inline content of the same clamped box and flow together. On a laptop
-     the heading goes back to `inline` so the blurb can trail it. */
+  /* Three lines at most on a phone, one cut line on a laptop. Two was one
+     short: at ~38 characters a line a phone cut a great many perfectly
+     ordinary headlines mid-clause, and a headline is the only thing the
+     collapsed row exists to show — truncating it to save height is saving
+     the wrong thing. Three is where the cost turns: a row is still ~56px
+     for the common one- and two-line title, and only the long ones pay.
+     The clamp lives on the heading rather than on the link inside it,
+     because `line-clamp` makes its element a `-webkit-box` — on the link,
+     the saved star beside it is pushed onto a line of its own; on the
+     heading, star and title are inline content of the same clamped box and
+     flow together. On a laptop the heading goes back to `inline` so the
+     blurb can trail it. */
   .reader-headline {
-    @apply line-clamp-2 text-sm font-semibold leading-tight text-ink lg:inline lg:line-clamp-none;
+    @apply line-clamp-3 text-sm font-semibold leading-tight text-ink lg:inline lg:line-clamp-none;
   }
   .reader-title {
     @apply hover:underline;
