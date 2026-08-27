@@ -214,7 +214,12 @@ app's usual card-per-item shape (`docs/DESIGN.md` → Lists):
 - **The phone drops the preview, not the headline.** Below `lg` the opening
   words go and the source folds into one small line with the age. They come
   back when the row is opened, so a preview is paid for on the item being
-  considered rather than on all forty.
+  considered rather than on all forty. The headline itself gets **three
+  lines** before it clamps: at ~38 characters a line, two cut a great many
+  ordinary headlines mid-clause, and the headline is the one thing a
+  collapsed row exists to show — height saved there is saved off the wrong
+  thing. Only the long titles pay it; a one- or two-line title is still a
+  56px row.
 
 ### Opening happens in the row
 
