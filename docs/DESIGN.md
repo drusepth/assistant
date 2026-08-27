@@ -83,6 +83,9 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
    - `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`)
      — the chat surface
+   - `.working-bars`/`.working-bar` — a full-width row of rounded columns
+     rising off one baseline on one wave: the waiting shape for work that's
+     already running (a tool run's draft)
 3. **Components** — `app/components/ui/*` (ViewComponent): `Ui::PageHeader`,
    `Ui::Card` (title/subtitle + actions slot), `Ui::EmptyState`,
    `Ui::Flash` (a `role="status"` banner; carries an Undo button when the

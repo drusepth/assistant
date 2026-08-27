@@ -78,6 +78,17 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Check in"
   end
 
+  test "a run still working shows the waiting bars beside the sentence" do
+    run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", status: :running,
+      inputs: { document_id: @document.id, intent: "remove the charge" })
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_select ".working-bars[aria-hidden=true] span.working-bar", count: 28
+    assert_select "p", text: /Working on it/
+  end
+
   test "a draft run is untouched by the chat shell" do
     run = users(:one).tool_runs.create!(tool_slug: "dispute_letter", status: :done,
       inputs: { document_id: @document.id, intent: "remove the charge" })
