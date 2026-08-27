@@ -17,6 +17,7 @@ module Tool
     self.title = "Talk it through"
     self.description = "Work on a task in conversation — think, decide, draft, and land on an answer."
     self.section_slugs = []
+    self.hosted_on_subject = true
     self.quick_replies = [
       "Help me get started",
       "Give me a few options to pick from",

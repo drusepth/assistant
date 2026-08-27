@@ -1,21 +1,53 @@
 <% own = @note.user_id == Current.user.id %>
+<% quizzes = @note.quizzes_by(Current.user) %>
+<%# Quiz me on this (D-note-quiz): the Education hub's retrieval gate, pointed
+    at the other place the user keeps things worth knowing. Off entirely with
+    no model configured, rather than guessing questions. %>
+<% quizzable = model_configured? %>
 
 <%= render Ui::PageHeaderComponent.new(title: @note.title.presence || "Note", subtitle: "Updated #{@note.updated_at.strftime("%B %-d, %Y")}") do |header| %>
-  <% if own %>
+  <% if own || quizzable %>
     <% header.with_actions do %>
-      <%= link_to "Edit", edit_note_path(@note), class: "btn btn-secondary" %>
-      <%= button_to "Delete", @note, method: :delete, class: "btn btn-danger",
-            data: { turbo_confirm: "Delete this note?" } %>
+      <% if quizzable %>
+        <%= button_to quizzes.any? ? "Quiz me again" : "Quiz me on this",
+              note_quizzes_path(@note), class: "btn btn-secondary" %>
+      <% end %>
+      <% if own %>
+        <%= link_to "Edit", edit_note_path(@note), class: "btn btn-secondary" %>
+        <%= button_to "Delete", @note, method: :delete, class: "btn btn-danger",
+              data: { turbo_confirm: "Delete this note?" } %>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>
 
 <div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
-  <div class="lg:col-span-2">
+  <div class="space-y-6 lg:col-span-2">
     <div class="card p-6">
       <div class="mb-4 flex flex-wrap gap-1.5"><%= render "shared/item_chips", item: @note %></div>
       <p class="whitespace-pre-wrap text-sm leading-relaxed text-ink"><%= @note.body %></p>
     </div>
+
+    <%# Past quizzes on this note — the run page holds each transcript, so
+        this is a way back in, not a second surface. %>
+    <% if quizzes.any? %>
+      <%= render Ui::CardComponent.new(title: "Quizzes on this note",
+            subtitle: "Recall beats rereading — each session is here to pick back up", padded: false) do %>
+        <div class="divide-y divide-edge">
+          <% quizzes.each do |quiz| %>
+            <%= link_to quiz, class: "flex items-center gap-3 px-4 py-3 transition-colors hover:bg-canvas" do %>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm text-ink"><%= quiz.created_at.strftime("%B %-d, %Y") %></span>
+                <span class="block text-xs text-soft">
+                  <%= pluralize(quiz.tool_run_messages.conversational.count, "message") %><%= " · graded" if quiz.items.grep(Note).any? %>
+                </span>
+              </span>
+              <%= icon(:chevron_left, css_class: "size-4 shrink-0 rotate-180 text-soft") %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
   </div>
   <% if own %>
     <div><%= render "shared/share_controls", subject: @note %></div>

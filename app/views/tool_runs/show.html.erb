@@ -15,7 +15,7 @@
         <% header.with_actions do %>
           <%= link_to "All conversations", chats_path, class: "btn btn-secondary" %>
           <% if @tool_run.subject %>
-            <%= link_to "Open the task", @tool_run.subject, class: "btn btn-secondary" %>
+            <%= link_to "Open the #{@tool_run.subject.model_name.human.downcase}", @tool_run.subject, class: "btn btn-secondary" %>
           <% else %>
             <%= link_to "New session", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
           <% end %>
@@ -37,7 +37,13 @@
       ) do |header| %>
     <% if @tool_run.finished? %>
       <% header.with_actions do %>
-        <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+        <%# A subject-bound run (D30) has no form to run again from — its
+            inputs are the item it's bound to, so the way back is the item. %>
+        <% if @tool_run.subject %>
+          <%= link_to "Open the #{@tool_run.subject.model_name.human.downcase}", @tool_run.subject, class: "btn btn-secondary" %>
+        <% else %>
+          <%= link_to "Run again", new_tool_run_path(@tool_run.tool_slug, inputs: @tool_run.inputs), class: "btn btn-secondary" %>
+        <% end %>
         <%= button_to "Delete", @tool_run, method: :delete, class: "btn btn-danger",
               data: { turbo_confirm: @tool_run.chat? ?
                 "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." :

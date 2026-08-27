@@ -33,10 +33,13 @@ class ToolRunsController < ApplicationController
   # records and stay.
   def destroy
     run = Current.user.tool_runs.find(params[:id])
+    # A subject-bound run (D30) came from its item's page, so that's where
+    # deleting it lands; everything else goes back to where the tool lives.
+    subject = run.subject
     section = run.tool.section_slugs.first
     notice = run.chat? ? "Conversation deleted." : "Run deleted."
     run.destroy!
-    redirect_to section ? section_path(section) : root_path, notice: notice
+    redirect_to subject || (section ? section_path(section) : root_path), notice: notice
   end
 
   # "Save a recap" on a chat run (D29) — the explicit click that turns a

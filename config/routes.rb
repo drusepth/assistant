@@ -128,7 +128,11 @@ Rails.application.routes.draw do
       post :break_down
     end
   end
-  resources :notes
+  resources :notes do
+    # "Quiz me on this" (D-note-quiz) — one click opens a retrieval check
+    # bound to the note.
+    resources :quizzes, only: :create, module: :notes
+  end
 
   # The personal school (docs/EDUCATION_PLAN.md): the curriculum spine —
   # per-learner subjects and their topic trees (D-education-spine), the
