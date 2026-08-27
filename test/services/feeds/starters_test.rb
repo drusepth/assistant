@@ -46,6 +46,19 @@ class Feeds::StartersTest < ActiveSupport::TestCase
     end
   end
 
+  # Explore links a row's name at the publisher's own page, so the shelf has
+  # to carry it — a feed URL is where the XML is, not where the reader would
+  # go to decide whether they want it (D-feed-explore).
+  test "a row knows the site behind it, and what a search matches it on" do
+    entry = Feeds::Starters.entries.find { |candidate| candidate.title == "xkcd" }
+
+    assert_equal "https://xkcd.com", entry.site
+    assert_equal "xkcd.com", entry.host
+    assert_equal "xkcd comics xkcd.com", entry.haystack
+    assert Feeds::Starters.entries.count { |candidate| candidate.site.present? } > 100,
+      "the file carries htmlUrl on every row; losing it silently would leave Explore linking at XML"
+  end
+
   # The checker (script/check_starter_feeds.rb, run weekly and on any PR that
   # edits the file) is the only thing standing between this list and rot, so
   # the file has to keep pointing at it.

@@ -28,6 +28,7 @@
     <h1 class="display text-xl text-ink sm:text-2xl">Reader</h1>
     <div class="flex items-baseline gap-3 text-xs">
       <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
+      <%= link_to "Explore", explore_feeds_path, class: "reader-filter" %>
       <% if @feeds.any? %>
         <%= button_to "Check now", refresh_all_feeds_path, class: "reader-verb",
               form_class: "contents", form: { data: { pull_refresh_target: "form" } },

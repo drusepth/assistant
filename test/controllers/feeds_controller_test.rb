@@ -161,6 +161,66 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Birding", response.body
   end
 
+  # D-feed-explore: the shelf outlives the empty state it used to live in.
+  test "explore shows the whole shelf even once feeds are followed" do
+    users(:one).feeds.create!(url: "https://example.com/mine.xml")
+
+    get explore_feeds_path
+
+    assert_response :success
+    assert_select "input[type=hidden][name=?][value=?]", "urls[]", Feeds::Starters.entries.first.url
+    assert_select "[data-shelf-target=row]", count: Feeds::Starters.entries.size
+    assert_match "Birding", response.body
+  end
+
+  test "one click follows exactly that source and comes back to the shelf" do
+    entry = Feeds::Starters.entries.find { |candidate| candidate.folder == "Birding" }
+
+    assert_difference "Feed.count", 1 do
+      post starters_feeds_path, params: { urls: [ entry.url ], create_lenses: "1", return_to: explore_feeds_path }
+    end
+
+    assert_redirected_to explore_feeds_path
+    feed = users(:one).feeds.sole
+    assert_equal entry.url, feed.url
+    assert_equal [ "Birding" ], feed.sections.map(&:name)
+  end
+
+  test "a source already followed is marked rather than offered again" do
+    entry = Feeds::Starters.entries.first
+    users(:one).feeds.create!(url: entry.url)
+
+    get explore_feeds_path
+
+    assert_select "input[type=hidden][name=?][value=?]", "urls[]", entry.url, count: 0
+    assert_match "Following", response.body
+  end
+
+  test "searching the shelf narrows it server-side, so the result is a link" do
+    get explore_feeds_path(q: "birding")
+
+    assert_response :success
+    assert_select "[data-shelf-target=row]", count: Feeds::Starters.groups["Birding"].size
+    assert_no_match(/Woodworking/, response.body)
+  end
+
+  test "a search that matches nothing says so rather than showing an empty shelf" do
+    get explore_feeds_path(q: "zzzznothing")
+
+    assert_select "[data-shelf-target=row]", count: 0
+    assert_select "[data-shelf-target=empty]:not(.hidden)"
+  end
+
+  test "a topic can be followed whole" do
+    urls = Feeds::Starters.groups["Chess"].map(&:url)
+
+    assert_difference "Feed.count", urls.size do
+      post starters_feeds_path, params: { urls: urls, create_lenses: "1", return_to: explore_feeds_path }
+    end
+
+    assert_equal [ "Chess" ], users(:one).feeds.flat_map(&:sections).map(&:name).uniq
+  end
+
   test "ticking starters follows those and returns to where the shelf was" do
     picks = Feeds::Starters.entries.first(2).map(&:url)
 

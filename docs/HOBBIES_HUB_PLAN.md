@@ -304,9 +304,12 @@ discovery feed* — draws the line it has to respect:
 - **Offered, never subscribed.** Nothing is followed at signup or in the FTUE.
   The list is checkboxes; a feed is followed because somebody ticked it. A
   stocked shelf, not a recommendation engine.
-- **Shown only when the reader is empty**, and reachable afterwards from
-  `/feeds` for somebody who wants a second look. It never appears above a
-  river that has anything in it.
+- **Never above a river that has anything in it.** The shelf *inlines* only
+  into an empty state — a list of things to follow stacked over the things
+  you already follow is clutter. The second look this clause always promised
+  is now a page of its own, `/feeds/explore` (**D-feed-explore**), linked
+  from the reader, the feed list and the shelf: the same list, browsable at
+  any time, one click per row.
 - **Static, offline, in the repo.** `config/starter_feeds.opml`, ordinary
   OPML with the outline folders naming common hobbies. Nothing is fetched to
   build the list, nothing is personalized, nothing is scored, and a
@@ -337,6 +340,11 @@ feeds across ~48 topics. Breadth changes the shape of the thing twice over:
   columns, so what somebody meets is a page of topic names — the wall of
   checkboxes only appears inside the topic they opened. Ticking works whether
   or not the folds are open, because the inputs are in the DOM either way.
+- **And a shelf worth browsing has to outlive the empty state.** Fourteen
+  rows could vanish the moment somebody followed a feed; a hundred and fifty
+  can't. `/feeds/explore` is the whole list as a destination, searchable, one
+  click per row, with already-followed rows marked rather than dropped
+  (**D-feed-explore**).
 - **Hand-verification stops scaling, so it's CI's job.**
   `script/check_starter_feeds.rb` fetches every row through the ordinary
   `Web::Fetch` + `Feeds::Parse` path and exits non-zero on anything that

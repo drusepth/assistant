@@ -43,7 +43,7 @@
                       class: "size-3.5 shrink-0 accent-primary-600" %>
                 <span class="min-w-0">
                   <span class="text-ink"><%= entry.title %></span>
-                  <span class="text-xs text-soft"><%= URI.parse(entry.url).host.to_s.delete_prefix("www.") rescue nil %></span>
+                  <span class="text-xs text-soft"><%= entry.host %></span>
                 </span>
               </label>
             <% end %>
@@ -57,6 +57,11 @@
       Make a hobby for each group I pick
     </label>
 
-    <%= submit_tag "Follow the ones I ticked", class: "btn btn-secondary btn-sm" %>
+    <div class="flex flex-wrap items-baseline gap-3">
+      <%= submit_tag "Follow the ones I ticked", class: "btn btn-secondary btn-sm" %>
+      <%# The same shelf with room to read it, and the copy that survives
+          this block disappearing the moment a feed is followed. %>
+      <%= link_to "Browse them all", explore_feeds_path, class: "reader-filter" %>
+    </div>
   <% end %>
 </div>

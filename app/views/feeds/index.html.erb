@@ -8,6 +8,9 @@
   <h1 class="display text-2xl text-ink">Feeds</h1>
   <div class="flex items-baseline gap-3 text-xs">
     <%= link_to "Reader", reader_path, class: "reader-filter" %>
+    <%# The shelf is a place, not just an empty state (D-feed-explore) —
+        reachable whether or not this list has anything in it. %>
+    <%= link_to "Explore", explore_feeds_path, class: "reader-filter" %>
     <% if @feeds.any? %>
       <%= button_to "Check all now", refresh_all_feeds_path, class: "reader-verb", form_class: "contents" %>
       <%= link_to "Export OPML", export_feeds_path, class: "reader-filter" %>

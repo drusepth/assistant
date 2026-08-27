@@ -363,7 +363,10 @@ promise 1 by being *offered*, never subscribed: a static list in the repo,
 nothing fetched to build it, every row a checkbox. It carries ~150 feeds
 across ~48 topics, browsed a collapsed topic at a time so breadth costs the
 reader nothing, and CI fetches every row weekly so the shelf can't rot into a
-page of dead links (`script/check_starter_feeds.rb`, D-hobby-feeds §7.1).
+page of dead links (`script/check_starter_feeds.rb`, D-hobby-feeds §7.1). The
+same list is a destination at `/feeds/explore` — searchable, one click per
+row, reachable whether or not the river is empty (**D-feed-explore**), because
+a library you can only open before your first subscription isn't one.
 
 ## What it doesn't do yet
 
