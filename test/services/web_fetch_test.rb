@@ -65,6 +65,40 @@ class WebFetchTest < ActiveSupport::TestCase
     assert_match(%r{image/png}, error.message)
   end
 
+  # All three of these came out of the starter shelf's first full run against
+  # the live web, where they were costing working feeds (D-hobby-feeds §7.1).
+  test "a caller that knows its documents run big can say so" do
+    body = "x" * (Web::Fetch::MAX_BYTES + 1)
+    stub_request(:get, "https://jobs.example.com/big").to_return(
+      status: 200, headers: { "Content-Type" => "text/plain" }, body: body
+    )
+
+    assert_raises(Web::Fetch::Error) { Web::Fetch.text("https://jobs.example.com/big") }
+    assert_equal body, Web::Fetch.text("https://jobs.example.com/big", max_bytes: 8.megabytes).text
+  end
+
+  test "a server that declares no content type gets sniffed rather than refused" do
+    stub_request(:get, "https://jobs.example.com/quiet").to_return(
+      status: 200, headers: {}, body: "<?xml version=\"1.0\"?><rss><channel><title>Q</title></channel></rss>"
+    )
+
+    assert_match "<channel>", Web::Fetch.raw("https://jobs.example.com/quiet").text
+  end
+
+  test "a declared content type still wins over what the body looks like" do
+    stub_request(:get, "https://jobs.example.com/liar").to_return(
+      status: 200, headers: { "Content-Type" => "image/png" }, body: "<?xml version=\"1.0\"?><rss/>"
+    )
+
+    assert_raises(Web::Fetch::Error) { Web::Fetch.text("https://jobs.example.com/liar") }
+  end
+
+  # Publishers' WAFs refuse bare-token agents, which is how ~30 ordinary
+  # feeds answered 403 to a reader that was behaving perfectly.
+  test "the agent string is the conventional well-behaved-bot shape" do
+    assert_match %r{\AMozilla/5\.0 \(compatible; assistant/[\d.]+; \+https://}, Web::Fetch::USER_AGENT
+  end
+
   test "an error status is reported plainly" do
     stub_request(:get, "https://jobs.example.com/gone").to_return(status: 404, body: "")
 

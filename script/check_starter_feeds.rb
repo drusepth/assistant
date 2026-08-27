@@ -37,11 +37,17 @@ puts "Checking #{entries.size} starter feeds across #{folders} topics (#{jobs} a
 Outcome = Struct.new(:entry, :status, :detail)
 
 def check(entry)
-  page = Web::Fetch.raw(entry.url, headers: { "Accept" => Feeds::Discover::ACCEPT })
+  page = Web::Fetch.raw(entry.url, headers: { "Accept" => Feeds::Discover::ACCEPT },
+    max_bytes: Feeds::Discover::MAX_BYTES)
   parsed = Feeds::Parse.call(page.text)
 
   if parsed.nil?
     Outcome.new(entry, :not_a_feed, entry.url)
+  elsif parsed.entries.empty?
+    # Parses, carries nothing. A row that puts an empty river on somebody's
+    # brand-new hobby card is broken in the way that matters, even though
+    # every byte of it is valid.
+    Outcome.new(entry, :empty, entry.url)
   elsif page.final_url != entry.url
     Outcome.new(entry, :moved, "#{entry.url} -> #{page.final_url}")
   else
@@ -64,7 +70,7 @@ workers = Array.new(jobs) do
     while (group = queue.pop)
       group.each do |entry|
         outcome = check(entry)
-        if outcome.status != :ok && outcome.status != :moved
+        if [ :failed, :not_a_feed ].include?(outcome.status)
           sleep RETRY_PAUSE
           outcome = check(entry)
         end
@@ -80,15 +86,20 @@ outcomes = []
 while (outcome = results.pop)
   outcomes << outcome
 end
-outcomes.sort_by! { |outcome| [ outcome.entry.folder.to_s, outcome.entry.title.to_s ] }
+# Broken first, then moved, then the quiet ones: a run with seventy things
+# to fix should not open with two hundred lines of OK.
+ORDER = { failed: 0, not_a_feed: 0, empty: 0, moved: 1, ok: 2 }.freeze
+outcomes.sort_by! do |outcome|
+  [ ORDER.fetch(outcome.status), outcome.entry.folder.to_s, outcome.entry.title.to_s ]
+end
 
-labels = { ok: "OK", moved: "MOVED", not_a_feed: "NOT A FEED", failed: "FAILED" }
+labels = { ok: "OK", moved: "MOVED", not_a_feed: "NOT A FEED", empty: "NO ITEMS", failed: "FAILED" }
 outcomes.each do |outcome|
   puts format("%-28s %-11s %s", outcome.entry.title.truncate(28), labels[outcome.status], outcome.detail)
 end
 
 moved = outcomes.count { |outcome| outcome.status == :moved }
-broken = outcomes.count { |outcome| [ :not_a_feed, :failed ].include?(outcome.status) }
+broken = outcomes.count { |outcome| [ :not_a_feed, :empty, :failed ].include?(outcome.status) }
 
 puts "\n#{outcomes.size} checked · #{outcomes.size - moved - broken} OK · #{moved} moved · #{broken} broken"
 if broken.positive?
