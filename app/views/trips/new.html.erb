@@ -1,0 +1,6 @@
+<%= render Ui::PageHeaderComponent.new(title: "Plan a trip",
+      subtitle: "Somewhere you haven't been yet — build the itinerary before you go.") %>
+
+<div class="max-w-xl">
+  <%= render "form", trip: @trip %>
+</div>

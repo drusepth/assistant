@@ -22,6 +22,16 @@ as-of year.
   that wants the villages a 7,000-entry gazetteer misses doesn't have to wait
   for a release.
 
+- `pet_toxics.csv` — household items that poison pets (US FDA consumer
+  updates and CVM pet-poison advisories, US government work, public domain),
+  read by the pet-care chat before any model speaks (`docs/PETS_PLAN.md` §6).
+  Like `places.csv` it has **no fetch and needs none**: the list is short and
+  stable, and the whole point is that "can he have this?" is answered the same
+  way every time rather than by a model that is right 98% of the time about
+  something with a fatal tail. A missing or malformed file leaves an empty
+  list, never an exception — the emergency notice beside it is code-authored
+  and does not depend on the data.
+
 ## When the fetch fails
 
 Whatever goes wrong is on the Public datasets card at `/admin` — dated, with

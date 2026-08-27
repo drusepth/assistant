@@ -33,7 +33,7 @@ module Watcher
           fingerprint: "#{status.kind.key}/#{period}",
           title: status.kind.book_title,
           body: "Your last #{status.kind.history_phrase} was #{status.last_visit_on.strftime("%B %Y")} — " \
-                "about every #{status.kind.interval_months} months is the usual rhythm, and nothing's booked yet.",
+                "about every #{status.kind.cadence_phrase} is the usual rhythm, and nothing's booked yet.",
           action: book_action(status.kind)
         )
       end

@@ -16,6 +16,10 @@ module Sections
       # only front door.
       def hidden_browse = %i[ events people ]
 
+      # The pets strip carries the care tools with the pet already chosen, so
+      # the Act zone shows only what a petless household could use.
+      def hidden_tool_slugs = ::Pets.hidden_tool_slugs(viewer)
+
       # The circle and every group as one uniform card (D-people-circles).
       def circle_cards = @circle_cards ||= ::People::Circles.for(viewer, section)
 
@@ -45,6 +49,15 @@ module Sections
       def address_book_size
         @address_book_size ||= Person.visible_to(viewer).count
       end
+
+      # Pets are members of the household (D-pet-primitive), so their cards
+      # sit on this page rather than in a section of their own. Zero pets is
+      # zero pixels — the partial draws nothing but the add tile.
+      def pet_cards = @pet_cards ||= ::Pets::Cards.new(viewer)
+
+      def pets = pet_cards.active_cards
+
+      def remembered_pets = pet_cards.gone_cards
     end
   end
 end

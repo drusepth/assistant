@@ -12,11 +12,15 @@ class User < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :documents, dependent: :destroy
   has_many :people, dependent: :destroy
+  has_many :pets, dependent: :destroy
   has_many :goals, dependent: :destroy
   has_many :notes, dependent: :destroy
   has_many :photos, dependent: :destroy
   has_many :albums, dependent: :destroy
   has_many :trips, dependent: :destroy
+  has_many :trip_memberships, dependent: :destroy
+  has_many :trip_comments, dependent: :destroy
+  has_many :trip_photos, dependent: :destroy
   has_many :recipes, dependent: :destroy
   has_many :recipe_books, dependent: :destroy
   has_many :subjects, dependent: :destroy

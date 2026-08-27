@@ -84,18 +84,57 @@ class Admin::HouseholdResetTest < ActiveSupport::TestCase
     end
   end
 
-  test "purges attached files rather than leaving them for a job" do
+  # D-purge-by-diff. This used to be a hand-written list of model names, and
+  # it had already gone stale twice — recipe images and every avatar survived
+  # a reset on a multi-household box, because nobody remembered to add them.
+  # Attaching one of *everything* is the point: a kind this test forgets is
+  # now still purged, because the mechanism never learned any names.
+  test "purges every kind of attached file rather than leaving them for a job" do
     document = @alice.documents.create!(title: "Lease")
     document.file.attach(io: StringIO.new("dummy"), filename: "lease.txt", content_type: "text/plain")
+    photo = @alice.photos.new
+    photo.image.attach(io: StringIO.new("dummy"), filename: "snap.jpg", content_type: "image/jpeg")
+    photo.save!
+    recipe = @alice.recipes.create!(title: "Soup")
+    recipe.image.attach(io: StringIO.new("dummy"), filename: "soup.jpg", content_type: "image/jpeg")
+    person = @alice.people.create!(name: "Dr Chen")
+    person.avatar.attach(io: StringIO.new("dummy"), filename: "chen.png", content_type: "image/png")
+    pet = create_pet(user: @alice)
+    pet.avatar.attach(io: StringIO.new("dummy"), filename: "rex.png", content_type: "image/png")
+    @alice.avatar.attach(io: StringIO.new("dummy"), filename: "me.png", content_type: "image/png")
+    @alice.export_archive.attach(io: StringIO.new("dummy"), filename: "export.zip", content_type: "application/zip")
     @household.banner.attach(io: StringIO.new("dummy"), filename: "home.jpg", content_type: "image/jpeg")
-    blobs = [ document.file.blob, @household.banner.blob ]
+
+    blobs = {
+      "document" => document.file.blob, "photo" => photo.image.blob,
+      "recipe image" => recipe.image.blob, "contact avatar" => person.avatar.blob,
+      "pet avatar" => pet.avatar.blob, "member avatar" => @alice.avatar.blob,
+      "export archive" => @alice.export_archive.blob, "household banner" => @household.banner.blob
+    }
 
     Admin::HouseholdReset.call(@household)
 
-    blobs.each do |blob|
-      assert_not ActiveStorage::Blob.exists?(blob.id)
-      assert_not blob.service.exist?(blob.key)
+    blobs.each do |kind, blob|
+      assert_not ActiveStorage::Blob.exists?(blob.id), "the #{kind} blob outlived the reset"
+      assert_not blob.service.exist?(blob.key), "the #{kind} bytes were left on disk"
     end
+  end
+
+  # The two things the old unattached sweep could not do safely, which is why
+  # it has to stay gated behind "no households left" and this doesn't.
+  test "another household's files, attached or mid-upload, survive the reset" do
+    theirs = @outsider.documents.create!(title: "Not mine")
+    theirs.file.attach(io: StringIO.new("dummy"), filename: "theirs.txt", content_type: "text/plain")
+    attached = theirs.file.blob
+    # A direct upload sitting unattached while somebody fills in the form.
+    in_flight = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("dummy"), filename: "wip.png", content_type: "image/png")
+
+    Admin::HouseholdReset.call(@household)
+
+    assert ActiveStorage::Blob.exists?(attached.id)
+    assert attached.service.exist?(attached.key)
+    assert ActiveStorage::Blob.exists?(in_flight.id), "an upload in flight elsewhere on the box is not ours to sweep"
   end
 
   # The reset is the one place that destroys a household whole, so it walks

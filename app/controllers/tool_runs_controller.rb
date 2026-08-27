@@ -92,6 +92,9 @@ class ToolRunsController < ApplicationController
       # Circle first (D30) — the people you're tending are almost always the
       # ones a People tool is about.
       @person_choices = Person.visible_to(Current.user).order(keep_in_touch: :desc, name: :asc) if @tool.inputs.any?(&:person?)
+      # Pets who are still with us: a tool about a pet's care has nothing to
+      # say about one who is gone, and offering her would be unkind.
+      @pet_choices = Pet.visible_to(Current.user).active if @tool.inputs.any?(&:pet?)
       # Hobby lenses (D25); with none yet the form falls back to free text,
       # so the Hobbies tools work before any lens exists.
       @hobby_choices = (Section.find_by(slug: "hobbies")&.children || Section.none) if @tool.inputs.any?(&:hobby?)

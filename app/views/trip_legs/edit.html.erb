@@ -1,0 +1,10 @@
+<%= render Ui::PageHeaderComponent.new(title: "Edit #{@leg.kind_label.downcase}", subtitle: @trip.name) %>
+
+<div class="max-w-xl space-y-6">
+  <%= render "form", leg: @leg, trip: @trip %>
+
+  <div class="row-actions">
+    <%= button_to "Remove from the itinerary", leg_path(@leg), method: :delete, class: "btn btn-ghost btn-sm",
+          data: { turbo_confirm: "Remove #{@leg.display_name}?" } %>
+  </div>
+</div>

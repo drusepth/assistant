@@ -1,0 +1,33 @@
+<%= render Ui::CardComponent.new(title: "Travelers", anchor: "travelers") do %>
+  <div class="space-y-2">
+    <% @travelers.each do |traveler| %>
+      <div class="flex items-center gap-2">
+        <%= render Ui::AvatarComponent.new(user: traveler, size: :xs) %>
+        <span class="text-sm text-ink"><%= traveler.name %></span>
+        <% if traveler.id == @trip.user_id %>
+          <span class="chip bg-stone-100 text-stone-600">Owner</span>
+        <% elsif @own || traveler.id == Current.user.id %>
+          <% membership = @trip.memberships.find { |m| m.user_id == traveler.id } %>
+          <%= button_to trip_companion_path(membership), method: :delete, class: "btn btn-ghost btn-sm",
+                data: { turbo_confirm: traveler.id == Current.user.id ? "Leave this trip?" : "Remove #{traveler.name} from the trip?" } do %>
+            <%= traveler.id == Current.user.id ? "Leave" : "Remove" %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+  <% if @own %>
+    <% addable = Current.user.household.users.where.not(id: @travelers.map(&:id)).order(:name) %>
+    <% if addable.any? %>
+      <%= form_with url: trip_companions_path(@trip), class: "mt-4 flex items-center gap-2" do |form| %>
+        <%= form.select "trip_membership[user_id]", addable.map { |user| [ user.name, user.id ] },
+              { include_blank: "Add someone from the household…" }, class: "input" %>
+        <%= form.submit "Add", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+      <p class="hint mt-2">
+        Everyone on the trip sees the itinerary, notes and posted photos, and can add their own.
+        Your map and camera roll stay yours.
+      </p>
+    <% end %>
+  <% end %>
+<% end %>

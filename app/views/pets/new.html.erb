@@ -1,0 +1,4 @@
+<%= render Ui::PageHeaderComponent.new(title: "Add a pet",
+      subtitle: "She gets her own page, and her own name to file things under — vet visits stay Health, her food stays Money.") %>
+
+<div class="max-w-2xl"><%= render "pets/form", pet: @pet %></div>

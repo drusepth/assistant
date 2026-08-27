@@ -1,0 +1,19 @@
+<%# Her photos: ordinary library photos tagged with her lens, which is why
+    this needs no photo_pets table (D-pet-primitive). Where a vision model is
+    configured it may *suggest* her lens from a caption; applying it is always
+    a human's click. %>
+<div data-controller="lightbox">
+  <%= render Ui::CardComponent.new(title: "Photos", subtitle: "Tagged #{pet.name}") do |card| %>
+    <% card.with_actions do %>
+      <%= link_to "All photos", photos_path(section: pet.section.slug), class: "btn btn-ghost btn-sm" %>
+      <% if memorial %>
+        <%# Offered once, quietly, and only for a pet who has died: the
+            photos are already gathered, so the album is one click. %>
+        <%= button_to "Make a memorial album", memorial_pet_album_path(pet), method: :post, class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    <% end %>
+    <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
+      <%= render partial: "photos/photo_tile", collection: photos, as: :photo %>
+    </div>
+  <% end %>
+</div>

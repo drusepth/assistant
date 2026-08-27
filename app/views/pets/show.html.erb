@@ -1,0 +1,135 @@
+<%# The pet's page (D-pet-primitive): the one place her care, food, papers,
+    pictures and cost converge. Her lens's section page is the raw browse of
+    everything tagged with her — linked at the foot, two surfaces, two jobs. %>
+<%= render Ui::PageHeaderComponent.new(title: @pet.name, subtitle: @pet.descriptor.presence) do |header| %>
+  <% header.with_avatar do %>
+    <%= render Ui::AvatarComponent.new(person: @pet, size: :lg, tone: :sage) %>
+  <% end %>
+  <% if @own %>
+    <% header.with_actions do %>
+      <%= link_to "Add an appointment", new_event_path(section_ids: [ @pet.section_id ]), class: "btn btn-secondary" %>
+      <%= link_to "Edit", edit_pet_path(@pet), class: "btn btn-secondary" %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<% unless @pet.active? %>
+  <%# Nothing nags about a pet who is gone, and nothing was deleted. %>
+  <div class="card mb-6 border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+    <%= @pet.died? ? "#{@pet.name} died #{@pet.died_on.strftime("%B %-d, %Y")}." : "#{@pet.name} was rehomed #{@pet.left_on.strftime("%B %-d, %Y")}." %>
+    Her reminders have stopped. Everything filed under her name is still here.
+  </div>
+<% end %>
+
+<div class="grid grid-cols-1 max-w-5xl gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <%= render Ui::CardComponent.new(title: "Details") do %>
+      <dl class="space-y-3 text-sm">
+        <% if @pet.sex.present? %>
+          <div class="flex gap-2">
+            <dt class="w-28 shrink-0 text-soft">Sex</dt>
+            <dd class="min-w-0 wrap-anywhere"><%= @pet.sex %></dd>
+          </div>
+        <% end %>
+        <% if @pet.color.present? %>
+          <div class="flex gap-2">
+            <dt class="w-28 shrink-0 text-soft">Markings</dt>
+            <dd class="min-w-0 wrap-anywhere"><%= @pet.color %></dd>
+          </div>
+        <% end %>
+        <% if @pet.born_on %>
+          <div class="flex gap-2">
+            <dt class="w-28 shrink-0 text-soft">Born</dt>
+            <dd class="min-w-0 wrap-anywhere">
+              <%= @pet.born_on.strftime("%B %-d, %Y") %><% if @pet.born_on_estimated %> <span class="text-soft">(estimated)</span><% end %>
+            </dd>
+          </div>
+        <% end %>
+        <% if @pet.adopted_on %>
+          <div class="flex gap-2">
+            <dt class="w-28 shrink-0 text-soft">Gotcha day</dt>
+            <dd class="min-w-0 wrap-anywhere"><%= @pet.adopted_on.strftime("%B %-d, %Y") %></dd>
+          </div>
+        <% end %>
+        <% if @pet.weight_kg %>
+          <div class="flex gap-2">
+            <dt class="w-28 shrink-0 text-soft">Weight</dt>
+            <dd class="min-w-0 wrap-anywhere"><%= number_with_precision(@pet.weight_kg, precision: 2, strip_insignificant_zeros: true) %> kg</dd>
+          </div>
+        <% end %>
+        <% if @pet.microchip.present? %>
+          <div class="flex gap-2">
+            <dt class="w-28 shrink-0 text-soft">Microchip</dt>
+            <dd class="min-w-0 font-mono text-xs wrap-anywhere"><%= @pet.microchip %></dd>
+          </div>
+        <% end %>
+        <div class="flex gap-2">
+          <dt class="w-28 shrink-0 text-soft">Vet</dt>
+          <dd class="min-w-0 wrap-anywhere">
+            <% if @pet.vet %>
+              <%= link_to @pet.vet.name, @pet.vet, class: "text-primary-700 hover:underline" %>
+              <% if @pet.vet.phone.present? %> · <%= phone_to @pet.vet.phone, nil, class: "text-primary-700 hover:underline" %><% end %>
+            <% else %>
+              <span class="text-soft">No vet on file</span>
+            <% end %>
+          </dd>
+        </div>
+        <% if @pet.notes.present? %>
+          <div>
+            <dt class="mb-1 text-soft">Notes</dt>
+            <dd class="whitespace-pre-wrap text-ink"><%= @pet.notes %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+
+    <% if @own && @pet.active? %>
+      <%= render "pets/tools", pet: @pet %>
+    <% end %>
+
+    <% if @care_statuses.any? %>
+      <%= render "pets/care_radar", pet: @pet, statuses: @care_statuses, health_section_id: @health_section_id %>
+    <% end %>
+
+    <% if @shelf.any? || @own %>
+      <%= render "pets/food_shelf", pet: @pet, shelf: @shelf, own: @own %>
+    <% end %>
+
+    <% if @events.any? || @tasks.any? %>
+      <%= render Ui::CardComponent.new(title: "Coming up", padded: false) do %>
+        <div class="divide-y divide-edge">
+          <%= render @events %>
+          <%= render @tasks %>
+        </div>
+      <% end %>
+    <% end %>
+
+    <% if @papers.any? || @own %>
+      <%= render "pets/papers", pet: @pet, papers: @papers %>
+    <% end %>
+
+    <% if @photos.any? %>
+      <%= render "pets/photos", pet: @pet, photos: @photos, memorial: @own && @pet.died? %>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <% if @cost %>
+      <%= render "pets/cost", pet: @pet, cost: @cost %>
+    <% end %>
+    <%= render "pets/filing", pet: @pet %>
+    <% if @own %>
+      <%= render "shared/share_controls", subject: @pet %>
+    <% else %>
+      <%# Grants are per-grantor (D9), so a shared pet only becomes one shared
+          calendar when each member shares their own side. Nothing implies it;
+          this is the button that makes it one click. %>
+      <%= render Ui::CardComponent.new(title: "Your #{@pet.name} items",
+            subtitle: "#{@pet.name} was shared with you. What you file under her name is still private until you share it.") do %>
+        <%= button_to "Share my #{@pet.name} items with the household",
+              access_grants_path(subject_type: "Section", subject_id: @pet.section_id, everyone: 1),
+              method: :post, class: "btn btn-secondary btn-sm w-full" %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

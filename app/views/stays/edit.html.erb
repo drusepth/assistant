@@ -1,0 +1,10 @@
+<%= render Ui::PageHeaderComponent.new(title: "Edit stay", subtitle: @trip.name) %>
+
+<div class="max-w-xl space-y-6">
+  <%= render "form", stay: @stay, trip: @trip %>
+
+  <div class="row-actions">
+    <%= button_to "Remove this stay", stay_path(@stay), method: :delete, class: "btn btn-ghost btn-sm",
+          data: { turbo_confirm: "Remove #{@stay.display_name} from the itinerary?" } %>
+  </div>
+</div>

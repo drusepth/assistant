@@ -15,19 +15,29 @@ module Sections
       panel_class(section)&.new(section: section, viewer: viewer)
     end
 
-    # By slug first. Failing that, a parent may claim its user-created lenses
-    # as one class, since those slugs are named by the user and can't be
-    # known here: `Panels::PeopleLens` for every group under People
-    # (D-people-circles), `Panels::HobbiesLens` for every hobby's river
-    # (D-hobby-feeds). A parent that declares no such class keeps the old
-    # answer: no panel, generic page.
+    # By slug first. Then a lens a model owns — a `Pet` holds a custom child
+    # of People (`Section::LENS_OWNERS`), and without this rung Rex's lens
+    # would fall through to the parent rule below and render as a group's
+    # members page. Failing both, a parent may
+    # claim its user-created lenses as one class, since those slugs are named
+    # by the user and can't be known here: `Panels::PeopleLens` for every
+    # group under People (D-people-circles), `Panels::HobbiesLens` for every
+    # hobby's river (D-hobby-feeds). A parent that declares no such class
+    # keeps the old answer: no panel, generic page.
     #
-    # Two branches arrived at this fallback for their own section in the same
-    # week, which is the argument for it being here rather than in either.
+    # Two branches arrived at the parent fallback for their own section in the
+    # same week, which is the argument for it being here rather than in either.
     def self.panel_class(section)
-      constant(section.slug) ||
+      constant(section.slug) || owned_lens_class(section) ||
         (section.parent && constant("#{section.parent.slug}_lens"))
     end
+
+    # `Pet` => `Sections::Panels::PetLens`, by the same naming convention the
+    # parent fallback uses.
+    def self.owned_lens_class(section)
+      section.lens_owner&.then { |model| constant("#{model.underscore}_lens") }
+    end
+    private_class_method :owned_lens_class
 
     # Lens slugs are `parameterize`d, so they hyphenate ("board-games") where
     # a constant needs underscores — `camelize` alone leaves "Board-games"

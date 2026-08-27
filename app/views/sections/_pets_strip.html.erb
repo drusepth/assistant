@@ -1,0 +1,38 @@
+<%# Pets on the People page (D-pet-primitive): family, in the same card
+    language as the circle and the groups beside them. There is no Pets
+    section — her vet visit is Health + her name, and both pages are right.
+
+    A household with no pets sees one dashed tile and nothing else. %>
+<div>
+  <h2 class="mb-3 text-sm font-medium text-soft">Your pets</h2>
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <% pets.each do |card| %>
+      <%= link_to card.path, class: "card group flex items-center gap-3 border-edge p-4 transition hover:border-primary-300 hover:shadow-sm" do %>
+        <%= render Ui::AvatarComponent.new(person: card.pet, size: :md, tone: :sage) %>
+        <div class="min-w-0">
+          <p class="truncate text-sm font-semibold text-ink group-hover:text-primary-700"><%= card.name %></p>
+          <p class="mt-0.5 text-xs text-soft"><%= card.signal %></p>
+        </div>
+      <% end %>
+    <% end %>
+
+    <%= link_to new_pet_path, class: "flex min-h-20 items-center justify-center rounded-xl border border-dashed border-edge p-4 text-sm font-medium text-soft transition hover:border-primary-300 hover:text-primary-700" do %>
+      + Add a pet
+    <% end %>
+  </div>
+
+  <% if remembered.any? %>
+    <%# Quiet, at the foot, and never a prompt to do anything. %>
+    <div class="mt-4">
+      <h3 class="mb-2 text-xs font-medium text-soft">Remembered</h3>
+      <div class="flex flex-wrap gap-2">
+        <% remembered.each do |card| %>
+          <%= link_to card.path, class: "chip inline-flex items-center gap-2 bg-stone-100 py-1 pr-3 pl-1 text-stone-600 hover:text-stone-800" do %>
+            <%= render Ui::AvatarComponent.new(person: card.pet, size: :xs, tone: :stone) %>
+            <span><%= card.name %></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

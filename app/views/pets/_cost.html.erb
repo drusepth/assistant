@@ -1,0 +1,27 @@
+<%# What she costs (D-pet-food-shelf). Two numbers from two places: the food
+    shelf's arithmetic, and what the ledger actually filed. The ledger half
+    says what it can't see rather than presenting a confident total, and says
+    nothing at all when there is no ledger. %>
+<%= render Ui::CardComponent.new(title: "Cost of care") do %>
+  <div class="space-y-3 text-sm">
+    <% if (line = pet_cost_line(cost)) %>
+      <p class="text-soft"><%= line %></p>
+      <%= link_to "See the transactions", spending_path(category: cost.category&.id), class: "text-primary-700 hover:underline" %>
+    <% elsif cost.category %>
+      <p class="text-soft">Nothing filed under <%= Pets::CostOfCare::CATEGORY_NAME %> in the last year yet.</p>
+    <% else %>
+      <p class="text-soft">No <%= Pets::CostOfCare::CATEGORY_NAME %> envelope yet. One line in the budget is what turns food, vet bills and insurance into a number you can see coming.</p>
+      <%= button_to "Make a Pets envelope", pet_budget_path(pet), method: :post, class: "btn btn-secondary btn-sm" %>
+    <% end %>
+
+    <% if cost.category && cost.ledger? %>
+      <%# The taught-rule loop (D-budget-envelopes), from the page where you
+          already know the answer. %>
+      <%= form_with url: pet_budget_path(pet), method: :patch, class: "capture-row border-t border-edge pt-3" do %>
+        <%= text_field_tag :matcher, nil, placeholder: "Chewy, the vet, the pet shop…", class: "input sm:max-w-56",
+              "aria-label": "Always file this shop under Pets" %>
+        <%= submit_tag "Always file under Pets", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

@@ -15,6 +15,12 @@ class Person < ApplicationRecord
   has_many :photo_people, dependent: :destroy
   has_many :photos, through: :photo_people
 
+  # Pets who see this contact (D-pet-primitive). Nullify, not restrict:
+  # removing the vet from your address book is not a claim about the dog, and
+  # without this the delete died on a foreign key.
+  has_many :patients, class_name: "Pet", foreign_key: :vet_id,
+    inverse_of: :vet, dependent: :nullify
+
   validates :name, presence: true
 
   # The circle (D-people-dashboard): relationships the user is tending, marked explicitly —

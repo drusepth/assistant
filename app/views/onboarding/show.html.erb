@@ -62,8 +62,8 @@
 
   <% when 4 %>
     <%= render Ui::CardComponent.new(title: "Bring your life in",
-          subtitle: "Three shortcuts that pay off immediately — or head straight to your dashboard.") do %>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          subtitle: "A few shortcuts that pay off immediately — or head straight to your dashboard.") do %>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <%= link_to new_people_import_path, class: "card block p-4 text-center hover:border-primary-300" do %>
           <p class="text-sm font-semibold text-ink">Import contacts</p>
           <p class="mt-1 text-xs text-soft">vCard or CSV from your phone or Google</p>
@@ -75,6 +75,19 @@
         <%= link_to new_document_path, class: "card block p-4 text-center hover:border-primary-300" do %>
           <p class="text-sm font-semibold text-ink">Upload a document</p>
           <p class="mt-1 text-xs text-soft">A lease, a bill, a test result</p>
+        <% end %>
+        <%# Pets are the one household member the app can't learn about from an
+            import (D-pet-primitive). They are deliberately *not* a question on
+            step 1: a pet is a whom and step 1 asks about sections, and a
+            "do you have pets?" screen is the persona quiz ROADMAP §5.4 refused.
+            A fourth shortcut is the honest size of it. Hidden once anyone in
+            the household has added one, so the second member to onboard isn't
+            asked to add the dog again. %>
+        <% if @offer_pet %>
+          <%= link_to new_pet_path, class: "card block p-4 text-center hover:border-primary-300" do %>
+            <p class="text-sm font-semibold text-ink">Add a pet</p>
+            <p class="mt-1 text-xs text-soft">Her vet visits, food and papers, in one place</p>
+          <% end %>
         <% end %>
       </div>
       <div class="mt-5 text-center">

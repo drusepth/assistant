@@ -1,0 +1,29 @@
+<%= render Ui::CardComponent.new(title: "Notes & comments", anchor: "comments", padded: false) do %>
+  <% if @comments.any? %>
+    <div class="divide-y divide-edge">
+      <% @comments.each do |comment| %>
+        <div class="flex items-start gap-3 p-4">
+          <%= render Ui::AvatarComponent.new(user: comment.user, size: :sm) %>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm">
+              <span class="font-medium text-ink"><%= comment.user.name %></span>
+              <span class="text-soft">· <%= comment.created_at.strftime("%-d %b %Y") %></span>
+            </p>
+            <p class="mt-0.5 whitespace-pre-line text-sm text-ink"><%= comment.body %></p>
+          </div>
+          <% if comment.editable_by?(Current.user) %>
+            <%= button_to trip_comment_path(comment), method: :delete, class: "btn btn-ghost btn-sm shrink-0",
+                  data: { turbo_confirm: "Remove this comment?" } do %>Remove<% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="border-t border-edge p-4">
+    <%= form_with url: trip_comments_path(@trip), class: "space-y-2" do |form| %>
+      <%= form.text_area "trip_comment[body]", rows: 2, class: "input",
+            placeholder: @travelers.size > 1 ? "Leave a note for everyone on the trip…" : "Leave a note on this trip…" %>
+      <%= form.submit "Post", class: "btn btn-secondary btn-sm" %>
+    <% end %>
+  </div>
+<% end %>

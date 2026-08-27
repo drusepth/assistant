@@ -1,0 +1,28 @@
+<%# A pet's papers: vaccination record, adoption papers, microchip
+    registration, the policy. All of them are Documents the vault already
+    reads and summarizes — this card is an order and a front door, not new
+    machinery. Policy-shaped ones lead: they're what you need at the worst
+    moment. %>
+<%= render Ui::CardComponent.new(title: "Papers", count: papers.size) do |card| %>
+  <% card.with_actions do %>
+    <%= link_to "Add a document", new_document_path(section_ids: [ pet.section_id ]), class: "btn btn-ghost btn-sm" %>
+  <% end %>
+  <% if papers.any? %>
+    <ul class="divide-y divide-edge">
+      <% papers.each do |document| %>
+        <li class="flex flex-wrap items-center gap-2 py-2.5 first:pt-0 last:pb-0">
+          <%= link_to document.title, document, class: "min-w-0 flex-1 truncate text-sm text-ink hover:text-primary-700" %>
+          <% if Pets::Papers.policy?(document) %>
+            <span class="chip bg-primary-100 text-primary-800">Policy</span>
+          <% end %>
+          <span class="shrink-0 text-xs text-soft"><%= document.created_at.to_date.strftime("%b %Y") %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="text-sm text-soft">
+      Nothing filed yet. The vaccination record and the policy are the two worth having here before you need them —
+      the boarding kennel asks for one and the emergency clinic asks for the other.
+    </p>
+  <% end %>
+<% end %>

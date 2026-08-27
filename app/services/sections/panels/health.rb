@@ -3,7 +3,10 @@ module Sections
     # The Health lead panel (docs/HEALTH.md): care radar, household care,
     # Mind, medications, allergies, insurance & coverage.
     class Health < Panel
-      def hidden_tool_slugs = ::Health::PANEL_TOOL_SLUGS
+      # The panel's own tools, plus the pet tools until this household has a
+      # pet (::Pets.hidden_tool_slugs) — "Prep for a vet visit" on a petless
+      # Health page is noise.
+      def hidden_tool_slugs = ::Health::PANEL_TOOL_SLUGS + ::Pets.hidden_tool_slugs(viewer)
 
       def care_statuses
         @care_statuses ||= ::Health::CareRadar.new(viewer).statuses
@@ -18,6 +21,18 @@ module Sections
           tracked = ::Health::CareRadar.new(member, viewer: viewer).statuses
             .select { |status| status.last_visit || status.next_visit }
           [ member, tracked ] if tracked.any?
+        end
+      end
+
+      # Pets are members of the household who can't log in
+      # (D-pet-care-radar), so they join this strip as rows without a login:
+      # the visibility wall is the pet's own grants rather than a member's
+      # sharing, and only pets still with us are tracked.
+      def pet_care
+        @pet_care ||= Pet.visible_to(viewer).active.includes(:section).filter_map do |pet|
+          tracked = ::Health::CareRadar.new(pet, viewer: viewer).statuses
+            .select { |status| status.last_visit || status.next_visit }
+          [ pet, tracked ] if tracked.any?
         end
       end
 

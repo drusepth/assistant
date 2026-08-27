@@ -168,14 +168,21 @@ Faro"), anything else is the two biggest joined. Somewhere the gazetteer has
 never heard of gets its month, which is at least true. It is a suggestion —
 the trip page renames.
 
-**A saved `Trip` is a name, a date range and a box on the map, and nothing
-else.** Membership is derived from those three: its photos are the ones taken
-inside the box while it ran, so photos imported later join the trip on their
-own, and its events are simply what was on the calendar those days. That is
-what keeps Q17 (person↔item links, and by extension item↔item links) deferred
-— a trip needs no join table, because dates and a box already say what belongs
-to it. Events read through `visible_to`, so a flight your spouse shared with
-you appears on your trip; photos never do (see the owner-only rule in §2).
+**A saved `Trip` is a name, a date range and — when it was born from photos —
+a box on the map.** Photo membership is derived from those three: its photos
+are the ones taken inside the box while it ran, so photos imported later join
+the trip on their own, and its events are simply what was on the calendar
+those days. That is what keeps Q17 (person↔item links, and by extension
+item↔item links) deferred — a trip's *photos* need no join table, because
+dates and a box already say what belongs to them. Events read through
+`visible_to`, so a flight your spouse shared with you appears on your trip;
+photos never do (see the owner-only rule in §2).
+
+Since D-trip-spine, a trip can also be **planned ahead** — typed name, place
+and dates, no box yet — and carries an itinerary of stays and transport legs
+with booked/planned tracking, shared with household companions by membership.
+That whole second life is `docs/TRIPS_PLAN.md`; this section stays the record
+of the photo-derived half.
 
 Saving re-derives everything server-side from the user's own photos: the form
 sends only the start date it is accepting, so a hand-edited request can move a
@@ -184,10 +191,14 @@ editable afterwards, because the detector's guess at when a trip started is
 only as good as when the first photo was taken, and the flight out often has
 none.
 
-Trips are **owner-only**, like the map and for the same reason: a trip is a
-lens on photo coordinates, and sharing one would hand a household member the
-locations the photo pages withhold. The per-album "share locations" toggle
-(Q14's open half) is the decision that would change this.
+Everything *coordinate-derived* on a trip is **owner-only**, like the map and
+for the same reason: the box, the trip map and the derived camera roll are a
+lens on photo coordinates, and sharing them would hand a household member the
+locations the photo pages withhold. A trip itself can now be shared by
+membership (D-trip-companions) — itinerary, comments, and explicitly *posted*
+photos — but each traveller's map and camera roll stay their own. The
+per-album "share locations" toggle (Q14's open half) is still the decision
+that would change the map's side of this.
 
 ## 4. What it costs
 
@@ -235,19 +246,20 @@ real rewrite of both services, so it waits for a library that actually hurts.
 
 ## 5. What the hub does not have yet
 
-Deliberately unbuilt, in rough order of expected demand:
+Much of the original list landed as D-trip-spine (planned trips, itineraries,
+booked/planned tracking, membership sharing, comments, posted photos — see
+`docs/TRIPS_PLAN.md`, whose §5 is now the forward list). Still deliberately
+unbuilt here:
 
 1. **Travel documents.** Passport and visa expiry are exactly renewal-radar's
    beat (`Watcher::RenewalRadar` already keys off "renew"/"expir"), so this may
    be a keyword and a panel rather than new machinery.
 2. **Tools.** Nothing Tier-A yet without live data (Q9): a packing list from a
    trip's dates and destination is honest; "find flights" is not.
-3. **Trips that know more than their dates.** A trip could carry the documents
-   and notes filed during it, but that is the Q17 link table — wait for a
-   second consumer to want it, per `docs/PEOPLE.md` §9.8.
-4. **A per-album "share locations" toggle** — Q14's open half, and the thing
-   that would let a trip be shared. Worth asking only once someone actually
-   wants a household trip to carry its map.
+3. **A per-album "share locations" toggle** — Q14's open half, and the thing
+   that would let a shared trip carry its *map* (the itinerary and posted
+   photos already travel with membership). Worth asking only once someone
+   actually wants that.
 
 ## 6. Files
 
@@ -257,7 +269,7 @@ Deliberately unbuilt, in rough order of expected demand:
 | Section hub panel | `app/services/sections/panels/travel.rb`, `app/views/sections/panels/_travel.html.erb` |
 | Pins | `app/services/photos/map.rb` |
 | Place names | `app/services/datasets/places.rb`, `db/datasets/places.csv`, `script/build_places_dataset.rb` |
-| Trips | `app/services/travel/trips.rb`, `app/models/trip.rb`, `TripsController`, `app/views/trips/` |
+| Trips | `app/services/travel/trips.rb`, `app/models/trip.rb`, `TripsController`, `app/views/trips/` (the planning half: `docs/TRIPS_PLAN.md` §6) |
 | Drawing | `app/components/ui/photo_map_component.rb` (+ `.html.erb`) |
 | Basemaps | `app/assets/images/world_land.svg` (world), `world_land_detail.svg` (zoomed), `script/build_world_map.rb` |
 | Full-page map | `PhotosController#map`, `app/views/photos/map.html.erb` |

@@ -1,0 +1,7 @@
+<%# One row of care states, for a household member or a pet — the same four
+    states in the same chips, because they are the same radar. %>
+<% statuses.each do |status| %>
+  <span class="chip <%= care_state_chip_classes(status.state) %>">
+    <%= status.kind.label %> — <%= care_state_label(status.state).downcase %><%= " #{status.next_visit_on.strftime("%b %-d")}" if status.state == :booked %>
+  </span>
+<% end %>

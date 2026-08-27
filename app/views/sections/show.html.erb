@@ -2,7 +2,8 @@
     lenses are unbounded, Money seeds seven) and a chip cloud has no pull.
     They get the browse grids below instead. %>
 <%= render Ui::PageHeaderComponent.new(title: @section.qualified_name) do |header| %>
-  <% if @section.custom? %>
+  <%# A lens a record owns (a pet's) is removed by removing the record. %>
+  <% if @section.removable? %>
     <% header.with_actions do %>
       <% group = @section.parent&.slug == "people" %>
       <%= button_to group ? "Remove this group" : "Remove this hobby",

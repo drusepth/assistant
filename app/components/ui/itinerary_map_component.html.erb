@@ -1,0 +1,33 @@
+<div class="relative w-full overflow-hidden rounded-2xl bg-stone-100"
+     style="aspect-ratio: <%= map.aspect_ratio %>">
+  <svg class="absolute inset-0 size-full text-sage-300" viewBox="<%= map.view_box %>"
+       preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="currentColor" fill-rule="evenodd"><%= land %></g>
+    <%# The route, drawn in the map's own coordinates. non-scaling-stroke
+        keeps the line hairline-thin whatever window the trip settled on. %>
+    <g class="text-stone-500" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5">
+      <% map.segments.each do |from, to| %>
+        <line x1="<%= from.x.round(2) %>" y1="<%= from.y.round(2) %>"
+              x2="<%= to.x.round(2) %>" y2="<%= to.y.round(2) %>" vector-effect="non-scaling-stroke" />
+      <% end %>
+    </g>
+  </svg>
+
+  <% map.context_labels.each do |label| %>
+    <span class="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium text-stone-600/80"
+          style="left: <%= label.left %>; top: <%= label.top %>" aria-hidden="true"><%= label.name %></span>
+  <% end %>
+
+  <p class="sr-only"><%= summary %></p>
+
+  <% map.waypoints.each_with_index do |waypoint, index| %>
+    <% position = map.position(waypoint) %>
+    <%= link_to edit_stay_path(waypoint.stay),
+          class: "absolute flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[9px] font-semibold text-white ring-2 ring-canvas transition-transform hover:z-10 hover:scale-125 focus-visible:z-10 focus-visible:scale-125 #{pin_classes(waypoint)}",
+          style: "left: #{position[:left]}; top: #{position[:top]}",
+          title: "#{waypoint.label} · #{waypoint.stay.period}#{waypoint.stay.booked? ? "" : " · not booked"}" do %>
+      <%= index + 1 %>
+      <span class="sr-only"><%= waypoint.label %></span>
+    <% end %>
+  <% end %>
+</div>

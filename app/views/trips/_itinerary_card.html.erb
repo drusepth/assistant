@@ -1,0 +1,61 @@
+<%# The itinerary: stays and legs in one chronological run, each wearing
+    its booked/not-booked chip. This is the page's job while the trip is
+    still ahead — the photos take over once you're back. %>
+<%= render Ui::CardComponent.new(title: "Itinerary", anchor: "itinerary", padded: false) do |card| %>
+  <% card.with_actions do %>
+    <div class="row-actions">
+      <%= link_to "+ Stay", new_trip_stay_path(@trip), class: "btn btn-secondary btn-sm" %>
+      <%= link_to "+ Flight", new_trip_leg_path(@trip, kind: "flight"), class: "btn btn-secondary btn-sm" %>
+      <%= link_to "+ Drive", new_trip_leg_path(@trip, kind: "drive"), class: "btn btn-secondary btn-sm" %>
+      <%= link_to "+ Car rental", new_trip_leg_path(@trip, kind: "car_rental"), class: "btn btn-secondary btn-sm" %>
+    </div>
+  <% end %>
+
+  <% if @timeline.any? %>
+    <div class="divide-y divide-edge">
+      <% @timeline.each do |item| %>
+        <%= render "trips/itinerary_item", item: item, trip: @trip %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="p-4 text-sm text-soft">
+      Nothing on the itinerary yet. Add where you'll stay, then how you'll get there —
+      each one tracks whether it's booked or still just planned.
+    </p>
+  <% end %>
+
+  <% booked_cents, planned_cents = @trip.booked_cost_cents, @trip.planned_cost_cents %>
+  <% if booked_cents.positive? || planned_cents.positive? %>
+    <p class="border-t border-edge px-4 py-3 text-sm text-soft">
+      <% if booked_cents.positive? %>
+        Booked: <span class="font-semibold text-ink"><%= money_amount(booked_cents) %></span>
+      <% end %>
+      <% if planned_cents.positive? %>
+        <%= "·" if booked_cents.positive? %>
+        Still to book: <span class="font-semibold text-ink"><%= money_amount(planned_cents) %></span>
+      <% end %>
+    </p>
+  <% end %>
+
+  <% unless @trip.past? %>
+    <% gaps = @trip.lodging_gaps %>
+    <% if @trip.stays.any? && gaps.any? %>
+      <div class="callout callout-warn m-4 mt-3">
+        <p class="callout-title">Nights with nowhere to sleep</p>
+        <ul class="mt-1 space-y-0.5 text-sm">
+          <% gaps.each do |gap| %>
+            <% nights = (gap.last - gap.first).to_i + 1 %>
+            <li>
+              <%= gap.first.strftime("%b %-d") %><%= " – #{gap.last.strftime("%b %-d")}" if gap.last != gap.first %>
+              (<%= pluralize(nights, "night") %>)
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% elsif @trip.stays.none? && @timeline.any? %>
+      <div class="callout callout-warn m-4 mt-3">
+        <p class="callout-title">No lodging on this trip yet</p>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

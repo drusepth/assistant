@@ -15,6 +15,7 @@ class Photo < ApplicationRecord
 
   has_many :album_photos, dependent: :destroy
   has_many :albums, through: :album_photos
+  has_many :trip_photos, dependent: :destroy
   has_many :photo_people, dependent: :destroy
   has_many :people, through: :photo_people
 
@@ -23,17 +24,36 @@ class Photo < ApplicationRecord
   # collaborative album (Q15) can never leak a contributor's photo through
   # someone else's grant.
   def self.extra_visibility_clauses
-    [ <<~SQL ]
-      EXISTS (
-        SELECT 1 FROM access_grants
-        INNER JOIN album_photos
-          ON album_photos.album_id = access_grants.subject_id
-          AND album_photos.photo_id = photos.id
-        WHERE access_grants.grantee_id = :viewer_id
-          AND access_grants.subject_type = 'Album'
-          AND access_grants.grantor_id = photos.user_id
-      )
-    SQL
+    [
+      <<~SQL,
+        EXISTS (
+          SELECT 1 FROM access_grants
+          INNER JOIN album_photos
+            ON album_photos.album_id = access_grants.subject_id
+            AND album_photos.photo_id = photos.id
+          WHERE access_grants.grantee_id = :viewer_id
+            AND access_grants.subject_type = 'Album'
+            AND access_grants.grantor_id = photos.user_id
+        )
+      SQL
+      # The trip-post path (D-trip-companions): a photo posted to a trip is
+      # visible to everyone travelling on it. Same guard as albums — the
+      # poster must own the photo — so a trip can never leak a photo through
+      # someone else's post.
+      <<~SQL
+        EXISTS (
+          SELECT 1 FROM trip_photos
+          INNER JOIN trips ON trips.id = trip_photos.trip_id
+          WHERE trip_photos.photo_id = photos.id
+            AND trip_photos.user_id = photos.user_id
+            AND (trips.user_id = :viewer_id OR EXISTS (
+              SELECT 1 FROM trip_memberships
+              WHERE trip_memberships.trip_id = trips.id
+                AND trip_memberships.user_id = :viewer_id
+            ))
+        )
+      SQL
+    ]
   end
 
   # Photos the map can place (D-travel-facet). Most libraries are a mix:
@@ -110,6 +130,16 @@ class Photo < ApplicationRecord
 
   def suggested_section_records
     Section.where(slug: suggested_sections).order(:parent_id, :position) - sections
+  end
+
+  # What the captioner may file *for* you, as opposed to offer. A lens a
+  # record owns is excluded: a model confidently tagging the neighbour's dog
+  # as Rex is the photo_people rule again (no face recognition, Q8's lesson),
+  # and a pet lens carries her whole page with it. It may suggest; a human
+  # applies (D-pet-primitive).
+  def auto_filable_section_records
+    owned = Section.owned_lens_ids
+    suggested_section_records.reject { |section| owned.include?(section.id) }
   end
 
   private
