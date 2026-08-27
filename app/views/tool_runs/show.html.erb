@@ -49,11 +49,13 @@
 <div class="max-w-3xl space-y-6">
   <% if @tool_run.queued? || @tool_run.running? %>
     <%= render Ui::CardComponent.new do %>
-      <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
-        <%# Decoration only — the sentence beside it is what a screen reader
-            should hear, so the bars stay out of the accessibility tree. %>
+      <div class="space-y-4">
+        <%# Decoration only — the sentence under it is what a screen reader
+            should hear, so the bars stay out of the accessibility tree.
+            28 is two full wavelengths of the atom's 14-bar phase, so the
+            wave meets both edges of the card at the same point. %>
         <div class="working-bars" aria-hidden="true">
-          <% 7.times do %><span class="working-bar"></span><% end %>
+          <% 28.times do %><span class="working-bar"></span><% end %>
         </div>
         <p class="text-sm text-soft">Working on it — this page updates by itself when the draft is ready.</p>
       </div>

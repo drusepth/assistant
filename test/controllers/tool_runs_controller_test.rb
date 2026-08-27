@@ -85,7 +85,7 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     get tool_run_path(run)
 
     assert_response :success
-    assert_select ".working-bars[aria-hidden=true] span.working-bar", count: 7
+    assert_select ".working-bars[aria-hidden=true] span.working-bar", count: 28
     assert_select "p", text: /Working on it/
   end
 
