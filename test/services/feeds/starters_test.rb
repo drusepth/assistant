@@ -22,6 +22,37 @@ class Feeds::StartersTest < ActiveSupport::TestCase
       "a feed living on somebody else's redirector is the failure mode this feature answers"
   end
 
+  # Breadth is the shelf's whole job: somebody who has never used a reader
+  # should find the thing *they* are into, not a choice between technology
+  # and world news. These floors are deliberately well under what ships, so
+  # they catch a list being gutted rather than bless an exact size.
+  test "the shelf is broad enough to cover the kinds of things people have hobbies about" do
+    groups = Feeds::Starters.groups
+
+    assert_operator groups.size, :>=, 30, "a shelf this narrow makes somebody's hobby somebody else's"
+    assert_operator Feeds::Starters.entries.size, :>=, 100
+    assert_operator Feeds::Starters.entries.size, :<=, Feeds::Opml::MAX_FEEDS,
+      "past the import cap the tail of the shelf silently stops being followable"
+    assert groups.values.all?(&:any?)
+    assert_equal groups.keys.uniq, groups.keys
+  end
+
+  # Two rows with the same name in one topic are a copy-paste, and two rows
+  # with the same name in a checkbox list are unpickable.
+  test "no topic offers the same source twice" do
+    Feeds::Starters.groups.each do |folder, entries|
+      titles = entries.map(&:title)
+      assert_equal titles.uniq, titles, "#{folder} lists a source twice"
+    end
+  end
+
+  # The checker (script/check_starter_feeds.rb, run weekly and on any PR that
+  # edits the file) is the only thing standing between this list and rot, so
+  # the file has to keep pointing at it.
+  test "the file says how it is verified" do
+    assert_match "check_starter_feeds", Feeds::Starters.reload!.document
+  end
+
   test "building the list fetches nothing" do
     assert_not_requested :any, //
     assert Feeds::Starters.groups.any?

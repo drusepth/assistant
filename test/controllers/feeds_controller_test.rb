@@ -149,6 +149,18 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Not sure where to start/, response.body)
   end
 
+  # ~48 topics is a page of names, not a page of checkboxes: each topic is a
+  # closed fold, and the boxes inside it still submit.
+  test "the shelf browses a topic at a time" do
+    get feeds_path
+
+    assert_select "form[action=?] details", starters_feeds_path, count: Feeds::Starters.groups.size
+    assert_select "form[action=?] details[open]", starters_feeds_path, false,
+      "a shelf that opens every topic is the wall the folds exist to answer"
+    assert_select "input[type=checkbox][name=?]", "urls[]", count: Feeds::Starters.entries.size
+    assert_match "Birding", response.body
+  end
+
   test "ticking starters follows those and returns to where the shelf was" do
     picks = Feeds::Starters.entries.first(2).map(&:url)
 

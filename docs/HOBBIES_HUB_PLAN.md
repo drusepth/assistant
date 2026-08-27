@@ -309,10 +309,35 @@ What earns a place on the list, in priority order: a **publisher-run URL**
 (never an aggregator or a FeedBurner proxy — that single point of failure is
 the Google Reader story this whole feature answers), no account or paywall, a
 decade of URL stability, politeness to poll, and coverage spread across the
-kinds of things people have hobbies about rather than a news firehose. Every
-URL is verified by hand before it ships and the file carries the date it was
-last checked; a starter that fails its first refresh is dropped from the list
-rather than left as a red row in a brand-new account.
+kinds of things people have hobbies about rather than a news firehose. A
+starter that fails its first refresh is dropped from the list rather than left
+as a red row in a brand-new account.
+
+**Breadth, and what it cost.** The shelf shipped with fourteen feeds across
+nine topics, which is a shelf that answers "do you like technology or world
+news?" — for anybody whose hobby is birding or chess or brewing, an empty
+reader offering nine topics is still an empty reader. It now carries ~150
+feeds across ~48 topics. Breadth changes the shape of the thing twice over:
+
+- **The shelf is browsed, not read.** Every topic renders as a closed
+  `<details>` (no JS, the fold the circle cards already use) in two or three
+  columns, so what somebody meets is a page of topic names — the wall of
+  checkboxes only appears inside the topic they opened. Ticking works whether
+  or not the folds are open, because the inputs are in the DOM either way.
+- **Hand-verification stops scaling, so it's CI's job.**
+  `script/check_starter_feeds.rb` fetches every row through the ordinary
+  `Web::Fetch` + `Feeds::Parse` path and exits non-zero on anything that
+  isn't a feed; `.github/workflows/starter-feeds.yml` runs it weekly and on
+  any PR touching the file. It retries each failure once (one timeout in a
+  hundred and fifty fetches is weather) and never runs two fetches at the
+  same host at once — this list multiplies by every self-hoster who ticks it.
+  It is the only job in CI that talks to the open web, which is why it is
+  path-filtered off every unrelated PR.
+
+The structural rules that don't need the network — https only, no
+redirector hosts, unique URLs, every row foldered, and floors on how many
+topics and feeds the shelf carries — stay in `Feeds::StartersTest`, where
+they run on every PR for free.
 
 ## 8. Deliberately not doing (and what would change our minds)
 

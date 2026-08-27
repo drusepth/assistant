@@ -336,7 +336,10 @@ model can't place under a hobby lands whole in one called Other Interests.
 The empty state gained a starter shelf for the same reason discovery exists —
 a blank paste field asks the user to already know what RSS is — and it keeps
 promise 1 by being *offered*, never subscribed: a static list in the repo,
-nothing fetched to build it, every row a checkbox.
+nothing fetched to build it, every row a checkbox. It carries ~150 feeds
+across ~48 topics, browsed a collapsed topic at a time so breadth costs the
+reader nothing, and CI fetches every row weekly so the shelf can't rot into a
+page of dead links (`script/check_starter_feeds.rb`, D-hobby-feeds §7.1).
 
 ## What it doesn't do yet
 
