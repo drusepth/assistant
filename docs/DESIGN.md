@@ -64,7 +64,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.btn-tile` (+ `.btn-tile-icon`) — the phone's stacked capture tile,
      folding back into the pill at `sm` (see Narrow screens)
    - `.input`, `.label`, `.hint`, `.field-error` — the form set
-   - `.card`, `.chip`
+   - `.card` (+ `.card-flush`), `.chip` — the card brings no padding; see
+     **Cards**
    - `.chip-inferred` — a chip for what the model decided, not what the user
      filed: outlined rather than filled (see D-story-matching)
    - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a
@@ -150,6 +151,38 @@ stay tellable apart at dot size, alternating terracotta and sage so
 neighbours in the sidebar never collide: Health `primary-800` · Hobbies
 `primary-500` · Education `sage-500` · Career `sage-700` · People
 `primary-400` · Money `sage-400` · Rights `primary-700`.
+
+## Cards
+
+**`.card` carries no padding, and the call site always says where the inset
+comes from.** The atom is the surface only — the tonal step, the radius —
+because the most common card in the app is a list, and a list wants its rows
+flush against the fold so their own padding is the only padding. Three ways
+to supply it:
+
+- **`Ui::Card`** — the default, and what most cards should be. Its body is
+  `p-5`; `padded: false` hands the job to an `.item-stack` inside.
+- **`p-5` at the call site** — a card written as a bare `div`. `p-5` is the
+  house inset; match it unless there's a reason not to.
+- **`.card-flush`** — a no-op marker meaning "my children carry it": the
+  calendar grid, the dashboard hero's banner-plus-body, a card holding
+  nothing but an `.item-stack`. (`divide-y` and `.item-stack` on the card
+  itself already say this and need no marker.)
+
+**A card's title is `text-sm font-semibold text-ink`** — the size `Ui::Card`
+gives its header, so a card written by hand sits at the same weight as one
+that went through the component. Base size is the tempting mistake and it
+inverts the hierarchy: a grid of item cards inside a section then has titles
+*larger* than the section headings around them, and the page reads as though
+the items outrank their own container. If a card title needs more presence
+it gets it from the card, not from the type — a tint, a mark, an avatar.
+
+The failure this prevents is a quiet one, which is why it's pinned in
+`test/integration/design_atoms_test.rb`: a card with no inset welds its text
+to the rounded edge, and a page of them looks precisely like a page whose
+stylesheet failed to load — the school shelf spent a while looking broken
+while every class on it was compiling correctly. Nothing in a rendered
+response can see it, so the pin is source-level, like the phone-width ones.
 
 ## Lists
 

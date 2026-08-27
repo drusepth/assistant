@@ -10,7 +10,7 @@
 <% members = hero.members.to_a %>
 <% shown_members = members.first(5) %>
 <% hidden_members = members.size - shown_members.size %>
-<section class="card mb-6 overflow-hidden bg-gradient-to-br from-primary-100/70 via-surface to-sage-100/50">
+<section class="card card-flush mb-6 overflow-hidden bg-gradient-to-br from-primary-100/70 via-surface to-sage-100/50">
   <% if hero.banner.attached? %>
     <%= image_tag url_for(hero.banner.variant(:cover)), alt: "#{hero.household.name} banner",
           class: "h-28 w-full object-cover sm:h-40" %>
