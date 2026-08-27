@@ -234,6 +234,25 @@ Only the plain left click is intercepted. Opening in place marks read too,
 but keeps the row where it is: it comes back `is-open` (`from=expand`), so
 the re-render its own mark-read triggers doesn't shut what was just opened.
 
+**Exactly one row is open at a time**, and it accordions: opening a row
+closes whichever was open. An expanded panel is a third of a phone screen,
+so a second one doesn't sit beside the first — it pushes the item you
+actually tapped below the fold, and the list you were scanning becomes a
+column you scroll past. The two details that make it feel like nothing
+happened rather than like the page moved:
+
+- **The row you tapped doesn't move.** A panel closing *above* it takes its
+  height out of the page and everything below slides up — on a phone that
+  lands you reading something you didn't pick. So the row's position is
+  measured either side of the collapse and the scroll gets the difference
+  back. The other panel vanishes; nothing else moves.
+- **The row that arrives late loses.** The mark-read a row fires on opening
+  comes back as a re-render of that row *open*. Tap a second row (or tap the
+  same one shut) while that is still in flight and the first would pop back
+  open behind you — so the module remembers which row is open, and a row
+  that arrives open when it isn't that one shuts itself before it is
+  painted.
+
 ### Clearing the pile
 
 A 404-item backlog had exactly two outcomes — 404 deliberate clicks, or Mark
