@@ -332,33 +332,47 @@ as a red row in a brand-new account.
 **Breadth, and what it cost.** The shelf shipped with fourteen feeds across
 nine topics, which is a shelf that answers "do you like technology or world
 news?" — for anybody whose hobby is birding or chess or brewing, an empty
-reader offering nine topics is still an empty reader. It now carries ~150
-feeds across ~48 topics. Breadth changes the shape of the thing twice over:
+reader offering nine topics is still an empty reader. It now carries ~325
+feeds across ~126 topics — beekeeping, crosswords, sourdough, jazz, amateur
+radio, cricket, watches. The asymmetry is what justifies the size: a topic
+nobody opens costs one folded line, while a topic nobody thought to add costs
+that person the whole feature.
+
+Two things stay off the shelf on purpose: **religion and party politics**.
+Every other topic here can be represented fairly by "the two or three
+long-running publications in that space"; those can't, and a default list
+that quietly ships one tradition's or one party's sources is making a choice
+that belongs to the user. Paste is one field away and OPML import is one
+more.
+
+Breadth changes the shape of the thing three ways over:
 
 - **The shelf is browsed, not read.** Every topic renders as a closed
-  `<details>` (no JS, the fold the circle cards already use) in two or three
+  `<details>` (no JS, the fold the circle cards already use) in two to four
   columns, so what somebody meets is a page of topic names — the wall of
   checkboxes only appears inside the topic they opened. Ticking works whether
   or not the folds are open, because the inputs are in the DOM either way.
 - **And a shelf worth browsing has to outlive the empty state.** Fourteen
-  rows could vanish the moment somebody followed a feed; a hundred and fifty
+  rows could vanish the moment somebody followed a feed; three hundred
   can't. `/feeds/explore` is the whole list as a destination, searchable, one
   click per row, with already-followed rows marked rather than dropped
-  (**D-feed-explore**).
+  (**D-feed-explore**). Search stops being a nicety at this size — it is the
+  primary way in.
 - **Hand-verification stops scaling, so it's CI's job.**
   `script/check_starter_feeds.rb` fetches every row through the ordinary
   `Web::Fetch` + `Feeds::Parse` path and exits non-zero on anything that
   isn't a feed; `.github/workflows/starter-feeds.yml` runs it weekly and on
-  any PR touching the file. It retries each failure once (one timeout in a
-  hundred and fifty fetches is weather) and never runs two fetches at the
+  any PR touching the file. It retries each failure once (one timeout in
+  three hundred fetches is weather) and never runs two fetches at the
   same host at once — this list multiplies by every self-hoster who ticks it.
   It is the only job in CI that talks to the open web, which is why it is
   path-filtered off every unrelated PR.
 
 The structural rules that don't need the network — https only, no
-redirector hosts, unique URLs, every row foldered, and floors on how many
-topics and feeds the shelf carries — stay in `Feeds::StartersTest`, where
-they run on every PR for free.
+redirector hosts, unique URLs, every row foldered, at least two sources per
+topic (one is a link, not a topic, and makes a hobby lens whose river is one
+publisher), and floors on how many topics and feeds the shelf carries — stay
+in `Feeds::StartersTest`, where they run on every PR for free.
 
 ## 8. Deliberately not doing (and what would change our minds)
 

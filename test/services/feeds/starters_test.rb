@@ -29,11 +29,14 @@ class Feeds::StartersTest < ActiveSupport::TestCase
   test "the shelf is broad enough to cover the kinds of things people have hobbies about" do
     groups = Feeds::Starters.groups
 
-    assert_operator groups.size, :>=, 30, "a shelf this narrow makes somebody's hobby somebody else's"
-    assert_operator Feeds::Starters.entries.size, :>=, 100
+    assert_operator groups.size, :>=, 90, "a shelf this narrow makes somebody's hobby somebody else's"
+    assert_operator Feeds::Starters.entries.size, :>=, 250
     assert_operator Feeds::Starters.entries.size, :<=, Feeds::Opml::MAX_FEEDS,
       "past the import cap the tail of the shelf silently stops being followable"
-    assert groups.values.all?(&:any?)
+    # A topic with one source isn't a topic, it's a link — and ticking it
+    # makes a hobby lens whose river is one publisher.
+    thin = groups.select { |_, entries| entries.size < 2 }.keys
+    assert_empty thin, "every topic needs at least two sources: #{thin.to_sentence}"
     assert_equal groups.keys.uniq, groups.keys
   end
 

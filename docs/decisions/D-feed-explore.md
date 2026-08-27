@@ -6,10 +6,10 @@ reader's empty state, the feed list's empty state, and the Hobbies panel when
 a household had no feeds. Following a single feed hid the whole list forever.
 That was defensible when the shelf was fourteen rows of courtesy — a nudge for
 somebody who had never used a reader, cleared away once they had. It stopped
-being defensible when the shelf became ~150 publisher-run sources across ~48
-topics: a library nobody can open after their first subscription is not a
-library. `/feeds/explore` is the same list as a destination, linked from the
-reader, the feed list and the shelf itself.
+being defensible when the shelf became hundreds of publisher-run sources
+across scores of topics: a library nobody can open after their first
+subscription is not a library. `/feeds/explore` is the same list as a
+destination, linked from the reader, the feed list and the shelf itself.
 
 **Same promise, unchanged.** READER.md's first promise is that every source is
 one the user chose, and Explore is still a shelf rather than a recommendation
@@ -37,6 +37,7 @@ have this one" is the more useful answer to somebody scanning for what to add.
 **The search is a real GET form with an instant filter over it**, the same
 shape the Address Book uses (D-address-book-directory): the server filters so a
 query deep-links and works with JS off, and `shelf_controller.js` narrows on
-the keystroke so 154 rows feel like a shelf rather than a scroll. Both match
-against `Entry#haystack` — one definition, so the two can't disagree about what
-a query finds.
+the keystroke so a three-hundred-row shelf feels like a shelf rather than a
+scroll. Both match against `Entry#haystack` — one definition, so the two can't
+disagree about what a query finds. At this size the search is not a nicety:
+it is how most people will reach the topic they came for.

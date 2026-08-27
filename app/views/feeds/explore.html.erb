@@ -3,7 +3,7 @@
     The same hand-curated list the empty state offers — publisher-run feeds,
     no aggregators, nothing fetched to build the page — but reachable at any
     time and browsed a row at a time. The shelf used to disappear the moment
-    somebody followed their first feed, which made ~150 sources across ~48
+    somebody followed their first feed, which made ~325 sources across ~126
     topics a thing you could only see before you knew you wanted them.
 
     Promise 1 is unchanged and load-bearing (READER.md): this is a shelf, not
@@ -50,10 +50,11 @@
   </div>
 
   <% if @groups.any? %>
-    <%# Two columns from `lg`, and columns rather than a grid for the reason
-        the tick-box shelf uses them: the topics are wildly different heights
-        and a grid row is as tall as its tallest cell. %>
-    <div class="gap-x-6 lg:columns-2">
+    <%# Columns rather than a grid for the reason the tick-box shelf uses
+        them: the topics are wildly different heights and a grid row is as
+        tall as its tallest cell. Three columns on a wide screen, because at
+        ~126 topics two is a page you scroll rather than a shelf you scan. %>
+    <div class="gap-x-6 lg:columns-2 xl:columns-3">
       <% @groups.each do |folder, entries| %>
         <% unfollowed = entries.reject { |entry| @followed.include?(entry.url) } %>
         <section class="card mb-3 break-inside-avoid p-4" data-shelf-target="group">
@@ -98,8 +99,8 @@
   <%# Rendered either way and toggled by the filter, so the no-JS empty
       result and the typed-into-nothing one say the same thing. %>
   <p class="px-3 py-8 text-center text-sm text-soft <%= "hidden" if @groups.any? %>" data-shelf-target="empty">
-    Nothing on the shelf matches that. The shelf is deliberately small and hand-kept —
-    <%= link_to "paste any address", feeds_path, class: "reader-filter" %> and the feed behind it
-    gets found for you.
+    Nothing on the shelf matches that. It's hand-kept rather than exhaustive, so plenty is
+    missing — <%= link_to "paste any address", feeds_path, class: "reader-filter" %> and the feed
+    behind it gets found for you.
   </p>
 </div>

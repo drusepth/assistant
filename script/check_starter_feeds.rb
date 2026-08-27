@@ -17,7 +17,7 @@
 # a red run is a list that needs editing.
 #
 # Two things keep this honest rather than flaky. Every failure is retried
-# once after a pause, because one timeout out of a hundred and fifty fetches
+# once after a pause, because one timeout out of three hundred fetches
 # is weather, not a dead feed. And the pool never runs two fetches against
 # the same host at once — this list multiplies by every self-hoster who ticks
 # it, and a checker that hammers a publisher is the opposite of the politeness

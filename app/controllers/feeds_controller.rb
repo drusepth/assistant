@@ -26,7 +26,7 @@ class FeedsController < ApplicationController
 
   # The shelf as a place you can go (D-feed-explore). The starter list was
   # only ever reachable from an empty state, which meant following one feed
-  # hid ~150 sources across ~48 topics forever — fine when the shelf was a
+  # hid ~325 sources across ~126 topics forever — fine when the shelf was a
   # fourteen-row courtesy card, wrong now that it is the app's answer to
   # "what could I read?". Same list, same promise: nothing here is followed
   # until somebody clicks it.
