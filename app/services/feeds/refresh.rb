@@ -32,7 +32,12 @@ module Feeds
       parsed = Parse.call(page.text)
       return failure("that address stopped being a feed") unless parsed
 
-      added, updated = ingest(parsed)
+      added, updated, touched = ingest(parsed)
+      # A broad feed's stories are about many things, so which of the user's
+      # hobbies each one belongs to is a question about the story rather
+      # than about the feed (D-story-matching). It is asked in a job: a
+      # model call has no claim on a refresh's patience.
+      route(touched)
       adopt_metadata(parsed)
       record_success(page, parsed)
       prune
@@ -63,6 +68,7 @@ module Feeds
 
       def ingest(parsed)
         added = updated = 0
+        touched = []
 
         parsed.entries.each do |entry|
           item = @feed.feed_items.find_or_initialize_by(guid: entry.guid.to_s.truncate(500))
@@ -74,9 +80,16 @@ module Feeds
           item.save or AppError.record(
             ActiveRecord::RecordInvalid.new(item), source: "Feeds::Refresh", user: @feed.user
           )
+          touched << item if item.persisted?
         end
 
-        [ added, updated ]
+        [ added, updated, touched ]
+      end
+
+      def route(items)
+        return if items.empty? || !@feed.broad?
+
+        RouteStories.enqueue(@feed.user)
       end
 
       def attributes_for(entry)

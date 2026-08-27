@@ -43,19 +43,32 @@ module Feeds
       items = base
       items = items.unread if filter == "unread"
       items = items.saved if filter == "saved"
-      items.newest.includes(feed: :sections)
+      items.newest.includes(feed: :sections, routings: :section)
     end
 
     private
-      # The one authorization line in the reader: a river is your own
-      # subscriptions.
-      def base = FeedItem.where(feed: feeds)
+      # A hobby's river is the items of the feeds filed under it **plus the
+      # stories the model routed into it** out of feeds that aren't
+      # (D-story-matching). Both halves sit inside `own` — the authorization
+      # line, "a river is your own subscriptions" — so a match can never
+      # show an item from a feed the viewer doesn't have, and no section
+      # grant can widen what it shows.
+      def base
+        own = FeedItem.where(feed: feeds)
+        return own unless section
 
+        own.where(feed_id: feeds.in_section(section).select(:id)).or(own.where(id: routed_ids))
+      end
+
+      # The user's own active feeds, narrowed by the feed filter but *not*
+      # by the section: narrowing here would drop the routed half, whose
+      # whole point is coming from a feed the section doesn't own.
       def feeds
         scope = user.feeds.active
         scope = scope.where(id: feed) if feed
-        scope = scope.in_section(section) if section
         scope
       end
+
+      def routed_ids = StoryRouting.live.where(section_id: section).select(:feed_item_id)
   end
 end

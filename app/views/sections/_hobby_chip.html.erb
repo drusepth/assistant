@@ -1,0 +1,13 @@
+<%# One suggested hobby name (D-hobby-spotting). A chip is a one-click way to
+    say "yes, that one" — the name is the whole label, and what a spotted
+    chip knows about *why* it is here rides as the hover title rather than
+    as a second line that would turn a row of chips into a paragraph.
+    The feed mark is the honest tell: this name came from what you read. %>
+<%= button_to hobbies_path(name: chip.name),
+      class: "chip bg-amber-100 text-amber-800 hover:bg-amber-200",
+      title: chip.reason.presence do %>
+  <% if chip.spotted? %>
+    <%= icon(:rss, css_class: "size-3 shrink-0") %>
+  <% end %>
+  <%= chip.name %>
+<% end %>

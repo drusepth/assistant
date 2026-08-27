@@ -1,0 +1,14 @@
+<%# The chip row under both captures. Spotted names lead (Hobbies::Suggestions),
+    so when the instance knows something about this household it says that
+    first and the broad starter names fill the rest. The caption appears only
+    when there is a spotted chip to explain — on a phone there is no hover to
+    carry the reason, and an unexplained "Birding" is a strange thing for the
+    app to have opinions about. %>
+<% if suggestions.any? %>
+  <div class="flex flex-wrap gap-2">
+    <%= render partial: "sections/hobby_chip", collection: suggestions, as: :chip %>
+  </div>
+  <% if suggestions.any?(&:spotted?) %>
+    <p class="mt-2 text-xs text-soft">Spotted in what you've been reading.</p>
+  <% end %>
+<% end %>

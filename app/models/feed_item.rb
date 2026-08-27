@@ -11,6 +11,15 @@ class FeedItem < ApplicationRecord
   belongs_to :feed
   has_one :user, through: :feed
 
+  # The exceptions to "an item's tags are its feed's tags" (D-story-matching).
+  # `routings` is the live set — what a row wears and what a river adds.
+  has_many :story_routings, dependent: :destroy
+  has_many :routings, -> { live }, class_name: "StoryRouting", inverse_of: :feed_item,
+    dependent: nil
+  has_many :routed_sections, through: :routings, source: :section
+
+  scope :unrouted, -> { where(routed_at: nil) }
+
   validates :guid, :title, presence: true
 
   scope :unread, -> { where(read_at: nil) }

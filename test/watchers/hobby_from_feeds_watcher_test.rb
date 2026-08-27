@@ -54,6 +54,19 @@ class HobbyFromFeedsWatcherTest < ActiveSupport::TestCase
     assert_no_difference("Suggestion.count") { Watcher::HobbyFromFeeds.new(@user).scan }
   end
 
+  # One call, two surfaces (D-hobby-spotting): the nudge is the loud subset
+  # of a reading that also leaves the hub's chips behind.
+  test "the scan stores every candidate as a chip and says only the first one out loud" do
+    feeds = 3.times.map { |n| unfiled("https://example.com/birds#{n}.xml", "Birding Blog #{n}") }
+    stub_body({ hobbies: [
+      { name: "Birding", feed_ids: feeds.first(2).map(&:id), reason: "Birds." },
+      { name: "Woodworking", feed_ids: feeds.last(2).map(&:id), reason: "Wood." }
+    ] })
+
+    assert_equal 1, scan.size
+    assert_equal %w[ Birding Woodworking ], @user.spotted_hobbies.ordered.map(&:name)
+  end
+
   test "feeds that already have a hobby are none of this watcher's business" do
     lens = Hobbies::Lens.find_or_create!("Guitar")
     3.times { |n| @user.feeds.create!(url: "https://example.com/guitar#{n}.xml", sections: [ lens ]) }

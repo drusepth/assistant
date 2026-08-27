@@ -63,20 +63,14 @@ module Hobbies
 
       def feeds = @feeds ||= user.feeds.active.includes(:sections).order(:id).to_a
 
+      # Add-only, plus the one mechanical drop — the shared write lives on
+      # OtherInterests, because a chip that names a spotted hobby files its
+      # feeds by exactly the same rules without asking the model twice.
       def map(slice)
         picks = ask(slice)
         return [] if picks.empty?
 
-        slice.select do |feed|
-          gained = picks.fetch(feed.id, []) - feed.sections.to_a
-          next false if gained.empty?
-
-          # Add-only, plus the one mechanical drop: whatever this feed
-          # already carries stays, and the catch-all goes now that a real
-          # hobby claimed it.
-          feed.sections = (feed.sections.to_a + gained).reject { |lens| OtherInterests.catch_all?(lens) }
-          true
-        end
+        slice.select { |feed| OtherInterests.claim!(feed, picks.fetch(feed.id, [])).any? }
       end
 
       # {feed_id => [lens, ...]}, unknown ids and slugs dropped: the model

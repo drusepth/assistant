@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Feeds::RefreshTest < ActiveSupport::TestCase
+class Feeds::RefreshTest < ActiveJob::TestCase
   PUBLIC_DNS = Class.new { def getaddresses(_host) = [ "93.184.216.34" ] }.new
 
   setup do
@@ -179,5 +179,21 @@ class Feeds::RefreshTest < ActiveSupport::TestCase
     assert FeedItem.exists?(unread.id), "unread is mail nobody opened, not archive"
     assert FeedItem.exists?(keeper.id)
     assert_not FeedItem.exists?(doomed.first.id), "the oldest read items go first"
+  end
+
+  # Routing rides the refresh (D-story-matching), but only as far as the
+  # queue: reading the stories is a model call, and a publisher's poll has
+  # no business waiting on a provider.
+  test "a broad feed's new stories send the router to work; a focused one doesn't" do
+    Hobbies::Lens.find_or_create!("Birding")
+    @feed.update!(broad: true, sections: [ Hobbies::OtherInterests.find_or_create! ])
+    stub_feed(item(title: "Rare warbler on the marsh"))
+
+    assert_enqueued_with(job: RouteStoriesJob) { Feeds::Refresh.call(@feed) }
+    assert_equal [ Hobbies::OtherInterests.find ], @feed.reload.sections.to_a, "the feed itself never moves"
+
+    @feed.update!(broad: false)
+    @feed.feed_items.destroy_all
+    assert_no_enqueued_jobs(only: RouteStoriesJob) { Feeds::Refresh.call(@feed) }
   end
 end

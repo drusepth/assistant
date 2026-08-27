@@ -15,6 +15,13 @@ import { Controller } from "@hotwired/stimulus"
 // *and leaves the unread list*, exactly as it always did. Only the plain
 // left click is intercepted.
 //
+// **Only one row is open at a time.** An expanded row is most of a phone
+// screen, so two of them turn a list you were scanning into a column you
+// have to scroll past — the second panel pushes the item you actually
+// tapped somewhere below the fold. Opening a row closes whatever else was
+// open, and the reader gets back the one thing the river is for: the next
+// forty headlines, right there under the thing being read.
+//
 // **The gestures** are the phone's answer to three 12px text links: swipe
 // left marks read, swipe right saves. Both end in pressing the row's own
 // ordinary button, so the write, the Turbo re-render and the Undo line all
@@ -24,11 +31,25 @@ const SWIPE_TRIGGER = 64 // px of travel before a swipe counts
 const SWIPE_SLOP = 20 // px of vertical drift that makes it a scroll instead
 const SWIPE_START = 10 // px before we commit to horizontal and stop scrolling
 
+// Which row is open, across every row controller on the page — `null` when
+// none is. Opening a row marks it read, which re-renders that row *in its
+// open state* (`from=expand`), and that render can land after the reader has
+// moved on: tap a second row (or tap the same one shut) while the first
+// request is still in flight and the row would pop back open behind them.
+// Only a row the server sends back open reads this, and the only thing that
+// asks for one is `setOpen` below — so a row that arrives open when this
+// says otherwise is answering a question already asked and answered.
+let openRowId = null
+
 export default class extends Controller {
   static targets = ["panel"]
   static values = { readUrl: String, dismissUrl: String, read: Boolean }
 
   connect() {
+    // A row that arrives open but isn't the open row any more (see
+    // `openRowId`) shuts itself before it is ever painted.
+    if (this.open && openRowId !== this.element.id) this.element.classList.remove("is-open")
+
     this.element.addEventListener("touchstart", this.onStart, { passive: true })
     this.element.addEventListener("touchmove", this.onMove, { passive: false })
     this.element.addEventListener("touchend", this.onEnd)
@@ -66,6 +87,9 @@ export default class extends Controller {
   }
 
   setOpen(next) {
+    openRowId = next ? this.element.id : null
+    if (next) this.collapseOthers()
+
     this.element.classList.toggle("is-open", next)
     // Opening something is reading it. The row is asked to come back *open*
     // (`from=expand`), so the re-render this triggers doesn't shut what you
@@ -73,6 +97,39 @@ export default class extends Controller {
     // unread list, because you haven't left it yet.
     if (next && !this.readValue) this.request(this.readUrlValue)
     if (next) this.element.dispatchEvent(new CustomEvent("reader:opened", { bubbles: true }))
+  }
+
+  // Shut every other open row, and hold this one still while doing it.
+  //
+  // A row closing above the one you just tapped takes its panel's height out
+  // of the page, and the row under your thumb slides up to fill the gap —
+  // on a phone, where the panel is a third of the screen, that lands you
+  // reading something you didn't pick. So: measure where this row is, close
+  // the others, measure again, and give the scroll position back the
+  // difference. The reader sees the other panel vanish and nothing else move.
+  //
+  // The others close instantly rather than over the usual 200ms, because the
+  // compensation is one jump and an animated collapse would drift out from
+  // under it for the rest of the transition.
+  collapseOthers() {
+    const others = [...document.querySelectorAll(".reader-row.is-open")]
+      .filter(row => row !== this.element)
+    if (others.length === 0) return
+
+    const panels = others.map(row => row.querySelector(".reader-expand")).filter(Boolean)
+    panels.forEach(panel => { panel.style.transition = "none" })
+
+    const before = this.element.getBoundingClientRect().top
+    others.forEach(row => row.classList.remove("is-open"))
+    // Reading geometry flushes the collapse, so this is where the page has
+    // already lost the height and not a frame later.
+    const after = this.element.getBoundingClientRect().top
+
+    // Restored after the layout above: the value is already collapsed, so
+    // putting the transition back animates nothing.
+    panels.forEach(panel => { panel.style.transition = "" })
+
+    if (after !== before) window.scrollBy(0, after - before)
   }
 
   // ---- gestures ----------------------------------------------------------

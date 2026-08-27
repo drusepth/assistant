@@ -15,6 +15,25 @@ class HobbiesControllerTest < ActionDispatch::IntegrationTest
     assert_equal sections(:hobbies), lens.parent
   end
 
+  # The chip is worth more than typing the name because the attribution is
+  # already made: the feeds move in this request, no model call (D-hobby-spotting).
+  test "creating a hobby the spotter named moves the feeds it stood on" do
+    other = Hobbies::OtherInterests.find_or_create!
+    feeds = 2.times.map do |n|
+      users(:one).feeds.create!(url: "https://example.com/birds#{n}.xml", sections: [ other ])
+    end
+    stray = users(:one).feeds.create!(url: "https://example.com/news.xml", sections: [ other ])
+    users(:one).spotted_hobbies.create!(name: "Birding", reason: "Birds.", feed_ids: feeds.map(&:id))
+
+    post hobbies_path, params: { name: "Birding" }
+
+    lens = Section.find_by!(slug: "birding")
+    assert_equal [ lens ], feeds.first.reload.sections.to_a
+    assert_equal [ other ], stray.reload.sections.to_a
+    assert_equal "Birding added to your hobbies, with 2 feeds moved over.", flash[:notice]
+    assert_empty users(:one).spotted_hobbies.reload
+  end
+
   test "create with a blank name explains instead of blowing up" do
     assert_no_difference "Section.count" do
       post hobbies_path, params: { name: "  " }

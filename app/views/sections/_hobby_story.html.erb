@@ -27,7 +27,14 @@
       <% else %>
         <span class="font-medium text-ink" title="<%= item.title %>"><%= item.title %></span>
       <% end %>
-      <span class="text-xs text-soft"><%= item.source_name %></span>
+      <span class="text-xs text-soft">
+        <%# Same question, same answer, one size down: a hub card carrying a
+            story from a feed filed elsewhere says why (D-story-matching). %>
+        <% if (routing = reader_routing(item, local_assigns[:section]&.slug)) %>
+          <span title="<%= reader_routing_title(routing) %>" aria-hidden="true">⌄</span>
+        <% end %>
+        <%= item.source_name %>
+      </span>
     </span>
     <span class="shrink-0 text-xs tabular-nums text-soft"><%= reader_age(item.published_on) %></span>
   <% end %>

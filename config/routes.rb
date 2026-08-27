@@ -304,8 +304,20 @@ Rails.application.routes.draw do
       patch :unread
       patch :save
       patch :unsave
+      # "This isn't Birding" and its Undo — the correcting verb on a story
+      # the model routed into a hobby (D-story-matching).
+      patch :reject
+      patch :unreject
     end
   end
+
+  # What a hobby means, in the user's own words (D-story-matching): the
+  # sentence the model reads when it decides whether a broad feed's story
+  # belongs here, and the switch that turns the whole thing off. Flat routes
+  # rather than nested under sections, because the brief is the user's own
+  # and the section is just which one it is about.
+  patch "hobby_brief" => "hobby_briefs#update", as: :hobby_brief
+  post  "hobby_brief/author" => "hobby_briefs#author", as: :author_hobby_brief
 
   resources :suggestions, only: [] do
     member do

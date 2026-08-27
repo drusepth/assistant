@@ -12,6 +12,9 @@ module Hobbies
 
     Row = Struct.new(:section, :feeds, :unread_count, :items, keyword_init: true) do
       def any_feeds? = feeds.any?
+      # A hobby can be fed entirely by routed stories (D-story-matching):
+      # no feed of its own, and a river all the same.
+      def any_river? = feeds.any? || items.any? || unread_count.positive?
       def catch_all? = Hobbies::OtherInterests.catch_all?(section)
     end
 
@@ -28,10 +31,11 @@ module Hobbies
     def rows
       @sections.map do |section|
         feeds = feeds_by_section.fetch(section.id, [])
+        routed = routed_unread.fetch(section.id, [])
         Row.new(
           section: section, feeds: feeds,
-          unread_count: feeds.sum { |feed| unread_counts.fetch(feed.id, 0) },
-          items: newest_unread(feeds)
+          unread_count: feeds.sum { |feed| unread_counts.fetch(feed.id, 0) } + routed.size,
+          items: newest_unread(feeds, routed)
         )
       end
     end
@@ -53,10 +57,31 @@ module Hobbies
         @unread_counts ||= FeedItem.where(feed: feeds).unread.group(:feed_id).count
       end
 
-      def newest_unread(feeds)
-        return [] if feeds.empty? || preview.zero?
+      # A hobby's card carries the stories routed into it as well as the
+      # ones its own feeds published (D-story-matching): that is the whole
+      # point — a hobby whose feeds are quiet but whose subject is in the
+      # news now has something to show.
+      def newest_unread(feeds, routed)
+        return [] if (feeds.empty? && routed.empty?) || preview.zero?
 
-        FeedItem.where(feed: feeds).unread.newest.includes(:feed).limit(preview).to_a
+        scope = FeedItem.unread.where(feed_id: feeds.map(&:id))
+        scope = scope.or(FeedItem.unread.where(id: routed)) if routed.any?
+        scope.newest.includes(:feed, routings: :section).limit(preview).to_a
+      end
+
+      # One query for every lens on the page, and it counts only what the
+      # feed half doesn't already: a story whose feed later gained this
+      # hobby is in the river once, not twice.
+      def routed_unread
+        @routed_unread ||= StoryRouting.live.joins(:feed_item)
+          .where(section_id: @sections.map(&:id))
+          .where(feed_items: { read_at: nil, feed_id: feeds.map(&:id) })
+          .pluck(:section_id, :feed_item_id, "feed_items.feed_id")
+          .each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(section_id, item_id, feed_id), map|
+            next if feeds_by_section.fetch(section_id, []).any? { |feed| feed.id == feed_id }
+
+            map[section_id] << item_id
+          end
       end
   end
 end

@@ -12,12 +12,6 @@
       <%= text_field_tag :name, nil, class: "input", placeholder: "Name a hobby…" %>
       <%= submit_tag "Add", class: "btn btn-primary" %>
     <% end %>
-    <% if (suggestions = hobby_suggestions(hobbies)).any? %>
-      <div class="flex flex-wrap gap-2">
-        <% suggestions.each do |name| %>
-          <%= button_to name, hobbies_path(name: name), class: "chip bg-amber-100 text-amber-800 hover:bg-amber-200" %>
-        <% end %>
-      </div>
-    <% end %>
+    <%= render "sections/hobby_suggestions", suggestions: suggestions %>
   </div>
 <% end %>
