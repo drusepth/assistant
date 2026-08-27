@@ -1056,6 +1056,45 @@
       100% { opacity: 0; }
     }
   }
+
+  /* The waiting bars — what a run in progress looks like while the model
+     works, where a spinner would otherwise go.
+
+     Seven rounded columns riding one wave: every bar runs the same 1.4s
+     keyframe, each offset by a seventh of the period, so the crest walks
+     across the row and wraps into itself with no seam — the loop has no
+     start and no end to catch the eye on. Only `transform` animates
+     (nothing that reflows), because this can sit on screen for a minute at
+     a time on a phone.
+
+     The resting shape is written on the bars themselves rather than left at
+     scaleY(1): the app-wide reduced-motion floor at the foot of this file
+     collapses the animation to a single 0.01ms pass, and what it falls back
+     to should still read as a considered skyline rather than seven
+     identical sticks. This one *wants* the floor — a decoration that says
+     "still working" has nothing to say that the sentence beside it doesn't,
+     so it doesn't opt out the way `.celebrate-banner` does. */
+  .working-bars {
+    @apply flex h-9 items-center gap-1.5;
+  }
+  .working-bar {
+    @apply h-full w-2 rounded-full;
+    background: linear-gradient(180deg, var(--color-primary-400), var(--color-primary-600));
+    animation: working-bar 1.4s ease-in-out infinite;
+    will-change: transform;
+  }
+  .working-bar:nth-child(1) { transform: scaleY(0.30); animation-delay: 0s; }
+  .working-bar:nth-child(2) { transform: scaleY(0.52); animation-delay: -0.2s; }
+  .working-bar:nth-child(3) { transform: scaleY(0.78); animation-delay: -0.4s; }
+  .working-bar:nth-child(4) { transform: scaleY(1);    animation-delay: -0.6s; }
+  .working-bar:nth-child(5) { transform: scaleY(0.78); animation-delay: -0.8s; }
+  .working-bar:nth-child(6) { transform: scaleY(0.52); animation-delay: -1s; }
+  .working-bar:nth-child(7) { transform: scaleY(0.30); animation-delay: -1.2s; }
+
+  @keyframes working-bar {
+    0%, 100% { transform: scaleY(0.28); }
+    50% { transform: scaleY(1); }
+  }
 }
 
 /* ============================================================================
