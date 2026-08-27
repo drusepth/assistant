@@ -22,6 +22,53 @@ class Feeds::StartersTest < ActiveSupport::TestCase
       "a feed living on somebody else's redirector is the failure mode this feature answers"
   end
 
+  # Breadth is the shelf's whole job: somebody who has never used a reader
+  # should find the thing *they* are into, not a choice between technology
+  # and world news. These floors are deliberately well under what ships, so
+  # they catch a list being gutted rather than bless an exact size.
+  test "the shelf is broad enough to cover the kinds of things people have hobbies about" do
+    groups = Feeds::Starters.groups
+
+    assert_operator groups.size, :>=, 90, "a shelf this narrow makes somebody's hobby somebody else's"
+    assert_operator Feeds::Starters.entries.size, :>=, 250
+    assert_operator Feeds::Starters.entries.size, :<=, Feeds::Opml::MAX_FEEDS,
+      "past the import cap the tail of the shelf silently stops being followable"
+    # A topic with one source isn't a topic, it's a link — and ticking it
+    # makes a hobby lens whose river is one publisher.
+    thin = groups.select { |_, entries| entries.size < 2 }.keys
+    assert_empty thin, "every topic needs at least two sources: #{thin.to_sentence}"
+    assert_equal groups.keys.uniq, groups.keys
+  end
+
+  # Two rows with the same name in one topic are a copy-paste, and two rows
+  # with the same name in a checkbox list are unpickable.
+  test "no topic offers the same source twice" do
+    Feeds::Starters.groups.each do |folder, entries|
+      titles = entries.map(&:title)
+      assert_equal titles.uniq, titles, "#{folder} lists a source twice"
+    end
+  end
+
+  # Explore links a row's name at the publisher's own page, so the shelf has
+  # to carry it — a feed URL is where the XML is, not where the reader would
+  # go to decide whether they want it (D-feed-explore).
+  test "a row knows the site behind it, and what a search matches it on" do
+    entry = Feeds::Starters.entries.find { |candidate| candidate.title == "xkcd" }
+
+    assert_equal "https://xkcd.com", entry.site
+    assert_equal "xkcd.com", entry.host
+    assert_equal "xkcd comics xkcd.com", entry.haystack
+    assert Feeds::Starters.entries.count { |candidate| candidate.site.present? } > 100,
+      "the file carries htmlUrl on every row; losing it silently would leave Explore linking at XML"
+  end
+
+  # The checker (script/check_starter_feeds.rb, run weekly and on any PR that
+  # edits the file) is the only thing standing between this list and rot, so
+  # the file has to keep pointing at it.
+  test "the file says how it is verified" do
+    assert_match "check_starter_feeds", Feeds::Starters.reload!.document
+  end
+
   test "building the list fetches nothing" do
     assert_not_requested :any, //
     assert Feeds::Starters.groups.any?

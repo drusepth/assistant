@@ -17,7 +17,19 @@ module Web
     MAX_REDIRECTS = 3
     OPEN_TIMEOUT = 10
     READ_TIMEOUT = 20
-    USER_AGENT = "assistant-self-hosted (+https://github.com/drusepth/assistant)".freeze
+
+    # The conventional well-behaved-bot form, and the change is not cosmetic:
+    # this was a bare token (`assistant-self-hosted (+url)`), and the first
+    # full run of the starter-shelf checker answered 403 on ~30 of 326
+    # ordinary publisher feeds — Mr. Money Mustache, Stronger by Science,
+    # Shut Up & Sit Down, Harvard Health. Naive WAF rules (Wordfence, Sucuri,
+    # Cloudflare's bot rules) refuse anything that doesn't parse as a
+    # `Mozilla/5.0 (compatible; …)` agent string, which is the shape
+    # Googlebot and every feed reader since Bloglines has used. It is no less
+    # honest — the app still names itself and links to its source — and it is
+    # what stands between a self-hoster and a reader that silently can't read
+    # a tenth of the open web.
+    USER_AGENT = "Mozilla/5.0 (compatible; assistant/1.0; +https://github.com/drusepth/assistant)".freeze
 
     BLOCKED_RANGES = %w[
       0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16
@@ -47,10 +59,18 @@ module Web
     # Timeouts are per call because they are a product decision, not a
     # network one: the defaults suit a background job, and a fetch somebody
     # is *waiting on* in a form submit wants to give up much sooner.
-    def initialize(url, headers: {}, raw: false, open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT)
+    # `max_bytes` is per call for the same reason the timeouts are: 2MB is
+    # the right ceiling for "a page somebody pasted", and the wrong one for a
+    # feed. A full-content Atom file is routinely bigger than that — the
+    # shelf checker found three (danluu.com, Podnews, Hagerty) that the
+    # reader was refusing to read at all, which is a subscription that
+    # silently never updates rather than an error anybody sees.
+    def initialize(url, headers: {}, raw: false, max_bytes: MAX_BYTES,
+                   open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT)
       @url = url.to_s.strip
       @headers = headers
       @raw = raw
+      @max_bytes = max_bytes
       @open_timeout = open_timeout
       @read_timeout = read_timeout
     end
@@ -131,9 +151,9 @@ module Web
 
       def extract(response, uri)
         body = response.body.to_s
-        raise Error, "the page is too large to read" if body.bytesize > MAX_BYTES
+        raise Error, "the page is too large to read" if body.bytesize > @max_bytes
 
-        type = response["content-type"].to_s
+        type = content_type(response, body)
         if type.include?("html") && @raw
           page(Nokogiri::HTML(body.scrub).title.to_s.squish.presence, body.scrub, uri, response)
         elsif type.include?("html")
@@ -145,6 +165,24 @@ module Web
           page(nil, body.scrub.strip, uri, response)
         else
           raise Error, "that link is #{type.split(";").first.presence || "not text"} — only pages and text work"
+        end
+      end
+
+      # A server that sends no Content-Type at all used to be refused
+      # outright, which cost the shelf a working feed (Bandcamp Daily sends
+      # none). Sniffing is only a *fallback* — a declared type always wins,
+      # so this can't be used to talk us into treating a binary as text; it
+      # just means a silent server gets read the way `file` would read it.
+      def content_type(response, body)
+        declared = response["content-type"].to_s
+        return declared if declared.present?
+
+        head = body.byteslice(0, 512).to_s.lstrip
+        case head
+        when /\A<\?xml|\A<(rss|feed|rdf:RDF)\b/i then "application/xml"
+        when /\A<(!doctype html|html)\b/i then "text/html"
+        when /\A[\[{]/ then "application/json"
+        else ""
         end
       end
   end

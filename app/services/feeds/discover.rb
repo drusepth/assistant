@@ -28,6 +28,11 @@ module Feeds
     GUESSES = %w[ /feed /feed.xml /rss /rss.xml /atom.xml /index.xml /feed.json ].freeze
     MAX_GUESSES = 4
 
+    # Feeds run bigger than pages: a full-content Atom file with a hundred
+    # posts in it clears Web::Fetch's 2MB page ceiling routinely, and a feed
+    # we refuse to read is a subscription that silently never updates.
+    MAX_BYTES = 8.megabytes
+
     def self.call(url) = new(url).call
 
     def initialize(url)
@@ -133,7 +138,7 @@ module Feeds
       # failure is kept, though — "couldn't reach the site" and "that page
       # has no feed" are different problems for the person pasting.
       def fetch(url)
-        Web::Fetch.raw(url, headers: { "Accept" => ACCEPT })
+        Web::Fetch.raw(url, headers: { "Accept" => ACCEPT }, max_bytes: MAX_BYTES)
       rescue Web::Fetch::Error => e
         @last_error ||= e.message
         nil

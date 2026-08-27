@@ -24,6 +24,26 @@ class FeedsController < ApplicationController
     @feed = Current.user.feeds.new
   end
 
+  # The shelf as a place you can go (D-feed-explore). The starter list was
+  # only ever reachable from an empty state, which meant following one feed
+  # hid ~325 sources across ~126 topics forever — fine when the shelf was a
+  # fourteen-row courtesy card, wrong now that it is the app's answer to
+  # "what could I read?". Same list, same promise: nothing here is followed
+  # until somebody clicks it.
+  def explore
+    @query = params[:q].to_s.strip
+    @groups = Feeds::Starters.groups
+    @total = Feeds::Starters.entries.size
+    # Followed rows stay on the shelf rather than vanishing from it — a
+    # topic that quietly loses a row reads as a list that changed its mind,
+    # and "you already have this one" is the more useful answer.
+    @followed = Current.user.feeds.pluck(:url).to_set
+    # The instant filter narrows the same rows client-side; this is what a
+    # submitted query (or a browser with no JS) gets, and what makes the
+    # result a URL somebody can keep.
+    @groups = filtered_groups(@groups, @query) if @query.present?
+  end
+
   def create
     @feed = Current.user.feeds.new(feed_params.except(:url))
     found = Feeds::Discover.call(feed_params[:url])
@@ -124,6 +144,16 @@ class FeedsController < ApplicationController
   private
     def set_feed
       @feed = Current.user.feeds.find(params[:id])
+    end
+
+    # Matched against the same haystack the instant filter reads, so the
+    # two can't disagree about what a query finds.
+    def filtered_groups(groups, query)
+      needle = query.downcase
+      groups.filter_map do |folder, entries|
+        hits = entries.select { |entry| entry.haystack.include?(needle) }
+        [ folder, hits ] if hits.any?
+      end.to_h
     end
 
 

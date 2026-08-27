@@ -1,0 +1,106 @@
+<%# Explore (D-feed-explore): the starter shelf as a place you can go.
+
+    The same hand-curated list the empty state offers — publisher-run feeds,
+    no aggregators, nothing fetched to build the page — but reachable at any
+    time and browsed a row at a time. The shelf used to disappear the moment
+    somebody followed their first feed, which made ~325 sources across ~126
+    topics a thing you could only see before you knew you wanted them.
+
+    Promise 1 is unchanged and load-bearing (READER.md): this is a shelf, not
+    a recommendation engine. The list is static, identical for every user and
+    every install, and nothing on it is followed until a button is pressed.
+    Nothing here is personalized, scored, or ordered by anything but the file.
+
+    Following a row makes its topic a hobby, which is the same reasoning the
+    tick-box shelf uses: a folder ticked here *is* the user saying they're
+    interested in birding. The header says so rather than leaving it a
+    surprise. %>
+<div data-controller="shelf" data-action="keydown@window->shelf#hotkey"
+     data-shelf-total-value="<%= @total %>">
+  <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+    <h1 class="display text-2xl text-ink">Explore feeds</h1>
+    <div class="flex items-baseline gap-3 text-xs">
+      <%= link_to "Feeds", feeds_path, class: "reader-filter" %>
+      <%= link_to "Reader", reader_path, class: "reader-filter" %>
+    </div>
+  </div>
+
+  <p class="mb-3 text-xs text-soft">
+    <%= pluralize(@total, "source") %> across <%= pluralize(Feeds::Starters.groups.size, "topic") %>, each one
+    publisher-run and each straight from the site itself — no aggregators, no accounts, nothing
+    fetched to build this page. Follow one and its topic becomes a hobby, so the stories land on
+    the right card.
+  </p>
+
+  <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+    <%# A real GET form, so a search deep-links and works with JS off; the
+        narrowing you feel is the keystroke one. %>
+    <%= form_with url: explore_feeds_path, method: :get, class: "relative min-w-0 flex-1" do |form| %>
+      <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-soft">
+        <%= icon(:magnifying_glass, css_class: "size-4") %>
+      </span>
+      <%= form.search_field :q, value: @query, autocomplete: "off",
+            placeholder: "Search topics, publishers, sites…",
+            class: "input w-full pl-10", "aria-label": "Search the shelf",
+            data: { shelf_target: "input", action: "input->shelf#filter keydown.esc->shelf#clear" } %>
+    <% end %>
+    <p class="shrink-0 text-xs text-soft sm:text-right" data-shelf-target="count">
+      <%= @query.present? ? "#{@groups.values.sum(&:size)} of #{@total} sources" : pluralize(@total, "source") %>
+    </p>
+  </div>
+
+  <% if @groups.any? %>
+    <%# Columns rather than a grid for the reason the tick-box shelf uses
+        them: the topics are wildly different heights and a grid row is as
+        tall as its tallest cell. Three columns on a wide screen, because at
+        ~126 topics two is a page you scroll rather than a shelf you scan. %>
+    <div class="gap-x-6 lg:columns-2 xl:columns-3">
+      <% @groups.each do |folder, entries| %>
+        <% unfollowed = entries.reject { |entry| @followed.include?(entry.url) } %>
+        <section class="card mb-3 break-inside-avoid p-4" data-shelf-target="group">
+          <div class="mb-2 flex items-baseline justify-between gap-3">
+            <h2 class="text-xs font-medium uppercase tracking-wide text-stone-500"><%= folder %></h2>
+            <% if unfollowed.many? %>
+              <%# The bulk verb the tick-box shelf had, kept to one button:
+                  a three-feed topic is a reasonable thing to want whole. %>
+              <%= button_to "Follow all #{unfollowed.size}", starters_feeds_path, class: "reader-verb text-xs",
+                    form_class: "contents",
+                    params: { urls: unfollowed.map(&:url), create_lenses: "1", return_to: request.fullpath } %>
+            <% end %>
+          </div>
+
+          <ul class="divide-y divide-edge">
+            <% entries.each do |entry| %>
+              <% followed = @followed.include?(entry.url) %>
+              <li class="flex items-baseline justify-between gap-3 py-1.5 text-sm"
+                  data-shelf-target="row"
+                  data-shelf-haystack="<%= entry.haystack %>">
+                <span class="min-w-0">
+                  <%= link_to entry.title, shelf_site_url(entry), class: "text-ink hover:underline", **ReaderHelper::OUTBOUND %>
+                  <span class="text-xs text-soft"><%= entry.host %></span>
+                </span>
+                <% if followed %>
+                  <span class="flex shrink-0 items-center gap-1 text-xs text-soft" title="Already in your feeds">
+                    <%= icon(:check_circle, css_class: "size-3.5") %> Following
+                  </span>
+                <% else %>
+                  <%= button_to "Follow", starters_feeds_path, class: "btn btn-secondary btn-sm shrink-0",
+                        form_class: "contents",
+                        params: { urls: [ entry.url ], create_lenses: "1", return_to: request.fullpath } %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Rendered either way and toggled by the filter, so the no-JS empty
+      result and the typed-into-nothing one say the same thing. %>
+  <p class="px-3 py-8 text-center text-sm text-soft <%= "hidden" if @groups.any? %>" data-shelf-target="empty">
+    Nothing on the shelf matches that. It's hand-kept rather than exhaustive, so plenty is
+    missing — <%= link_to "paste any address", feeds_path, class: "reader-filter" %> and the feed
+    behind it gets found for you.
+  </p>
+</div>

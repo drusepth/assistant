@@ -23,7 +23,7 @@ module Feeds
     end
 
     def call
-      page = Web::Fetch.raw(@feed.url, headers: request_headers)
+      page = Web::Fetch.raw(@feed.url, headers: request_headers, max_bytes: Discover::MAX_BYTES)
       # The whole point of the conditional GET: the publisher said nothing
       # changed, so there is no body to parse and nothing to write beyond
       # "we checked".

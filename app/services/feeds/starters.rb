@@ -17,7 +17,22 @@ module Feeds
   module Starters
     PATH = Rails.root.join("config", "starter_feeds.opml")
 
-    Entry = Data.define(:url, :title, :folder)
+    # `site` is the publisher's own page rather than the feed: Explore links
+    # a row's name at it, because "what am I agreeing to read?" is a fair
+    # question and raw XML is not an answer to it.
+    Entry = Data.define(:url, :title, :folder, :site) do
+      def host
+        URI.parse(url.to_s).host.to_s.delete_prefix("www.")
+      rescue URI::InvalidURIError
+        ""
+      end
+
+      # What a search matches a row against, defined once so Explore's
+      # server-side filter and its instant one can't drift apart — and
+      # deliberately only what the row *shows*, since a filter that searches
+      # invisible text looks broken from both directions.
+      def haystack = "#{title} #{folder} #{host}".downcase
+    end
 
     module_function
 
@@ -31,7 +46,8 @@ module Feeds
 
     def entries
       @entries ||= Opml.entries(document).map do |entry|
-        Entry.new(url: entry[:url], title: entry[:label].presence || entry[:url], folder: entry[:folder])
+        Entry.new(url: entry[:url], title: entry[:label].presence || entry[:url],
+          folder: entry[:folder], site: entry[:site])
       end
     end
 

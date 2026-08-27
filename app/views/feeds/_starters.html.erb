@@ -1,4 +1,4 @@
-<%# The stocked shelf (D-hobby-feeds §7.1): a short, hand-curated list of
+<%# The stocked shelf (D-hobby-feeds §7.1): a hand-curated list of
     publisher-run feeds, shown only while there is nothing to read.
 
     Offered, never subscribed. Nothing here is followed at signup or in the
@@ -6,36 +6,49 @@
     every row is a checkbox somebody ticks. That is the line READER.md's
     first promise draws: the sources are the ones the user chose.
 
+    The shelf carries a few dozen topics, so it is browsed rather than read:
+    each topic is a closed <details> (no JS — the same fold the circle cards
+    and the settings channels use), and what the reader sees first is a wall
+    of topic names, not a wall of checkboxes. Ticking still works while the
+    folds stay shut, because the inputs are in the DOM either way.
+
     Locals: starters (grouped by folder); optional heading. %>
 <div class="space-y-3">
   <div>
     <p class="text-sm font-medium text-ink"><%= local_assigns.fetch(:heading, "Not sure where to start?") %></p>
     <p class="text-xs text-soft">
-      A few sources that have been publishing for years, each straight from the site itself.
-      Tick the ones you want — nothing is followed until you do.
+      <%= pluralize(starters.sum { |_, entries| entries.size }, "source") %> across
+      <%= pluralize(starters.size, "topic") %>, each one that has been publishing for years
+      and each straight from the site itself. Open a topic and tick what you want —
+      nothing is followed until you do.
     </p>
   </div>
 
   <%= form_with url: starters_feeds_path, class: "space-y-3" do %>
     <%= hidden_field_tag :return_to, request.path %>
-    <%# Columns rather than a grid: the groups are different heights (one
-        cooking feed, three reading ones), and a grid row is as tall as its
-        tallest cell — which is how a short list grows a hole in the middle. %>
-    <div class="gap-x-6 sm:columns-2">
+    <%# Columns rather than a grid: the folds are different heights once
+        opened, and a grid row is as tall as its tallest cell — which is how
+        a shelf grows a hole in the middle the moment somebody opens one. %>
+    <div class="gap-x-6 sm:columns-2 lg:columns-3 xl:columns-4">
       <% starters.each do |folder, entries| %>
-        <div class="mb-3 break-inside-avoid">
-          <p class="text-xs font-medium uppercase tracking-wide text-stone-500"><%= folder %></p>
-          <% entries.each do |entry| %>
-            <label class="flex items-baseline gap-2 py-0.5 text-sm">
-              <%= check_box_tag "urls[]", entry.url, false, id: "starter-#{entry.url.parameterize}",
-                    class: "size-3.5 shrink-0 accent-primary-600" %>
-              <span class="min-w-0">
-                <span class="text-ink"><%= entry.title %></span>
-                <span class="text-xs text-soft"><%= URI.parse(entry.url).host.to_s.delete_prefix("www.") rescue nil %></span>
-              </span>
-            </label>
-          <% end %>
-        </div>
+        <details class="mb-1.5 break-inside-avoid rounded-lg border border-edge px-3 py-2">
+          <summary class="flex cursor-pointer list-none items-baseline justify-between gap-2 [&::-webkit-details-marker]:hidden">
+            <span class="text-xs font-medium uppercase tracking-wide text-stone-500"><%= folder %></span>
+            <span class="text-xs text-soft"><%= entries.size %></span>
+          </summary>
+          <div class="mt-1.5">
+            <% entries.each do |entry| %>
+              <label class="flex items-baseline gap-2 py-0.5 text-sm">
+                <%= check_box_tag "urls[]", entry.url, false, id: "starter-#{entry.url.parameterize}",
+                      class: "size-3.5 shrink-0 accent-primary-600" %>
+                <span class="min-w-0">
+                  <span class="text-ink"><%= entry.title %></span>
+                  <span class="text-xs text-soft"><%= entry.host %></span>
+                </span>
+              </label>
+            <% end %>
+          </div>
+        </details>
       <% end %>
     </div>
 
@@ -44,6 +57,11 @@
       Make a hobby for each group I pick
     </label>
 
-    <%= submit_tag "Follow the ones I ticked", class: "btn btn-secondary btn-sm" %>
+    <div class="flex flex-wrap items-baseline gap-3">
+      <%= submit_tag "Follow the ones I ticked", class: "btn btn-secondary btn-sm" %>
+      <%# The same shelf with room to read it, and the copy that survives
+          this block disappearing the moment a feed is followed. %>
+      <%= link_to "Browse them all", explore_feeds_path, class: "reader-filter" %>
+    </div>
   <% end %>
 </div>

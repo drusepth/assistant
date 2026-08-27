@@ -68,7 +68,11 @@ module Feeds
         next unless url.match?(%r{\Ahttps?://\S+\z}i)
 
         folder = outline.ancestors("outline").first
+        # `htmlUrl` is the publisher's own page, which nothing on the import
+        # path needs (a refresh learns the site from the feed itself) — the
+        # shelf reads it so a row can be looked at before it is followed.
         { url: url, label: outline["title"].presence || outline["text"].presence,
+          site: outline["htmlUrl"].to_s.strip.presence,
           folder: folder && (folder["title"].presence || folder["text"].presence) }
       end.uniq { |entry| entry[:url] }.first(MAX_FEEDS)
     rescue Nokogiri::XML::SyntaxError

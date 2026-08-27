@@ -296,6 +296,9 @@ Rails.application.routes.draw do
       # The empty state's stocked shelf (D-hobby-feeds §7.1) — offered,
       # never subscribed.
       post :starters
+      # The same shelf as a place rather than an empty state: browsable at
+      # any time, one click per row (D-feed-explore).
+      get :explore
     end
   end
   resources :feed_items, only: [] do

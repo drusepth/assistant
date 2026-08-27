@@ -1,0 +1,53 @@
+name: Starter feeds
+
+# The starter shelf (D-hobby-feeds §7.1) ships in the repo and points at
+# three hundred-odd servers we don't run, so it rots on somebody else's
+# schedule: a publisher moves a feed, drops RSS, or parks it behind a
+# redirect, and a brand-new account gets a red row on its first refresh.
+#
+# So the list is verified against the live web rather than by hand. It runs
+# weekly (rot is found before a user finds it), on demand, and on any pull
+# request that edits the shelf or its checker — which keeps the fetching off
+# every unrelated PR while still gating the one change that could break it.
+#
+# This is the only job in CI that talks to the open web; it can go red
+# because a publisher had a bad morning. The script already retries each
+# failure once, and a genuinely dead row is fixed or dropped in the file.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - config/starter_feeds.opml
+      - script/check_starter_feeds.rb
+      - app/services/feeds/starters.rb
+      - .github/workflows/starter-feeds.yml
+
+# A PR that touches the shelf re-runs this on every push (GitHub matches the
+# paths filter against the whole PR diff, not the last commit), so a docs
+# commit on the same branch starts a second full sweep of 300 strangers'
+# servers. Cancel the one it superseded.
+concurrency:
+  group: starter-feeds-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Fetch every feed on the starter shelf
+        env:
+          RAILS_ENV: test
+        run: bin/rails runner script/check_starter_feeds.rb --jobs 8
