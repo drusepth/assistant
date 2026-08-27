@@ -36,9 +36,15 @@
   <%# Filing a stray feed where you noticed it was stray. The Edit page can
       do this too, but "notice it, open a form, find the picker, save" is
       three screens away from the row that told you, and this is the one
-      correction the classifier will actually make people want. %>
+      correction the classifier will actually make people want.
+
+      From `lg` only, with the verbs it belongs to. On a phone a select plus
+      a button is most of the row's width, so the title wrapped to three
+      lines and the picker still read "File under…" — a full-height control
+      shouting at every stray in a list you came to *scan*. Filing is a
+      pointer-side job; the phone keeps the list. %>
   <% if feed_unfiled?(feed) && lenses.any? %>
-    <%= form_with model: feed, url: feed_path(feed), method: :patch, class: "flex shrink-0 items-baseline gap-1.5" do |form| %>
+    <%= form_with model: feed, url: feed_path(feed), method: :patch, class: "hidden shrink-0 items-baseline gap-1.5 lg:flex" do |form| %>
       <%= hidden_field_tag :return_to, request.fullpath %>
       <%# One hobby, submitted as the one-element array `section_ids` expects:
           a multi-select in a list row is a scroll box, and filing a stray is
