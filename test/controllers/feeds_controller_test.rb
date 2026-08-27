@@ -94,7 +94,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     get feeds_path
     assert_match(/not filed yet/, response.body)
-    assert_select "select[name='feed[section_ids][]']"
+    # Pointer-side only, with the rest of the row's verbs: on a phone the
+    # picker was most of the row's width (see feeds/_feed).
+    assert_select "form[class*=?]", "lg:flex" do
+      assert_select "select[name='feed[section_ids][]']"
+    end
+    assert_select "form[class*=?] select[name='feed[section_ids][]']", "hidden"
 
     patch feed_path(feed), params: { feed: { section_ids: [ lens.id ] }, return_to: feeds_path(unfiled: 1) }
 
