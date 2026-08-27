@@ -39,7 +39,7 @@
       <% panel.own_subjects.each do |subject| %>
         <%= link_to subject_path(subject), class: "card block space-y-2 p-5 transition hover:shadow-md", id: dom_id(subject, :hub) do %>
           <div class="flex items-start justify-between gap-2">
-            <p class="min-w-0 flex-1 font-semibold text-ink"><%= subject.title %></p>
+            <p class="min-w-0 flex-1 text-sm font-semibold text-ink"><%= subject.title %></p>
             <% if subject.rusty_topics.any? %>
               <span class="chip bg-primary-100 text-primary-800 flex-none"><%= pluralize(subject.rusty_topics.size, "rusty topic") %></span>
             <% end %>
@@ -70,11 +70,11 @@
 <%= render Ui::CardComponent.new(title: "Start something new") do %>
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
     <%= link_to curriculum_shelf_path, class: "block rounded-2xl bg-canvas p-4 transition hover:shadow-md" do %>
-      <p class="font-semibold text-ink">The school shelf</p>
+      <p class="text-sm font-semibold text-ink">The school shelf</p>
       <p class="mt-0.5 text-sm text-soft">Core subjects — math, writing, science, civics, money, computers.</p>
     <% end %>
     <%= link_to new_subject_path, class: "block rounded-2xl bg-canvas p-4 transition hover:shadow-md" do %>
-      <p class="font-semibold text-ink">Learn anything</p>
+      <p class="text-sm font-semibold text-ink">Learn anything</p>
       <p class="mt-0.5 text-sm text-soft">Name a topic — get your own curriculum, taught your way.</p>
     <% end %>
   </div>

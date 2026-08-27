@@ -166,6 +166,14 @@ to supply it:
   nothing but an `.item-stack`. (`divide-y` and `.item-stack` on the card
   itself already say this and need no marker.)
 
+**A card's title is `text-sm font-semibold text-ink`** — the size `Ui::Card`
+gives its header, so a card written by hand sits at the same weight as one
+that went through the component. Base size is the tempting mistake and it
+inverts the hierarchy: a grid of item cards inside a section then has titles
+*larger* than the section headings around them, and the page reads as though
+the items outrank their own container. If a card title needs more presence
+it gets it from the card, not from the type — a tint, a mark, an avatar.
+
 The failure this prevents is a quiet one, which is why it's pinned in
 `test/integration/design_atoms_test.rb`: a card with no inset welds its text
 to the rounded edge, and a page of them looks precisely like a page whose
