@@ -8,10 +8,21 @@ class Suggestion < ApplicationRecord
   include Sectionable
 
   belongs_to :user
+  # The draft the agent had waiting when this suggestion arrived
+  # (D-agent-prepared-work). Optional by design: a suggestion without one is
+  # exactly the M3 suggestion, which is also what a failed preparation
+  # degrades back to.
+  belongs_to :tool_run, optional: true
 
   enum :kind, { nudge: "nudge", heads_up: "heads_up", insight: "insight" }, default: :nudge
-  enum :status, { pending: "pending", accepted: "accepted", dismissed: "dismissed", snoozed: "snoozed" },
-    default: :pending
+  # `resolved` is retirement by the world, as distinct from `dismissed`,
+  # which is retirement by the user (D-suggestion-lifecycle). Both leave the
+  # fingerprint standing, so neither is ever re-proposed; the difference is
+  # only what it means — and it means enough to keep apart, since "you
+  # handled it" and "I didn't want this" are opposite signals to the dial
+  # tuner (D-agent-earned-dials) reading the same rows.
+  enum :status, { pending: "pending", accepted: "accepted", dismissed: "dismissed", snoozed: "snoozed",
+                  resolved: "resolved" }, default: :pending
 
   validates :title, :watcher_slug, presence: true
   # The fingerprint (watcher + subject, chosen by the watcher) is what keeps
@@ -30,6 +41,29 @@ class Suggestion < ApplicationRecord
 
   def dismiss!
     update!(status: :dismissed)
+    discard_prepared_work
+  end
+
+  # The world handled it — book the checkup yourself and the nudge about
+  # booking it should not be waiting for you to dismiss it by hand. Called
+  # only by the scan's retire pass, never by a user action.
+  def resolve!
+    update!(status: :resolved)
+    discard_prepared_work
+  end
+
+  # The one retirement rule that needs no watcher code: a suggestion whose
+  # subject moment has passed. A nudge about last Thursday's event is the
+  # app reading as broken (the D-reminders argument — a reminder more than a
+  # day late is retired rather than delivered), so watchers whose subject
+  # has a date stamp `expires_on` at propose time and get this for free.
+  def expired?
+    date = action["expires_on"]
+    return false if date.blank?
+
+    Date.iso8601(date.to_s) < Date.current
+  rescue Date::Error
+    false
   end
 
   # Materializes the action payload as ordinary primitives, tagged with the
@@ -43,6 +77,29 @@ class Suggestion < ApplicationRecord
 
   def tool_action = action["tool"]
 
+  # ── Prepared work (D-agent-prepared-work) ────────────────────────────
+
+  # The tool the agent may run ahead of the click, or nil. Derived, so no
+  # watcher writes a line to opt in: a suggestion is preparable exactly when
+  # its action already names a draft tool and prefills every input the form
+  # would ask for — i.e. when there is nothing left for the user to answer.
+  # Plan tools are excluded (a prepared Goal is a whole deferred graph, and
+  # wants the seam proven first) and chat tools inherently so — a
+  # conversation cannot be had in advance.
+  def preparable_tool
+    return nil unless tool_action.is_a?(Hash)
+
+    tool = Tool.find(tool_action["slug"].to_s)
+    return nil unless tool && tool.kind == :draft && tool.preparable
+
+    given = tool_action["inputs"] || {}
+    tool.inputs.select(&:required?).all? { |input| given[input.name].present? } ? tool : nil
+  end
+
+  # A draft is waiting. Guarded on the run's own status so a discarded or
+  # half-written run never advertises itself as one.
+  def prepared? = tool_run&.prepared?
+
   # An in-app destination ("look at these photos") — internal paths only,
   # so a payload can never send the user off the instance.
   def path_action
@@ -51,6 +108,10 @@ class Suggestion < ApplicationRecord
   end
 
   def accept_label
+    # A waiting draft outranks the payload's own copy: "Review draft" is
+    # what the click actually does now, and promising anything else would
+    # be describing the M3 behavior this suggestion no longer has.
+    return "Review draft" if prepared?
     return action["accept_label"] if action["accept_label"].present?
     return "Add task" if action["task"]
     return "Add event" if action["event"]
@@ -63,6 +124,10 @@ class Suggestion < ApplicationRecord
   end
 
   def accept_notice(created)
+    if (dial = action["agent_level"])
+      section = Section.find_by(slug: dial["section"])
+      return "Assistant set to #{dial["level"]} for #{section&.name}." if section
+    end
     return "Done." if created.nil?
     return "Logged #{created.display_merchant} to your spending." if created.is_a?(SpendingTransaction)
 
@@ -70,6 +135,15 @@ class Suggestion < ApplicationRecord
   end
 
   private
+    # A draft never outlives the nudge that occasioned it
+    # (D-agent-prepared-work): a prepared response letter about a bill the
+    # user has since paid is worse than a stale nudge, because it looks like
+    # work waiting to be done. Retiring the suggestion retires the draft,
+    # whether the world resolved it or the user waved it away.
+    def discard_prepared_work
+      tool_run.discard! if tool_run&.prepared?
+    end
+
     # A payload may carry several keys (birthday radar lands a gift task
     # *and* the day on the calendar); each present key materializes, and the
     # first creation names the flash notice.
@@ -105,6 +179,19 @@ class Suggestion < ApplicationRecord
           descriptor: attrs["descriptor"], merchant: attrs["merchant"],
           fingerprint: "receipt-#{SecureRandom.hex(10)}", source: "email_receipt")
         Spending::Categorize.new(user: user).apply_deterministic
+      end
+
+      if (attrs = action["agent_level"])
+        # The agent tuning itself (D-agent-earned-dials) — the one action
+        # that changes a setting rather than creating a primitive, and it
+        # still only moves on this click. Validated against the closed set
+        # and the user's own row: a payload can never widen anyone's dials
+        # but the owner's, or to a level that doesn't exist.
+        section = Section.find_by(slug: attrs["section"])
+        level = attrs["level"]
+        if section && UserSection::AGENT_LEVELS.include?(level)
+          user.user_sections.find_or_initialize_by(section: section).update!(agent_level: level)
+        end
       end
 
       if (attrs = action["schedule_task"])

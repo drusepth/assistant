@@ -19,9 +19,23 @@ module Watcher
           body: "A prep sheet and a mock round are how the nerves become answers. " \
                 "It reads your logged wins, so the stories are yours.",
           action: { "tool" => { "slug" => "interview_prep",
-                                "inputs" => { "role" => event.title } } }
+                                "inputs" => { "role" => event.title } },
+                    # Past the interview there is nothing left to prep for
+                    # (D-suggestion-lifecycle): the day itself retires it.
+                    "expires_on" => event.starts_at.to_date.iso8601 }
         )
       end
+    end
+
+    # They prepped — through this suggestion or by opening the tool
+    # themselves — or the interview came off the calendar.
+    def resolved?(suggestion)
+      return false unless (id = subject_id(suggestion, "event"))
+
+      event = Event.where(user: user).find_by(id: id)
+      return true if event.nil?
+
+      prepped_since?(event)
     end
 
     private

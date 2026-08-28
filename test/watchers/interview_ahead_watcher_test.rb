@@ -11,9 +11,11 @@ class InterviewAheadWatcherTest < ActiveSupport::TestCase
     suggestion = scan.sole
     assert_equal "interview_ahead/event:#{event.id}", suggestion.fingerprint
     assert_includes suggestion.title, "Interview — shift lead at Acme"
-    assert_equal({ "tool" => { "slug" => "interview_prep",
-                               "inputs" => { "role" => "Interview — shift lead at Acme" } } },
-      suggestion.action)
+    assert_equal({ "slug" => "interview_prep", "inputs" => { "role" => "Interview — shift lead at Acme" } },
+      suggestion.tool_action)
+    # Past the interview there is nothing left to prep for, so the nudge
+    # carries its own retirement date (D-suggestion-lifecycle).
+    assert_equal event.starts_at.to_date.iso8601, suggestion.action["expires_on"]
   end
 
   test "a prep run after the event was booked keeps it quiet" do

@@ -1,0 +1,57 @@
+<%# A draft the agent wrote ahead of the click (D-agent-prepared-work).
+    Nothing on this page exists as a row yet: the landings are intents, and
+    Save is the D20 click that turns them into ordinary primitives. The copy
+    has one job — never let the user believe something has already been
+    filed on their behalf. %>
+<%= render Ui::CardComponent.new(
+      title: "Your assistant drafted this ahead of you",
+      subtitle: "Nothing is saved yet — read it, then decide."
+    ) do %>
+  <% if (suggestion = tool_run.suggestion) %>
+    <p class="text-sm text-soft">
+      Prepared because <span class="text-ink"><%= suggestion.title.downcase %></span>.
+    </p>
+  <% end %>
+<% end %>
+
+<% landings = tool_run.landings %>
+<% drafts, follow_ups = landings.partition { |landing| landing.kind == "note" } %>
+
+<% drafts.each do |draft| %>
+  <%= render Ui::CardComponent.new(title: draft.title, subtitle: "Draft — saved to your notes when you say so") do %>
+    <p class="whitespace-pre-wrap text-sm text-ink"><%= draft.detail %></p>
+  <% end %>
+<% end %>
+
+<% if follow_ups.any? %>
+  <%= render Ui::CardComponent.new(
+        title: "It would also add",
+        subtitle: "Tasks and dates that come with the draft", padded: false
+      ) do %>
+    <div class="divide-y divide-edge">
+      <% follow_ups.each do |landing| %>
+        <div class="flex items-center justify-between gap-4 px-4 py-3">
+          <p class="min-w-0 text-sm text-ink"><%= landing.title %></p>
+          <span class="chip chip-inferred shrink-0">
+            <%= landing.kind == "event" ? "calendar" : "task" %><%= " · #{landing.date}" if landing.date %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%= render Ui::CardComponent.new do %>
+  <div class="space-y-3">
+    <div class="row-actions">
+      <%= button_to "Save it", land_tool_run_path(tool_run), method: :post, class: "btn btn-primary" %>
+      <%= button_to "Discard", discard_tool_run_path(tool_run), method: :post, class: "btn btn-ghost",
+            data: { turbo_confirm: "Discard this draft? Nothing was saved, so nothing is lost — the nudge goes away too." } %>
+    </div>
+    <p class="text-xs text-soft">
+      Saving files the draft and its follow-ups exactly where the tool would have.
+      Discarding leaves no trace. Your assistant only ever prepares work in sections
+      you've set to Active — <%= link_to "change that in Settings", settings_path, class: "underline" %>.
+    </p>
+  </div>
+<% end %>

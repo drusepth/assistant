@@ -23,6 +23,21 @@ module Watcher
       proposals
     end
 
+    # The visit got booked or logged. Both halves ask the same question the
+    # scan asked: a per-kind nudge retires once the radar stops calling that
+    # kind due (something is on the calendar, or a visit got logged), and
+    # the zero-signal generic one retires once anything health-shaped is on
+    # the calendar at all.
+    def resolved?(suggestion)
+      # "checkup_cadence/dental/2026h2" — per kind; "checkup_cadence/2026h2"
+      # — the generic one, which carries no kind segment.
+      _, kind_key, period = suggestion.fingerprint.split("/")
+      return !calendar_silent? if period.nil?
+
+      status = Health::CareRadar.new(user).statuses.find { |candidate| candidate.kind.key == kind_key }
+      status.nil? || status.state != :due
+    end
+
     private
       # Accepting opens the find-care tool prefilled with the right kind of
       # provider — the reconnect/stay-in-touch convention. A non-clinical

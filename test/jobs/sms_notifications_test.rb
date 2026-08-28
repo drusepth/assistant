@@ -169,6 +169,26 @@ class SmsNotificationsTest < ActiveJob::TestCase
     assert_operator text.length, :<=, NotificationChannel::TEXT_LIMIT
   end
 
+  test "the decision link rides inside the same length bound, whole" do
+    # D-decision-links spends from the D-sms-channels budget rather than
+    # extending it: the bound caps what a carrier keeps and what a message
+    # costs, and neither cares which half of the text is a URL. A truncated
+    # URL, though, is worse than no URL — so the summary yields, not the link.
+    outbox = Dir.mktmpdir
+    channel_for(:gammu, outbox_path: outbox)
+    suggestion = @user.suggestions.create!(watcher_slug: "checkup_cadence",
+      fingerprint: "checkup_cadence/x", title: "Book a dental cleaning")
+
+    NotifyJob.perform_now(@user, Array.new(40) { |i| "A rather long suggestion title number #{i}" },
+      suggestion_ids: [ suggestion.id ])
+
+    text = File.read(File.join(outbox, Dir.children(outbox).sole))
+    assert_operator text.length, :<=, NotificationChannel::TEXT_LIMIT
+    token = text[%r{/assistant/decisions/([A-Za-z0-9_\-.=]+)\z}, 1]
+    assert_equal [ suggestion.id ], Notifications::DecisionLink.suggestion_ids(token),
+      "the URL arrived whole enough to still open the right batch"
+  end
+
   test "one broken phone channel never silences the others" do
     outbox = Dir.mktmpdir
     channel_for(:gammu, outbox_path: outbox)

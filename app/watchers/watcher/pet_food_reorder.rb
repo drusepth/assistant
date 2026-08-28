@@ -18,6 +18,19 @@ module Watcher
       proposals
     end
 
+    # The bag got handled: reordered onto the calendar, refilled (which
+    # moves `runs_out_on`, so the fingerprint's date no longer describes
+    # anything), or the food came off the shelf entirely.
+    def resolved?(suggestion)
+      _, food_id, runs_out_on = suggestion.fingerprint.split("/")
+      return false if runs_out_on.blank?
+
+      food = PetFood.where(pet: user.pets).find_by(id: food_id)
+      return true if food.nil?
+
+      already_on_the_calendar?(food) || food.runs_out_on&.iso8601 != runs_out_on
+    end
+
     private
       def propose_reorder(pet, food)
         return if already_on_the_calendar?(food)

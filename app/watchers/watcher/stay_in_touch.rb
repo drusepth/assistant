@@ -23,6 +23,19 @@ module Watcher
       end
     end
 
+    # They talked. The signal that raised this nudge is the same one that
+    # retires it: a logged contact inside the quiet window — from the one-tap
+    # button on the person's page, or from accepting this very suggestion —
+    # means the app has no business still asking.
+    def resolved?(suggestion)
+      return false unless (id = subject_id(suggestion, "person"))
+
+      person = user.people.find_by(id: id)
+      return true if person.nil? || person.last_contacted_on.nil?
+
+      person.last_contacted_on > QUIET_AFTER.ago.to_date
+    end
+
     private
       # One nudge per person per quarter, even across dismissals.
       def quarter = "#{Date.current.year}q#{(Date.current.month - 1) / 3 + 1}"

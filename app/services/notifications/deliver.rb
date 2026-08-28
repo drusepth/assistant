@@ -6,10 +6,11 @@ module Notifications
   class Deliver
     TIMEOUT = 5
 
-    def initialize(user, titles:, summary: nil)
+    def initialize(user, titles:, summary: nil, link: nil)
       @user = user
       @titles = titles
       @summary = summary
+      @link = link
     end
 
     def call
@@ -51,7 +52,18 @@ module Notifications
       # A phone is the one place where the payload costs money and is kept
       # by someone else, so the D22 summary gets a hard length bound before
       # it leaves — two GSM segments, never four.
-      def phone_text = summary.truncate(NotificationChannel::TEXT_LIMIT)
+      #
+      # The decision link (D-decision-links) spends from that same budget
+      # rather than extending it: the bound exists to cap what a carrier
+      # keeps and what a message costs, and neither cares which half of the
+      # text is a URL. So the summary is trimmed to fit around the link, and
+      # the link goes in whole — a truncated URL is worse than no URL.
+      def phone_text
+        return summary.truncate(NotificationChannel::TEXT_LIMIT) if @link.blank?
+
+        room = NotificationChannel::TEXT_LIMIT - @link.length - 1
+        "#{summary.truncate([ room, 40 ].max)} #{@link}"
+      end
 
       def deliver_sms(channel)
         transport = Sms.for(channel)
@@ -66,7 +78,8 @@ module Notifications
         request["Content-Type"] = "application/json"
         # ntfy and friends read Title/plain body; everything else gets JSON.
         request["Title"] = "Assistant"
-        request.body = { title: "Assistant", message: summary, count: @titles.size, titles: @titles }.to_json
+        request.body = { title: "Assistant", message: summary, count: @titles.size, titles: @titles,
+                         url: @link }.compact.to_json
         Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
           open_timeout: TIMEOUT, read_timeout: TIMEOUT) { |http| http.request(request) }
       end
@@ -74,7 +87,9 @@ module Notifications
       def deliver_web_push(channel)
         subscription = channel.config["subscription"]
         WebPush.payload_send(
-          message: { title: "Assistant", body: summary }.to_json,
+          # The service worker opens `url` when the notification is tapped,
+          # which is the same one-tap loop the phone channels get.
+          message: { title: "Assistant", body: summary, url: @link }.compact.to_json,
           endpoint: subscription["endpoint"],
           p256dh: subscription.dig("keys", "p256dh"),
           auth: subscription.dig("keys", "auth"),
@@ -89,7 +104,7 @@ module Notifications
       end
 
       def deliver_email(channel)
-        NotificationsMailer.suggestions(channel.config["address"], summary, @titles).deliver_now
+        NotificationsMailer.suggestions(channel.config["address"], summary, @titles, @link).deliver_now
       end
   end
 end

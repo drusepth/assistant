@@ -1,0 +1,3 @@
+<!-- open -->
+**Q-agent-chat-openers. May the agent open a conversation?**
+The tutor noticing a review backlog and starting the session itself is the natural end of "the app comes to the user" — but an unsolicited chat turn is a stronger interruption than any suggestion card, and D33's ephemeral transcripts complicate "picking up where we left off." The conservative shape is obvious (a suggestion whose accept opens the chat with the opener pre-run, riding D-agent-prepared-work once chat tools become preparable), so the real question is whether anything stronger than that is ever wanted. Parked until chat has streaming and real daily use. — *Not started.*

@@ -25,6 +25,19 @@ module Watcher
       end
     end
 
+    # The goal moved: a step got finished, one got scheduled, or the user
+    # closed or paused it. Pausing counts (D-goal-pause) — a goal parked on
+    # purpose is not a stalled one, and nudging about it is exactly the
+    # shame that decision exists to defuse.
+    def resolved?(suggestion)
+      return false unless (id = subject_id(suggestion, "goal"))
+
+      goal = user.goals.includes(:tasks).find_by(id: id)
+      return true if goal.nil? || !goal.active?
+
+      recently_worked?(goal) || scheduled_soon?(goal)
+    end
+
     private
       def recently_worked?(goal)
         goal.tasks.any? { |task| task.completed_at && task.completed_at >= STALL_AFTER.ago }

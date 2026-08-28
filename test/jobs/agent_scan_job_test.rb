@@ -55,6 +55,23 @@ class AgentScanJobTest < ActiveJob::TestCase
     assert_equal({ "watcher" => BrokenWatcher.name }, recorded.context)
   end
 
+  # A5 (docs/AGENT_PLAN.md): the greeting stays current for exactly the
+  # people who asked the app to be daily.
+  test "a user with an Active section gets the digest refreshed daily too" do
+    users(:one).user_sections.find_or_initialize_by(section: sections(:health))
+      .update!(agent_level: :active, enabled: true)
+
+    assert_difference -> { AppError.count }, 1 do
+      AgentScanJob.perform_now(users(:one), cadence: "daily")
+    end
+  end
+
+  test "a Quiet-only user is not asked for a daily digest" do
+    assert_no_difference -> { AppError.count } do
+      AgentScanJob.perform_now(users(:one), cadence: "daily")
+    end
+  end
+
   test "scan_all fans out one job per user" do
     assert_enqueued_jobs User.count, only: AgentScanJob do
       AgentScanJob.scan_all

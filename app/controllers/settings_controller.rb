@@ -8,6 +8,11 @@ class SettingsController < ApplicationController
     # Grouped, not indexed: a provider may be linked more than once
     # (multi: true — one row per mailbox).
     @linked_accounts = Current.user.linked_accounts.order(:created_at).group_by(&:provider)
+    # The transparency line under the prepared-work switch: the agent is the
+    # one thing in the app that spends model calls without being asked, so
+    # what it spent is shown where the switch to stop it is. Derived from
+    # the runs themselves — no bookkeeping of its own.
+    @drafts_prepared = Current.user.tool_runs.origin_agent.where(created_at: 7.days.ago..).count
   end
 
   def update
@@ -29,6 +34,15 @@ class SettingsController < ApplicationController
       Current.user.household.update!(public_pages_enabled: params[:public_pages] == "1")
       return redirect_to settings_path,
         notice: Current.user.household.public_pages_enabled? ? "Public pages are on." : "Public pages are off."
+    end
+
+    # The prepared-work switch (D-agent-prepared-work) — same early-return
+    # shape as celebrations, for the same reason.
+    if params.key?(:prepare_work)
+      Current.user.update!(prepare_work: params[:prepare_work] == "1")
+      return redirect_to settings_path, notice: Current.user.prepare_work? ?
+        "Your assistant will draft ahead in Active sections." :
+        "Your assistant will stop drafting ahead."
     end
 
     # The work-profile card (D-work-profile) posts here too, and posts

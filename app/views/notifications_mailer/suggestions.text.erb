@@ -4,4 +4,7 @@
 - <%= title %>
 <% end -%>
 
+<% if @link.present? -%>
+Decide on these: <%= @link %>
+<% end -%>
 Open your assistant to act on these. (This email carries titles only — details stay in the app.)

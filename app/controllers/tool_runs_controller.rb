@@ -42,6 +42,32 @@ class ToolRunsController < ApplicationController
     redirect_to subject || (section ? section_path(section) : root_path), notice: notice
   end
 
+  # The D20 click, arriving late (D-agent-prepared-work): the agent drafted
+  # this ahead of time and landed none of it, so Save is the moment the
+  # intents become ordinary primitives — materially identical to the user
+  # having run the tool themselves. Accepting the suggestion here (rather
+  # than when they opened the page) is what keeps looking from counting as
+  # accepting.
+  def land
+    run = Current.user.tool_runs.find(params[:id])
+    return redirect_to run unless run.prepared?
+
+    created = run.land!
+    run.suggestion&.accept!
+    redirect_to run, notice: "Saved — #{created.size} #{"item".pluralize(created.size)} added to your things."
+  end
+
+  # The other button. The draft goes, and so does the nudge that occasioned
+  # it: having read the draft and said no, being asked again next week would
+  # be the app not listening.
+  def discard
+    run = Current.user.tool_runs.find(params[:id])
+    suggestion = run.suggestion
+    run.discard! if run.prepared?
+    suggestion&.dismiss!
+    redirect_to root_path, notice: "Discarded. Nothing was saved."
+  end
+
   # "Save a recap" on a chat run (D29) — the explicit click that turns a
   # session into an owned Note (D20: nothing lands without the user asking).
   # recap_requested_at is the in-flight marker: it drives the button's

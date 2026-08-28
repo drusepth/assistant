@@ -19,5 +19,9 @@ module Watcher
         action: { "path" => "/reviews", "accept_label" => "Review now" }
       )
     end
+
+    # The queue drained. Whether the user came through the suggestion or
+    # just opened /reviews on their own, the backlog it was about is gone.
+    def resolved?(suggestion) = user.review_items.due.count < THRESHOLD
   end
 end

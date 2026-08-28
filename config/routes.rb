@@ -328,6 +328,11 @@ Rails.application.routes.draw do
   patch "hobby_brief" => "hobby_briefs#update", as: :hobby_brief
   post  "hobby_brief/author" => "hobby_briefs#author", as: :author_hobby_brief
 
+  # The decision link a notification carries (D-decision-links). Signed and
+  # expiring, but it only ever *identifies* — the page authenticates like
+  # every other, so the URL in a text message grants nobody anything.
+  get "assistant/decisions/:token" => "agent_decisions#show", as: :agent_decision
+
   resources :suggestions, only: [] do
     member do
       patch :accept
@@ -348,6 +353,9 @@ Rails.application.routes.draw do
       post :recap
       post :retry_reply
       post :save_answer
+      # The two ends of a prepared draft (D-agent-prepared-work).
+      post :land
+      post :discard
     end
   end
 
