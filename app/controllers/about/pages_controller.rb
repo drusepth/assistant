@@ -17,6 +17,7 @@ module About
       @page = registered!(Page.hub(params[:slug]))
       @features = Page.features_for(@page.slug)
       @tools = @page.tools
+      @featured = @page.featured_tools.presence || @tools
       @prose = prose_for("sections", @page.slug)
     end
 

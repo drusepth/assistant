@@ -11,7 +11,7 @@ module About
   # install, which is what makes the tree safe to expose at all: it
   # describes the software, never the household.
   module Page
-    Entry = Data.define(:slug, :title, :blurb, :sections) do
+    Entry = Data.define(:slug, :title, :blurb, :sections, :featured) do
       def to_param = slug
 
       # The tools this page speaks for. Declared here rather than read from
@@ -23,9 +23,19 @@ module About
 
         Tool.all.select { |tool| tool.section_slugs.intersect?(sections) }
       end
+
+      # The tools this hub leads with. Tools register on several sections,
+      # so the full list runs long and dilutes — Money's sixteen include "I
+      # lost my job", which belongs to it and yet is not what Money *is*.
+      # A hub with a curated list shows it and links to the rest; one
+      # without shows everything, which is the right default until a hub's
+      # buildout wave decides otherwise.
+      def featured_tools = featured.map { |slug| Tool.find!(slug) }
     end
 
-    def self.entry(slug, title, blurb, sections: []) = Entry.new(slug:, title:, blurb:, sections:)
+    def self.entry(slug, title, blurb, sections: [], featured: [])
+      Entry.new(slug:, title:, blurb:, sections:, featured:)
+    end
 
     # The top-level pages — the "why should I run this" half of the site.
     # Order is the order they appear in the footer and on the index.
@@ -54,7 +64,9 @@ module About
         sections: %w[ health ]),
       entry("money", "Money",
         "Where it goes, what you owe, and what you're entitled to.",
-        sections: %w[ money budget debt taxes assets bills subscriptions benefits ]),
+        sections: %w[ money budget debt taxes assets bills subscriptions benefits ],
+        featured: %w[ build_my_budget spending_review debt_payoff_plan
+                      benefits_screener cancel_subscription money_coach ]),
       entry("career", "Career",
         "Finding work, being paid properly, and the conversations in between.",
         sections: %w[ career ]),

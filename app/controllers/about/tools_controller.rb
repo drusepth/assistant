@@ -11,6 +11,10 @@ module About
     def index
       @tools = Tool.all.sort_by(&:title)
       @hubs = Page::HUBS.reject { |hub| hub.sections.empty? }
+      # The contextual tools: registered on no section because they are
+      # launched from the thing itself — a note, a task — rather than from
+      # a section page. The directory is the one place they're browsable.
+      @contextual = @tools.select { |tool| tool.section_slugs.empty? }
     end
 
     def show

@@ -8,8 +8,9 @@
     missing it leaves a clearly marked blank rather than inventing one.
   </p>
   <p class="mt-3 text-sm text-soft">
-    Alongside it: up to three small follow-ups added to your tasks, and any
-    real deadline it found put on your calendar as a dated reminder.
+    Alongside it: up to <%= Tool::Base::MAX_FOLLOW_UPS %> small follow-ups
+    added to your tasks, and any real deadline it found put on your calendar
+    as a dated reminder.
   </p>
 <% when :plan %>
   <p class="text-sm text-soft">

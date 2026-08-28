@@ -69,11 +69,17 @@ class AboutControllerTest < ActionDispatch::IntegrationTest
       About::Page::HUBS.map { |hub| about_hub_path(hub) } +
       About::Page::FEATURES.map { |feature| about_feature_path(feature) }
 
+    # The fixtures' own values, not a domain heuristic — the test host is
+    # www.example.com, so og:url legitimately carries that domain.
+    emails = User.pluck(:email_address)
+
     paths.each do |path|
       get path
       assert_response :success, path
       assert_no_match(/Smith/i, response.body, "#{path} names the household")
-      assert_no_match(/example\.com/, response.body, "#{path} leaks an email address")
+      emails.each do |email|
+        assert_not_includes response.body, email, "#{path} leaks an email address"
+      end
     end
   end
 
@@ -127,7 +133,59 @@ class AboutControllerTest < ActionDispatch::IntegrationTest
   test "the directory lists every tool" do
     get about_tools_path
     assert_response :success
-    assert_select "a[href=?]", about_tool_path("deposit_demand")
+    Tool::SLUGS.each do |slug|
+      assert_select "a[href=?]", about_tool_path(slug), { minimum: 1 },
+        "#{slug} is missing from the directory"
+    end
+  end
+
+  # The invariant behind the directory and the hub cards: every tool is
+  # browsable somewhere — from a hub whose sections carry it, or from the
+  # directory's contextual block when it registers on no section at all
+  # (quiz_note and task_chat start from the note or task itself). What
+  # fails here is the third case: a tool registered on a section no hub
+  # claims — the fix is a row in that hub's `sections:` list.
+  test "every tool is reachable from a hub or the contextual block" do
+    orphans = Tool.all.reject do |tool|
+      tool.section_slugs.empty? ||
+        About::Page::HUBS.any? { |hub| hub.sections.intersect?(tool.section_slugs) }
+    end
+
+    assert_empty orphans.map(&:slug),
+      "these tools register on sections no hub claims, so no /about page lists them"
+  end
+
+  # A featured list is a curation, not a second registry: every slug in it
+  # must be a real tool that the hub's own sections already carry.
+  test "every featured tool belongs to its hub" do
+    About::Page::HUBS.each do |hub|
+      hub.featured_tools.each do |tool|
+        assert hub.sections.intersect?(tool.section_slugs),
+          "#{tool.slug} is featured on #{hub.slug} but registers on none of its sections"
+      end
+    end
+  end
+
+  # The class of bug this tree grows: a page links a slug nobody registered
+  # yet. Crawl every page we serve, follow every internal /about link, and
+  # let a dead one fail by name.
+  test "every internal link on every page resolves" do
+    pages = [ about_root_path, about_tools_path ] +
+      About::Page::TOP_LEVEL.map { |page| about_page_path(page) } +
+      About::Page::HUBS.map { |hub| about_hub_path(hub) } +
+      About::Page::FEATURES.map { |feature| about_feature_path(feature) } +
+      Tool::SLUGS.map { |slug| about_tool_path(slug) }
+
+    links = pages.each_with_object(Hash.new { |h, k| h[k] = [] }) do |path, found|
+      get path
+      assert_response :success, path
+      response.body.scan(/href="(\/about[^"#?]*)/).flatten.each { |href| found[href] << path }
+    end
+
+    links.each do |href, sources|
+      get href
+      assert_response :success, "dead link #{href} (from #{sources.uniq.first(3).join(', ')})"
+    end
   end
 
   # The pages are the same bytes on every install, so a tool page must not

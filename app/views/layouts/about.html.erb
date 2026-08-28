@@ -3,7 +3,14 @@
   <head>
     <title><%= [ content_for(:title), "A life assistant you run at home" ].compact.join(" · ") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="<%= content_for(:description) || "An open-source life assistant your household runs at home, on a model you run yourself." %>">
+    <%# The registry blurb doubles as the description everywhere — one
+        source, so the page and its unfurl can't disagree. %>
+    <% description = content_for(:description) || "An open-source life assistant your household runs at home, on a model you run yourself." %>
+    <meta name="description" content="<%= description %>">
+    <meta property="og:title" content="<%= content_for(:title) || "A life assistant you run at home" %>">
+    <meta property="og:description" content="<%= description %>">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= request.original_url %>">
     <%# Unlike the share-link layout, this tree *wants* indexing — it is the
         same public documentation on every install, and the household that
         would rather it weren't reachable turns it off entirely rather than
@@ -42,7 +49,25 @@
       <%= yield %>
     </main>
 
-    <footer class="mt-16 border-t border-edge">
+    <%# Every page ends somewhere on purpose — a landing page that trails
+        off into the footer wastes the reader it just convinced. Wave 2
+        swaps the primary action for the install page the moment it exists
+        (docs/ABOUT_PLAN.md §8). %>
+    <section class="border-t border-edge bg-surface">
+      <div class="mx-auto max-w-5xl px-4 py-12 sm:px-8">
+        <h2 class="display text-2xl">Yours to run</h2>
+        <p class="mt-2 max-w-2xl text-soft">
+          No account, no subscription, no company between you and it. A
+          computer in your house, and an evening.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <%= link_to "Everything it does", about_tools_path, class: "btn btn-primary" %>
+          <%= link_to "How your data stays yours", about_page_path("privacy"), class: "btn btn-secondary" %>
+        </div>
+      </div>
+    </section>
+
+    <footer class="border-t border-edge">
       <div class="mx-auto max-w-5xl px-4 py-10 sm:px-8">
         <div class="grid grid-cols-2 gap-8 sm:grid-cols-4">
           <div>

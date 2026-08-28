@@ -77,7 +77,10 @@ same way:
 
 1. What this area of life costs you today (the problem, in one paragraph)
 2. What the section shows you at a glance
-3. The tools, as cards linking to their tool pages
+3. The tools, as cards linking to their tool pages — curated via the
+   registry's `featured:` list where the full set runs long (tools register
+   on several sections, so Money's sixteen include "I lost my job"; a
+   curated hub shows its six and links to the rest in the directory)
 4. What it does proactively, and the dial that controls it
 5. Links to each feature page under this hub
 6. What is private and what is shareable here
@@ -138,11 +141,42 @@ The target reader is the 99% — not power users. Two rules:
 
 - **No architecture words.** "Sections" and "household" are public
   vocabulary. "Lens", "primitive", "sectionable", "mirror layer" are not,
-  and never appear outside `docs/`.
+  and never appear outside `docs/`. Pinned by
+  `test/integration/about_content_test.rb`, which scans the about views
+  for the banned list; ERB comments are exempt, because they're for the
+  next builder.
 - **Honesty is the strategy.** Local models are worse at some things than
   the hosted ones people have tried. A page that says plainly which
   features are happy on a small model and which want a big one earns more
   trust than one that glosses — and trust is the entire product.
+
+## 6a. Drift: facts come from code, or they come with a pin
+
+A documentation tree that ships with the app rots page by page unless
+every fact on it has a mechanism keeping it true. Two mechanisms, chosen
+per fact:
+
+- **Computable facts are computed.** The tool count is `@tools.size`, a
+  hub's tool cards come from the registry, a tool page's inputs come from
+  the class, the follow-up cap is `Tool::Base::MAX_FOLLOW_UPS`, the hub
+  count is `@hubs.size`. If a template states a number the code knows, the
+  template asks the code.
+- **Prose facts get a tripwire.** Some facts no template can compute — a
+  class name can't become "the password vault", so the privacy page names
+  the sealed containers in prose. Each such fact is pinned in
+  `about_content_test.rb`: the pin asserts the code-side value, and its
+  failure message lists every page stating the fact. Growing
+  `VaultSealed::CONTAINERS` turns the stale page into a red test naming
+  what to rewrite, instead of a lie nobody notices.
+- **Counts that are neither are written out of the prose.** "Three
+  features reach outside the house" became "a short list", so the next
+  entry is an append rather than a rewrite.
+
+Two request-level pins back these up, in `about_controller_test.rb`: every
+internal `/about` link on every page must resolve (the dead-link crawl),
+and every tool must be reachable from a hub or from the directory's
+contextual block — a tool registered on a section no hub claims fails the
+build rather than silently vanishing from the site.
 
 ## 7. Screenshots need a demo household
 

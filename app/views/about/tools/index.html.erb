@@ -33,3 +33,18 @@
     </div>
   </section>
 <% end %>
+
+<% if @contextual.any? %>
+  <section class="mt-14">
+    <h2 class="display text-2xl">From wherever you're standing</h2>
+    <p class="mt-2 max-w-2xl text-soft">
+      A few don't belong to any one area. They start from the thing itself —
+      you open what you're working on, and the help is right there.
+    </p>
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <% @contextual.each do |tool| %>
+        <%= render "about/tools/summary", tool: tool %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

@@ -17,10 +17,16 @@
       little as possible.
     </p>
     <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <% @tools.each do |tool| %>
+      <% @featured.each do |tool| %>
         <%= render "about/tools/summary", tool: tool %>
       <% end %>
     </div>
+    <% if @featured.size < @tools.size %>
+      <p class="mt-6 text-sm">
+        <%= link_to "All #{@tools.size} things it does with #{@page.title.downcase} →",
+              about_tools_path(anchor: @page.slug), class: "text-primary-700 hover:underline" %>
+      </p>
+    <% end %>
   </section>
 <% end %>
 
