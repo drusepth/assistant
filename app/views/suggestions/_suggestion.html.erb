@@ -4,11 +4,6 @@
     <% if suggestion.body.present? %>
       <p class="mt-0.5 text-sm text-soft"><%= suggestion.body %></p>
     <% end %>
-    <% if suggestion.sections.any? %>
-      <div class="mt-1.5 flex flex-wrap gap-1.5">
-        <%= render "shared/item_chips", item: suggestion %>
-      </div>
-    <% end %>
   </div>
   <div class="row-actions">
     <%= button_to suggestion.accept_label, accept_suggestion_path(suggestion), method: :patch, class: "btn btn-primary btn-sm" %>
