@@ -5,6 +5,12 @@ class Section < ApplicationRecord
   has_many :section_taggings, dependent: :destroy
   has_many :user_sections, dependent: :destroy
   has_many :access_grants, as: :subject, dependent: :destroy
+  # Both of these are *about* a hobby lens rather than tagged with it, so
+  # they end where it ends: what the hobby means to the reader
+  # (D-story-matching §4) and the stories the model filed under it. Removing
+  # a hobby raised a foreign-key error until they said so.
+  has_many :hobby_briefs, dependent: :destroy
+  has_many :story_routings, dependent: :destroy
 
   validates :slug, presence: true, uniqueness: true
   validates :name, presence: true

@@ -54,6 +54,23 @@ class User < ApplicationRecord
   has_many :emergency_contact_roles, class_name: "EmergencyContact", foreign_key: :contact_user_id,
     inverse_of: :contact_user, dependent: :destroy
   has_many :vault_events, dependent: :destroy
+  # The other two ends of an audit line (D-household-reset): the member who
+  # did the thing, and the member it was done to. Both columns are foreign
+  # keys, so without these a member who ever appeared in someone else's vault
+  # log couldn't be deleted at all — the household reset and "remove member"
+  # both died on the constraint. Destroyed rather than nullified because an
+  # event reads as names ("Shared with Bob"): with the account gone there is
+  # no line left to write, and `actor` isn't optional.
+  has_many :vault_events_as_actor, class_name: "VaultEvent", foreign_key: :actor_id,
+    inverse_of: :actor, dependent: :destroy
+  has_many :vault_events_as_subject, class_name: "VaultEvent", foreign_key: :subject_user_id,
+    inverse_of: :subject_user, dependent: :destroy
+
+  # A failure outlives the account that hit it on purpose — the operator still
+  # needs to see that the model was down last week — so the log is kept and
+  # only its owner reference is dropped. (The household reset deletes these
+  # outright instead; a reset is meant to leave nothing behind.)
+  has_many :app_errors, dependent: :nullify
 
   # The takeable copy of your life (M4.2): regenerated on demand, only the
   # newest kept.

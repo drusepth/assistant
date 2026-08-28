@@ -57,6 +57,12 @@ class HobbiesControllerTest < ActionDispatch::IntegrationTest
     task = users(:one).tasks.create!(title: "Practice scales")
     task.sections = [ lens, sections(:hobbies) ]
     grant = users(:one).granted_access_grants.create!(grantee: users(:two), subject: lens)
+    # What the hobby meant and what the model filed under it: both point at
+    # the lens by foreign key, and a lens with either used to be undeletable.
+    brief = users(:one).hobby_briefs.create!(section: lens, description: "Acoustic guitar, not the band")
+    story = users(:one).feeds.create!(url: "https://example.com/music.xml")
+      .feed_items.create!(guid: "g1", title: "A new luthier")
+    routing = StoryRouting.create!(feed_item: story, section: lens, reason: "guitar building")
 
     delete hobby_path(lens)
 
@@ -64,6 +70,9 @@ class HobbiesControllerTest < ActionDispatch::IntegrationTest
     assert_not Section.exists?(lens.id)
     assert_equal [ sections(:hobbies) ], task.reload.sections.to_a
     assert_not AccessGrant.exists?(grant.id)
+    assert_not HobbyBrief.exists?(brief.id)
+    assert_not StoryRouting.exists?(routing.id)
+    assert FeedItem.exists?(story.id), "the story itself is not the hobby's to delete"
   end
 
   # D-hobby-feeds §4: hobbies arrive over months, so a new one is a question

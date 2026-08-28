@@ -155,18 +155,28 @@ class Admin::HouseholdResetTest < ActiveSupport::TestCase
     photo.photo_people.create!(person: person)
     album = @alice.albums.create!(title: "Trip", cover_photo: photo)
     album.album_photos.create!(photo: photo)
+    # The curriculum spine reaches sideways out of its own tree: a topic can
+    # point at the goal it serves, and an hours log at the topic it was
+    # recorded against. Both are foreign keys to rows the reset destroys
+    # earlier in the cascade.
+    subject = @alice.subjects.create!(title: "Math")
+    topic = subject.topics.create!(title: "Fractions", goal: goal)
+    @alice.study_logs.create!(subject: subject, topic: topic, on: Date.current, minutes: 30)
     run = @alice.tool_runs.create!(tool_slug: "task_chat", subject: task)
     run.tool_run_items.create!(item: task)
     run.tool_run_messages.create!(role: "user", content: "hello")
     @alice.suggestions.create!(title: "Try this", watcher_slug: "test", fingerprint: "test-1")
     AccessGrant.create!(grantor: @alice, grantee: @bob, subject: sections(:career))
+    # Three foreign keys to users on one row, only one of which the owning
+    # member cascades — the shape that broke the reset with a 500.
+    VaultEvent.record("shared", user: @alice, actor: @alice, subject_user: @bob)
 
     assert_nothing_raised { Admin::HouseholdReset.call(@household) }
 
     assert_empty Household.where(id: @household.id)
     [ Task, Event, Goal, Document, Person, Photo, Album, AlbumPhoto, PhotoPerson,
       ToolRun, ToolRunItem, ToolRunMessage, Suggestion, AccessGrant, SectionTagging,
-      UserSection, Session ].each do |model|
+      UserSection, Session, VaultEvent, Subject, Topic, StudyLog ].each do |model|
       assert_equal 0, model.count, "#{model.name} rows outlived the reset"
     end
   end
