@@ -17,6 +17,10 @@ module Agent
     def call
       tool = suggestion.preparable_tool
       return if tool.nil? || suggestion.tool_run.present?
+      # The scan enqueued this; between then and now the retire pass, or the
+      # user, may have settled the matter. Drafting for a nudge that is
+      # already gone would spend tokens on work nobody will ever be shown.
+      return unless suggestion.reload.pending?
 
       run = user.tool_runs.create!(
         tool_slug: tool.slug, inputs: suggestion.tool_action["inputs"] || {},

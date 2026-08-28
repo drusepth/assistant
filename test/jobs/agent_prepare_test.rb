@@ -124,6 +124,28 @@ class AgentPrepareTest < ActiveJob::TestCase
     assert_equal 1, ToolRun.count
   end
 
+  test "a draft never outlives the nudge that occasioned it" do
+    # A prepared letter about a bill since paid is worse than a stale
+    # nudge: it looks like work waiting to be done.
+    stub_llm(draft: { title: "Draft", body: "…" }, follow_ups: [])
+    AgentPrepareJob.perform_now(@suggestion)
+    run = @suggestion.reload.tool_run
+
+    @suggestion.resolve!
+
+    assert_predicate run.reload, :discarded?
+    assert_not @suggestion.reload.prepared?
+  end
+
+  test "a suggestion settled between the scan and the job is not drafted for" do
+    stub_llm(draft: { title: "Draft", body: "…" }, follow_ups: [])
+    @suggestion.dismiss!
+
+    AgentPrepareJob.perform_now(@suggestion)
+
+    assert_equal 0, ToolRun.count, "no tokens spent on work nobody will be shown"
+  end
+
   # ── What is preparable ────────────────────────────────────────────────
 
   test "a suggestion whose tool still needs an answer is not preparable" do

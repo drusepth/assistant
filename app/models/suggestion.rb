@@ -41,6 +41,7 @@ class Suggestion < ApplicationRecord
 
   def dismiss!
     update!(status: :dismissed)
+    discard_prepared_work
   end
 
   # The world handled it — book the checkup yourself and the nudge about
@@ -48,6 +49,7 @@ class Suggestion < ApplicationRecord
   # only by the scan's retire pass, never by a user action.
   def resolve!
     update!(status: :resolved)
+    discard_prepared_work
   end
 
   # The one retirement rule that needs no watcher code: a suggestion whose
@@ -122,6 +124,10 @@ class Suggestion < ApplicationRecord
   end
 
   def accept_notice(created)
+    if (dial = action["agent_level"])
+      section = Section.find_by(slug: dial["section"])
+      return "Assistant set to #{dial["level"]} for #{section&.name}." if section
+    end
     return "Done." if created.nil?
     return "Logged #{created.display_merchant} to your spending." if created.is_a?(SpendingTransaction)
 
@@ -129,6 +135,15 @@ class Suggestion < ApplicationRecord
   end
 
   private
+    # A draft never outlives the nudge that occasioned it
+    # (D-agent-prepared-work): a prepared response letter about a bill the
+    # user has since paid is worse than a stale nudge, because it looks like
+    # work waiting to be done. Retiring the suggestion retires the draft,
+    # whether the world resolved it or the user waved it away.
+    def discard_prepared_work
+      tool_run.discard! if tool_run&.prepared?
+    end
+
     # A payload may carry several keys (birthday radar lands a gift task
     # *and* the day on the calendar); each present key materializes, and the
     # first creation names the flash notice.
@@ -164,6 +179,19 @@ class Suggestion < ApplicationRecord
           descriptor: attrs["descriptor"], merchant: attrs["merchant"],
           fingerprint: "receipt-#{SecureRandom.hex(10)}", source: "email_receipt")
         Spending::Categorize.new(user: user).apply_deterministic
+      end
+
+      if (attrs = action["agent_level"])
+        # The agent tuning itself (D-agent-earned-dials) — the one action
+        # that changes a setting rather than creating a primitive, and it
+        # still only moves on this click. Validated against the closed set
+        # and the user's own row: a payload can never widen anyone's dials
+        # but the owner's, or to a level that doesn't exist.
+        section = Section.find_by(slug: attrs["section"])
+        level = attrs["level"]
+        if section && UserSection::AGENT_LEVELS.include?(level)
+          user.user_sections.find_or_initialize_by(section: section).update!(agent_level: level)
+        end
       end
 
       if (attrs = action["schedule_task"])

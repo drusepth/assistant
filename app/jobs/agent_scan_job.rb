@@ -51,7 +51,7 @@ class AgentScanJob < ApplicationJob
     end
     prepare_work(user, noteworthy)
 
-    generate_digest(user) if cadence == "weekly"
+    generate_digest(user) if cadence == "weekly" || daily_brief?(user)
   end
 
   private
@@ -102,6 +102,15 @@ class AgentScanJob < ApplicationJob
       live.find_each { |suggestion| suggestion.resolve! if check.resolved?(suggestion) }
     rescue StandardError => e
       record_failure(e, user: user, context: { watcher: watcher.name, retire: true })
+    end
+
+    # A greeting that says "this week" on a Thursday is stale for exactly
+    # the people who asked the app to be daily, so a user with any Active
+    # section gets the digest regenerated on the daily scan too. No new
+    # prompt and no new surface — the same deterministic-facts-in,
+    # two-warm-sentences-out recipe, run more often for those who asked.
+    def daily_brief?(user)
+      user.user_sections.where(enabled: true, agent_level: "active").exists?
     end
 
     # LLM phrasing rides the weekly scan, after the deterministic work, and
