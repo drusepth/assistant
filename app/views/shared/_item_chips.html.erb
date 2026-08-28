@@ -1,7 +1,11 @@
 <%# Section chips + shared-by attribution, used inside every item row.
-    Pass on_dark: true when the row sits on a dark surface (goal cards). %>
-<% item.sections.each do |section| %>
-  <%= render Ui::SectionChipComponent.new(section: section) %>
+    Pass on_dark: true when the row sits on a dark surface (goal cards).
+    Pass sections: false to drop the section chips and keep only the
+    attribution — for rows whose design reads better without the tags. %>
+<% if local_assigns.fetch(:sections, true) %>
+  <% item.sections.each do |section| %>
+    <%= render Ui::SectionChipComponent.new(section: section) %>
+  <% end %>
 <% end %>
 <% if item.user_id != Current.user.id %>
   <%# The one marker that says "this is someone else's" on every primitive,

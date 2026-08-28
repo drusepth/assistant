@@ -39,11 +39,16 @@
       <p class="mt-1.5 text-xs text-primary-100"><%= done_count %> of <%= total %> steps done</p>
     <% end %>
 
-    <div class="mt-2 flex flex-wrap items-center gap-1.5">
-      <% if goal.target_on %>
-        <span class="chip bg-white/10 text-primary-50 ring-1 ring-white/20">by <%= goal.target_on.strftime("%b %-d, %Y") %></span>
-      <% end %>
-      <%= render "shared/item_chips", item: goal, on_dark: true %>
-    </div>
+    <%# No section chips here: the card sells one outcome and its progress,
+        and the tags belong to the tasks it spawns. The date and the
+        someone-else's marker stay — they say when and whose. %>
+    <% if goal.target_on || goal.user_id != Current.user.id %>
+      <div class="mt-2 flex flex-wrap items-center gap-1.5">
+        <% if goal.target_on %>
+          <span class="chip bg-white/10 text-primary-50 ring-1 ring-white/20">by <%= goal.target_on.strftime("%b %-d, %Y") %></span>
+        <% end %>
+        <%= render "shared/item_chips", item: goal, on_dark: true, sections: false %>
+      </div>
+    <% end %>
   </div>
 </div>
