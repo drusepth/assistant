@@ -1,0 +1,92 @@
+<%# People, on PEOPLE.md's argument — and its named design trap. The page
+    has to actively disclaim CRM-for-friends, because that is what every
+    reader will assume a "contacts" feature is. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    The wealthy have always had social infrastructure. Someone who remembers
+    every birthday and sends the gift. Clubs that manufacture friendship.
+    Somebody to make the gathering actually happen, rather than leaving it
+    at "we should do this more often" for nine years.
+  </p>
+  <p>
+    Most people get a contacts app that is effectively a graveyard, and a
+    feed engineered so that scrolling <em>about</em> people substitutes for
+    time <em>with</em> them. The result is a slow, unremarked loss of the
+    relationships that would have mattered most, to nobody's decision in
+    particular.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Not a database of humans</h2>
+  <p class="mt-4 text-soft">
+    The obvious way to build this is customer-relationship software pointed
+    at your friends, and it is the wrong way — the moment the core activity
+    becomes enriching contact records, you've built something that makes
+    people into pipeline. So the rule here is that every feature has to end
+    in contact: a message sent, a date on the calendar, a visit that
+    happened. Not in a tidier record.
+  </p>
+  <p class="mt-4 text-soft">
+    Which is also why keeping it up to date is meant to cost almost nothing.
+    You log that you saw someone in about four seconds, and the app does the
+    filing.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What you see</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Your circle, not your address book") do %>
+      <p class="text-sm text-soft">
+        The people you'd regret losing touch with, surfaced — separate from
+        the three hundred acquaintances a phone sync drags in. The full
+        roster still exists; it just isn't what greets you.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Who you haven't spoken to") do %>
+      <p class="text-sm text-soft">
+        The friendship that's drifted eleven months without either of you
+        deciding anything. Named gently, with something you could actually
+        send, rather than a guilt counter.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Groups, not just individuals") do %>
+      <p class="text-sm text-soft">
+        Church, the club, the team, the mutual aid group, the school
+        parents. Real social life is mostly groups, and an app that only
+        understood one-to-one friendships would recreate the isolation it's
+        meant to answer.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "What you know about them") do %>
+      <p class="text-sm text-soft">
+        The allergy, the new job, the name of their kid, what they said
+        about their mother last spring. The things a thoughtful person
+        remembers, kept somewhere that isn't only your memory.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">For the hard ones too</h2>
+  <p class="mt-4 text-soft">
+    Not every conversation you're avoiding is a cheerful one. The apology
+    you owe, the boundary you've never managed to state, the friend whose
+    parent just died and whom you haven't messaged because you don't know
+    what to say. Those are the moments people most need a hand with, so
+    they're here rather than treated as outside the remit.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Who can see it</h2>
+  <p class="mt-4 text-soft">
+    Yours alone by default. What you've recorded about a friendship is a
+    genuinely private thing, and it stays that way unless you share it —
+    the household calendar can carry the dinner without the household
+    reading your notes about the guest.
+  </p>
+</section>

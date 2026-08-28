@@ -109,14 +109,16 @@ class AboutControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # A hub backed by sections falls back on generated tool cards, so it is a
-  # real page before anyone writes its prose. The two cross-cutting hubs
-  # generate nothing, so prose is the only thing they have — registering one
-  # without it ships an empty page.
-  test "a hub that owns no section has hand-written prose" do
-    About::Page::HUBS.select { |hub| hub.sections.empty? }.each do |hub|
+  # A hub backed by tool cards is a real page before anyone writes its
+  # prose. A hub that generates nothing has only its prose, so registering
+  # one without it ships a masthead and a footer. Two ways to generate
+  # nothing: own no section (the cross-cutting hubs), or own sections that
+  # no tool registers on — which is Travel, and is why this asks about
+  # tools rather than about sections.
+  test "a hub that generates nothing has hand-written prose" do
+    About::Page::HUBS.select { |hub| hub.tools.empty? }.each do |hub|
       partial = Rails.root.join("app/views/about/sections/_#{hub.slug.tr('-', '_')}.html.erb")
-      assert partial.exist?, "#{hub.slug} generates nothing, so it needs #{partial.basename}"
+      assert partial.exist?, "#{hub.slug} generates no tool cards, so it needs #{partial.basename}"
     end
   end
 

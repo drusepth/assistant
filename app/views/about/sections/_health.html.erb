@@ -1,0 +1,102 @@
+<%# Health, on HEALTH.md's thesis: the assistant's job here is logistics and
+    comprehension, never diagnosis. Says so early, because a health page in
+    an AI product has to name its scope line before it can be trusted. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    What an assistant actually does for someone's health is mostly not
+    medical. They make sure the checkup gets booked. They remember when the
+    last one was. They keep the insurance paperwork findable, sit on hold
+    with the insurer, and make sure you walk into the appointment with your
+    questions written down instead of remembering them in the car park
+    afterwards.
+  </p>
+  <p>
+    That's the job here. This section will never tell you what's wrong with
+    you — it does preparation and plain language, so you arrive ready and
+    leave understanding what you were told.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What you see</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "You're due") do %>
+      <p class="text-sm text-soft">
+        The checks that have quietly gone too long — the dentist, the eye
+        test, the screening nobody scheduled — surfaced before they become a
+        thing you feel guilty about. For everyone in the house, including
+        the ones with four legs.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "You're booked") do %>
+      <p class="text-sm text-soft">
+        The quieter half, and the one that matters more. An assistant that
+        can only nag adds anxiety; this one can also say <em>handled</em>,
+        and mean it, so you can stop carrying it around.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The paperwork, findable") do %>
+      <p class="text-sm text-soft">
+        Insurance cards, plan documents, benefit summaries, the letter about
+        the claim. Filed, searchable inside, and summarised — so "what does
+        my plan actually cover for this" has an answer that takes a minute.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Medications and allergies") do %>
+      <p class="text-sm text-soft">
+        Kept in one place, because the form at every new clinic asks for
+        exactly this list and nobody has ever had it to hand.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The line it won't cross</h2>
+  <p class="mt-4 text-soft">
+    Preparation and comprehension, never diagnosis. It will explain what the
+    words on your results letter mean and list the questions worth asking
+    your doctor about them. It will not tell you what they indicate, and it
+    will not suggest a treatment. Where something is genuinely unclear it
+    says so rather than smoothing over it.
+  </p>
+  <p class="mt-4 text-soft">
+    This is a scope line rather than a legal disclaimer, and the difference
+    shows in the output: the app is trying to make you a better-informed
+    patient, not to replace the appointment.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">No step counting</h2>
+  <p class="mt-4 text-soft">
+    You won't find sleep graphs or heart-rate trends here. Not because
+    they're worthless, but because every honest route to that data is either
+    shut off, locked to a phone, or a separate integration with a company
+    per device — and a chart with nothing to say is worse than no chart. The
+    durable, universally useful health assets turned out to be appointments
+    and paperwork, so those are what this section is built around.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Everyone in the house</h2>
+  <p class="mt-4 text-soft">
+    Health is rarely only yours. The parent you've started caring for, the
+    child whose immunisations you track, the dog whose vaccination is due —
+    all of them generate exactly this kind of work, and all of them are
+    handled here rather than in a separate app each. Pets get their own
+    page, their own record, and their own due-soon list.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Who can see it</h2>
+  <p class="mt-4 text-soft">
+    Nobody but you, unless you say so. Health is the area where that default
+    matters most, and where the app is most careful never to guess: sharing
+    a diagnosis with a spouse, or a child's records between two parents, is
+    something you switch on per item or per area and can revoke at any time.
+  </p>
+</section>
