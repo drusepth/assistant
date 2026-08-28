@@ -8,41 +8,24 @@
   <% end %>
 <% end %>
 
-<%# One box for everything: name the outcome, the assistant plans the steps (D17). %>
-<%= form_with model: @new_goal, class: "capture-row mb-6" do |form| %>
+<%# One box for everything: name the outcome, the assistant plans the steps
+    (D17) — and files a day-sized capture as a plain task instead
+    (D-goal-capture-routing). %>
+<%= form_with model: @new_goal, class: "capture-row mb-4" do |form| %>
   <%= form.text_field :title, placeholder: goal_capture_placeholder, required: true, class: "flex-1" %>
   <%= form.submit "Add goal" %>
 <% end %>
 
-<% if @goals.any? %>
-  <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-    <%= render @goals %>
-  </div>
-<% end %>
+<%# One section, two surfaces (D-tasks-two-surfaces): the board for daily
+    doing, Goals for occasional planning. Links, not a toggle — each surface
+    is a URL, so back and bookmark work. %>
+<nav class="tab-bar">
+  <%= link_to tasks_path, class: class_names("tab", "tab-active" => @tab == "board") do %>
+    <%= icon(:inbox, css_class: "size-4") %> Board
+  <% end %>
+  <%= link_to tasks_path(tab: "goals"), class: class_names("tab", "tab-active" => @tab == "goals") do %>
+    <%= icon(:flag, css_class: "size-4") %> Goals
+  <% end %>
+</nav>
 
-<% columns = { "Later" => @later_tasks, "Today" => @today_tasks, "Done" => @done_tasks } %>
-<% if columns.values.all?(&:empty?) %>
-  <%= render Ui::EmptyStateComponent.new(
-        title: "Nothing to do yet",
-        description: "Name a goal above — big (“get a job”) or small (“renew my passport”) — and your assistant breaks it into day-sized tasks. Or add a one-off task from the button up top."
-      ) %>
-<% else %>
-  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-    <% columns.each do |name, tasks| %>
-      <div class="rounded-xl bg-stone-100/70 p-3">
-        <div class="mb-3 flex items-center justify-between px-1">
-          <h2 class="text-sm font-semibold text-ink"><%= name %></h2>
-          <span class="text-xs text-soft"><%= tasks.size %></span>
-        </div>
-        <div class="space-y-3">
-          <%= render partial: "tasks/card", collection: tasks, as: :task, locals: { column: name.downcase } %>
-          <% if tasks.empty? %>
-            <p class="px-1 py-4 text-center text-xs text-soft">
-              <%= name == "Today" ? "Nothing picked for today — pull a task over." : "Nothing here." %>
-            </p>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-  </div>
-<% end %>
+<%= render @tab == "goals" ? "goals_panel" : "board" %>

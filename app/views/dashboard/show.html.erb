@@ -48,7 +48,12 @@
   </div>
 <% end %>
 
-<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+<%# The controller wraps the whole pair rather than the one card that uses it:
+    a wrapper around a single card would become the grid item, and the card
+    inside it would stop stretching to its neighbour's height. %>
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2"
+     data-controller="quick-add"
+     data-action="keydown.esc@window->quick-add#closeAll click@window->quick-add#clickOutside">
   <%= render Ui::CardComponent.new(title: "Needs attention", padded: false) do |card| %>
     <% card.with_actions { link_to "Today view", today_path, class: "btn btn-ghost btn-sm" } %>
     <% needing = @overdue_tasks + @due_today_tasks %>
@@ -59,8 +64,18 @@
     <% end %>
   <% end %>
 
+  <%# Capture where the answer is: noticing a gap in the week and adding to it
+      are the same moment, so the week's card carries its own add button rather
+      than sending you back up to the hero. %>
   <%= render Ui::CardComponent.new(title: "Next 7 days", padded: false) do |card| %>
-    <% card.with_actions { link_to "Calendar", calendar_path, class: "btn btn-ghost btn-sm" } %>
+    <% card.with_actions do %>
+      <%= link_to "Calendar", calendar_path, class: "btn btn-ghost btn-sm" %>
+      <%= render Ui::QuickAddComponent.new(name: "upcoming_event", label: "Event",
+            title: "New event", small: true) do %>
+        <%= render "events/quick_form", event: @quick_event, return_to: root_path,
+              autofocus: false, namespace: "upcoming" %>
+      <% end %>
+    <% end %>
     <% if @upcoming_events.any? %>
       <div class="divide-y divide-edge"><%= render @upcoming_events %></div>
     <% else %>

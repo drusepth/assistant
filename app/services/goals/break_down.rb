@@ -11,7 +11,7 @@ module Goals
     MAX_QUESTIONS = 3
 
     Step = Data.define(:title, :notes, :due_on, :sections, :questions)
-    Result = Data.define(:sections, :target_on, :steps)
+    Result = Data.define(:kind, :shape, :sections, :target_on, :steps)
 
     # brief is optional framing from whatever captured the goal — a plan
     # tool shaping its steps (D19). It rides the same prompt; plan tools
@@ -26,6 +26,8 @@ module Goals
       response = @profile.client.chat(messages, json: true)
 
       Result.new(
+        kind: response["kind"] == "task" ? "task" : "goal",
+        shape: Goal::SHAPES.include?(response["shape"]) ? response["shape"] : nil,
         sections: Llm::Taxonomy.match(response["sections"], limit: MAX_SECTIONS),
         target_on: parsed_date(response["target_on"]),
         steps: parsed_steps(response["steps"])
@@ -38,6 +40,12 @@ module Goals
     def plan!
       result = call
 
+      # The one box routes (D-goal-capture-routing): day-sized input becomes a
+      # plain task, no goal ceremony. Only a bare capture is ever converted —
+      # anyone who filled in the goal form made the choice themselves.
+      return convert_to_task!(result) if result.kind == "task" && convertible?
+
+      @goal.update!(shape: result.shape) if @goal.shape.nil? && result.shape
       @goal.sections = result.sections if @goal.sections.none?
       @goal.update!(target_on: result.target_on) if @goal.target_on.nil? && result.target_on
 
@@ -53,6 +61,42 @@ module Goals
     end
 
     private
+      # A bare capture: nothing but a title, typed into the one box (or left
+      # unplanned by an earlier failure). A description, hand-set sections, a
+      # target date, existing steps, or a tool's brief all mean someone chose
+      # "goal" on purpose, and that choice is never second-guessed (D16).
+      def convertible?
+        @brief.nil? && @goal.tasks.none? &&
+          @goal.description.blank? && @goal.target_on.nil? && @goal.sections.none?
+      end
+
+      # Files the capture as the single task it is, deletes the placeholder
+      # goal, and tells the goal page the user is sitting on what happened
+      # (the board finds the task on its next refresh; the goal page is where
+      # capture lands per D-tasks-two-surfaces, so it gets the live word).
+      def convert_to_task!(result)
+        step = result.steps.first
+        user = @goal.user
+
+        task = user.tasks.create!(
+          title: step&.title.presence || @goal.title,
+          notes: step&.notes,
+          due_on: step&.due_on,
+          guiding_questions: step&.questions || [],
+          bucket: step&.due_on && step.due_on <= Date.current ? :today : :later
+        )
+        task.sections = step&.sections.presence || result.sections
+
+        target = ActionView::RecordIdentifier.dom_id(@goal, :planning)
+        @goal.destroy!
+        Turbo::StreamsChannel.broadcast_replace_to(
+          user, :tasks, target: target,
+          partial: "goals/converted", locals: { task: task }
+        )
+
+        [ task ]
+      end
+
       def messages
         [
           { role: "system", content: system_prompt },
@@ -65,11 +109,21 @@ module Goals
           You are the goal-planning feature of a private, self-hosted life assistant.
           The user names something they want to accomplish; you break it into concrete
           steps so they always know the next small thing to do. Respond with a JSON object:
-          {"sections": ["slug", ...],
+          {"kind": "goal" or "task",
+           "shape": "finite" or "ongoing",
+           "sections": ["slug", ...],
            "target_on": "YYYY-MM-DD" or null,
            "steps": [{"title": "...", "notes": "..." or null,
                       "due_on": "YYYY-MM-DD" or null, "sections": ["slug", ...],
                       "questions": ["...", ...]}, ...]}.
+          kind is "task" when the input is itself one small concrete action completable
+          in a single day ("buy cat litter", "call the dentist back") that needs no plan;
+          then give exactly one step describing that action and it will be filed as a
+          plain to-do instead of a goal. Anything that takes multiple steps is "goal".
+          shape is "finite" when the goal has a real finish line the steps complete
+          ("watch the series", "renew the passport", "find a job"); "ongoing" for
+          open-ended aspirations that are never simply done ("make new friends",
+          "get fit", "read more").
           Steps must be small concrete actions completable within a single day, each
           with a clear done/not-done outcome, listed in the order they should happen.
           Use 3 to #{MAX_STEPS} steps for a substantial goal; a trivial goal may need only one.

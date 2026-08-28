@@ -1,7 +1,10 @@
 <%# Minimal capture form (D16). Locals: event; optional return_to (local path
     to land on after create), autofocus, and cancel_url — omit cancel_url to
-    get a button that closes the enclosing quick-add panel instead. %>
-<%= form_with model: event, class: "space-y-4" do |form| %>
+    get a button that closes the enclosing quick-add panel instead.
+    `namespace` prefixes the field ids (param names are untouched): the
+    dashboard draws this form twice — in the hero and on the Next 7 days card —
+    and two copies sharing `id="event_title"` would break every label. %>
+<%= form_with model: event, class: "space-y-4", namespace: local_assigns[:namespace] do |form| %>
   <div class="space-y-1">
     <%= form.text_field :title, placeholder: "What's happening?", autofocus: local_assigns.fetch(:autofocus, true), required: true %>
     <%= form.errors_for :title %>

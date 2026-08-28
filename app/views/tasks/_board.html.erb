@@ -1,0 +1,50 @@
+<%# The goals strip (D-tasks-two-surfaces): active goals compressed to one
+    scrollable row, needs-attention first — a doorway to the Goals tab, not a
+    dashboard. The board below is the page's real subject. %>
+<% if @strip_goals.any? %>
+  <div class="mb-6 flex snap-x gap-2 overflow-x-auto pb-1">
+    <%= render partial: "goals/strip_chip", collection: @strip_goals, as: :goal %>
+  </div>
+<% end %>
+
+<% columns = { "Later" => @later_tasks, "Today" => @today_tasks, "Done" => @done_tasks } %>
+<% if columns.values.all?(&:empty?) %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "Nothing to do yet",
+        description: "Name a goal above — big (“get a job”) or small (“renew my passport”) — and your assistant breaks it into day-sized tasks. Or add a one-off task from the button up top."
+      ) %>
+<% else %>
+  <%# On a phone the columns become swipeable snap panes opening on Today
+      (D-tasks-two-surfaces): present state first, no scrolling past Later.
+      At lg the same markup lays out as the three-column grid and the pane
+      tab bar disappears. %>
+  <div data-controller="board-panes">
+    <div class="mb-2 grid grid-cols-3 gap-1 rounded-full bg-stone-200/70 p-1 lg:hidden">
+      <% columns.each_with_index do |(name, tasks), index| %>
+        <button type="button" class="tab justify-center" data-board-panes-target="tab"
+                data-action="board-panes#show" data-index="<%= index %>">
+          <%= name %> <span class="text-xs text-soft"><%= tasks.size %></span>
+        </button>
+      <% end %>
+    </div>
+    <div class="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0"
+         data-board-panes-target="track" data-action="scroll->board-panes#sync">
+      <% columns.each do |name, tasks| %>
+        <div class="w-full shrink-0 snap-center rounded-xl bg-stone-100/70 p-3 lg:w-auto lg:shrink" data-board-panes-target="pane">
+          <div class="mb-3 flex items-center justify-between px-1">
+            <h2 class="text-sm font-semibold text-ink"><%= name %></h2>
+            <span class="text-xs text-soft"><%= tasks.size %></span>
+          </div>
+          <div class="space-y-3">
+            <%= render partial: "tasks/card", collection: tasks, as: :task, locals: { column: name.downcase } %>
+            <% if tasks.empty? %>
+              <p class="px-1 py-4 text-center text-xs text-soft">
+                <%= name == "Today" ? "Nothing picked for today — pull a task over." : "Nothing here." %>
+              </p>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
