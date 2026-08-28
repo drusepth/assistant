@@ -1,0 +1,114 @@
+<%# The mission page, adapted from docs/VISION.md for a reader who has never
+    heard the argument and did not come here for a manifesto. Concrete
+    before abstract: the thing you don't have, then why you don't have it. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Think about what a wealthy person actually buys. Not the car — the
+    people. Someone who keeps the calendar and books the appointment.
+    Someone who reads the letter from the insurer and knows it can be
+    appealed. Someone who does the taxes, checks the lease, tutors the kid,
+    and remembers that the renewal is in March.
+  </p>
+  <p>
+    None of that is genius. Almost all of it is attention, applied steadily
+    to a life by someone who has read the paperwork. It is the most
+    boringly practical advantage money buys, and it compounds — because the
+    deposit gets recovered, the denial gets appealed, the raise gets asked
+    for, and the deadline doesn't pass.
+  </p>
+  <p>
+    For the first time, software can do a real share of that work. The
+    question is who ends up owning it.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Rent, or own</h2>
+  <p class="mt-4 text-soft">
+    The obvious path is the one already happening: assistance arrives as a
+    subscription from a handful of very large companies. You type your life
+    into their servers; they read it; you pay monthly; and if they change
+    the terms, raise the price, or switch the product off, that is simply
+    what happens next. This has a name in every other market. It's tenancy.
+  </p>
+  <p class="mt-4 text-soft">
+    We think that's a bad ending, and not mainly for privacy reasons. If
+    the productivity gain from this technology is only ever available as
+    rent, then the gain concentrates at the top of the lease — permanently,
+    structurally, in a way no amount of goodwill from the landlord fixes.
+    The people who most need an assistant, an accountant and an advocate
+    are exactly the people who will be priced into the cheap tier of one.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Why software, and not a policy</h2>
+  <p class="mt-4 text-soft">
+    Rules can be repealed by whoever wins the next election. Companies get
+    acquired and shut things off. But software that runs on hardware people
+    already own, that copies for free, and that nobody has the authority to
+    switch off, is very hard to take back. That pattern has worked before:
+    Linux, Signal, BitTorrent. One person can write a thing that millions
+    end up running, and after that it is simply out there.
+  </p>
+  <p class="mt-4 text-soft">
+    So the counter-move isn't to lobby for a better landlord. It's to lower
+    the cost of ownership until an ordinary household can have the whole
+    stack on a computer in the spare room.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What follows from that</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "The memory is the asset") do %>
+      <p class="text-sm text-soft">
+        What makes an assistant useful is not the model — it's everything it
+        knows about you. That knowledge is the part worth owning, and here
+        it is a file on your disk. The model is a component you can swap out
+        on a Tuesday.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Built for the 99%") do %>
+      <p class="text-sm text-soft">
+        Not for developers, not for enterprises. For people who have never
+        had an assistant, an accountant or a lawyer, and who are the reason
+        this is worth building at all. If a feature only makes sense to
+        someone technical, it's a bug.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Useful before it's clever") do %>
+      <p class="text-sm text-soft">
+        The first job is to be a good place to keep a life — calendar,
+        documents, tasks, people. That is worth having with the intelligence
+        switched off entirely, and everything cleverer is built on top of it
+        rather than in place of it.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Adoption beats elegance") do %>
+      <p class="text-sm text-soft">
+        A beautiful tool nobody can install protects nobody. Every decision
+        that makes this easier to get running is a mission decision, not a
+        convenience one.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The honest part</h2>
+  <p class="mt-4 text-soft">
+    This is not a finished answer. Running your own software is still harder
+    than signing up for something, the models you can run at home are behind
+    the ones you can rent, and a house full of self-hosted services is not
+    everybody's idea of a good evening. All of that is true and we'd rather
+    say so than pretend.
+  </p>
+  <p class="mt-4 text-soft">
+    What we'd argue is that the gap is closing from both directions, and
+    that the thing worth building now is the part that doesn't close by
+    itself: somewhere for a household's life to live that belongs to the
+    household.
+  </p>
+</section>

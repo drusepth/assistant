@@ -1,0 +1,111 @@
+<%# The objections, answered where a skeptic will actually look for them.
+    Every answer that could be a hedge is a straight yes or no first, then
+    the qualification — a FAQ that dodges reads worse than no FAQ. %>
+
+<div class="mt-12 max-w-3xl space-y-8">
+  <section>
+    <h2 class="display text-xl">Does it phone home?</h2>
+    <p class="mt-3 text-soft">
+      No. There is no telemetry, no analytics, no update check, no licence
+      server, and no address of ours anywhere in it. The app reaches the
+      network only where you have connected something yourself — a mailbox,
+      a feed, a calendar — and those go to your provider, not to us.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">Do I need to be technical?</h2>
+    <p class="mt-3 text-soft">
+      To install it today: a bit, yes. If you can follow instructions to
+      paste a couple of commands into a terminal, you can do it in an
+      evening. Once it's running, no — the app is for everyone in the
+      house, and nobody but the person who set it up ever sees a command.
+      <%= link_to "What installing involves →", about_page_path("install"), class: "text-primary-700 hover:underline" %>
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">What if I don't set up a model?</h2>
+    <p class="mt-3 text-soft">
+      Then you have a very good private organiser: a calendar across every
+      part of your life, a document vault that can find things, tasks,
+      people, photos, recipes, a feed reader, a password vault and a diary.
+      Anything that needs a model says so plainly instead of breaking.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">Is the AI any good, running on my computer?</h2>
+    <p class="mt-3 text-soft">
+      Good enough for most of what this app asks it to do, and behind the
+      big hosted models at the hardest end. Reading your documents,
+      explaining a letter, drafting a formal one, filing things and breaking
+      down a goal all work well on a modest model. Long open-ended
+      conversation is where you'd notice the difference.
+      <%= link_to "The honest version, with hardware →", about_page_path("models"), class: "text-primary-700 hover:underline" %>
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">Can it give me medical or legal advice?</h2>
+    <p class="mt-3 text-soft">
+      No, and it is built not to try. What it does is preparation and
+      comprehension: explaining what a letter or a lab result actually says,
+      listing the questions worth asking, and drafting the formal letter
+      you were entitled to send anyway. It will tell you a deadline is
+      commonly thirty days and that you should check your own state's rules,
+      rather than inventing a confident number. That restraint is
+      deliberate, and it is the reason the output is worth trusting.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">What happens to my data if this project stops?</h2>
+    <p class="mt-3 text-soft">
+      Nothing. It is a database file and a folder of attachments on hardware
+      you own, and the software carries on running on the machine it's
+      already on. There is no server of ours to switch off, because there
+      isn't one now. That is most of the point.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">Can my family see my things?</h2>
+    <p class="mt-3 text-soft">
+      Only what you have shared with them, deliberately, and you can see
+      that list and undo it at any time. The admin account has no special
+      view, and two things — the password vault and the diary — are
+      encrypted so that even someone with the raw database gets nothing.
+      <%= link_to "How households work →", about_page_path("household"), class: "text-primary-700 hover:underline" %>
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">Can I use it on my phone?</h2>
+    <p class="mt-3 text-soft">
+      Yes — it's a website, so it works in a phone browser and can be added
+      to a home screen like an app. Reaching it from outside the house is
+      the ordinary self-hosting question, and the ordinary answers apply.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">Is it finished?</h2>
+    <p class="mt-3 text-soft">
+      No. A great deal works and is in daily use; some of what is described
+      across these pages is newer than the rest; and the roadmap is public
+      rather than promised. If a page here describes something, it exists —
+      we'd rather have fewer pages than aspirational ones.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="display text-xl">Why is it free?</h2>
+    <p class="mt-3 text-soft">
+      Because charging rent for it would contradict the argument for
+      building it. There is no paid tier, no hosted version, and nothing
+      held back — the whole thing is the thing you can run.
+      <%= link_to "The longer answer →", about_page_path("why"), class: "text-primary-700 hover:underline" %>
+    </p>
+  </section>
+</div>

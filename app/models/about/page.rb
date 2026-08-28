@@ -47,8 +47,20 @@ module About
     # `faq` and `open-source` arrive in wave 2), and
     # `About::PagesTest#test_every_registered_page_renders` holds the line.
     TOP_LEVEL = [
+      entry("why", "Why we built this",
+        "Help you own, instead of help you rent."),
       entry("privacy", "Private by design",
-        "Nothing leaves your network. Here is exactly what that means.")
+        "Nothing leaves your network. Here is exactly what that means."),
+      entry("models", "The model, explained",
+        "What actually does the thinking, and what it needs from your computer."),
+      entry("install", "Getting started",
+        "What it takes to have this running tonight."),
+      entry("household", "Your household",
+        "Several people, one machine, private from each other by default."),
+      entry("faq", "Questions",
+        "The ones worth asking before you install anything."),
+      entry("open-source", "Open source",
+        "Read every line, change what you like, and keep it if we disappear.")
     ].freeze
 
     # The ten hubs. Eight are the app's sections; `your-day` and

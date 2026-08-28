@@ -1,0 +1,101 @@
+<%# The sharing model, which is the feature most likely to be misunderstood
+    as "an app for families" when the actual claim is stranger and better:
+    private *from* your family by default, with sharing as a visible act.
+    D9's no-hidden-defaults rule is the whole page. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    One installation serves a household. Everyone in it gets their own
+    account, and — this is the part worth reading twice — everything each
+    person keeps is invisible to everyone else until they say otherwise.
+  </p>
+  <p>
+    Not invisible to the internet. Invisible to your spouse, your adult
+    children, your housemate, and the admin who set the thing up. Shared
+    hardware is not shared visibility, and a household assistant that got
+    that wrong would be worse than useless — it would be a surveillance
+    device with a nice calendar.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">How sharing actually works</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "One thing at a time") do %>
+      <p class="text-sm text-soft">
+        Share a single item with a single person: this appointment, this
+        document, this task. They see it; nothing else comes with it; you
+        can take it back later.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A whole area, standing") do %>
+      <p class="text-sm text-soft">
+        Or share an entire area — "everything I file under Money goes to my
+        wife" — including things you file in future. Standing arrangements
+        are how a couple actually runs a household, so they are a first-class
+        option rather than a workaround.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Always visible, always revocable") do %>
+      <p class="text-sm text-soft">
+        Settings lists every share you have granted, in one place, with a
+        revoke button beside each. You should never have to wonder what
+        you've shared, and you should never need to remember what you did
+        last year.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Never guessed for you") do %>
+      <p class="text-sm text-soft">
+        The app has no opinion about what a household ought to share. It
+        does not decide that spouses see each other's money, or that parents
+        see everything. There are no hidden defaults, because a default that
+        shares something is a decision made on your behalf about your family.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What being shared with gets you</h2>
+  <p class="mt-4 text-soft">
+    Shared things behave like your own: they turn up on your calendar,
+    appear in your searches, and count when the app looks across your life
+    to tell you what needs attention. Two people who share their calendars
+    get an assistant that can genuinely see the collision between the
+    school run and the hospital appointment — which is the whole reason to
+    put a household on one machine rather than five.
+  </p>
+  <p class="mt-4 text-soft">
+    Anything the app does across people works strictly over what has been
+    shared with the person asking. There is no view from above, and the
+    admin account does not have one either.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Two things that stay sealed regardless</h2>
+  <p class="mt-4 text-soft">
+    The password vault and the diary are encrypted with a key derived from
+    your own login password. They are not merely un-shared — they are
+    unreadable to anyone holding the database file, which includes the
+    person who administers the machine and anyone who walks off with a
+    backup. Sharing an individual password with the household is possible
+    and deliberate; sharing the diary is not possible at all.
+    <%= link_to "How that's built →", about_page_path("privacy"), class: "text-primary-700 hover:underline" %>
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Joining, and leaving</h2>
+  <p class="mt-4 text-soft">
+    People join by an invitation link that the admin copies and hands over —
+    no email server, nothing sent anywhere. People leave by having their
+    account removed, and what they kept goes with them rather than being
+    quietly inherited by the household.
+  </p>
+  <p class="mt-4 text-soft">
+    If a household stops being one household, the honest answer is that the
+    data is a file: it can be copied, split, and taken. That is a great deal
+    more than a subscription would give either of you.
+  </p>
+</section>

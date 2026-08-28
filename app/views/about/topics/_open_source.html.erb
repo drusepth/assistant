@@ -1,0 +1,82 @@
+<%# Deliberately does not name a licence: the repository has no LICENSE file
+    yet, and a page that states one would be the site's first lie. When one
+    lands, this page gains a paragraph — see ABOUT_PLAN §6a on facts that
+    can't be computed. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Every line of this is public, and that is not a marketing posture — it
+    is the only way the promises on these pages can be checked. A claim
+    that nothing leaves your network is worth exactly as much as your
+    ability to go and look.
+  </p>
+  <p>
+    So: go and look. The code, the design documents, the decision log and
+    the build log are all in the repository, including the arguments we
+    lost and the things we tried and cut.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What being open buys you here</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "It cannot be taken away") do %>
+      <p class="text-sm text-soft">
+        Not by us losing interest, not by an acquisition, not by a change of
+        terms. Copies exist; yours runs on your hardware; and the ability to
+        keep running it does not depend on anyone's continued goodwill.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It can be checked") do %>
+      <p class="text-sm text-soft">
+        Every privacy claim on this site corresponds to code you can read.
+        If we said something that isn't true, it is true in the repository or
+        it isn't true anywhere.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It can be changed") do %>
+      <p class="text-sm text-soft">
+        Your household is not our target user in the abstract — it's yours,
+        specifically. Fork it, cut what you don't want, add the thing your
+        family actually needs. Nothing here is designed to make that hard.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It shows its reasoning") do %>
+      <p class="text-sm text-soft">
+        The repository keeps a decision log — one entry per real decision,
+        including the ones that were reversed. If you want to know why the
+        app works some particular way, the answer is written down rather
+        than lost in someone's memory.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Helping</h2>
+  <p class="mt-4 text-soft">
+    The most useful thing is to run it and say what broke. Not a bug report
+    in the formal sense — just the place you got stuck, the thing you
+    expected that didn't happen, the word that didn't mean what you thought.
+    Software built for people who have never had an assistant is very easy
+    to build for people who already understand it, and outside eyes are the
+    only real defence.
+  </p>
+  <p class="mt-4 text-soft">
+    After that: writing, translation, and design help are all more valuable
+    here than more features. So is telling somebody else about it — the
+    argument on this site only works if enough people end up running the
+    thing.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What we won't do</h2>
+  <p class="mt-4 text-soft">
+    Add telemetry. Add a hosted tier that gets features the self-hosted one
+    doesn't. Make the good version the one where your data passes through
+    somebody else. If any of that ever happens, the correct response is to
+    keep running the last version that didn't — which you will be able to
+    do, because that's how this is licensed and distributed.
+  </p>
+</section>

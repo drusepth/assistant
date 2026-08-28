@@ -1,0 +1,136 @@
+<%# The page that decides whether a non-technical visitor believes the rest
+    of the site. Its job is to make "run your own model" concrete, and to be
+    straight about where a home model is worse — per ABOUT_PLAN §6, honesty
+    is the strategy here, not a disclaimer at the bottom. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Every time this app writes something — a letter, a plan, an explanation
+    of your lab results — a language model does that writing. This page is
+    about where that model lives, because it is the difference between an
+    assistant you own and a subscription you rent.
+  </p>
+  <p>
+    It runs on your computer. You install one of several free programs that
+    serve a model locally, point this app at it once in Settings, and from
+    then on the writing happens on your hardware, in your house, with no
+    account and no per-word charge.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">How it fits together</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <%= render Ui::CardComponent.new(title: "1 · A model runner") do %>
+      <p class="text-sm text-soft">
+        A small free program that loads a model file and answers questions
+        on your machine. Ollama is the usual first choice because it
+        installs in one step; LM Studio gives you a friendlier window;
+        llama.cpp is the lean option underneath both.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "2 · A model") do %>
+      <p class="text-sm text-soft">
+        A file you download once, a few gigabytes, and keep. There are
+        dozens of good open ones and new ones every few months. You are not
+        locked to whichever you pick first — swapping is changing a name in
+        a box.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "3 · This app") do %>
+      <p class="text-sm text-soft">
+        In Settings, you tell it the address the runner is listening on and
+        the name of the model. That's the whole integration. Nothing else in
+        the app changes when you swap models later.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What your computer needs</h2>
+  <p class="mt-4 text-soft">
+    Less than people expect, and more than a phone. The rough shape:
+  </p>
+  <ul class="mt-6 space-y-4">
+    <li class="card p-5">
+      <h3 class="font-semibold">A recent laptop or desktop with 16GB of memory</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Runs a small model comfortably. Good enough for the letters, the
+        summaries, the plain-language explanations, and the daily filing —
+        which is most of what the app asks a model to do.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">32GB, or a machine with a real graphics card</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Runs a mid-sized model, and answers arrive at reading speed rather
+        than at typing speed. This is the sweet spot, and a second-hand
+        desktop that hits it costs less than a year of most subscriptions.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">A Mac with Apple silicon</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Punches above its price here, because the graphics chip can use the
+        machine's whole memory. An M-series Mac with 32GB is one of the
+        easiest good setups there is.
+      </p>
+    </li>
+  </ul>
+  <p class="mt-6 text-soft">
+    The app itself is undemanding — it is a small web application and a
+    database file, and will run happily on a mini PC or a home server. It is
+    only the model that wants the memory, and the two do not have to be the
+    same machine: plenty of households run the app on something tiny and
+    point it at the desktop upstairs.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Where a home model is worse</h2>
+  <p class="mt-4 text-soft">
+    Straight answer: a model you run at home is behind the largest hosted
+    ones, and anyone who tells you otherwise is selling something. What
+    matters is that the gap is uneven, and this app leans on the half where
+    it is small.
+  </p>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Happy on a small model") do %>
+      <p class="text-sm text-soft">
+        Summarising a document you supplied. Turning a letter into plain
+        language. Drafting a formal letter to a template. Filing things into
+        the right places. Breaking a goal into steps. This is the bulk of
+        the app, and it is mostly comprehension and structure rather than
+        knowledge.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Wants a bigger one") do %>
+      <p class="text-sm text-soft">
+        Long open-ended conversations that hold a lot at once — the tutor
+        across a whole subject, a mock interview that keeps its thread, an
+        argument about a complicated document. These work on a small model
+        and get noticeably better on a large one.
+      </p>
+    <% end %>
+  </div>
+  <p class="mt-6 text-soft">
+    There is also a whole half of the app that never asks a model anything:
+    the calendar, the documents, the tasks, the photos, the reader, the
+    vault. Those work identically on a machine with no model configured at
+    all, and they are deliberately the foundation rather than the garnish.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Why we don't just call an API</h2>
+  <p class="mt-4 text-soft">
+    Because then this would be a nicer front end for somebody else's
+    subscription, and everything on the
+    <%= link_to "privacy page", about_page_path("privacy"), class: "text-primary-700 hover:underline" %>
+    would be a promise about their behaviour rather than a fact about
+    yours. The whole argument of this project is that the thing doing the
+    reading should be a thing you own — so the app is built to work that
+    way, and the pages here describe that app.
+  </p>
+</section>

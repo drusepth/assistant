@@ -1,0 +1,107 @@
+<%# Getting started. Deliberately honest about difficulty rather than
+    promising one magic command — the mission argument says adoption beats
+    elegance, which means telling people the truth about the evening ahead
+    and then making it as short as possible. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    You need a computer that stays on, half an hour, and a willingness to
+    paste two or three commands into a terminal. That is genuinely the bar
+    today — not because it should be, but because it is, and we would
+    rather you know before you start than halfway through.
+  </p>
+  <p>
+    There is no account to create, no signup, no key to request. You end
+    the evening with a web address on your home network that your household
+    logs into.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Three ways in</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <%= render Ui::CardComponent.new(title: "Docker", subtitle: "The usual answer") do %>
+      <p class="text-sm text-soft">
+        Build the image and run it. One command each, and the container
+        carries everything the app needs — no Ruby to install, no
+        dependencies to chase. If you already run anything else at home this
+        way, this will take you ten minutes.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "From the source", subtitle: "If you'd rather see it") do %>
+      <p class="text-sm text-soft">
+        Clone the repository, install the dependencies, prepare the
+        database, start the server. Four commands, all of them the standard
+        ones for this kind of application, and the whole thing is readable
+        while it runs.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A small server", subtitle: "If you want it always on") do %>
+      <p class="text-sm text-soft">
+        The repository carries deployment configuration for putting it on a
+        machine you rent or one in your cupboard. Worth doing once you know
+        you want to keep it, not on the first evening.
+      </p>
+    <% end %>
+  </div>
+  <p class="mt-6 text-soft">
+    The exact commands live in the repository's README, where they can stay
+    correct as the app changes — a version of them copied onto this page
+    would be wrong within a month.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What happens the first time you open it</h2>
+  <ol class="mt-6 space-y-4">
+    <li class="card p-5">
+      <h3 class="font-semibold">1 · You make the household</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        The first visit to a fresh installation is a single form: name your
+        household, make your own account. That account is the admin, because
+        somebody has to be, and it is you because you got there first.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">2 · You choose what you want</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        A short walkthrough asks which parts of life you want the app to
+        cover. Everything is switchable later, and switching a part off
+        hides it rather than losing anything.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">3 · You invite the household</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Invitations are links you copy and hand over however you like — a
+        message, a note on the table. There is no mail server to configure
+        because nothing here needs to send you email.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">4 · You point it at a model, when you're ready</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Optional, and worth leaving until you've had a look around. The app
+        is a complete organiser without it, and every page that needs a
+        model says so plainly rather than failing oddly.
+        <%= link_to "How the model works →", about_page_path("models"), class: "text-primary-700 hover:underline" %>
+      </p>
+    </li>
+  </ol>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Keeping it</h2>
+  <p class="mt-4 text-soft">
+    Your entire installation is a database file and a folder of
+    attachments. Backing up means copying those two things somewhere else —
+    an external drive, another machine, wherever you already put things you
+    would hate to lose. Restoring means copying them back. There is no
+    export format to fight with, because there is no lock-in to escape.
+  </p>
+  <p class="mt-4 text-soft">
+    Do set that up. Self-hosting means the failure that loses your data is
+    now your hardware, and a household calendar is worth ten minutes of
+    thinking about backups.
+  </p>
+</section>
