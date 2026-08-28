@@ -68,6 +68,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
      **Cards**
    - `.chip-inferred` — a chip for what the model decided, not what the user
      filed: outlined rather than filled (see D-story-matching)
+   - `.tab-bar`/`.tab` (+ `.tab-active`) — a page's surface switch, as links
+     so each surface is a URL (see D-tasks-two-surfaces)
    - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a
      recommendation or caveat that belongs to the form, not the request
    - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)

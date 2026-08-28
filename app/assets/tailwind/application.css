@@ -330,6 +330,19 @@
     @apply border border-dashed border-edge text-soft;
   }
 
+  /* A page's surface switch (D-tasks-two-surfaces): links, not buttons —
+     each tab is a URL, so back and bookmark work. The active tab sits on
+     the surface color; the rest stay quiet. */
+  .tab-bar {
+    @apply mb-4 inline-flex items-center gap-1 rounded-full bg-stone-200/70 p-1;
+  }
+  .tab {
+    @apply inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium text-soft transition-colors hover:text-ink;
+  }
+  .tab-active {
+    @apply bg-canvas font-semibold text-ink shadow-sm;
+  }
+
   /* Rendered prose from a writer's own Markdown (Diary::Markdown). Preflight
      strips headings and lists back to plain text, so the tags that renderer
      emits need dressing somewhere — here, once, rather than as a class on

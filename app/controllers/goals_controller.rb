@@ -1,5 +1,5 @@
 class GoalsController < ApplicationController
-  before_action :set_own_goal, only: %i[ edit update destroy complete reopen break_down ]
+  before_action :set_own_goal, only: %i[ edit update destroy complete reopen pause resume break_down ]
 
   # Goals live inside the Tasks section now; the old boards URL just forwards.
   def index
@@ -21,7 +21,9 @@ class GoalsController < ApplicationController
     if @goal.save
       @goal.enqueue_break_down!
       notice = @goal.breaking_down? ? "Goal added — your assistant is breaking it into steps." : "Goal added."
-      redirect_to return_to_path(tasks_path), notice: notice
+      # Capture lands on the goal's own page (D-tasks-two-surfaces): the plan
+      # streams in there, and editing it flows straight into doing it.
+      redirect_to return_to_path(goal_path(@goal)), notice: notice
     else
       render :new, status: :unprocessable_entity
     end
@@ -51,6 +53,17 @@ class GoalsController < ApplicationController
   def reopen
     @goal.update!(status: :active)
     redirect_back fallback_location: goal_path(@goal)
+  end
+
+  # Shelving without shame (D-goal-pause): one click each way, no ceremony.
+  def pause
+    @goal.pause!
+    redirect_back fallback_location: goal_path(@goal), notice: "Goal paused — it's parked on the Goals tab whenever you're ready."
+  end
+
+  def resume
+    @goal.resume!
+    redirect_back fallback_location: goal_path(@goal), notice: "Goal resumed."
   end
 
   def break_down

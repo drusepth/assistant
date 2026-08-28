@@ -5,12 +5,22 @@
   <% header.with_actions do %>
     <% if @goal.done? %>
       <span class="chip bg-primary-100 text-primary-800">Done</span>
+    <% elsif @goal.paused? %>
+      <span class="chip bg-stone-200 text-soft">Paused</span>
     <% end %>
     <% if own %>
       <% if @goal.done? %>
         <%= button_to "Reactivate", reopen_goal_path(@goal), method: :patch, class: "btn btn-secondary" %>
+      <% elsif @goal.paused? %>
+        <%# Shelving is a plan, not a failure (D-goal-pause): one click back. %>
+        <%= button_to resume_goal_path(@goal), method: :patch, class: "btn btn-secondary" do %>
+          <%= icon(:play, css_class: "size-4") %> Resume
+        <% end %>
       <% else %>
         <%= button_to "Mark done", complete_goal_path(@goal), method: :patch, class: "btn btn-secondary" %>
+        <%= button_to pause_goal_path(@goal), method: :patch, class: "btn btn-secondary" do %>
+          <%= icon(:pause, css_class: "size-4") %> Pause
+        <% end %>
       <% end %>
       <%= link_to "Edit", edit_goal_path(@goal), class: "btn btn-secondary" %>
       <%= button_to "Delete", @goal, method: :delete, class: "btn btn-danger",
@@ -19,7 +29,11 @@
   <% end %>
 <% end %>
 
-<div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
+<%# The planning container: when a bare capture turns out to be day-sized,
+    the breakdown replaces this whole block with goals/_converted
+    (D-goal-capture-routing) — the user watching the plan form is told what
+    happened instead of being teleported. %>
+<div id="<%= dom_id(@goal, :planning) %>" class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
     <% if @goal.description.present? %>
       <%= render Ui::CardComponent.new(title: "About") do %>

@@ -1,11 +1,13 @@
 <%# Goals are the big swings, so their card sells the climb: a deep brand
     gradient with a flag watermark and prominent progress, visually distinct
-    from the day-sized task cards below. %>
+    from the day-sized task cards. The percent climb is only shown when it's
+    true — finite goals; ongoing ones speak in momentum (D-goal-shape) — and
+    a paused card visibly rests (D-goal-pause). %>
 <% total = goal.tasks.size %>
 <% done_count = goal.tasks.count(&:completed?) %>
 <% pct = total.positive? ? (done_count * 100.0 / total).round : 0 %>
 
-<div class="group relative flex flex-col overflow-hidden rounded-xl bg-gradient-to-br from-primary-900 via-primary-700 to-primary-500 p-4 text-white shadow-md ring-1 ring-white/10 transition-shadow hover:shadow-lg">
+<div class="group relative flex flex-col overflow-hidden rounded-xl bg-gradient-to-br from-primary-900 via-primary-700 to-primary-500 p-4 text-white shadow-md ring-1 ring-white/10 transition-shadow hover:shadow-lg <%= "opacity-75 saturate-50" if goal.paused? %>">
   <%= icon(goal.done? ? :check_circle : :flag, css_class: "pointer-events-none absolute -right-5 -top-5 size-28 rotate-6 text-white/10 transition-transform duration-300 group-hover:rotate-0 group-hover:scale-105") %>
   <div class="pointer-events-none absolute -bottom-16 -left-12 size-44 rounded-full bg-primary-300/20 blur-2xl"></div>
 
@@ -17,7 +19,11 @@
       <span class="chip bg-white/15 text-white ring-1 ring-white/30">
         <%= icon(:check_circle, css_class: "size-3.5") %> Achieved
       </span>
-    <% elsif total.positive? %>
+    <% elsif goal.paused? %>
+      <span class="chip bg-white/15 text-white ring-1 ring-white/30">
+        <%= icon(:pause, css_class: "size-3.5") %> Paused
+      </span>
+    <% elsif total.positive? && !goal.ongoing_shape? %>
       <span class="text-lg font-bold leading-none tabular-nums">
         <%= pct %><span class="text-xs font-semibold text-primary-200">%</span>
       </span>
@@ -32,6 +38,8 @@
         <span class="size-1.5 animate-pulse rounded-full bg-white"></span>
         Breaking this into steps…
       </p>
+    <% elsif goal.ongoing_shape? && !goal.done? %>
+      <p class="text-xs text-primary-100"><%= goal_momentum(goal) %></p>
     <% elsif total.positive? %>
       <div class="h-2 w-full overflow-hidden rounded-full bg-white/15">
         <div class="h-full rounded-full bg-gradient-to-r from-primary-300 to-white" style="width: <%= pct %>%"></div>
@@ -40,10 +48,14 @@
     <% end %>
 
     <%# No section chips here: the card sells one outcome and its progress,
-        and the tags belong to the tasks it spawns. The date and the
-        someone-else's marker stay — they say when and whose. %>
-    <% if goal.target_on || goal.user_id != Current.user.id %>
+        and the tags belong to the tasks it spawns. The date, the quiet-goal
+        marker (D-goal-pause), and the someone-else's marker stay — they say
+        when, whether it's moving, and whose. %>
+    <% if goal.stale? || goal.target_on || goal.user_id != Current.user.id %>
       <div class="mt-2 flex flex-wrap items-center gap-1.5">
+        <% if goal.stale? %>
+          <span class="chip bg-white/10 text-primary-50 ring-1 ring-white/20"><%= goal_stale_label(goal) %></span>
+        <% end %>
         <% if goal.target_on %>
           <span class="chip bg-white/10 text-primary-50 ring-1 ring-white/20">by <%= goal.target_on.strftime("%b %-d, %Y") %></span>
         <% end %>
