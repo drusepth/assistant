@@ -145,6 +145,15 @@ Notification channels (email/push) are deferred: self-hosted instances rarely ha
 6. ✅ **M3.2 — Dials + watchers**: Off/Quiet/Active per section in Settings (`user_sections.agent_level`), honored by weekly/daily cadences (loudest dial among a watcher's sections wins); stay-in-touch (Q8 resolved: manual "Log contact" signal), renewal radar, goal stall — joined by **neglected-hobby** from the Hobbies build (`docs/HOBBIES.md` §4).
 7. **M3.3 — Garnish + reach**: ✅ the LLM-phrased Dashboard digest (phrasing only — deterministic facts in, two warm sentences out, silent failure). Remaining: cross-user coordination suggestions (needs its own design pass — shared-data semantics across household members), notification channels (Q10), Tier-B capabilities (Q9).
 
+**The agent went active after M4** (`docs/AGENT_PLAN.md`, built 2026-08).
+The dials' meanings above are unchanged, but Active now buys abilities
+rather than only cadence: suggestions retire when the world resolves them
+(D-suggestion-lifecycle), Active-dial suggestions arrive with the draft
+already written and nothing landed until the click (D-agent-prepared-work),
+every notification carries a one-tap decision link (D-decision-links,
+resolving Q10's successor Q-sms-replies), and the agent offers its own dial
+tuning in both directions (D-agent-earned-dials).
+
 Still parked from before, unchanged: D14 leftovers (export, `model_profiles.api_key` encryption) slot in whenever — they don't block this sequence.
 
 ---

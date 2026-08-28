@@ -8,9 +8,10 @@ Off/Quiet/Active dials, the phrased weekly digest) and M4 gave it reach
 D6 trust ladder: an agent that doesn't just *point at* work but *arrives with
 the work already done* — while changing nothing about who clicks.
 
-Proposed decisions here are logged as **D-agent-prepared-work,
-D-suggestion-lifecycle, D-decision-links, D-agent-earned-dials** (provisional
-until their build passes prove them, same convention as D18–D20/D28–D29).
+Decisions here are logged as **D-agent-prepared-work,
+D-suggestion-lifecycle, D-decision-links, D-agent-earned-dials** — all five
+waves are **built** (2026-08); §9 records what the build changed about the
+design.
 
 ---
 
@@ -322,20 +323,47 @@ the step-2 copy promises.
 
 ## 9. Build order
 
-Each wave lands green and independent, in this order:
+All five waves are **built** (2026-08). Each landed green and independent,
+in this order:
 
-1. **A1 — Lifecycle**: `resolved` status + `expires_on` + `Watcher::Base#
-   resolved?` + the retire pass, with inverse checks for the ~8 watchers
-   where the SQL is cheap. Model-free trust win; prerequisite for A2.
-2. **A2 — Prepared work**: `tool_runs.origin` + `prepared`/`discarded`
-   statuses + landing intents + `land!` + review UI + budget + `prepare_work`
-   toggle + transparency line. The flagship.
-3. **A3 — Decision links**: the signed-token decision page + the URL in
+1. ✅ **A1 — Lifecycle**: `resolved` status + `expires_on` +
+   `Watcher::Base#resolved?`/`retires?` + the retire pass, with inverse
+   checks for nine watchers. Model-free; prerequisite for A2.
+2. ✅ **A2 — Prepared work**: `tool_runs.origin` + `prepared`/`discarded`
+   statuses + landing intents + `land!` + review UI + budget +
+   `prepare_work` toggle + transparency line. The flagship.
+3. ✅ **A3 — Decision links**: the signed-token decision page + the URL in
    every channel payload. Closes Q-sms-replies' loop.
-4. **A4 — Earned dials**: `dial_tuner` + the `agent_level` action key.
-   Smallest wave; ships whenever after A1.
-5. **A5 — Daily brief** for Active users; the parked items wait for their
-   moments.
+4. ✅ **A4 — Earned dials**: `dial_tuner` + the `agent_level` action key.
+5. ✅ **A5 — Daily brief** for Active users; the parked items wait for
+   their moments.
+
+### What the build changed about the design
+
+Three things came out different, and each is the more defensible version:
+
+- **The no-side-effects guarantee moved from the tools to the runner.**
+  §4 described landing intents as a mode the `Tool::Base` helpers honor,
+  which is true but would have made the guarantee a rule every future tool
+  had to follow — and four tools already create primitives outside those
+  helpers. `Agent::Prepare` now runs the whole call inside a transaction it
+  always rolls back, so the property holds for tools that have never heard
+  of preparation: their writes are undone, and having staged no intents
+  they prepare nothing at all and degrade to the plain redirect.
+- **The decision token is packed by hand.** §5's signed token, built the
+  obvious way with Rails' `expires_in:`/`purpose:` metadata, measured 162
+  characters — a 212-character URL against a 300-character SMS bound, which
+  would have left almost no room for the message. Packing `expiry.ids`
+  ourselves and deriving the key from the purpose gets the URL to 124.
+  The summary now yields space to the link rather than the link being
+  truncated, since a broken URL is worse than a short sentence.
+- **An unparseable fingerprint means "can't say", not "handled".** A1's
+  retire checks read their subject back out of the fingerprint, and the
+  first draft treated a subject it couldn't find as resolved. That is right
+  for a deleted row and badly wrong for a fingerprint format that changed —
+  it would silently retire every live nudge of that watcher on the next
+  scan. The parse failing and the record being gone are now different
+  answers.
 
 ## 10. Schema summary
 

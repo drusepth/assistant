@@ -33,19 +33,19 @@ an entry another branch is holding; add a new one instead.
 All want their own design conversation first:
 
 1. Richer coordination (location/LLM garnish over the same signals)
-2. Tier-B tool capabilities (Q9)
-3. Project name (Q4)
-4. Community packs (D11 revisit)
+2. The active agent's parked tail (`docs/AGENT_PLAN.md` §7, waves A1–A5
+   built 2026-08): prepared *plan* tools (a Goal and its breakdown landed as
+   one deferred graph — wants a plan-tool suggestion that demonstrably
+   suffers from the form hop first), Q-agent-chat-openers, and Q19's
+   outbound-action consent design, which is the trust ladder's next rung
+   and should wait until prepared work has run in real houses for a while
+3. Tier-B tool capabilities (Q9)
+4. Project name (Q4)
+5. Community packs (D11 revisit)
 
 Ready to build without one:
 
-5. Email follow-ons (`docs/EMAIL_PLAN.md` §10 parked list): sending mail's consent design (Q19), receipt/renewal signals feeding Money watchers over the People/mirror linkage, `person_email_addresses` normalization if single-address matching disappoints, wiring the E0 `households.region` into the Rights/Money tool prompts (Q12's other half)
-6. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)
-7. People deferred slice (`docs/PEOPLE.md` §9.8, waits decided 2026-08): Q17 person↔item links → afterglow watcher + per-person history (wait for a second consumer), the stay-in-touch cadence upgrade (wait for a wrong-feeling nudge in real use), community tools for groups (wait for a real group living in a lens), "new baby"/co-parenting Situations (on demand)
-8. The active agent (`docs/AGENT_PLAN.md`, designed 2026-08): waves A1
-   (suggestion lifecycle — retire what the world resolved) → A2 (prepared
-   work: dial-gated, budgeted draft pre-runs that land nothing until the
-   click) → A3 (signed decision links, the Q-sms-replies answer) → A4
-   (earned dials) → A5 (daily brief for Active users) — A1 is model-free
-   and stands alone; A2 is the flagship
+6. Email follow-ons (`docs/EMAIL_PLAN.md` §10 parked list): sending mail's consent design (Q19), receipt/renewal signals feeding Money watchers over the People/mirror linkage, `person_email_addresses` normalization if single-address matching disappoints, wiring the E0 `households.region` into the Rights/Money tool prompts (Q12's other half)
+7. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)
+8. People deferred slice (`docs/PEOPLE.md` §9.8, waits decided 2026-08): Q17 person↔item links → afterglow watcher + per-person history (wait for a second consumer), the stay-in-touch cadence upgrade (wait for a wrong-feeling nudge in real use), community tools for groups (wait for a real group living in a lens), "new baby"/co-parenting Situations (on demand)
 9. The Money buildout (`docs/MONEY.md`, designed 2026-08): passes B1 (ledger) → B2 (budget + panels + build-my-budget) → B3 (faithfulness watchers) → B4 (the coach pair) → B5 (debt payoff plan, email-receipt suggestions) — B1/B2 are the meat, each pass lands green and independent
