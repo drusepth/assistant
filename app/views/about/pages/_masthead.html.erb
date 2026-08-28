@@ -1,0 +1,13 @@
+<%# Every /about page opens the same way, so they scan alike: an optional
+    trail up, the title, and the one-line blurb the registry already carries
+    (which is also the page's meta description — one source, no drift).
+    back: an optional { title:, path: } pair. %>
+<header class="max-w-3xl">
+  <% if local_assigns[:back] %>
+    <p class="mb-3 text-sm">
+      <%= link_to "← #{back[:title]}", back[:path], class: "text-primary-700 hover:underline" %>
+    </p>
+  <% end %>
+  <h1 class="display text-3xl sm:text-4xl"><%= page.title %></h1>
+  <p class="mt-4 text-lg text-soft"><%= page.blurb %></p>
+</header>

@@ -1,0 +1,6 @@
+<%# A tool as a card, from registry metadata alone. Used by the directory
+    and by every hub page. %>
+<%= link_to about_tool_path(tool.slug), class: "card block p-5 transition-colors hover:border-primary-300" do %>
+  <h3 class="font-semibold"><%= tool.title %></h3>
+  <p class="mt-1.5 text-sm text-soft"><%= tool.description %></p>
+<% end %>

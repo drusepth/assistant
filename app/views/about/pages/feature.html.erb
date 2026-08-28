@@ -1,0 +1,8 @@
+<%# A feature page, hanging under its hub. %>
+<% content_for :title, @page.title %>
+<% content_for :description, @page.blurb %>
+
+<%= render "about/pages/masthead", page: @page,
+      back: { title: @hub.title, path: about_hub_path(@hub) } %>
+
+<%= render @prose %>

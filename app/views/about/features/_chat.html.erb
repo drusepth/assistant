@@ -1,0 +1,69 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Most of this app is forms, deliberately — a form asks for exactly what
+    it needs and hands back something specific, which beats an open box that
+    makes you do the work of knowing what to say.
+  </p>
+  <p>
+    But some things genuinely are conversations. Talking yourself out of a
+    purchase. Practising for an interview. Working out what to say to
+    someone whose father just died. For those, chat is the right shape, and
+    the app's version of it starts from a considerable advantage: it has
+    already read your files.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Why it's different from a chatbot</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "You start in the middle") do %>
+      <p class="text-sm text-soft">
+        No explaining your situation from scratch. The money conversation
+        already knows your budget and what you've spent; the career one
+        already knows what you do and what you've been paid.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It remembers last time") do %>
+      <p class="text-sm text-soft">
+        A mock interview picks up where the previous one left off, including
+        what you were bad at. Tutoring resumes rather than restarting.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Several conversations, not one") do %>
+      <p class="text-sm text-soft">
+        Each kind of conversation is its own thing with its own memory,
+        rather than one endless thread where last month's mortgage question
+        pollutes today's homework help.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It ends in something") do %>
+      <p class="text-sm text-soft">
+        A conversation that concludes you should do a thing can put the thing
+        on your list. Talking is allowed to produce a change in your actual
+        week.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">On your machine, which changes what you'll say</h2>
+  <p class="mt-4 text-soft">
+    This is the feature where the ownership argument stops being abstract.
+    People do not tell a company's chatbot the true version of their money,
+    their marriage or their health — and an assistant given the sanitised
+    version gives sanitised help back. Knowing the conversation cannot leave
+    the house is what makes it worth having honestly.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What it isn't</h2>
+  <p class="mt-4 text-soft">
+    Not a therapist, not a doctor, not a lawyer. The support conversations
+    are built to listen and help you think, and to be clear about being a
+    place to sort your head out rather than treatment. Where something needs
+    a professional, the useful thing it can do is help you prepare for
+    seeing one.
+  </p>
+</section>

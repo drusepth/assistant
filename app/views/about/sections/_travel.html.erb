@@ -1,0 +1,104 @@
+<%# Travel has no tools, so this partial is the whole page — hence rather
+    more of it than the other section hubs carry. The map's constraints
+    (own basemap, no geocoder, owner-only) are the interesting part and are
+    the privacy story in miniature. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    A trip isn't one kind of thing. It's a flight, a passport, an insurance
+    policy, a budget line, the friend whose spare room you used, a plan, and
+    four hundred photographs. Every travel app has to pick one of those to
+    be about, and ends up being about that one.
+  </p>
+  <p>
+    Because everything in this app can belong to several parts of your life
+    at once, Travel doesn't have to pick. The flight is travel and money.
+    The friend is travel and people. Nothing gets filed away from where it
+    also belongs.
+  </p>
+</section>
+
+<%= about_screenshot("world_map") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">The map of where you've been</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Drawn from your own photos") do %>
+      <p class="text-sm text-soft">
+        Most photographs quietly record where they were taken. Yours are
+        already in this app, so the map of everywhere you've been draws
+        itself — no check-ins, no app that tracked you, nothing you had to
+        remember to do at the time.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "No tiles, no lookups") do %>
+      <p class="text-sm text-soft">
+        The world map is a file inside the app, drawn from public-domain
+        coastline data. Nothing is fetched while you pan it, so no map
+        service ever receives a request that says where your photographs
+        were taken. That is not a setting — there is simply nowhere for it
+        to go.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Trips it noticed") do %>
+      <p class="text-sm text-soft">
+        A cluster of photographs somewhere you don't live, over a few days,
+        is a trip. The app can propose them and you keep the ones that were
+        real — a decade of travel recovered from a library you already had.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Yours only") do %>
+      <p class="text-sm text-soft">
+        Anything derived from photo coordinates stays with the person whose
+        library it came from, even inside a trip shared with the household.
+        Where you have been is a strong claim about you, and it is not
+        something sharing a holiday hands over.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">And where you're going</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Booked, or only discussed") do %>
+      <p class="text-sm text-soft">
+        The distinction that actually matters when a trip is coming
+        together. Each stay and each leg is either genuinely booked or still
+        a conversation, and the difference is visible at a glance instead of
+        living in somebody's head.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Where will we be in March?") do %>
+      <p class="text-sm text-soft">
+        An outlook across the coming months, and a band on the calendar
+        beside everything else. Built for households who move often enough
+        that this is a real question with a real answer.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Somewhere to sleep, every night") do %>
+      <p class="text-sm text-soft">
+        Stays and travel legs laid end to end, so the gap between the
+        Tuesday checkout and the Thursday flight is visible now rather than
+        on the Tuesday.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The people coming with you") do %>
+      <p class="text-sm text-soft">
+        A trip can be shared with the household members who are on it, so
+        everyone sees the same plan — while each person's photographs, and
+        anything drawn from them, stay their own.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The same record, before and after</h2>
+  <p class="mt-4 text-soft">
+    A trip you planned in February is the trip the photographs attach to in
+    July. It doesn't graduate from one feature to another, or get retyped
+    into a scrapbook — the thing you used to keep track of the booking is
+    the thing that ends up holding the memory of it.
+  </p>
+</section>

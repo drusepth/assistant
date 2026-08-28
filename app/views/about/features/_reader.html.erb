@@ -1,0 +1,81 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Google Reader was the last mass-market software where the reading list
+    was chosen entirely by the reader. It was switched off, from outside, by
+    a company that owed nobody an explanation, and what replaced it was
+    feeds that decide for you what you're interested in.
+  </p>
+  <p>
+    That's this whole project's argument in miniature, which is why a full
+    feed reader lives here.
+  </p>
+</section>
+
+<%= about_screenshot("reader") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Three promises</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <%= render Ui::CardComponent.new(title: "You chose every source") do %>
+      <p class="text-sm text-soft">
+        No recommendations, no discovery, no "you might also like". If it's
+        in your river, you put it there.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Nothing is reordered") do %>
+      <p class="text-sm text-soft">
+        Newest first, across everything you follow, in the order it was
+        published. No score, no relevance weighting, no engagement
+        optimisation.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Nothing leaves the box") do %>
+      <p class="text-sm text-soft">
+        No third-party service, no telemetry. It works identically on an
+        installation with no model configured at all.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The ranking that got built and cut</h2>
+  <p class="mt-4 text-soft">
+    The first version of this had a relevance score, up and down votes to
+    train it, and a decay curve balancing the two. It worked. It was removed
+    anyway — because a reader that decides what you should see first is the
+    thing we were trying to get away from, however good our reasons for
+    ordering it are. Chronological is a promise, not a limitation.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">One river per interest</h2>
+  <p class="mt-4 text-soft">
+    Feeds belong to your hobbies, so the birding sites feed the birding
+    corner of your life rather than one undifferentiated stream. Where a
+    general news feed occasionally carries something about your interest,
+    that story can find its way to the right place too.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Polite to strangers' servers</h2>
+  <p class="mt-4 text-soft">
+    This is the one part of the app that regularly contacts machines that
+    aren't yours, and it behaves accordingly: fetching on a sensible
+    schedule, backing off when asked, and identifying itself honestly. The
+    sites you subscribe to learn that somebody at your address subscribes,
+    which is simply what subscribing is.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">A way out of the river</h2>
+  <p class="mt-4 text-soft">
+    Reading about a hobby is the substitute for doing it, so the exits
+    matter: an article can become a project you'll start, a session on the
+    calendar, or a person to go and meet. The reading is supposed to lead
+    somewhere.
+  </p>
+</section>

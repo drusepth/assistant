@@ -20,6 +20,17 @@ class SettingsController < ApplicationController
         notice: Current.user.celebrations? ? "Celebrations on. 🎉" : "Celebrations off."
     end
 
+    # The /about switch (D-about-pages). Admin-only and household-wide —
+    # it is the instance's front door, not one member's preference — and
+    # another early return, for the same reason as celebrations.
+    if params.key?(:public_pages)
+      return redirect_to settings_path, alert: "Only household admins can do that." unless Current.user.admin?
+
+      Current.user.household.update!(public_pages_enabled: params[:public_pages] == "1")
+      return redirect_to settings_path,
+        notice: Current.user.household.public_pages_enabled? ? "Public pages are on." : "Public pages are off."
+    end
+
     # The work-profile card (D-work-profile) posts here too, and posts
     # nothing else — same early return as celebrations for the same reason.
     if params.key?(:work)

@@ -1,0 +1,65 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Most people's calendar is a work calendar with some of their life
+    smuggled into it. Everything that doesn't fit — the letter with a
+    deadline, the renewal, the thing the school sent home — lives on the
+    fridge, in an email, or in the vague hope of remembering.
+  </p>
+  <p>
+    This one is the other way round. It's a calendar of a life, and work is
+    one of the things on it.
+  </p>
+</section>
+
+<%= about_screenshot("calendar") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What lands on it</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Things you put there") do %>
+      <p class="text-sm text-soft">
+        Appointments, birthdays, the MOT. Added in a few seconds, taggable
+        to as many parts of your life as they honestly belong to.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Deadlines the app found") do %>
+      <p class="text-sm text-soft">
+        When a tool drafts your appeal, the date you must respond by lands
+        here by itself. The deadline that would have been lost in a letter
+        becomes a thing on a calendar, which is the entire difference.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Calendars you already keep") do %>
+      <p class="text-sm text-soft">
+        Existing calendars can sync in, so this doesn't demand you abandon
+        what your workplace or your phone already runs.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "What others have shared") do %>
+      <p class="text-sm text-soft">
+        A partner's shared appointments appear alongside yours, which is how
+        you notice that two people have promised to be in different places
+        at the same school pickup.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">One thing, several places</h2>
+  <p class="mt-4 text-soft">
+    Your mother's cardiology appointment is a health thing and a family
+    thing. Most software makes you file it as one and then lose it under the
+    other. Here it carries both labels, appears under both, and is still one
+    appointment rather than two copies that drift apart.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">It works with nothing configured</h2>
+  <p class="mt-4 text-soft">
+    This is ordinary, sturdy calendar software that happens to sit inside an
+    assistant. No model is involved in showing you next week, and none is
+    required for any of it.
+  </p>
+</section>

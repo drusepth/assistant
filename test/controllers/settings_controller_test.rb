@@ -66,6 +66,29 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert users(:one).reload.celebrations?
   end
 
+  # D-about-pages: household-wide and admin-only, so it takes the same
+  # early-return shape as celebrations and must not disturb the sections.
+  test "public pages toggle off and back on without touching sections" do
+    enabled_before = Section.top_level.select { |s| users(:one).section_enabled?(s) }
+
+    patch settings_path, params: { public_pages: "0" }
+    assert_redirected_to settings_path
+    assert_not households(:smith).reload.public_pages_enabled?
+    assert enabled_before.all? { |s| users(:one).section_enabled?(s) }
+
+    patch settings_path, params: { public_pages: "1" }
+    assert households(:smith).reload.public_pages_enabled?
+  end
+
+  test "a non-admin cannot touch the public pages switch" do
+    sign_in_as users(:two)
+
+    patch settings_path, params: { public_pages: "0" }
+
+    assert_redirected_to settings_path
+    assert households(:smith).reload.public_pages_enabled?
+  end
+
   test "toggling a section off persists" do
     health = sections(:health)
     enabled_ids = Section.top_level.where.not(id: health.id).ids

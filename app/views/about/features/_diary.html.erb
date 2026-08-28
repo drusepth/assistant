@@ -1,0 +1,66 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    A password protects an account. A diary is closer to being the person —
+    which makes it the single strongest privacy expectation in this app, and
+    the one thing here where the correct amount of cleverness is none.
+  </p>
+  <p>
+    So it's sealed even harder than the password vault, it has no
+    intelligence pointed at it, and it appears nowhere else in the app.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">The rules it keeps</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Even the titles are encrypted") do %>
+      <p class="text-sm text-soft">
+        Everything but the date. Somebody with the database file cannot read
+        your entries and cannot read what you called them, which is nearly as
+        revealing.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "No sharing at all") do %>
+      <p class="text-sm text-soft">
+        Not restricted sharing — none. There is no mechanism, which is a
+        stronger promise than a setting, because a setting can be changed by
+        somebody who isn't you.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Nothing reads it") do %>
+      <p class="text-sm text-soft">
+        No summarising, no filing, no mention on the dashboard, no model
+        anywhere near it. It doesn't feed the assistant, and that's the
+        design rather than an oversight.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A surface worth returning to") do %>
+      <p class="text-sm text-soft">
+        A focused editor, one entry a day, saved as you write, with a
+        calendar that makes the habit visible. Missed days are backfillable,
+        because life happens.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">On this day</h2>
+  <p class="mt-4 text-soft">
+    The reason to keep one for years rather than months: what you wrote on
+    this date one year ago, and five. It's the only feature here that gets
+    better purely by the passage of time, and it's the argument for a diary
+    that lives somewhere permanent rather than in an app that might be
+    discontinued.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The trade, stated plainly</h2>
+  <p class="mt-4 text-soft">
+    Real secrecy means the contents depend on your passphrase, and losing it
+    loses them. There's a recovery route you can set up in advance, on
+    purpose, with your eyes open — and nothing that quietly weakens the seal
+    to make the software more forgiving.
+  </p>
+</section>

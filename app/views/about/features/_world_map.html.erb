@@ -1,0 +1,74 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Your photographs already know where you've been. Almost every picture
+    taken on a phone quietly records its coordinates, which means a decade
+    of travel is sitting in your library waiting to be drawn.
+  </p>
+  <p>
+    So the map draws itself. No check-ins, no app that tracked you, nothing
+    you had to remember to do at the time.
+  </p>
+</section>
+
+<%= about_screenshot("world_map") %>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The interesting part is what it doesn't do</h2>
+  <p class="mt-4 text-soft">
+    A map on a web page normally works by requesting image tiles from a map
+    service as you pan and zoom. Every one of those requests tells that
+    company which part of the world you're looking at — and on a map of your
+    own photographs, that is a remarkably precise account of where you have
+    been and what you were looking for.
+  </p>
+  <p class="mt-4 text-soft">
+    So this map fetches nothing. The world it draws is a file inside the
+    app, made from public-domain coastline data, and turning a coordinate
+    into a position on it is arithmetic done on your own machine. There is
+    no map service, and therefore no setting to get wrong.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What you get</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Every located photo, pinned") do %>
+      <p class="text-sm text-soft">
+        The whole library at once — which is a genuinely affecting thing to
+        look at the first time, and usually reveals a few places you'd
+        forgotten you went.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Trips it can propose") do %>
+      <p class="text-sm text-soft">
+        A cluster of photos somewhere you don't live, over a few days, is a
+        trip. The app can suggest them; you keep the ones that were real.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "No place names looked up") do %>
+      <p class="text-sm text-soft">
+        Turning coordinates into "Lisbon" would mean asking somebody else's
+        service where your photographs were taken. It doesn't, for the same
+        reason it doesn't fetch tiles.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Yours alone") do %>
+      <p class="text-sm text-soft">
+        Anything derived from photo coordinates stays with the person whose
+        library it came from — including inside a trip shared with the rest
+        of the household.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Why this one is worth the trouble</h2>
+  <p class="mt-4 text-soft">
+    Location history is about the most sensitive record a person can hand
+    over — it reveals where you sleep, who you visit, and what you'd rather
+    nobody knew. Building the map the awkward way, so that no request
+    carrying that information exists to be made, is the difference between
+    a privacy policy and a fact.
+  </p>
+</section>

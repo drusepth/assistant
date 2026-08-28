@@ -10,6 +10,17 @@ class Household < ApplicationRecord
     attachable.variant :cover, resize_to_limit: [ 1600, 500 ], format: :webp, saver: { quality: 80, strip: true }
   end
 
+  # Is the /about tree readable by a signed-out visitor (D-about-pages)?
+  # One instance serves one household, so its switch is the instance's.
+  #
+  # Phrased as "nobody has said no" rather than "the household said yes",
+  # for two reasons. A machine with no household yet is a fresh install
+  # nobody has set up, and whoever reached it is deciding whether to — which
+  # is exactly who the pages are for, so no household reads as yes. And an
+  # instance that somehow holds more than one household resolves to the
+  # quieter answer instead of to whichever row happened to be first.
+  def self.public_pages? = !exists?(public_pages_enabled: false)
+
   # Do you own or rent? The one routing signal that changes which help is
   # relevant: renters get deposit/repair/eviction footing, owners get
   # mortgage and property-tax footing.

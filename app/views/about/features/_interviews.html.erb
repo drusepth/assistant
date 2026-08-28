@@ -1,0 +1,72 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    An interview is a performance you're asked to give a handful of times in
+    your life, unrehearsed, about yourself, while nervous — judged against
+    people who happen to be better at exactly that.
+  </p>
+  <p>
+    Rehearsal is the whole intervention. It's what coaching actually is, and
+    it costs a hundred an hour largely because it requires a second person.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Before</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "The listing, decoded") do %>
+      <p class="text-sm text-soft">
+        What they're actually asking for underneath the phrasing, and which
+        of your real experiences answer each part — drawn from the wins
+        you've been logging rather than from memory on the day.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The questions, likely") do %>
+      <p class="text-sm text-soft">
+        What this role will probably probe, what to have ready, and the few
+        things worth looking up about them beforehand so you sound like
+        someone who wanted this job specifically.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Rehearsal</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Out loud, repeatedly") do %>
+      <p class="text-sm text-soft">
+        A practice interview you can do at eleven at night, as many times as
+        you want, without using up a favour or embarrassing yourself in
+        front of somebody whose opinion you care about.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Coached, and it remembers") do %>
+      <p class="text-sm text-soft">
+        Each answer gets feedback, and the next session knows what you were
+        weak on last time. Which is exactly the thing a one-off mock
+        interview with a friend cannot do.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">And afterwards</h2>
+  <p class="mt-4 text-soft">
+    The follow-up that goes unsent, the thread that went quiet, and — if it
+    goes well — the offer. Which is its own moment worth preparing for:
+    reading what's actually in it, and knowing what you'd say before they
+    ask you to say something.
+    <%= link_to "Pay, and asking for more →", about_feature_path("pay"), class: "text-primary-700 hover:underline" %>
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Practice you'd only do privately</h2>
+  <p class="mt-4 text-soft">
+    Being bad at something on purpose, repeatedly, is how you get good at
+    it — and almost nobody will do that where it's recorded on somebody
+    else's servers. The rehearsal being genuinely private is what makes it
+    rehearsal.
+  </p>
+</section>

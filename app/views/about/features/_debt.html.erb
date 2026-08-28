@@ -1,0 +1,64 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Debt does most of its damage while unexamined. Four balances in four
+    places, four interest rates nobody has written next to each other, and a
+    monthly payment to each that feels like progress and often isn't.
+  </p>
+  <p>
+    Putting them on one page, with the rates visible, changes the arithmetic
+    from a feeling into a fact.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What it gives you</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "All of it, in one list") do %>
+      <p class="text-sm text-soft">
+        Balance, rate, minimum payment. The unglamorous act of writing them
+        down together is most of the value, and it's the step people avoid
+        because of how it feels rather than how hard it is.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "An order to kill them in") do %>
+      <p class="text-sm text-soft">
+        With the reasoning shown, so you can disagree. Paying the expensive
+        one first saves the most money; paying the small one first is
+        sometimes what keeps a person going. Both are legitimate and the
+        choice is yours.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A date it ends") do %>
+      <p class="text-sm text-soft">
+        The single most motivating number available: when this is over, if
+        you keep doing what you're doing. Vague debt is infinite debt.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Payments on the calendar") do %>
+      <p class="text-sm text-soft">
+        Beside everything else, so the month you're stretched is visible
+        before it arrives rather than on the day.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">If someone is chasing you</h2>
+  <p class="mt-4 text-soft">
+    Being contacted by a collector is a specific situation with a specific
+    correct first move, and it's usually to ask them in writing to prove the
+    debt is yours — inside a window that starts running immediately. That's
+    a letter here, not something you have to know already.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Not advice, and not judgement</h2>
+  <p class="mt-4 text-soft">
+    This isn't financial advice and won't tell you to consolidate or
+    refinance. It does the arithmetic you'd do yourself if you had the
+    numbers side by side, and it doesn't editorialise about how you got
+    here.
+  </p>
+</section>

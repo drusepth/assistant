@@ -1,0 +1,97 @@
+<%# The Organize-mode hub — the "useful with zero AI" argument, and the one
+    most visitors won't expect. It leads with the model switched off on
+    purpose (docs/ABOUT_PLAN.md §2). %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Start here, because this is the part that works with the model turned
+    off entirely.
+  </p>
+  <p>
+    Underneath everything else, this app is a place to put the things that
+    make up a life: what's happening and when, what you have to do, the
+    documents that prove things, the people you care about, and what you
+    know. Once those are in one place that belongs to you, a great deal
+    stops going wrong — and that happens before any model has read a word.
+  </p>
+</section>
+
+<%= about_screenshot("calendar") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">One calendar, for all of it</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Not a work calendar") do %>
+      <p class="text-sm text-soft">
+        The cardiology appointment, the car insurance renewal, the school
+        holiday and the visa deadline are the same kind of thing — a date
+        that will hurt if you miss it — and they belong on the same page.
+        Most people's lives are split across a work calendar, a paper letter
+        on the fridge and a memory. This is the page where they meet.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Things belong to more than one place") do %>
+      <p class="text-sm text-soft">
+        Your mother's cardiology appointment is a health thing and a family
+        thing at once. Rather than making you file it as one and lose it
+        under the other, everything here can carry as many labels as it
+        honestly has, and turns up under all of them.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What else lives here</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <%= render Ui::CardComponent.new(title: "Today") do %>
+      <p class="text-sm text-soft">
+        One short list: what's due, what's coming, what's overdue. The page
+        to open when you don't know where to start.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Tasks and goals") do %>
+      <p class="text-sm text-soft">
+        A board of day-sized things. Bigger ambitions go in as one sentence
+        and come back broken into steps you can start on — the one place
+        here where a model earns its keep immediately.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Notes") do %>
+      <p class="text-sm text-soft">
+        What you know and what you've been told, kept where the rest of your
+        life can reach it.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The dashboard") do %>
+      <p class="text-sm text-soft">
+        A read of the week across everything you've switched on: what needs
+        attention, and why it thinks so.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Chat") do %>
+      <p class="text-sm text-soft">
+        For when a form is the wrong shape. It has already read the relevant
+        part of your own files, so you can start in the middle.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Reminders") do %>
+      <p class="text-sm text-soft">
+        Told once, surfaced when it matters, on the device you're actually
+        holding.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Why this comes first</h2>
+  <p class="mt-4 text-soft">
+    An assistant that knows nothing about you can only give you advice you
+    could have searched for. Everything genuinely useful the rest of this app
+    does — reading your lease before drafting the letter, noticing that a
+    renewal lands the week the tuition is due — depends on this layer
+    existing. It is also the layer you keep if you ever swap the model out,
+    which is the point: the model is a part you can replace, and this is not.
+  </p>
+</section>

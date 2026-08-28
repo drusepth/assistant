@@ -91,6 +91,32 @@
     <% end %>
   <% end %>
 
+  <%# D-about-pages: the /about tree is documentation of the software and is
+      identical on every install, so it carries nothing about this household.
+      The switch is here for people who would rather this machine answered
+      strangers with nothing at all. Admin-only, because it is the whole
+      instance's front door rather than one person's preference. %>
+  <% if Current.user.admin? %>
+    <%= render Ui::CardComponent.new(title: "Public pages",
+          subtitle: "The /about pages describing what this software does") do %>
+      <%= form_with url: settings_path, method: :patch, class: "flex flex-wrap items-center gap-3" do |form| %>
+        <%= hidden_field_tag :public_pages, Current.user.household.public_pages_enabled? ? "0" : "1" %>
+        <%= form.submit Current.user.household.public_pages_enabled? ? "Turn public pages off" : "Turn public pages on",
+              class: "btn btn-secondary" %>
+        <span class="text-sm text-soft">
+          Currently <strong class="text-ink"><%= Current.user.household.public_pages_enabled? ? "on" : "off" %></strong>.
+          <% if Current.user.household.public_pages_enabled? %>
+            Anyone who can reach this machine can read <%= link_to "/about", about_root_path, class: "text-primary-700 hover:underline" %> —
+            the same pages as every other installation, with nothing about you in them.
+          <% else %>
+            Signed-out visitors get nothing. You and the rest of the household
+            can still read <%= link_to "/about", about_root_path, class: "text-primary-700 hover:underline" %>.
+          <% end %>
+        </span>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <%= render Ui::CardComponent.new(title: "Section sharing", subtitle: "Share everything you tag with a section — including future items") do %>
     <% if @section_grants.any? %>
       <ul class="mb-4 space-y-2">

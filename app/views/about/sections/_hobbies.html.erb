@@ -1,0 +1,91 @@
+<%# Hobbies, on HOBBIES.md's framing: the meaning-making section, not the
+    fun extra. Its named trap — hobby apps that turn the hobby into
+    tracking — gets disclaimed the way People disclaims contact management. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    This isn't the light-relief section. As work changes shape, the question
+    of what you make and why you're interested stops being a hobby question
+    and starts being most of the answer to what a life is for.
+  </p>
+  <p>
+    And it's the area where the current arrangement is most obviously
+    against you: the feed knows exactly what you're into, and uses that to
+    keep you reading <em>about</em> the thing instead of doing it. Hours of
+    woodworking videos, no wood. The counter-move here is the same as
+    everywhere else in the app — own the sources, and point everything at
+    doing.
+  </p>
+</section>
+
+<%= about_screenshot("reader") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What you see</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "A page per hobby") do %>
+      <p class="text-sm text-soft">
+        Guitar gets its own corner: the practice sessions, the gear
+        receipts, the people you play with, the piece you're learning, the
+        notes. Not a folder — a real view across everything in your life
+        that's about that one thing.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Your own river of reading") do %>
+      <p class="text-sm text-soft">
+        The sites and writers you follow, in one chronological stream, in
+        the order they published. No ranking, no recommendations, no
+        engagement weighting — just what came out, from sources you chose.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Interests you didn't declare") do %>
+      <p class="text-sm text-soft">
+        If what you actually read clusters around something you've never
+        named as a hobby, the app can notice and offer to make it a proper
+        one. Spotted in your own reading, on your own machine, and always
+        an offer rather than a filing decision.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The next thing to make") do %>
+      <p class="text-sm text-soft">
+        Ideas sized to your actual skill and the materials you already have,
+        rather than to an algorithm's idea of an impressive project. The
+        output is something you could start on Saturday.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Tracking is not the hobby</h2>
+  <p class="mt-4 text-soft">
+    Hobby apps die by making the logging into the pastime — a beautifully
+    maintained record of a thing you stopped doing in March. So capture here
+    is close to free, the app does the filing, and every feature is supposed
+    to end in a session on the calendar, a project begun, or a person met.
+    A tidier log is not the goal and is not the reward.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The reader deserves its own note</h2>
+  <p class="mt-4 text-soft">
+    Google Reader was the last mass-market software where the reading list
+    was chosen entirely by the reader — and it was switched off, from
+    outside, by a company that owed nobody an explanation. That is this
+    whole project's argument in miniature, which is why a full feed reader
+    lives in here: chronological on purpose, and working identically on an
+    installation with no model configured at all.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">And the people in it</h2>
+  <p class="mt-4 text-soft">
+    Most hobbies are better with somebody else doing them too, and most
+    adult friendships now start around a shared interest rather than
+    proximity. So the hobby pages point outward — where the people who do
+    this gather, and how to actually turn up — instead of treating a hobby
+    as a solitary hardware collection.
+  </p>
+</section>

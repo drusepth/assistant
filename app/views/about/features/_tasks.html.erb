@@ -1,0 +1,78 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    "Get a job." "Sort out the estate." "Learn to swim." These are the things
+    that actually matter, and they're also the things that sit untouched for
+    a year, because none of them is a task — each is a fog with a task
+    somewhere inside it.
+  </p>
+  <p>
+    The gap between an ambition and a first step is where most people's
+    plans die, and closing it is one of the few things a model is
+    unambiguously good at.
+  </p>
+</section>
+
+<%= about_screenshot("tasks") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">How it goes</h2>
+  <ol class="mt-6 space-y-4">
+    <li class="card p-5">
+      <h3 class="font-semibold">1 · You say the big thing in one line</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        In your own words, without structuring it. "I need to sort out mum's
+        house." That sentence is the entire input.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">2 · It comes back as steps</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Each one small enough to finish inside a day, in a sensible order,
+        with dates on the ones that genuinely have them. Yours to edit,
+        delete and reorder — it's a first draft, not an instruction.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">3 · They join everything else</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Not into a separate project app. Onto the same board as the bins and
+        the dentist, because that's the list you actually look at.
+      </p>
+    </li>
+  </ol>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">The board</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <%= render Ui::CardComponent.new(title: "Later") do %>
+      <p class="text-sm text-soft">
+        Everything you've said you'll do. Allowed to be long — that's what
+        it's for.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Today") do %>
+      <p class="text-sm text-soft">
+        What you've claimed for today. Deliberately a decision you make,
+        rather than a list the software assigns you.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Done") do %>
+      <p class="text-sm text-soft">
+        Kept visible, because on the days when nothing feels finished, the
+        evidence that things were is worth having.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The situations, not just the goals</h2>
+  <p class="mt-4 text-soft">
+    Some things aren't a goal so much as a period of life happening to you —
+    a bereavement, a redundancy, a move, becoming someone's carer. Those
+    produce work across half the app at once, and they're handled the same
+    way: one sentence in, and a plan out whose steps land wherever they
+    belong.
+  </p>
+</section>

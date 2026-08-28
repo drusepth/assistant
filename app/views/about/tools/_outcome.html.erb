@@ -1,0 +1,31 @@
+<%# What a tool hands back, by kind. Three shapes, so this is three
+    paragraphs rather than sixty (docs/ABOUT_PLAN.md §3). %>
+<% case tool.kind %>
+<% when :draft %>
+  <p class="text-sm text-soft">
+    A written draft you own and can edit — saved into your notes, filed
+    where it belongs, and yours to send or not send. Where a detail is
+    missing it leaves a clearly marked blank rather than inventing one.
+  </p>
+  <p class="mt-3 text-sm text-soft">
+    Alongside it: up to <%= Tool::Base::MAX_FOLLOW_UPS %> small follow-ups
+    added to your tasks, and any real deadline it found put on your calendar
+    as a dated reminder.
+  </p>
+<% when :plan %>
+  <p class="text-sm text-soft">
+    A goal, broken into tasks that each fit inside a day. The big thing you
+    typed in one line comes back as an ordered list you can actually start
+    on tomorrow morning, on your board with the rest of your work.
+  </p>
+<% when :chat %>
+  <p class="text-sm text-soft">
+    A conversation, kept for as long as you want it. It has already read the
+    relevant part of what you've filed, so you can start in the middle
+    instead of explaining your situation from scratch.
+  </p>
+<% end %>
+
+<p class="mt-3 text-sm text-soft">
+  Nothing is sent anywhere, and nothing is filed you can't delete.
+</p>

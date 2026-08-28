@@ -1,0 +1,72 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Photographs are the most emotionally valuable thing an ordinary family
+    owns, and almost every family now rents their custody. The library, the
+    sharing, and the cost of leaving all belong to a company, and the bill
+    goes up when the storage fills.
+  </p>
+  <p>
+    This is that library, on hardware you own.
+  </p>
+</section>
+
+<%= about_screenshot("photos") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What it does</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Takes a folder at a time") do %>
+      <p class="text-sm text-soft">
+        Drag in a decade. Duplicates are skipped, so importing the same
+        holiday twice from two phones does what you'd hope rather than what
+        you'd fear.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Albums, and who's in them") do %>
+      <p class="text-sm text-soft">
+        Group them however you like, and record who appears — which turns
+        "find the ones with dad in" from an afternoon into a search.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Shared deliberately") do %>
+      <p class="text-sm text-soft">
+        With the household, or outside it by a link that needs no account —
+        so the grandmother who will never sign up for anything can still see
+        the christening.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A map, for free") do %>
+      <p class="text-sm text-soft">
+        Photos quietly record where they were taken, so the library also
+        draws the map of everywhere you've been — without fetching anything
+        from anyone.
+        <%= link_to "How that works →", about_feature_path("world-map"), class: "text-primary-700 hover:underline" %>
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Storage, honestly</h2>
+  <p class="mt-4 text-soft">
+    Photographs are big, and a family library will outgrow a small disk. The
+    app can keep them on your machine or on storage you rent from whoever
+    you like, and moving between the two is a setting rather than a
+    migration. What it will not do is pretend that ten years of video fits
+    anywhere for free.
+  </p>
+  <p class="mt-4 text-soft">
+    Back them up somewhere else too. This is the data you would be most
+    upset to lose, and self-hosting means the disk that dies is now yours.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What it won't do</h2>
+  <p class="mt-4 text-soft">
+    It will not scan your library to sell you anything, build a face
+    database it uses elsewhere, or turn your children into training data.
+    The only thing looking at these photographs is the software you're
+    running.
+  </p>
+</section>

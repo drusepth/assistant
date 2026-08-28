@@ -1,0 +1,79 @@
+<%# The household-library hub. Everything here is a thing you already own
+    and currently keep somewhere worse. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Most of what matters to a household is already in files: the lease, the
+    insurance policy, twelve years of photographs, the recipe your
+    grandmother wrote out, the password to the account nobody can get into
+    since the funeral. It lives across four services, three of which could
+    change their terms next year, and one shoebox.
+  </p>
+  <p>
+    This is where it lives instead — on a disk you can hold.
+  </p>
+</section>
+
+<%= about_screenshot("photos") %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What it holds</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Documents") do %>
+      <p class="text-sm text-soft">
+        Files, with their text pulled out so you can search inside them, and
+        a plain-language summary of what each one actually says. The point of
+        filing the lease is being able to answer a question about the lease.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Photos and albums") do %>
+      <p class="text-sm text-soft">
+        The family library, on your own storage. Albums you can share with
+        the household, or hand to one relative by a link that needs no
+        account.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Recipes") do %>
+      <p class="text-sm text-soft">
+        A recipe box that understands ingredients well enough to scale a
+        batch, gathered into books, and shareable outside the house in a
+        format another copy of this app can simply import.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Email") do %>
+      <p class="text-sm text-soft">
+        Your mail, mirrored down onto your own disk from your own provider,
+        so the app can notice the bill and the deadline in it without any of
+        it passing through anyone else.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Passwords") do %>
+      <p class="text-sm text-soft">
+        A vault, encrypted with a key derived from your passphrase, with
+        one-time codes and sharing to the people who will one day need in.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A diary") do %>
+      <p class="text-sm text-soft">
+        A second sealed container, where everything but the date is
+        encrypted. Nobody with the database file can read it. Neither can the
+        rest of the app.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Private means private from the house, too</h2>
+  <p class="mt-4 text-soft">
+    Everything here starts visible to you alone — not merely hidden from the
+    internet, but hidden from the other people signed in to the same
+    installation. Sharing is per item or per area, always something you
+    switched on, and always listed where you can see and revoke it. Some
+    things go further and stay sealed even from someone with the machine:
+    the password vault and the diary.
+  </p>
+  <p class="mt-5">
+    <%= link_to "How the privacy model works →", about_page_path("privacy"), class: "text-primary-700 hover:underline" %>
+  </p>
+</section>
