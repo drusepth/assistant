@@ -57,6 +57,7 @@ module Demo
     build_people_life(kay, people)
     build_recipes(kay, danny)
     build_reader(kay, danny, ify)
+    build_photos(kay, danny, ify, people)
     build_travel(kay, danny, ify)
     build_vault(kay, danny)
     build_sharing(kay, danny)
@@ -940,6 +941,103 @@ module Demo
   end
 
   # ------------------------------------------------------------------ travel
+
+  # ------------------------------------------------------------------ photos
+
+  # Real image files, because half of what the photo library and the world
+  # map do is only visible when there is something to look at. They are
+  # generated rather than shipped: an abstract band per place, so the grid
+  # has colour and the map has pins without anyone's actual holiday being
+  # committed to a public repository.
+  #
+  # Coordinates are the point. The map draws itself from these and from
+  # nothing else — no tiles fetched, no place names looked up — which is
+  # exactly the claim /about/features/world-map makes.
+  PLACES = [
+    # [ label, lat, long, hue, count, years-ago ]
+    [ "Prentice Street", 40.9812, -81.3540, 30, 6, 0 ],
+    [ "Millbrook Reserve", 40.9455, -81.4102, 110, 5, 0 ],
+    [ "Spiddal, Galway", 53.2447, -9.3044, 190, 7, 3 ],
+    [ "Cliffs of Moher", 52.9715, -9.4309, 205, 3, 3 ],
+    [ "Chicago", 41.8781, -87.6298, 250, 3, 5 ],
+    [ "Toronto", 43.6532, -79.3832, 280, 2, 8 ],
+    [ "Sanibel Island", 26.4489, -82.0170, 45, 4, 9 ]
+  ].freeze
+
+  def build_photos(kay, danny, ify, people)
+    travel = section("travel")
+    albums = {}
+
+    PLACES.each do |label, lat, long, hue, count, years_ago|
+      count.times do |index|
+        taken = (TODAY << (years_ago * 12 + index)) - (index * 3)
+        photo = kay.photos.new(
+          title: "#{label} #{index + 1}", taken_at: taken.to_time.change(hour: 10 + index),
+          latitude: lat + (index * 0.004), longitude: long + (index * 0.006),
+          ingest_status: "ready"
+        )
+        # Attached before the save: the image is validated as present, so
+        # attaching afterwards fails the create it was meant to complete.
+        photo.image.attach(
+          io: StringIO.new(generated_image(hue + (index * 7))),
+          filename: "#{label.parameterize}-#{index + 1}.jpg", content_type: "image/jpeg"
+        )
+        photo.save!
+        tag(photo, travel) unless label.start_with?("Prentice")
+
+        (albums[label] ||= []) << photo
+      end
+    end
+
+    galway = kay.albums.create!(title: "Galway, 2023",
+      description: "Two weeks at Colm's. The last summer Danny's dad knew everyone.")
+    (albums["Spiddal, Galway"] + albums["Cliffs of Moher"]).each { |p| galway.album_photos.create!(photo: p) }
+    galway.update!(cover_photo: albums["Spiddal, Galway"].first)
+
+    reserve = kay.albums.create!(title: "Ify's first year birding",
+      description: "Every Saturday since April, and the list to prove it.")
+    albums["Millbrook Reserve"].each { |p| reserve.album_photos.create!(photo: p) }
+    reserve.update!(cover_photo: albums["Millbrook Reserve"].first)
+
+    home = kay.albums.create!(title: "Prentice Street",
+      description: "The flat, the dog, and whatever was happening that week.")
+    albums["Prentice Street"].each { |p| home.album_photos.create!(photo: p) }
+    home.update!(cover_photo: albums["Prentice Street"].first)
+
+    # Shared to the household, so the demo shows an album that isn't private.
+    [ danny, ify ].each { |member| AccessGrant.create!(grantor: kay, grantee: member, subject: galway) }
+
+    # Faces, on the photos where the app would know them.
+    albums["Prentice Street"].first(3).each { |p| p.photo_people.create!(person: people[:ada]) }
+
+    kay.share_links.create!(subject: galway, label: "For Colm and the kids",
+      views_count: 31, last_viewed_at: 8.days.ago)
+
+    @photos = albums
+  end
+
+  # A soft two-tone band. Not a photograph, and not pretending to be — it
+  # reads as an image at thumbnail size, which is all the grid and the map
+  # need, and it costs a few milliseconds instead of a licence.
+  def generated_image(hue)
+    require "vips"
+
+    width, height = 800, 600
+    top = Vips::Image.new_from_array([ [ 1 ] ]).cast(:uchar)
+    base = top.embed(0, 0, width, height, extend: :copy)
+
+    channels = [ hue % 360, 42, 78 ].each_with_index.map do |value, index|
+      base.linear(0, colour_channel(hue, index, value)).cast(:uchar)
+    end
+    Vips::Image.bandjoin(channels).jpegsave_buffer(Q: 72, strip: true)
+  end
+
+  # Cheap HSV-ish spread: enough variety that a grid of them doesn't look
+  # like one repeated tile.
+  def colour_channel(hue, index, _value)
+    angle = (hue + index * 120) * Math::PI / 180
+    120 + (Math.sin(angle) * 70).round
+  end
 
   def build_travel(kay, danny, ify)
     travel = section("travel")

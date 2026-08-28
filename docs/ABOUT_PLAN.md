@@ -202,6 +202,31 @@ app's architectural argument — lenses over one pool, not silos — and a
 demo whose sections held unrelated filler would quietly contradict it on
 every screenshot. `test/models/demo_test.rb` pins it.
 
+**The pipeline is built too.** `bin/rails screenshots:capture` seeds the
+household, drives a real browser over it, and writes WEBP into
+`app/assets/images/about/`. It is written as a system test — under
+`test/system/`, which `bin/rails test` skips — so it gets a browser and a
+server for free and cannot fire during an ordinary test run.
+
+Three parts, and the seams between them are what stops it rotting:
+
+- **`About::Shot`** is the registry, read by both the capture and the
+  views, so they cannot disagree about what exists.
+- **`about_screenshot`** renders a shot *or nothing at all*. A missing file
+  must degrade to an absent figure rather than a broken image on a public
+  page, because a checkout can legitimately be without one.
+- **`about_shots_test.rb`** pins all three directions: no view asks for an
+  unregistered shot, no registered shot is uncaptured, no captured file
+  goes unrendered, and nothing is over 250KB. These are committed and
+  served to every visitor.
+
+Running it needs a browser. `ApplicationSystemTestCase` takes
+`CHROME_BINARY` and `CHROMEDRIVER` and otherwise looks for the usual names
+on PATH, so a laptop needs no configuration and a container can be pointed
+at whatever it has. **The two must match on major version** — a container
+with Chromium 141 and chromedriver 147 fails with a session error that does
+not say so plainly.
+
 Two things the seed proved by having to work around them, both worth
 knowing:
 
@@ -231,9 +256,9 @@ Each wave is its own branch.
 - **Wave 3 — the remaining hubs. ✅** health, career, education, people,
   hobbies, rights, travel.
 - **Wave 4 — the feature pages. ✅** 29 of them, and the sitemap.
-- **Wave 5 — the screenshots.** A seeded demo household and a pipeline that
-  regenerates images from system tests. Still to do, and the part most
-  likely to be underestimated (§7).
+- **Wave 5 — the screenshots. ✅** The demo household (`db/demo.rb`), the
+  capture that drives a browser over it (`bin/rails screenshots:capture`),
+  and the 18 images now on the pages (§7).
 
 Waves 0 and 1 landed together, since a spine with no page on it cannot be
 reviewed for the thing that matters, which is whether the pages read well.
