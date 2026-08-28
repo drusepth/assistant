@@ -7,6 +7,11 @@ class Goal < ApplicationRecord
 
   has_many :tasks, dependent: :nullify
   has_many :events, dependent: :nullify
+  # A curriculum topic can point at the goal it's being learned for
+  # (D-education-spine). Same posture as tasks and events: dropping the goal
+  # drops the link, never the learning — and without this the foreign key
+  # made the goal undeletable.
+  has_many :topics, dependent: :nullify
 
   # paused (D-goal-pause): shelved without shame — off the board's strip,
   # parked on the Goals tab, one click each way.

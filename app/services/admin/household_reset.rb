@@ -41,9 +41,10 @@ module Admin
       # Attached blobs are identified by diffing across the destroy (below),
       # so the "before" side has to be read while the household still stands.
       attached_before = attached_blob_ids
-      # The error log keeps a foreign key to users but is not cascaded from
-      # them — a failure outlives the account that hit it on purpose — so
-      # these rows go first or the destroy below trips the constraint.
+      # A failure outlives the account that hit it on purpose, so destroying a
+      # user only nullifies its error rows. A reset is the one place that isn't
+      # what's wanted — the next screen claims a fresh instance — so the
+      # household's errors are deleted outright rather than left ownerless.
       AppError.where(user: users).delete_all
 
       household.destroy!

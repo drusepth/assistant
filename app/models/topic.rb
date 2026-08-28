@@ -10,6 +10,11 @@ class Topic < ApplicationRecord
   has_many :children, -> { order(:position) }, class_name: "Topic", foreign_key: :parent_id,
     dependent: :destroy, inverse_of: :parent
   has_many :review_items, dependent: :destroy
+  # The hours log is append-only in spirit (D-learning-record) and outlives
+  # the tree it was recorded against — reorganising a curriculum must not
+  # rewrite how much someone studied. Nullify, not destroy; and it has to be
+  # said out loud, because the column is a foreign key.
+  has_many :study_logs, dependent: :nullify
 
   enum :mastery, { unseen: 0, learning: 1, practicing: 2, mastered: 3, rusty: 4 }, default: :unseen
 
