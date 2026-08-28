@@ -186,6 +186,35 @@ documents, fake ledger — as a first-class repository asset, driven from
 system tests so the images regenerate rather than rot. This is its own
 wave, and it is the part most likely to be underestimated.
 
+**The family is built** (`db/demo.rb`, `bin/rails demo:seed`): the
+Okafor–Lynch household of Millbrook, Ohio — Kay, who schedules surgery at
+the local hospital; Danny, laid off from an HVAC job in July; Ify, fifteen
+and homeschooled since the anxiety got bad; two pets; and Kay's mother Ada,
+who fell in June. Three logins, ~350 records, every section and subsection
+populated. The screenshot pipeline on top of it is still to come.
+
+One rule made it worth writing rather than generating: **the lore crosses
+sections.** Danny's layoff is a Career note, a Money shortfall, a Health
+insurance question and a Rights claim for unpaid overtime, and it is the
+same event in all four. Ify's 2023 appendectomy is a Health record, a
+medical debt, and a collections letter with a 30-day window. That is the
+app's architectural argument — lenses over one pool, not silos — and a
+demo whose sections held unrelated filler would quietly contradict it on
+every screenshot. `test/models/demo_test.rb` pins it.
+
+Two things the seed proved by having to work around them, both worth
+knowing:
+
+- **Sealed containers can only be written by something holding the
+  password.** The demo creates credentials and diary entries by unlocking a
+  keyring with the known demo password and going through `Vault::Share` —
+  not by inserting rows, which it *cannot* do. That friction is the
+  guarantee working.
+- **Times are wall-clock times in the household's kitchen.** Parsed in the
+  process default they land hours out, and a 9am church service renders as
+  5am. The seed runs inside `Time.use_zone(household.zone)`, and a test
+  pins the service at 09:00.
+
 ## 8. Build sequence
 
 Each wave is its own branch.
