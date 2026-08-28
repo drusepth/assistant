@@ -46,7 +46,9 @@ class AgentScanJob < ApplicationJob
       end
     end
 
-    NotifyJob.perform_later(user, noteworthy.map(&:title)) if noteworthy.any?
+    if noteworthy.any?
+      NotifyJob.perform_later(user, noteworthy.map(&:title), suggestion_ids: noteworthy.map(&:id))
+    end
     prepare_work(user, noteworthy)
 
     generate_digest(user) if cadence == "weekly"
