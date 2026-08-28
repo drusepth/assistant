@@ -1,0 +1,35 @@
+<%# The planning surface (D-tasks-two-surfaces): the big cards, the paused
+    shelf (D-goal-pause), and the achieved archive — kept on purpose; years
+    of finished goals are history worth looking at, not clutter. %>
+<% if @active_goals.none? && @paused_goals.none? && @achieved_goals.none? %>
+  <%= render Ui::EmptyStateComponent.new(
+        title: "No goals yet",
+        description: "Name something you're working toward in the box above — your assistant breaks it into day-sized steps you'll meet on the board."
+      ) %>
+<% else %>
+  <% if @active_goals.any? %>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <%= render @active_goals %>
+    </div>
+  <% else %>
+    <p class="rounded-xl bg-stone-100/70 px-5 py-8 text-center text-sm text-soft">Nothing in flight — everything is paused or achieved.</p>
+  <% end %>
+
+  <% if @paused_goals.any? %>
+    <h2 class="mb-3 mt-8 flex items-center gap-1.5 text-sm font-semibold text-ink">
+      <%= icon(:pause, css_class: "size-4") %> Paused
+    </h2>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <%= render @paused_goals %>
+    </div>
+  <% end %>
+
+  <% if @achieved_goals.any? %>
+    <h2 class="mb-3 mt-8 flex items-center gap-1.5 text-sm font-semibold text-ink">
+      <%= icon(:check_circle, css_class: "size-4") %> Achieved
+    </h2>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <%= render @achieved_goals %>
+    </div>
+  <% end %>
+<% end %>

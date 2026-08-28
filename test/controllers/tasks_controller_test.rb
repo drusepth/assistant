@@ -33,13 +33,50 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_match "What do you want to accomplish?", response.body
   end
 
-  test "index shows active goals with their progress" do
+  test "the board compresses active goals to the strip; the Goals tab carries the full cards" do
     goal = users(:one).goals.create!(title: "Find a new job", broken_down_at: Time.current)
-    users(:one).tasks.create!(title: "Update resume", goal: goal)
+    users(:one).tasks.create!(title: "Update resume", goal: goal, due_on: Date.tomorrow)
 
     get tasks_path
     assert_match "Find a new job", response.body
+    assert_no_match "0 of 1 steps done", response.body, "the strip is a doorway, not a dashboard"
+
+    get tasks_path(tab: "goals")
+    assert_match "Find a new job", response.body
     assert_match "0 of 1 steps done", response.body
+  end
+
+  test "the strip flags a goal with no next step" do
+    goal = users(:one).goals.create!(title: "Adrift goal", broken_down_at: Time.current)
+    users(:one).tasks.create!(title: "Undated step", goal: goal)
+
+    get tasks_path
+    assert_match "No next step", response.body
+  end
+
+  test "the Goals tab shelves paused goals and archives achieved ones off the board" do
+    users(:one).goals.create!(title: "Resting goal", status: :paused, broken_down_at: Time.current)
+    users(:one).goals.create!(title: "Climbed mountain", status: :done, broken_down_at: Time.current)
+
+    get tasks_path
+    assert_no_match "Resting goal", response.body
+    assert_no_match "Climbed mountain", response.body
+
+    get tasks_path(tab: "goals")
+    assert_match "Paused", response.body
+    assert_match "Resting goal", response.body
+    assert_match "Achieved", response.body
+    assert_match "Climbed mountain", response.body
+  end
+
+  test "an ongoing goal shows momentum instead of a percent (D-goal-shape)" do
+    goal = users(:one).goals.create!(title: "Make new friends", shape: "ongoing", broken_down_at: Time.current)
+    users(:one).tasks.create!(title: "Join the club", goal: goal, completed_at: 1.day.ago)
+    users(:one).tasks.create!(title: "Go again", goal: goal, due_on: Date.tomorrow)
+
+    get tasks_path(tab: "goals")
+    assert_match "1 step this week", response.body
+    assert_no_match "of 2 steps done", response.body
   end
 
   test "moves a task across the board" do

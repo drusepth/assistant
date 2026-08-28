@@ -125,6 +125,8 @@ Rails.application.routes.draw do
     member do
       patch :complete
       patch :reopen
+      patch :pause
+      patch :resume
       post :break_down
     end
   end

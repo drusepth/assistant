@@ -38,6 +38,63 @@ class BreakDownGoalJobTest < ActiveJob::TestCase
       "step questions seed the task page's conversation (D30)"
   end
 
+  test "stores the model's shape verdict, once (D-goal-shape)" do
+    stub_llm(sections: [], target_on: nil, steps: [ { title: "Join a club" } ], shape: "ongoing")
+    BreakDownGoalJob.perform_now(@goal)
+    assert_equal "ongoing", @goal.reload.shape
+
+    stub_llm(sections: [], target_on: nil, steps: [ { title: "Another step" } ], shape: "finite")
+    BreakDownGoalJob.perform_now(@goal, append: true)
+    assert_equal "ongoing", @goal.reload.shape, "a later run never reclassifies"
+  end
+
+  test "an unrecognized shape is dropped rather than stored" do
+    stub_llm(sections: [], target_on: nil, steps: [ { title: "Step" } ], shape: "aspirational")
+    BreakDownGoalJob.perform_now(@goal)
+    assert_nil @goal.reload.shape
+  end
+
+  test "a day-sized capture is filed as a task, not a goal (D-goal-capture-routing)" do
+    goal = users(:one).goals.create!(title: "buy cat litter")
+    stub_llm(
+      kind: "task", sections: [ "money" ], target_on: nil,
+      steps: [ { title: "Buy cat litter", due_on: Date.current.iso8601, sections: [ "money" ] } ]
+    )
+
+    BreakDownGoalJob.perform_now(goal)
+
+    assert_not Goal.exists?(goal.id), "the placeholder goal is deleted"
+    task = users(:one).tasks.order(:id).last
+    assert_equal "Buy cat litter", task.title
+    assert_equal Date.current, task.due_on
+    assert task.today?
+    assert_nil task.goal_id
+    assert_equal [ sections(:money) ], task.sections.to_a
+  end
+
+  test "conversion falls back to the capture's own words when the model gives no step" do
+    goal = users(:one).goals.create!(title: "call the dentist back")
+    stub_llm(kind: "task", sections: [ "health" ], target_on: nil, steps: [])
+
+    BreakDownGoalJob.perform_now(goal)
+
+    assert_not Goal.exists?(goal.id)
+    task = users(:one).tasks.order(:id).last
+    assert_equal "call the dentist back", task.title
+    assert task.later?
+    assert_equal [ sections(:health) ], task.sections.to_a
+  end
+
+  test "a hand-shaped goal is never converted, whatever the model says" do
+    goal = users(:one).goals.create!(title: "buy cat litter", description: "the good unscented kind")
+    stub_llm(kind: "task", sections: [], target_on: nil, steps: [ { title: "Buy cat litter" } ])
+
+    BreakDownGoalJob.perform_now(goal)
+
+    assert Goal.exists?(goal.id), "a description means someone chose goal on purpose"
+    assert_equal [ "Buy cat litter" ], goal.tasks.pluck(:title)
+  end
+
   test "does not re-break a goal that already has steps" do
     @goal.tasks.create!(user: users(:one), title: "Existing step")
 
@@ -122,11 +179,11 @@ class BreakDownGoalJobTest < ActiveJob::TestCase
   end
 
   private
-    def stub_llm(sections:, target_on:, steps:)
+    def stub_llm(sections:, target_on:, steps:, kind: nil, shape: nil)
       stub_request(:post, ENDPOINT).to_return(
         status: 200,
         body: { choices: [ { message: { content: {
-          sections: sections, target_on: target_on, steps: steps
+          kind: kind, shape: shape, sections: sections, target_on: target_on, steps: steps
         }.to_json } } ] }.to_json
       )
     end

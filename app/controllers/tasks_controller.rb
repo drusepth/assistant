@@ -3,14 +3,24 @@ class TasksController < ApplicationController
 
   before_action :set_own_task, only: %i[ edit update destroy complete reopen reschedule move ]
 
+  # One section, two surfaces (D-tasks-two-surfaces): the board is the daily
+  # default; ?tab=goals is the planning destination.
   def index
-    scope = Task.visible_to(Current.user).includes(:sections, :user, :goal)
-    open_tasks = scope.open.order(Arel.sql("due_on IS NULL, due_on ASC, created_at ASC")).to_a
-    @today_tasks, @later_tasks = open_tasks.partition(&:for_today?)
-    @done_tasks = scope.completed.order(completed_at: :desc).limit(DONE_COLUMN_LIMIT)
-
-    @goals = Goal.visible_to(Current.user).active.includes(:sections, :tasks, :user).order(created_at: :desc)
+    @tab = params[:tab] == "goals" ? "goals" : "board"
+    goals = Goal.visible_to(Current.user).includes(:sections, :tasks, :user)
     @new_goal = Current.user.goals.new
+
+    if @tab == "goals"
+      @active_goals = Goal.by_attention(goals.active.to_a)
+      @paused_goals = goals.paused.order(updated_at: :desc)
+      @achieved_goals = goals.done.order(updated_at: :desc)
+    else
+      scope = Task.visible_to(Current.user).includes(:sections, :user, :goal)
+      open_tasks = scope.open.order(Arel.sql("due_on IS NULL, due_on ASC, created_at ASC")).to_a
+      @today_tasks, @later_tasks = open_tasks.partition(&:for_today?)
+      @done_tasks = scope.completed.order(completed_at: :desc).limit(DONE_COLUMN_LIMIT)
+      @strip_goals = Goal.by_attention(goals.active.to_a)
+    end
   end
 
   def show
