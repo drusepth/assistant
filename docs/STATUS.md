@@ -42,4 +42,10 @@ Ready to build without one:
 5. Email follow-ons (`docs/EMAIL_PLAN.md` §10 parked list): sending mail's consent design (Q19), receipt/renewal signals feeding Money watchers over the People/mirror linkage, `person_email_addresses` normalization if single-address matching disappoints, wiring the E0 `households.region` into the Rights/Money tool prompts (Q12's other half)
 6. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)
 7. People deferred slice (`docs/PEOPLE.md` §9.8, waits decided 2026-08): Q17 person↔item links → afterglow watcher + per-person history (wait for a second consumer), the stay-in-touch cadence upgrade (wait for a wrong-feeling nudge in real use), community tools for groups (wait for a real group living in a lens), "new baby"/co-parenting Situations (on demand)
-8. The Money buildout (`docs/MONEY.md`, designed 2026-08): passes B1 (ledger) → B2 (budget + panels + build-my-budget) → B3 (faithfulness watchers) → B4 (the coach pair) → B5 (debt payoff plan, email-receipt suggestions) — B1/B2 are the meat, each pass lands green and independent
+8. The active agent (`docs/AGENT_PLAN.md`, designed 2026-08): waves A1
+   (suggestion lifecycle — retire what the world resolved) → A2 (prepared
+   work: dial-gated, budgeted draft pre-runs that land nothing until the
+   click) → A3 (signed decision links, the Q-sms-replies answer) → A4
+   (earned dials) → A5 (daily brief for Active users) — A1 is model-free
+   and stands alone; A2 is the flagship
+9. The Money buildout (`docs/MONEY.md`, designed 2026-08): passes B1 (ledger) → B2 (budget + panels + build-my-budget) → B3 (faithfulness watchers) → B4 (the coach pair) → B5 (debt payoff plan, email-receipt suggestions) — B1/B2 are the meat, each pass lands green and independent
