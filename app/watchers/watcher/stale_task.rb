@@ -35,6 +35,18 @@ module Watcher
       end
     end
 
+    # The task stopped being stranded — it got a date, got done, got pulled
+    # into Today, or got deleted. Any of those is the rescue this nudge was
+    # offering, so it retires rather than waiting to be dismissed. Retiring
+    # also frees one of the three slots, which is why the retire pass runs
+    # before the scan.
+    def resolved?(suggestion)
+      task = user.tasks.find_by(id: suggestion.action.dig("schedule_task", "id"))
+      return true if task.nil?
+
+      task.completed? || task.due_on.present? || task.today?
+    end
+
     private
       def stale_tasks
         user.tasks.open.where(due_on: nil, bucket: :later, goal_id: nil)

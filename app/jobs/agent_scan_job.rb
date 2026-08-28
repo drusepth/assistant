@@ -13,10 +13,18 @@ class AgentScanJob < ApplicationJob
   def perform(user, cadence: "weekly")
     noteworthy = []
 
+    retire_expired(user)
+
     Watcher.all.each do |watcher|
       level = dial_for(user, watcher)
       next if level == "off"
       next if cadence == "daily" && level != "active"
+
+      # Retiring first, before the scan (D-suggestion-lifecycle): a watcher
+      # that caps its live suggestions (stale task's three slots) should
+      # spend those slots on what still matters, so freeing the handled ones
+      # has to happen before the scan counts them.
+      retire_resolved(user, watcher)
 
       begin
         scan = watcher.new(user)
@@ -37,6 +45,33 @@ class AgentScanJob < ApplicationJob
   end
 
   private
+    # The dateless half of the lifecycle (D-suggestion-lifecycle): anything
+    # whose subject moment has passed retires without consulting a watcher.
+    # Deliberately outside the dial loop — an expired nudge is stale in a
+    # section the user has since turned Off too, and cleaning it up is not
+    # the agent speaking.
+    def retire_expired(user)
+      user.suggestions.actionable.find_each { |suggestion| suggestion.resolve! if suggestion.expired? }
+    rescue StandardError => e
+      record_failure(e, user: user, context: { retire: "expired" })
+    end
+
+    # The watcher-answered half: each watcher is asked whether its own live
+    # suggestions have been overtaken by events. Isolated exactly like the
+    # scan is — a watcher whose `resolved?` raises must not cost the user
+    # their scan, and must not stop the other watchers retiring.
+    def retire_resolved(user, watcher)
+      return unless watcher.respond_to?(:retires?) && watcher.retires?
+
+      live = user.suggestions.actionable.where(watcher_slug: watcher.slug)
+      return if live.none?
+
+      check = watcher.new(user)
+      live.find_each { |suggestion| suggestion.resolve! if check.resolved?(suggestion) }
+    rescue StandardError => e
+      record_failure(e, user: user, context: { watcher: watcher.name, retire: true })
+    end
+
     # LLM phrasing rides the weekly scan, after the deterministic work, and
     # fails silently — the Dashboard's local summary never depends on it.
     def generate_digest(user)

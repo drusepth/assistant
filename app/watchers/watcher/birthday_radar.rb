@@ -22,11 +22,23 @@ module Watcher
             "accept_label" => "Get ready",
             "task" => { "title" => "Get a birthday gift for #{person.name}",
                         "due_on" => [ date - GIFT_LEAD, Date.current ].max.iso8601 },
-            "event" => { "title" => "#{person.name}'s birthday", "starts_at" => date.iso8601, "all_day" => true }
+            "event" => { "title" => "#{person.name}'s birthday", "starts_at" => date.iso8601, "all_day" => true },
+            # "Get ready" stops meaning anything once the day has gone by;
+            # the suggestion retires the morning after rather than sitting
+            # in Attend as a reproach (D-suggestion-lifecycle).
+            "expires_on" => date.iso8601
           },
           sections: (self.class.section_slugs + person.sections.map(&:slug)).uniq
         )
       end
+    end
+
+    # They left the circle, or the record is gone. (The day itself is
+    # handled by `expires_on`, which needs no watcher code.)
+    def resolved?(suggestion)
+      return false unless (id = subject_id(suggestion, "person"))
+
+      user.people.circle.find_by(id: id).nil?
     end
 
     private

@@ -10,8 +10,14 @@ class Suggestion < ApplicationRecord
   belongs_to :user
 
   enum :kind, { nudge: "nudge", heads_up: "heads_up", insight: "insight" }, default: :nudge
-  enum :status, { pending: "pending", accepted: "accepted", dismissed: "dismissed", snoozed: "snoozed" },
-    default: :pending
+  # `resolved` is retirement by the world, as distinct from `dismissed`,
+  # which is retirement by the user (D-suggestion-lifecycle). Both leave the
+  # fingerprint standing, so neither is ever re-proposed; the difference is
+  # only what it means — and it means enough to keep apart, since "you
+  # handled it" and "I didn't want this" are opposite signals to the dial
+  # tuner (D-agent-earned-dials) reading the same rows.
+  enum :status, { pending: "pending", accepted: "accepted", dismissed: "dismissed", snoozed: "snoozed",
+                  resolved: "resolved" }, default: :pending
 
   validates :title, :watcher_slug, presence: true
   # The fingerprint (watcher + subject, chosen by the watcher) is what keeps
@@ -30,6 +36,27 @@ class Suggestion < ApplicationRecord
 
   def dismiss!
     update!(status: :dismissed)
+  end
+
+  # The world handled it — book the checkup yourself and the nudge about
+  # booking it should not be waiting for you to dismiss it by hand. Called
+  # only by the scan's retire pass, never by a user action.
+  def resolve!
+    update!(status: :resolved)
+  end
+
+  # The one retirement rule that needs no watcher code: a suggestion whose
+  # subject moment has passed. A nudge about last Thursday's event is the
+  # app reading as broken (the D-reminders argument — a reminder more than a
+  # day late is retired rather than delivered), so watchers whose subject
+  # has a date stamp `expires_on` at propose time and get this for free.
+  def expired?
+    date = action["expires_on"]
+    return false if date.blank?
+
+    Date.iso8601(date.to_s) < Date.current
+  rescue Date::Error
+    false
   end
 
   # Materializes the action payload as ordinary primitives, tagged with the
