@@ -348,6 +348,9 @@ Rails.application.routes.draw do
       post :recap
       post :retry_reply
       post :save_answer
+      # The two ends of a prepared draft (D-agent-prepared-work).
+      post :land
+      post :discard
     end
   end
 

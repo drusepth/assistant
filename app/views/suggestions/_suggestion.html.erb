@@ -4,6 +4,14 @@
     <% if suggestion.body.present? %>
       <p class="mt-0.5 text-sm text-soft"><%= suggestion.body %></p>
     <% end %>
+    <%# The draft is written but nothing is saved (D-agent-prepared-work) —
+        the dashed chip is the app's existing mark for something the model
+        did rather than something the user did. %>
+    <% if suggestion.prepared? %>
+      <p class="mt-1.5">
+        <span class="chip chip-inferred">Draft ready — nothing saved yet</span>
+      </p>
+    <% end %>
   </div>
   <div class="row-actions">
     <%= button_to suggestion.accept_label, accept_suggestion_path(suggestion), method: :patch, class: "btn btn-primary btn-sm" %>

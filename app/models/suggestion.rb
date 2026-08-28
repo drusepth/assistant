@@ -8,6 +8,11 @@ class Suggestion < ApplicationRecord
   include Sectionable
 
   belongs_to :user
+  # The draft the agent had waiting when this suggestion arrived
+  # (D-agent-prepared-work). Optional by design: a suggestion without one is
+  # exactly the M3 suggestion, which is also what a failed preparation
+  # degrades back to.
+  belongs_to :tool_run, optional: true
 
   enum :kind, { nudge: "nudge", heads_up: "heads_up", insight: "insight" }, default: :nudge
   # `resolved` is retirement by the world, as distinct from `dismissed`,
@@ -70,6 +75,29 @@ class Suggestion < ApplicationRecord
 
   def tool_action = action["tool"]
 
+  # ── Prepared work (D-agent-prepared-work) ────────────────────────────
+
+  # The tool the agent may run ahead of the click, or nil. Derived, so no
+  # watcher writes a line to opt in: a suggestion is preparable exactly when
+  # its action already names a draft tool and prefills every input the form
+  # would ask for — i.e. when there is nothing left for the user to answer.
+  # Plan tools are excluded (a prepared Goal is a whole deferred graph, and
+  # wants the seam proven first) and chat tools inherently so — a
+  # conversation cannot be had in advance.
+  def preparable_tool
+    return nil unless tool_action.is_a?(Hash)
+
+    tool = Tool.find(tool_action["slug"].to_s)
+    return nil unless tool && tool.kind == :draft && tool.preparable
+
+    given = tool_action["inputs"] || {}
+    tool.inputs.select(&:required?).all? { |input| given[input.name].present? } ? tool : nil
+  end
+
+  # A draft is waiting. Guarded on the run's own status so a discarded or
+  # half-written run never advertises itself as one.
+  def prepared? = tool_run&.prepared?
+
   # An in-app destination ("look at these photos") — internal paths only,
   # so a payload can never send the user off the instance.
   def path_action
@@ -78,6 +106,10 @@ class Suggestion < ApplicationRecord
   end
 
   def accept_label
+    # A waiting draft outranks the payload's own copy: "Review draft" is
+    # what the click actually does now, and promising anything else would
+    # be describing the M3 behavior this suggestion no longer has.
+    return "Review draft" if prepared?
     return action["accept_label"] if action["accept_label"].present?
     return "Add task" if action["task"]
     return "Add event" if action["event"]

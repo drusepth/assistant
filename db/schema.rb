@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_051023) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_164512) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -779,9 +779,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_051023) do
     t.date "snoozed_until"
     t.string "status", default: "pending", null: false
     t.string "title", null: false
+    t.integer "tool_run_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.string "watcher_slug", null: false
+    t.index ["tool_run_id"], name: "index_suggestions_on_tool_run_id"
     t.index ["user_id", "fingerprint"], name: "index_suggestions_on_user_id_and_fingerprint", unique: true
     t.index ["user_id", "status"], name: "index_suggestions_on_user_id_and_status"
     t.index ["user_id"], name: "index_suggestions_on_user_id"
@@ -831,6 +833,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_051023) do
     t.datetime "created_at", null: false
     t.string "error"
     t.json "inputs", default: {}, null: false
+    t.string "origin", default: "user", null: false
     t.json "output", default: {}, null: false
     t.datetime "recap_requested_at"
     t.string "status", default: "queued", null: false
@@ -961,6 +964,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_051023) do
     t.string "name", null: false
     t.datetime "onboarded_at"
     t.string "password_digest", null: false
+    t.boolean "prepare_work", default: true, null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["household_id"], name: "index_users_on_household_id"
@@ -1054,6 +1058,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_051023) do
   add_foreign_key "study_logs", "topics"
   add_foreign_key "study_logs", "users"
   add_foreign_key "subjects", "users"
+  add_foreign_key "suggestions", "tool_runs", on_delete: :nullify
   add_foreign_key "suggestions", "users"
   add_foreign_key "tasks", "goals"
   add_foreign_key "tasks", "users"

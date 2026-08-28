@@ -44,6 +44,11 @@ module Tool
     class_attribute :title, :description, :kind, instance_accessor: false, default: nil
     class_attribute :section_slugs, instance_accessor: false, default: []
     class_attribute :input_definitions, instance_accessor: false, default: []
+    # Whether the agent may run this tool unbidden to have a draft waiting
+    # (D-agent-prepared-work). A tool opts out when its run is too slow or
+    # too web-bound to spend on a click that may never come; only draft
+    # tools are ever eligible in the first place.
+    class_attribute :preparable, instance_accessor: false, default: true
 
     MAX_FOLLOW_UPS = 3
     MAX_DEADLINES = 3
@@ -79,7 +84,13 @@ module Tool
     def initialize(run)
       @run = run
       @user = run.user
+      @landings = []
     end
+
+    # What this run would have created, when it ran in preparation mode —
+    # the `Watcher::Base#proposals` convention: the caller reads the work
+    # off the instance rather than the instance writing it anywhere.
+    attr_reader :landings
 
     # The template method ToolRunJob calls. Everything user-facing that can
     # go wrong raises Llm::Error so the run fails with a friendly message.
@@ -292,17 +303,28 @@ module Tool
 
       # ── Landing primitives ─────────────────────────────────────────────
 
+      # In preparation mode (D-agent-prepared-work) these three write down
+      # what they *would* have created and hand back an unsaved record, so
+      # the agent's speculative run leaves nothing in Browse, Calendar,
+      # Today or search until the user's Save replays the intents. Tool
+      # subclasses are unchanged by any of it — routing preparation through
+      # the same classes, prompts and filing is the whole point.
       def create_note(title:, body:)
+        return stage("note", { "title" => title, "body" => body }, user.notes.new(title:, body:)) if preparing?
+
         note = record(user.notes.create!(title:, body:))
         note.sections = filing
         note
       end
 
       def create_task(title:, due_on: nil, notes: nil)
-        task = record(user.tasks.create!(
-          title:, notes:, due_on:,
-          bucket: due_on && due_on <= Date.current ? :today : :later
-        ))
+        bucket = due_on && due_on <= Date.current ? :today : :later
+        if preparing?
+          return stage("task", { "title" => title, "notes" => notes, "due_on" => due_on&.iso8601 },
+            user.tasks.new(title:, notes:, due_on:, bucket:))
+        end
+
+        task = record(user.tasks.create!(title:, notes:, due_on:, bucket:))
         task.sections = filing
         task
       end
@@ -311,11 +333,26 @@ module Tool
       # the calendar is harder to lose — and it surfaces in Calendar/Today
       # like everything else.
       def create_event(title:, on:, description: nil)
+        if preparing?
+          return stage("event", { "title" => title, "description" => description, "on" => on&.to_date&.iso8601 },
+            user.events.new(title:, description:, starts_at: on&.in_time_zone, all_day: true))
+        end
+
         event = record(user.events.create!(
           title:, description:, starts_at: on.in_time_zone, all_day: true
         ))
         event.sections = filing
         event
+      end
+
+      def preparing? = run.preparing.present?
+
+      # Records the intent — including the filing, resolved now so the Save
+      # click files exactly where an ordinary run would have — and returns
+      # the unsaved record, so a caller reading the result back still can.
+      def stage(kind, attributes, item)
+        @landings << attributes.compact.merge("kind" => kind, "sections" => filing.map(&:id))
+        item
       end
 
       # The response-shape parsers shared by the draft-tool family: arrays

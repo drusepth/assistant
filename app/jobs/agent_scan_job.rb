@@ -5,6 +5,13 @@
 class AgentScanJob < ApplicationJob
   queue_as :default
 
+  # Preparations attempted per user per scan (D-agent-prepared-work).
+  # Counted as attempts, not successes: this is the first thing the agent
+  # spends model tokens on without a click, so the cap has to bound the
+  # spending rather than the yield. Whatever doesn't fit stays an ordinary
+  # prefilled redirect, which is no worse than last week.
+  PREPARE_BUDGET = 3
+
   # Fan-out entry points for the recurring schedules (config/recurring.yml).
   def self.scan_all(cadence: :weekly)
     User.find_each { |user| perform_later(user, cadence: cadence.to_s) }
@@ -40,11 +47,34 @@ class AgentScanJob < ApplicationJob
     end
 
     NotifyJob.perform_later(user, noteworthy.map(&:title)) if noteworthy.any?
+    prepare_work(user, noteworthy)
 
     generate_digest(user) if cadence == "weekly"
   end
 
   private
+    # Drafts the work behind the suggestions this scan just made
+    # (D-agent-prepared-work). The candidate set is `noteworthy` — the
+    # proposals from Active-dial watchers — which is the same set the
+    # notification speaks about, and rightly so: Active means both "tell me"
+    # and "have it ready". Quiet keeps exactly today's behavior.
+    #
+    # Newly-proposed only, by construction: a suggestion re-surfacing from a
+    # snooze was never in this list, so nothing is ever prepared twice.
+    def prepare_work(user, noteworthy)
+      return if noteworthy.empty?
+      return unless user.prepare_work?
+      # With no model configured the feature silently does not exist —
+      # nothing errors and nothing apologizes.
+      return unless user.household.model_profile&.configured?
+
+      noteworthy.select(&:preparable_tool).first(PREPARE_BUDGET).each do |suggestion|
+        AgentPrepareJob.perform_later(suggestion)
+      end
+    rescue StandardError => e
+      record_failure(e, user: user, context: { prepare: true })
+    end
+
     # The dateless half of the lifecycle (D-suggestion-lifecycle): anything
     # whose subject moment has passed retires without consulting a watcher.
     # Deliberately outside the dial loop — an expired nudge is stale in a

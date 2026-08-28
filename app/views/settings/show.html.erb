@@ -75,6 +75,30 @@
     <% end %>
   <% end %>
 
+  <%# D-agent-prepared-work: the one switch over preparation itself. The
+      dials above already decide *which* sections may prepare; this is the
+      answer to "draft ahead at all". On by default, because Active is
+      opt-in already. %>
+  <%= render Ui::CardComponent.new(title: "Drafting ahead",
+        subtitle: "In Active sections, your assistant can write the draft before you ask — and still save nothing until you click") do %>
+    <%= form_with url: settings_path, method: :patch, class: "flex flex-wrap items-center gap-3" do |form| %>
+      <%= hidden_field_tag :prepare_work, Current.user.prepare_work? ? "0" : "1" %>
+      <%= form.submit Current.user.prepare_work? ? "Stop drafting ahead" : "Draft ahead in Active sections",
+            class: "btn btn-secondary" %>
+      <span class="text-sm text-soft">
+        Currently <strong class="text-ink"><%= Current.user.prepare_work? ? "on" : "off" %></strong>.
+        <% if @drafts_prepared.positive? %>
+          <%= pluralize(@drafts_prepared, "draft") %> prepared in the last week.
+        <% else %>
+          Nothing prepared in the last week.
+        <% end %>
+        This is the only thing the assistant does that uses your model without you asking,
+        so it's capped at <%= AgentScanJob::PREPARE_BUDGET %> per scan — and costs nothing at all
+        on a model you run yourself.
+      </span>
+    <% end %>
+  <% end %>
+
   <%# D-task-celebration: on by default, and one click from gone. The point
       of the party is the hit of dopamine, and something you can't switch off
       stops being a treat. %>

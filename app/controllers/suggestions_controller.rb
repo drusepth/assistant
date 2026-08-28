@@ -2,7 +2,12 @@ class SuggestionsController < ApplicationController
   before_action :set_suggestion
 
   def accept
-    if (tool = @suggestion.tool_action)
+    # A waiting draft (D-agent-prepared-work) opens for review and the
+    # suggestion stays pending: looking is not accepting. The D20 click is
+    # Save on the review page, which is where anything lands.
+    if @suggestion.prepared?
+      redirect_to @suggestion.tool_run
+    elsif (tool = @suggestion.tool_action)
       @suggestion.accept!
       redirect_to new_tool_run_path(tool["slug"], inputs: tool["inputs"] || {})
     elsif (path = @suggestion.path_action)

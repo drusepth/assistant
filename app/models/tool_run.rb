@@ -10,8 +10,28 @@ class ToolRun < ApplicationRecord
   belongs_to :subject, polymorphic: true, optional: true
   has_many :tool_run_items, dependent: :destroy
   has_many :tool_run_messages, dependent: :destroy
+  # The suggestion this run was prepared for, if any (D-agent-prepared-work).
+  # Nullify rather than destroy: a discarded draft must not take the nudge
+  # that occasioned it down with it — the user may still want the plain
+  # prefilled form the suggestion falls back to.
+  has_one :suggestion, dependent: :nullify
 
-  enum :status, { queued: "queued", running: "running", done: "done", failed: "failed" }, default: :queued
+  # `prepared` and `discarded` are the agent's states (D-agent-prepared-work):
+  # a prepared run has made its model call and written down what it *would*
+  # create, and lands nothing until the user's Save turns those intents into
+  # rows. `discarded` is the answer to the other button.
+  enum :status, { queued: "queued", running: "running", done: "done", failed: "failed",
+                  prepared: "prepared", discarded: "discarded" }, default: :queued
+
+  # Who asked for the run. An agent run is speculative until the user says
+  # otherwise, so it is labeled wherever runs appear.
+  enum :origin, { user_asked: "user", agent: "agent" }, default: :user_asked, prefix: true
+
+  # Set for the duration of a preparation call, never persisted: it tells
+  # the landing helpers in Tool::Base to write intents instead of rows. A
+  # run loaded from the database is never preparing, which is what keeps an
+  # ordinary run from accidentally landing nothing.
+  attr_accessor :preparing
 
   validates :tool_slug, inclusion: { in: Tool::SLUGS }
   validate :required_inputs_present, on: :create
@@ -35,6 +55,36 @@ class ToolRun < ApplicationRecord
       NextStep.new(tool: tool, inputs: entry["inputs"] || {}, reason: entry["reason"]) if tool
     end
   end
+
+  # ── Prepared work (D-agent-prepared-work) ────────────────────────────
+
+  Landing = Data.define(:kind, :title, :detail, :date)
+
+  # What a prepared run would create, for the review page to show before
+  # the user commits to any of it. Re-read from the payload each time
+  # rather than cached, since a discard can empty it.
+  def landings
+    Array(output["landings"]).filter_map do |landing|
+      next unless landing.is_a?(Hash) && landing["title"].present?
+
+      Landing.new(kind: landing["kind"], title: landing["title"],
+        detail: landing["body"].presence || landing["notes"].presence || landing["description"].presence,
+        date: landing["due_on"].presence || landing["on"].presence)
+    end
+  end
+
+  # The D20 click, arriving late: the intents become ordinary primitives,
+  # filed exactly where the tool filed them, recorded on the run like any
+  # other run's output. Dates are resolved *now*, not at preparation time —
+  # a draft prepared on Monday and saved on Thursday means Thursday, the
+  # same rule the schedule_task payload already follows.
+  def land!
+    created = Array(output["landings"]).filter_map { |landing| land_one(landing) }
+    update!(status: :done)
+    created
+  end
+
+  def discard! = update!(status: :discarded)
 
   def finished? = done? || failed?
 
@@ -89,6 +139,38 @@ class ToolRun < ApplicationRecord
   end
 
   private
+    # One staged intent becomes one row. Unknown kinds are dropped rather
+    # than raised on: the payload was written by an earlier version of the
+    # app as easily as by this one, and a half-landed draft is worse than a
+    # slightly short one.
+    def land_one(landing)
+      return unless landing.is_a?(Hash) && landing["title"].present?
+
+      item = case landing["kind"]
+      when "note"
+        user.notes.create!(title: landing["title"], body: landing["body"])
+      when "task"
+        due_on = parsed_date(landing["due_on"])
+        user.tasks.create!(title: landing["title"], notes: landing["notes"], due_on: due_on,
+          bucket: due_on && due_on <= Date.current ? :today : :later)
+      when "event"
+        on = parsed_date(landing["on"]) or return
+        user.events.create!(title: landing["title"], description: landing["description"],
+          starts_at: on.in_time_zone, all_day: true)
+      end
+      return unless item
+
+      item.sections = Section.where(id: landing["sections"])
+      tool_run_items.create!(item: item)
+      item
+    end
+
+    def parsed_date(value)
+      Date.iso8601(value.to_s) if value.present?
+    rescue Date::Error
+      nil
+    end
+
     def required_inputs_present
       return unless (tool = Tool.find(tool_slug))
 

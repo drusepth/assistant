@@ -31,9 +31,13 @@
 <% else %>
   <%# Everything else: a draft-kind run of any status, and a chat run that
       hasn't opened yet or failed to. These flow in the page. %>
+  <%# An agent run says so in its own subtitle: a run the user never
+      started should never read as one they forgot starting. %>
   <%= render Ui::PageHeaderComponent.new(
         title: @tool_run.tool.title,
-        subtitle: "#{@tool_run.chat? ? "Started" : "Run on"} #{@tool_run.created_at.strftime("%B %-d, %Y")}"
+        subtitle: @tool_run.origin_agent? ?
+          "Prepared by your assistant on #{@tool_run.created_at.strftime("%B %-d, %Y")}" :
+          "#{@tool_run.chat? ? "Started" : "Run on"} #{@tool_run.created_at.strftime("%B %-d, %Y")}"
       ) do |header| %>
     <% if @tool_run.finished? %>
       <% header.with_actions do %>
@@ -69,6 +73,12 @@
   <% elsif @tool_run.failed? %>
     <%= render Ui::CardComponent.new(title: "That didn't work") do %>
       <p class="text-sm text-red-600"><%= @tool_run.error %></p>
+    <% end %>
+  <% elsif @tool_run.prepared? %>
+    <%= render "tool_runs/prepared", tool_run: @tool_run %>
+  <% elsif @tool_run.discarded? %>
+    <%= render Ui::CardComponent.new(title: "Discarded") do %>
+      <p class="text-sm text-soft">You read this draft and said no — nothing was ever saved.</p>
     <% end %>
   <% else %>
     <%# Ask-your-email answers render here rather than landing anything —
