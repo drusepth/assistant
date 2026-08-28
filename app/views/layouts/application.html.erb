@@ -190,6 +190,14 @@
                   <%= icon(:warning, css_class: "size-4 shrink-0") %>Admin settings
                 <% end %>
               <% end %>
+              <%# The household's own way into /about (D-about-pages). The
+                  public switch gates signed-out visitors only, precisely so
+                  that turning the public site off doesn't delete the
+                  family's documentation — which needs a door from inside
+                  the app, not just a URL somebody has to remember. %>
+              <%= link_to about_root_path, class: "flex items-center gap-2.5 whitespace-nowrap rounded-full px-3 py-2 text-sm text-ink hover:bg-surface", role: "menuitem" do %>
+                <%= icon(:book_open, css_class: "size-4 shrink-0") %>How this works
+              <% end %>
               <%= button_to "Sign out", session_path, method: :delete, role: "menuitem",
                     class: "w-full cursor-pointer rounded-full px-3 py-2 text-left text-sm text-soft hover:bg-surface hover:text-ink" %>
             </div>
