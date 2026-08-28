@@ -1,0 +1,185 @@
+# The /about pages
+
+How the app explains itself — to someone deciding whether to run it, and to
+someone already running it who wants to know what a feature does.
+
+See **D-about-pages** for the decision this rests on.
+
+## 1. The problem
+
+Everything the app can do is currently discoverable only by clicking around
+inside it while signed in. That fails two people:
+
+- **The prospective self-hoster.** They have heard there is a private life
+  assistant they can run at home. They want to know what it does, what it
+  costs them in hardware, and whether it phones home — before they install
+  anything. Today the only answer is the repository's README and a pile of
+  design documents written for the people building it.
+- **The household member already running it.** They opened the Money
+  section and found a spending ledger, a budget, and eleven tools. Nothing
+  on the page explains what "taught rules" are, or why the letter tool
+  hedges about state law. The knowledge exists — in `docs/` — in a form
+  nobody outside this repository will ever read.
+
+One set of pages serves both, because the honest answer to "what does this
+do?" is the same answer either way. What differs is only the order: the
+prospective user needs the *why* first, the running user needs the *what*
+first, and the page structure gives each of them their entry point.
+
+## 2. Shape
+
+Nine or so top-level pages, ten hubs, ~25 feature pages, ~60 tool pages —
+all under `/about`, all rendered by the app.
+
+```
+/about                        the front door: what this is, in three promises
+/about/why                    the mission — rent vs. own
+/about/privacy                nothing leaves your network (the flagship page)
+/about/models                 local models, explained for people who've never run one
+/about/install                one command, and what to expect after it
+/about/household              multiple people, one box, private by default
+/about/faq
+/about/open-source
+
+/about/sections/:slug         the ten hubs
+/about/features/:slug         one page per substantial feature
+/about/tools                  the tool directory, filterable
+/about/tools/:slug            one page per tool (~60)
+```
+
+### The ten hubs
+
+Eight of them are the app's sections. Two more exist because a large amount
+of what is built does not live in any section, and would otherwise be
+homeless:
+
+| Hub | Covers |
+| --- | --- |
+| `health` | care radar, visit prep, results explainer, insurance toolkit, pets |
+| `money` | budget, spending ledger, subscriptions, debt, benefits |
+| `career` | job search, applications, interviews, pay, negotiation |
+| `education` | the curriculum spine, tutor, reviews, records |
+| `people` | circles, staying in touch, gatherings |
+| `hobbies` | hobby hubs, the reader's rivers, finding people |
+| `rights` | the letters people otherwise pay a lawyer for |
+| `travel` | the photo world map, trips |
+| `your-day` | dashboard, calendar, today, tasks & goals, notes, chat |
+| `your-stuff` | documents, photos, recipes, email, passwords, diary, feeds |
+
+`your-day` is the Organize-mode hub — the "useful with zero AI" argument,
+which most visitors will not expect and which is the app's strongest
+opening move against a skeptical reader.
+
+### Hub page anatomy
+
+Every hub is the same six blocks, so they are cheap to write and scan the
+same way:
+
+1. What this area of life costs you today (the problem, in one paragraph)
+2. What the section shows you at a glance
+3. The tools, as cards linking to their tool pages
+4. What it does proactively, and the dial that controls it
+5. Links to each feature page under this hub
+6. What is private and what is shareable here
+
+## 3. Tool pages are the point
+
+There are ~60 tools in `Tool::SLUGS`, and each one matches a moment
+somebody is actually, urgently trying to solve: fighting an insurance
+denial, answering a debt collector, reading a pay stub, getting a deposit
+back. These are the highest-intent pages on the site and the most likely
+entry point from a search engine.
+
+They are **generated from the registry**, not hand-written. Every tool
+class already declares `title`, `description`, `section_slugs`, `kind`, and
+its `inputs` with labels and hints. That is enough for a real page: what it
+is, what it asks you for, what you get back, which section it lives in,
+what it routes to next. Prose lives in an optional per-tool file, so the
+flagship ten can be hand-written without the other fifty going stale.
+
+This has a second effect worth having: a tool whose registry metadata
+cannot produce a decent page has a naming problem inside the app too.
+
+## 4. The switch
+
+`households.public_pages_enabled`, boolean, default `true`, admin-only,
+edited from Settings.
+
+- It gates **unauthenticated** access only. A signed-in household member
+  always reads `/about` — turning off the public site must not delete the
+  family's own documentation.
+- Off means **404**, not 403. A 403 confirms the thing it hides.
+- `robots.txt` is dynamic: it disallows `/about` when the switch is off. A
+  static one would advertise exactly the paths the switch was flipped to
+  hide.
+
+Why default on: the pages are byte-identical on every install (D-about-
+pages), so there is nothing about *this* household to broadcast, and a
+self-hoster who never finds the switch still gets the docs.
+
+## 5. Security posture
+
+`/about` is the second unauthenticated read path after `/s/:token`
+(D-share-link), and inherits its posture.
+
+- Its own bare layout: no navigation, no session chrome, no household name,
+  no email addresses. One sign-in link.
+- **No user input reaches a template lookup.** Every page resolves through
+  a registry of known slugs; an unknown slug is a 404. This is the rule
+  that keeps a wildcard route from becoming a file-read primitive.
+- Rate-limited like the app's other public door.
+- No database reads of household data anywhere in the tree. The only
+  records these pages touch are the tool registry (code) and the section
+  taxonomy (seeded, identical everywhere).
+
+## 6. Voice
+
+The target reader is the 99% — not power users. Two rules:
+
+- **No architecture words.** "Sections" and "household" are public
+  vocabulary. "Lens", "primitive", "sectionable", "mirror layer" are not,
+  and never appear outside `docs/`.
+- **Honesty is the strategy.** Local models are worse at some things than
+  the hosted ones people have tried. A page that says plainly which
+  features are happy on a small model and which want a big one earns more
+  trust than one that glosses — and trust is the entire product.
+
+## 7. Screenshots need a demo household
+
+Every page wants images, and real data is private by definition. So the
+screenshot pipeline needs a seeded fake family — fake people, fake
+documents, fake ledger — as a first-class repository asset, driven from
+system tests so the images regenerate rather than rot. This is its own
+wave, and it is the part most likely to be underestimated.
+
+## 8. Build sequence
+
+Each wave is its own branch.
+
+- **Wave 0 — the spine.** Migration, `About::Page` registry, controllers,
+  layout, the switch, dynamic robots, Settings checkbox, `/about` index.
+- **Wave 1 — the vertical slice.** `/about/privacy`, one hub
+  (`money`), one feature page (`budget`), the tool directory, and all ~60
+  generated tool pages. Enough to lock the pattern before ~100 pages exist
+  in that shape.
+- **Wave 2** — the rest of the top-level pages (why, models, install,
+  household, faq, open-source).
+- **Wave 3** — the remaining nine hubs.
+- **Wave 4** — the ~25 feature pages.
+- **Wave 5** — demo household seed, screenshot pipeline, sitemap, meta and
+  OG tags.
+
+Waves 0 and 1 land together, since a spine with no page on it cannot be
+reviewed for the thing that matters, which is whether the pages read well.
+
+## 9. Merge hygiene
+
+Per CLAUDE.md: **one file per page**. A hub is
+`app/views/about/sections/_<slug>.html.erb`, a feature is
+`app/views/about/features/_<slug>.html.erb`, a tool's prose is
+`app/views/about/tools/_<slug>.html.erb`. Parallel branches adding pages
+touch different files.
+
+The registries (`About::Page::HUBS`, `FEATURES`, `PAGES`) are hub files
+that conflict by design — one entry per line, resolved keep-both, never
+redesigned.

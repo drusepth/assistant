@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= [ content_for(:title), "A life assistant you run at home" ].compact.join(" · ") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="<%= content_for(:description) || "An open-source life assistant your household runs at home, on a model you run yourself." %>">
+    <%# Unlike the share-link layout, this tree *wants* indexing — it is the
+        same public documentation on every install, and the household that
+        would rather it weren't reachable turns it off entirely rather than
+        serving it to people and hiding it from crawlers. %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  </head>
+
+  <%# The documentation layout (D-about-pages). It borrows the app's tokens
+      so the screenshots and the page around them agree, but carries none of
+      its chrome: no sidebar, no session, no household name, and exactly one
+      link inward — sign in. %>
+  <body class="bg-canvas text-ink antialiased">
+    <header class="border-b border-edge">
+      <nav class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
+        <%= link_to about_root_path, class: "flex items-center gap-2 font-semibold" do %>
+          <%= image_tag "/icon.svg", alt: "", class: "size-6", aria: { hidden: true } %>
+          <span>Assistant</span>
+        <% end %>
+        <div class="flex items-center gap-1 text-sm sm:gap-3">
+          <%= link_to "What it does", about_root_path(anchor: "hubs"), class: "hidden px-2 text-soft hover:text-ink sm:inline" %>
+          <%= link_to "Tools", about_tools_path, class: "px-2 text-soft hover:text-ink" %>
+          <%= link_to "Privacy", about_page_path("privacy"), class: "px-2 text-soft hover:text-ink" %>
+          <%= link_to "Sign in", new_session_path, class: "btn btn-secondary btn-sm" %>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-8 sm:py-14">
+      <%= yield %>
+    </main>
+
+    <footer class="mt-16 border-t border-edge">
+      <div class="mx-auto max-w-5xl px-4 py-10 sm:px-8">
+        <div class="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <div>
+            <h2 class="text-xs font-semibold tracking-wide text-soft uppercase">The software</h2>
+            <ul class="mt-3 space-y-2 text-sm">
+              <% About::Page::TOP_LEVEL.each do |page| %>
+                <li><%= link_to page.title, about_page_path(page), class: "text-soft hover:text-ink" %></li>
+              <% end %>
+            </ul>
+          </div>
+          <div class="col-span-2 sm:col-span-3">
+            <h2 class="text-xs font-semibold tracking-wide text-soft uppercase">What it does</h2>
+            <ul class="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+              <% About::Page::HUBS.each do |hub| %>
+                <li><%= link_to hub.title, about_hub_path(hub), class: "text-soft hover:text-ink" %></li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+        <p class="mt-10 text-xs text-soft">
+          Open source, and yours to run. This page is part of the software —
+          it is the same on every installation, and it knows nothing about
+          the household running this one.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

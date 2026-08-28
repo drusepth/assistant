@@ -377,6 +377,24 @@ Rails.application.routes.draw do
   get "manifest.webmanifest" => "rails/pwa#manifest", as: :pwa_manifest,
     defaults: { format: :webmanifest }
 
+  # The /about tree (D-about-pages): static documentation of the software,
+  # identical on every install, and the app's second unauthenticated read
+  # path after /s/:token. Every segment is a registry slug — About::Page and
+  # Tool::SLUGS — so nothing a visitor types reaches a template lookup. The
+  # four fixed prefixes (sections/, features/, tools/) keep the top-level
+  # page route from swallowing them.
+  namespace :about do
+    root "pages#index"
+    get "tools" => "tools#index", as: :tools
+    get "tools/:slug" => "tools#show", as: :tool
+    get "sections/:slug" => "pages#hub", as: :hub
+    get "features/:slug" => "pages#feature", as: :feature
+    get ":slug" => "pages#show", as: :page
+  end
+  # Dynamic on purpose: a static robots.txt would advertise exactly the
+  # paths the household switch was flipped to hide.
+  get "robots.txt" => "robots#show", format: :text
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check

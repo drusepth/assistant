@@ -1,0 +1,71 @@
+<%# The reference feature page. Shape: the problem, how it works, the honest
+    limits, then where to go next. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    A budget is two numbers per category — what you meant to spend, and what
+    you spent. Nearly every budgeting product buries those two numbers under
+    an onboarding flow, a bank connection, and a subscription. This one is
+    the two numbers.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">How it works</h2>
+  <ol class="mt-6 space-y-4">
+    <li class="card p-5">
+      <h3 class="font-semibold">1 · You name the categories</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Yours, not a standard chart of accounts. If your life has a
+        "motorbike" line and no "dining out" line, that's the budget.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">2 · Spending arrives</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Import the CSV your bank already offers, or log things by hand as
+        they happen. No bank credentials, no third-party aggregator, no
+        read-only-we-promise connection to anybody.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">3 · It learns your sorting</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Sort a transaction once and you've taught it a rule. Next month the
+        same merchant lands in the same category on its own, and you can see
+        and edit every rule you've taught it.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">4 · You see the gap</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Category by category, meant-to versus did, for the month you're
+        standing in — not a report you generate afterwards.
+      </p>
+    </li>
+  </ol>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What it won't do</h2>
+  <p class="mt-4 text-soft">
+    It won't fetch your transactions for you. Someone has to export a file
+    or type a number, and that is a real cost — the honest trade for never
+    handing your bank login to a piece of software. It also won't grade you.
+    There is no score, no streak, and no notification calling a coffee a
+    mistake.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Where it goes next</h2>
+  <p class="mt-4 text-soft">
+    A budget on its own is a spreadsheet. What makes this one worth having is
+    what sits around it: bills landing on the same calendar as the rest of
+    your life, a payoff order for what you owe, and a coach that has read the
+    ledger before you ask it anything.
+  </p>
+  <p class="mt-5">
+    <%= link_to "Back to Money →", about_hub_path("money"), class: "text-primary-700 hover:underline" %>
+  </p>
+</section>

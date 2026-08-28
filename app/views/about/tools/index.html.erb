@@ -1,0 +1,35 @@
+<% content_for :title, "Everything it does" %>
+<% content_for :description, "The #{@tools.size} specific jobs this assistant will do for you, from appealing an insurance denial to reading a pay stub." %>
+
+<header class="max-w-3xl">
+  <h1 class="display text-3xl sm:text-4xl">Everything it does</h1>
+  <p class="mt-4 text-lg text-soft">
+    <%= @tools.size %> specific jobs, each one a short form and a real
+    answer. They read what you have already filed — the lease, the letter,
+    last month's stub — so most of them ask you for a line of context and
+    nothing more.
+  </p>
+</header>
+
+<nav class="mt-8 flex flex-wrap gap-2" aria-label="Jump to an area">
+  <% @hubs.each do |hub| %>
+    <a href="#<%= hub.slug %>" class="chip bg-surface text-soft hover:text-ink"><%= hub.title %></a>
+  <% end %>
+</nav>
+
+<% @hubs.each do |hub| %>
+  <% tools = hub.tools.sort_by(&:title) %>
+  <% next if tools.empty? %>
+
+  <section id="<%= hub.slug %>" class="mt-14 scroll-mt-8">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 class="display text-2xl"><%= hub.title %></h2>
+      <%= link_to "About #{hub.title.downcase} →", about_hub_path(hub), class: "text-sm text-primary-700 hover:underline" %>
+    </div>
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <% tools.each do |tool| %>
+        <%= render "about/tools/summary", tool: tool %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

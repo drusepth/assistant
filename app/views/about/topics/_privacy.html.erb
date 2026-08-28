@@ -1,0 +1,107 @@
+<%# The flagship page. It has one job: convert a claim a visitor has heard
+    from every app they've ever used into something specific enough to
+    check. Every paragraph should name a mechanism, not a value. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Almost every assistant works the same way underneath: you type something,
+    it travels to a company's servers, a model there reads it, and an answer
+    comes back. Whatever the privacy policy says, the arrangement is that
+    your medical questions, your finances and your family are somebody else's
+    inbound traffic.
+  </p>
+  <p>
+    This one is built the other way round. The app runs on a computer in your
+    home. The model it thinks with runs on a computer in your home. There is
+    no account to make, no server of ours to reach, and no version of this
+    software that works differently if you pay more.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What that means, concretely</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "There is no cloud to fall back on") do %>
+      <p class="text-sm text-soft">
+        The app talks to one model endpoint, and that endpoint is one you
+        chose and run — on the same machine, or another one in your house.
+        Turn off your internet connection and everything on these pages still
+        works.
+      </p>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Your data is files on your disk") do %>
+      <p class="text-sm text-soft">
+        One database file and one folder of attachments. You can back them
+        up, copy them to another machine, or delete them, without asking
+        anyone. Nothing is stored in a format only we can read.
+      </p>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "The house doesn't read your mail") do %>
+      <p class="text-sm text-soft">
+        Each person's things are private to them by default — not "private
+        from the internet", private from the other people using the same
+        installation. Sharing is per item or per area, always something you
+        switched on, and always visible to you.
+      </p>
+    <% end %>
+
+    <%= render Ui::CardComponent.new(title: "Two things are sealed even from us") do %>
+      <p class="text-sm text-soft">
+        The password vault and the diary are encrypted with a key derived
+        from your own passphrase. Somebody with the database file and full
+        access to the machine still cannot read either one. That is also true
+        of you, if you lose the passphrase — which is the honest cost of it
+        being real.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The parts that do touch the internet</h2>
+  <p class="mt-4 text-soft">
+    Three features reach outside the house, because they cannot do their job
+    otherwise. Each is off until you set it up, and each is listed here
+    rather than buried.
+  </p>
+  <ul class="mt-6 space-y-4">
+    <li class="card p-5">
+      <h3 class="font-semibold">Email, if you connect a mailbox</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        The app connects to your mail provider to read your mail down onto
+        your own disk. It talks to your provider and to nobody else, and it
+        never sends anything on your behalf without you pressing send.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">Feeds, if you subscribe to any</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        The reader fetches the sites you subscribed to, on a polite schedule,
+        the same way any feed reader does. Those sites learn that somebody at
+        your address is subscribed — which is what subscribing is.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">Share links, if you make one</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        You can hand somebody outside the house a link to a recipe or an
+        album. That link works without an account, which is the point of it,
+        so treat it as public and revoke it when you're done.
+      </p>
+    </li>
+  </ul>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Including this page</h2>
+  <p class="mt-4 text-soft">
+    The pages you are reading are part of the software, and they are the same
+    on every installation of it. They describe what the app can do; they
+    contain nothing about the household running this copy — not a name, not a
+    count, not which parts of it are switched on. If you would rather this
+    installation answered strangers with nothing at all, one checkbox in
+    Settings turns the whole public side off.
+  </p>
+</section>

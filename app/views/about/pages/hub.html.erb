@@ -1,0 +1,39 @@
+<%# A hub page. The blocks are fixed (docs/ABOUT_PLAN.md §2) so all ten scan
+    alike: the hub's own prose, then the tools, then the features under it. %>
+<% content_for :title, @page.title %>
+<% content_for :description, @page.blurb %>
+
+<%= render "about/pages/masthead", page: @page,
+      back: { title: "Everything it helps with", path: about_root_path(anchor: "hubs") } %>
+
+<%= render @prose if @prose %>
+
+<% if @tools.any? %>
+  <section class="mt-16">
+    <h2 class="display text-2xl">What it will do for you here</h2>
+    <p class="mt-2 max-w-2xl text-soft">
+      Each of these is a form and an answer, not a conversation you have to
+      steer. They read what you've already filed, so they ask you for as
+      little as possible.
+    </p>
+    <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <% @tools.each do |tool| %>
+        <%= render "about/tools/summary", tool: tool %>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<% if @features.any? %>
+  <section class="mt-16">
+    <h2 class="display text-2xl">In more detail</h2>
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <% @features.each do |feature| %>
+        <%= link_to about_feature_path(feature), class: "card block p-5 transition-colors hover:border-primary-300" do %>
+          <h3 class="font-semibold"><%= feature.title %></h3>
+          <p class="mt-1.5 text-sm text-soft"><%= feature.blurb %></p>
+        <% end %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

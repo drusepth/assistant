@@ -1,0 +1,78 @@
+<%# The front door. Three promises, in the order a skeptical stranger needs
+    them: what it is, where it runs, and that it earns its keep before any
+    model is involved. %>
+<% content_for :description, "An open-source life assistant your household runs at home. Your data stays on your machine, on a model you run yourself." %>
+
+<section class="max-w-3xl">
+  <p class="text-sm font-semibold tracking-wide text-primary-700 uppercase">Open source · self-hosted</p>
+  <h1 class="display mt-3 text-4xl sm:text-5xl">An assistant your family owns.</h1>
+  <p class="mt-6 text-lg text-soft">
+    People with money have help: an assistant who keeps the calendar, an
+    accountant who reads the letters, a lawyer who writes the difficult one
+    back. This is that stack of help, as software you run on a computer in
+    your own home — for the rest of us.
+  </p>
+  <div class="mt-8 flex flex-wrap gap-3">
+    <%= link_to "See what it does", about_root_path(anchor: "hubs"), class: "btn btn-primary" %>
+    <%= link_to "How your data stays yours", about_page_path("privacy"), class: "btn btn-secondary" %>
+  </div>
+</section>
+
+<section class="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-3">
+  <%= render Ui::CardComponent.new(title: "It runs in your house") do %>
+    <p class="text-sm text-soft">
+      Not on our servers — there are no our-servers. The app runs on your
+      machine and thinks with a model running on your machine. Nothing you
+      put into it goes anywhere else.
+    </p>
+    <p class="mt-3 text-sm"><%= link_to "How that works →", about_page_path("privacy"), class: "text-primary-700 hover:underline" %></p>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "It's useful before the AI is") do %>
+    <p class="text-sm text-soft">
+      Turn the model off entirely and you still have a calendar that knows
+      about every part of your life, a document vault that can find the
+      lease, and a list of what's due. The assistance is the second layer,
+      not the foundation.
+    </p>
+    <p class="mt-3 text-sm"><%= link_to "See what that looks like →", about_hub_path("your-day"), class: "text-primary-700 hover:underline" %></p>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Everyone gets their own") do %>
+    <p class="text-sm text-soft">
+      One installation serves a household, and each person in it has their
+      own private space. Nothing you keep is visible to anyone else until
+      you decide it is.
+    </p>
+    <p class="mt-3 text-sm"><%= link_to "What that protects →", about_hub_path("your-stuff"), class: "text-primary-700 hover:underline" %></p>
+  <% end %>
+</section>
+
+<section id="hubs" class="mt-20 scroll-mt-8">
+  <h2 class="display text-2xl">What it helps with</h2>
+  <p class="mt-2 max-w-2xl text-soft">
+    Ten areas, each of which you can switch off if it isn't yours. They are
+    not separate apps — one appointment can be a health thing and a family
+    thing at once, and it shows up in both.
+  </p>
+
+  <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <% @hubs.each do |hub| %>
+      <%= link_to about_hub_path(hub), class: "card block p-5 transition-colors hover:border-primary-300" do %>
+        <h3 class="font-semibold"><%= hub.title %></h3>
+        <p class="mt-1.5 text-sm text-soft"><%= hub.blurb %></p>
+      <% end %>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-20">
+  <h2 class="display text-2xl"><%= @tools.size %> things it will do for you</h2>
+  <p class="mt-2 max-w-2xl text-soft">
+    Not chat. Specific jobs, each one a form and an answer: read this pay
+    stub, appeal this denial, get this deposit back, plan this job search.
+  </p>
+  <p class="mt-5">
+    <%= link_to "Browse everything it does →", about_tools_path, class: "text-primary-700 hover:underline" %>
+  </p>
+</section>

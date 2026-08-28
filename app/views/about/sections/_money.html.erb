@@ -1,0 +1,73 @@
+<%# The Money hub — the reference implementation of the six-block anatomy in
+    docs/ABOUT_PLAN.md §2. Blocks 3 (tools) and 5 (features) are rendered by
+    hub.html.erb around this partial; what lives here is 1, 2, 4 and 6. %>
+
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Most people are not bad with money. They are working from an incomplete
+    picture: the subscription that renewed at a price nobody agreed to, the
+    benefit they qualified for and never claimed, the debt whose interest
+    they have never actually seen written down. The advice industry answers
+    this with discipline. The real answer is usually information.
+  </p>
+  <p>
+    This is the part of the app that holds the picture — without connecting
+    to your bank, because handing a bank login to any software is a bad trade
+    and it turns out not to be necessary.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What you see</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Where it went") do %>
+      <p class="text-sm text-soft">
+        A ledger you fill by importing the statement your bank already gives
+        you, or by logging a spend in about four seconds. Once a purchase has
+        been sorted somewhere, the same purchase sorts itself next month.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "What's coming") do %>
+      <p class="text-sm text-soft">
+        Bills and renewals as real dates on the same calendar as everything
+        else in your life — so the car insurance turns up next to the school
+        holiday, which is when it is actually useful to know.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "What you owe") do %>
+      <p class="text-sm text-soft">
+        Every debt in one list, with the interest written down, and an order
+        to pay them off in that you can see the reasoning for.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "What you're paying for monthly") do %>
+      <p class="text-sm text-soft">
+        Subscriptions, gathered up — including the ones that arrived as a
+        free trial three years ago. Cancelling one is a tool, because the
+        hard part was never the decision.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What it does without being asked</h2>
+  <p class="mt-4 text-soft">
+    As much or as little as you want. Each area of the app has a dial: leave
+    it at the bottom and it never speaks unless spoken to; turn it up and it
+    will tell you that a renewal is coming, that this month looks unlike the
+    last three, or that something you're entitled to has opened. You set the
+    dial per area, and you can move it back down.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Who can see it</h2>
+  <p class="mt-4 text-soft">
+    Nobody, until you say so. Money is the area where that matters most and
+    where households differ most — some share everything, some share the
+    bills and not the salaries, some share nothing. The app takes no view.
+    You can share a single item or the whole area with another person in the
+    house, and see at a glance what you've shared.
+  </p>
+</section>

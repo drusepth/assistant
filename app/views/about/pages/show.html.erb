@@ -1,0 +1,8 @@
+<%# One of the top-level pages. The registry vouched for the slug in the
+    controller, so the partial name here can never be anything but a
+    registered one — see docs/ABOUT_PLAN.md §5. %>
+<% content_for :title, @page.title %>
+<% content_for :description, @page.blurb %>
+
+<%= render "about/pages/masthead", page: @page %>
+<%= render @prose %>

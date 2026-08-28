@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_223817) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_050506) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -334,6 +334,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_223817) do
     t.date "moved_in_on"
     t.string "name", null: false
     t.string "phone"
+    t.boolean "public_pages_enabled", default: true, null: false
     t.string "region"
     t.string "tagline"
     t.string "time_zone"
