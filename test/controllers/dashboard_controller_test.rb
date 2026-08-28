@@ -29,8 +29,22 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
       assert_select "form[action=?]", notes_path
       assert_select "form[action=?]", events_path
       assert_select "form[action=?]", goals_path
-      assert_select "input[name=return_to][value=?]", root_path, count: 4
+      # Five, not four: the four hero tiles plus the Next 7 days card's own
+      # event add, which lands you back here too.
+      assert_select "input[name=return_to][value=?]", root_path, count: 5
     end
+  end
+
+  test "the next-7-days card carries its own event quick-add" do
+    sign_in_as users(:one)
+
+    get root_path
+    assert_response :success
+    assert_select "button[data-quick-add-name-param=upcoming_event]"
+    # Namespaced ids: the hero draws the same form, and two `event_title`s
+    # would leave every label pointing at the wrong input.
+    assert_select "#upcoming_event_title"
+    assert_select "#event_title"
   end
 
   test "the hero celebrates what is true today" do
