@@ -1,0 +1,73 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Money is mostly lost to drift rather than to disasters: the subscription
+    that renewed at a price nobody agreed to, the quiet increase, the
+    category that's been forty pounds a week more than you'd have guessed
+    for two years.
+  </p>
+  <p>
+    None of that is visible without a ledger, and every convenient way to get
+    one asks for your bank login.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">No bank connection, on purpose</h2>
+  <p class="mt-4 text-soft">
+    Handing your banking credentials to software — or to the aggregator
+    behind it — is a bad trade, and it turns out not to be necessary. Your
+    bank already offers a statement export. Import that, or log things by
+    hand as they happen, and the ledger fills up without anybody holding
+    keys to your account.
+  </p>
+  <p class="mt-4 text-soft">
+    The honest cost is that somebody has to do the import. That's a real
+    chore, and it's the price of the rest of this page.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What it does with it</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Learns your sorting, once") do %>
+      <p class="text-sm text-soft">
+        Put a merchant in a category and you've taught a rule. Next month it
+        sorts itself. Every rule you've taught is visible and editable — the
+        app is never quietly deciding things you can't inspect.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Reads the month back to you") do %>
+      <p class="text-sm text-soft">
+        In plain language, with the specific cuts worth making rather than a
+        pie chart and an implication. It knows what you meant to spend,
+        because you told it.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Finds the subscriptions") do %>
+      <p class="text-sm text-soft">
+        Including the free trial from three years ago. Cancelling one is a
+        tool of its own, because the decision was never the hard part — the
+        retention phone call was.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Stays yours") do %>
+      <p class="text-sm text-soft">
+        Your complete transaction history is among the most revealing things
+        about you. It sits on your disk, and nothing is sold, scored, or
+        shown to anyone.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">No scores, no streaks</h2>
+  <p class="mt-4 text-soft">
+    There's no rating of you, no notification calling a coffee a mistake,
+    and no gamified points for frugality. The ledger's job is to make the
+    picture visible. What you do about it is yours.
+  </p>
+  <p class="mt-5">
+    <%= link_to "How the budget uses this →", about_feature_path("budget"), class: "text-primary-700 hover:underline" %>
+  </p>
+</section>

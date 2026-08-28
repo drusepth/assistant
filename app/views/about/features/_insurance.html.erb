@@ -1,0 +1,72 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Health insurance is written so that understanding it is work. Not
+    maliciously, necessarily — but the result is that most people don't know
+    what their own plan covers, and find out at the worst possible moment,
+    from a bill.
+  </p>
+  <p>
+    Two jobs here: understanding the plan you have, and pushing back when
+    they say no.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Understanding it</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Your plan, in plain words") do %>
+      <p class="text-sm text-soft">
+        What you'd actually pay in the situations that come up, what's
+        covered, and how to use the thing you're already paying for. Read
+        from your own policy documents rather than from generalities.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Two plans, side by side") do %>
+      <p class="text-sm text-soft">
+        Open enrolment with a real comparison: what each costs your
+        household given how your household actually uses healthcare, rather
+        than which has the lower headline premium.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">When they say no</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "The appeal, drafted") do %>
+      <p class="text-sm text-soft">
+        From the denial letter itself. A formal appeal that cites what they
+        actually said, in the register these letters are answered in — which
+        is most of what makes one land.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The deadline, on your calendar") do %>
+      <p class="text-sm text-soft">
+        Appeals are time-boxed and the window is easy to lose. It lands as a
+        real date beside everything else in your life, not as a line in a
+        letter you filed.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Why this is worth real money</h2>
+  <p class="mt-4 text-soft">
+    A substantial share of denials are overturned when appealed, and a
+    substantial share are never appealed at all. The gap between those two
+    numbers isn't about who's right — it's about who had the time, the
+    confidence, and a template. That's the gap this closes.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">What it won't claim</h2>
+  <p class="mt-4 text-soft">
+    It reads your documents and says what they say. It won't assert what
+    your insurer must do under law where you live, or promise an appeal will
+    succeed. Where a rule varies, it says so and tells you to check — a
+    confident wrong citation is worse than none.
+  </p>
+</section>

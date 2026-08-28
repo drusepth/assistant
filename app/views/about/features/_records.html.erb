@@ -1,0 +1,65 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Households schooling on their own terms have to produce evidence: a
+    portfolio, an hours log, something transcript-shaped, an account of what
+    was covered. What usually happens is a fortnight of panic each year,
+    reconstructing a whole year's learning from memory and a shoebox.
+  </p>
+  <p>
+    The reconstruction is unnecessary. If mastery was being recorded as it
+    was earned, the record already exists — it just needs printing.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What it can produce</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "A portfolio") do %>
+      <p class="text-sm text-soft">
+        What was actually covered and the work that showed it, per subject,
+        across the period — assembled from evidence recorded at the time
+        rather than remembered afterwards.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "An hours log") do %>
+      <p class="text-sm text-soft">
+        Where hours are what your jurisdiction counts. Built from sessions
+        that were logged as they happened, which is the only way this number
+        is ever honest.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Something transcript-shaped") do %>
+      <p class="text-sm text-soft">
+        For the older learner who will eventually need to hand somebody a
+        document. Subjects, coverage, and what was demonstrated.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A progress account") do %>
+      <p class="text-sm text-soft">
+        In plain language, for the conversation with a relative, an
+        assessor, or the learner themselves about how the year went.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">It reports, it doesn't embellish</h2>
+  <p class="mt-4 text-soft">
+    The generated record says what the year's evidence supports. It won't
+    inflate coverage, invent hours, or describe mastery that was never
+    demonstrated — partly because that would be dishonest, and partly
+    because a record like that is worse than useless the moment anybody
+    checks it.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Requirements differ, and it says so</h2>
+  <p class="mt-4 text-soft">
+    What a household must produce, and to whom, varies enormously by where
+    you live, and changes. The app generates the documents; it does not tell
+    you what your jurisdiction requires, and where that matters it says to
+    check rather than asserting a rule it can't stand behind.
+  </p>
+</section>

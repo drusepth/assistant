@@ -1,0 +1,57 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Everything an assistant knows about you had to arrive somehow. Notes are
+    that: the facts, the context, the things you'd have to explain again
+    every time otherwise.
+  </p>
+  <p>
+    Your daughter's teacher's name. The plumber who was good. What the
+    consultant said in March. The reason you decided against the other
+    quote. Small things, individually forgettable, which together are the
+    difference between software that knows your situation and software that
+    asks you to describe it.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What they're for</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Written by you") do %>
+      <p class="text-sm text-soft">
+        Typed in a few seconds, tagged to whichever parts of your life they
+        touch, and findable later by searching for a word you remember.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Written by the app") do %>
+      <p class="text-sm text-soft">
+        Every letter the app drafts and every explanation it produces is
+        saved here too. Your appeal, your budget, the plain-language read of
+        your policy — kept, editable, and yours.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Read back when it matters") do %>
+      <p class="text-sm text-soft">
+        Because notes are filed by area, a tool working on your insurance
+        already has what you wrote about your insurance. That's why the
+        forms are short.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Testable, if you like") do %>
+      <p class="text-sm text-soft">
+        A note about something you're learning can be turned into a quick
+        quiz on the spot, which is a surprisingly effective way to find out
+        whether reading it counted as knowing it.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">This is the part worth owning</h2>
+  <p class="mt-4 text-soft">
+    Models will keep getting better and keep getting replaced. What accrues
+    is this layer — years of context that makes any model useful to you
+    specifically. It's a file on your disk, it belongs to you, and it's the
+    reason swapping the model out costs you nothing.
+  </p>
+</section>

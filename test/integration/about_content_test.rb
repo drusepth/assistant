@@ -30,6 +30,31 @@ class AboutContentTest < ActiveSupport::TestCase
     MSG
   end
 
+  # A hub degrades gracefully without prose (generated tool cards carry it),
+  # but a top-level page and a feature page are nothing *but* their prose.
+  # Registering one without its partial ships a masthead over an exception,
+  # so the registry and the views are pinned to each other here — with a
+  # message that names the missing file rather than failing as a render.
+  test "every prose-only page has its partial" do
+    missing = {
+      "topics" => About::Page::TOP_LEVEL,
+      "features" => About::Page::FEATURES
+    }.flat_map do |directory, pages|
+      pages.filter_map do |page|
+        path = "app/views/about/#{directory}/_#{page.slug.tr('-', '_')}.html.erb"
+        path unless Rails.root.join(path).exist?
+      end
+    end
+
+    assert_empty missing, <<~MSG
+      These pages are registered but have no prose, and have nothing
+      generated to fall back on. Write the partial, or drop the registry row
+      until you do (docs/ABOUT_PLAN.md §8):
+
+      #{missing.join("\n")}
+    MSG
+  end
+
   # Facts the prose states that no template can compute — a class name
   # can't become "the password vault". So the fact is pinned instead:
   # growing the registry turns the stale page into a red test that names

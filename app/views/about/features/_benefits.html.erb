@@ -1,0 +1,68 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Enormous sums go unclaimed every year by people who qualify. Not through
+    fraud in reverse or pride — mostly because nobody knew the thing existed,
+    or assumed they earned too much, or looked at the form once and closed
+    the tab.
+  </p>
+  <p>
+    This is a screen for what your household might be entitled to, based on
+    what the app already knows about your situation.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">How it works</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "It already knows most of it") do %>
+      <p class="text-sm text-soft">
+        Household size, whether you rent or own, who you're caring for,
+        what's happened to your work this year. So the screening is a short
+        conversation rather than a form that asks your life story again.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It surfaces the unlikely ones") do %>
+      <p class="text-sm text-soft">
+        The value isn't in the benefit everybody's heard of. It's in the
+        credit for carers, or the thing that only applies in the year
+        something changed — the ones people miss precisely because they've
+        never heard of them.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It ends in an action") do %>
+      <p class="text-sm text-soft">
+        Not a list of possibilities. What to check, where to go, and the
+        deadline on your calendar — because entitlements expire and that is
+        how most of this money is lost.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "It watches for changes") do %>
+      <p class="text-sm text-soft">
+        Eligibility follows life events: a birth, a job loss, becoming a
+        carer, a move. When your circumstances change, it's worth asking the
+        question again, and the app can notice that moment.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">A screen, not a determination</h2>
+  <p class="mt-4 text-soft">
+    It tells you what looks worth investigating and why. It cannot tell you
+    that you qualify — only the body running the scheme can do that, rules
+    differ by where you live, and they change. A tool that stated confident
+    eligibility would be inventing the most consequential thing on the page.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Why it's private, and why that matters</h2>
+  <p class="mt-4 text-soft">
+    Screening for benefits means describing your household's money, health
+    and difficulties in detail. Doing that on a website means telling a
+    company all of it. Doing it here means telling your own computer, which
+    is the difference between a screen you'll answer honestly and one you
+    won't.
+  </p>
+</section>

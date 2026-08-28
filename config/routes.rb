@@ -385,6 +385,7 @@ Rails.application.routes.draw do
   # page route from swallowing them.
   namespace :about do
     root "pages#index"
+    get "sitemap" => "sitemap#show", as: :sitemap, defaults: { format: :xml }
     get "tools" => "tools#index", as: :tools
     get "tools/:slug" => "tools#show", as: :tool
     get "sections/:slug" => "pages#hub", as: :hub

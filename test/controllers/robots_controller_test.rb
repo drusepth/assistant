@@ -11,6 +11,7 @@ class RobotsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "text/plain", response.media_type
     assert_match(/^Allow: \/about$/, response.body)
     assert_match(/^Disallow: \/$/, response.body)
+    assert_match(%r{^Sitemap: https?://\S+/about/sitemap$}, response.body)
   end
 
   test "disallows everything once public pages are off" do

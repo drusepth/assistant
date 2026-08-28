@@ -1,0 +1,77 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Almost nobody was ever shown how to read a pay stub. It arrives with
+    eight abbreviations on it, the number at the bottom is smaller than the
+    number at the top, and the difference is simply accepted as one of the
+    facts of adult life.
+  </p>
+  <p>
+    It's also where quiet errors live for years, and where the case for
+    being paid more either exists in writing or doesn't.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Reading what you're paid</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Every line explained") do %>
+      <p class="text-sm text-soft">
+        What each deduction actually is and funds, what pre-tax versus
+        after-tax means for you, and exactly how the top number became the
+        bottom one.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The arithmetic checked") do %>
+      <p class="text-sm text-soft">
+        Done by the app rather than by a model, because arithmetic is not a
+        thing to guess at. If it doesn't add up, you'll be told it doesn't
+        add up.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "What changed since last time") do %>
+      <p class="text-sm text-soft">
+        Compared against your previous stub. A deduction that appeared, a
+        rate that moved, hours that came out wrong — the things that
+        otherwise go unnoticed for a year.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "If they didn't pay you") do %>
+      <p class="text-sm text-soft">
+        Missing hours, unpaid overtime, a final paycheck that never arrived
+        — a formal demand, which is a real and effective step that most
+        people don't know is available to them.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">Asking for more</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Built from what you logged") do %>
+      <p class="text-sm text-soft">
+        Two years of small recorded wins become a memo you could actually
+        send. This is why logging them takes ten seconds at the time — the
+        payoff is a document you'd otherwise have to reconstruct from
+        nothing.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A script, and a walkaway") do %>
+      <p class="text-sm text-soft">
+        Talking points, an opening, what to say when they say no, and — the
+        part people skip — deciding your walkaway before you're in the room
+        rather than during.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">It won't invent the market rate</h2>
+  <p class="mt-4 text-soft">
+    A number a model made up about what your role pays is worse than no
+    number, because you'd walk in and say it. Where a fact has to come from
+    outside, the app tells you which fact to go and get, and helps you use
+    it once you have it.
+  </p>
+</section>

@@ -1,0 +1,81 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Almost everything with a deadline arrives by email, and then drowns.
+    The inspection date, the renewal notice, the letter that needed a reply
+    within thirty days — all technically in your inbox, alongside four
+    thousand things that aren't.
+  </p>
+  <p>
+    Connecting a mailbox lets the app read your mail down onto your own
+    disk, so it can notice the things that matter and you can ask questions
+    of years of correspondence.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What it's for</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Asking your own mail things") do %>
+      <p class="text-sm text-soft">
+        "When did the landlord say the inspection was?" — answered from your
+        actual correspondence, with the message it came from, rather than
+        from your memory of it.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "One calm summary a day") do %>
+      <p class="text-sm text-soft">
+        What actually mattered across every mailbox you've connected. A day
+        with nothing important in it sends nothing, which is the part most
+        digests get wrong.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The genuinely urgent thing") do %>
+      <p class="text-sm text-soft">
+        A cancelled flight, a moved court date. Rare by design — an alert
+        that fires often is an alert nobody reads.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The reply that never came") do %>
+      <p class="text-sm text-soft">
+        Something you sent has gone a week without an answer, and you'd
+        forgotten. A nudge, and a follow-up ready to send.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">It talks to your provider, and nobody else</h2>
+  <p class="mt-4 text-soft">
+    The app connects directly to your mail host — anything speaking the
+    standard protocol, which is effectively all of them. Your mail moves
+    from your provider to your machine. There is no service in the middle,
+    ours or anyone's, and the model reading it is the one running in your
+    house.
+  </p>
+  <p class="mt-4 text-soft">
+    You can pause the whole thing, delete what's been copied down, and
+    disconnect an account — and doing so removes the local copy rather than
+    hiding it.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Mail is hostile input, and is treated as such</h2>
+  <p class="mt-4 text-soft">
+    Anyone can send you an email, which means anyone can put text in front
+    of your assistant. That's an unusual risk and it's handled deliberately:
+    message content is treated as something to read about, never as
+    instructions to follow. An email telling the app to do something is an
+    email that said a strange thing, not a command.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">It teaches quickly</h2>
+  <p class="mt-4 text-soft">
+    Tell it once that this sender never matters, and it stops raising them.
+    The rules you've taught are visible and editable, so triage becomes
+    something you shaped rather than something happening to you.
+  </p>
+</section>

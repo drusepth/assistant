@@ -190,21 +190,36 @@ wave, and it is the part most likely to be underestimated.
 
 Each wave is its own branch.
 
-- **Wave 0 — the spine.** Migration, `About::Page` registry, controllers,
+- **Wave 0 — the spine. ✅** Migration, `About::Page` registry, controllers,
   layout, the switch, dynamic robots, Settings checkbox, `/about` index.
-- **Wave 1 — the vertical slice.** `/about/privacy`, one hub
-  (`money`), one feature page (`budget`), the tool directory, and all ~60
+- **Wave 1 — the vertical slice. ✅** `/about/privacy`, one hub
+  (`money`), one feature page (`budget`), the tool directory, and all
   generated tool pages. Enough to lock the pattern before ~100 pages exist
-  in that shape.
-- **Wave 2** — the rest of the top-level pages (why, models, install,
-  household, faq, open-source).
-- **Wave 3** — the remaining nine hubs.
-- **Wave 4** — the ~25 feature pages.
-- **Wave 5** — demo household seed, screenshot pipeline, sitemap, meta and
-  OG tags.
+  in that shape. A hardening pass followed (§6a), plus OG tags and the
+  layout's closing call to action.
+- **Wave 2 — the top-level pages. ✅** why, models, install, household,
+  faq, open-source.
+- **Wave 3 — the remaining hubs. ✅** health, career, education, people,
+  hobbies, rights, travel.
+- **Wave 4 — the feature pages. ✅** 29 of them, and the sitemap.
+- **Wave 5 — the screenshots.** A seeded demo household and a pipeline that
+  regenerates images from system tests. Still to do, and the part most
+  likely to be underestimated (§7).
 
-Waves 0 and 1 land together, since a spine with no page on it cannot be
+Waves 0 and 1 landed together, since a spine with no page on it cannot be
 reviewed for the thing that matters, which is whether the pages read well.
+
+Two rules the later waves settled, worth keeping:
+
+- **A page is registered in the same commit that writes it**, for anything
+  with no generated content to fall back on — every top-level page and
+  every feature page. `about_content_test.rb` pins the registry to the
+  views so a row without a partial fails by name.
+- **A hub needs prose when it generates nothing.** Most hubs degrade
+  gracefully into their tool cards; Travel owns a section that no tool
+  registers on, and the two cross-cutting hubs own none, so for those the
+  prose *is* the page. The pin asks whether a hub generates tool cards, not
+  whether it owns sections.
 
 ## 9. Merge hygiene
 

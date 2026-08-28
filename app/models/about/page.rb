@@ -117,8 +117,73 @@ module About
     def self.feature(slug, hub, title, blurb) = Feature.new(slug:, hub:, title:, blurb:)
 
     FEATURES = [
+      feature("dashboard", "your-day", "The dashboard",
+        "What needs attention this week, read across every part of your life at once."),
+      feature("calendar", "your-day", "Calendar",
+        "One calendar for a whole life, not a work one with the rest bolted on."),
+      feature("tasks", "your-day", "Tasks and goals",
+        "Day-sized things on a board, and big ambitions broken down into them."),
+      feature("notes", "your-day", "Notes",
+        "What you know, kept where the rest of your life can reach it."),
+      feature("chat", "your-day", "Chat",
+        "For when a form is the wrong shape — and it has already read your files."),
+
+      feature("documents", "your-stuff", "Documents",
+        "Files with their text pulled out, summarised in plain language, and findable."),
+      feature("photos", "your-stuff", "Photos",
+        "The family library on your own storage, with albums you choose to share."),
+      feature("recipes", "your-stuff", "Recipes",
+        "A recipe box that scales a batch and shares a book, without the 900-word memoir."),
+      feature("email", "your-stuff", "Email",
+        "Your mail mirrored onto your own disk, so the app can notice the deadline in it."),
+      feature("passwords", "your-stuff", "Passwords",
+        "A household vault, encrypted so that a stolen disk is worth nothing."),
+      feature("diary", "your-stuff", "Diary",
+        "A sealed journal: everything but the date encrypted, and no sharing at all."),
+
+      feature("care-radar", "health", "The care radar",
+        "What's quietly gone too long — for everyone in the house, including the pets."),
+      feature("insurance", "health", "Insurance",
+        "Your plan in plain language, and the appeal for when they say no."),
+      feature("pets", "health", "Pets",
+        "The dependent who can't tell you what hurts, given a record and a reorder date."),
+
       feature("budget", "money", "Budget",
-        "Categories you set, spending measured against them, no bank login anywhere.")
+        "Categories you set, spending measured against them, no bank login anywhere."),
+      feature("spending", "money", "The spending ledger",
+        "Where it actually went, taught once and sorted from then on."),
+      feature("debt", "money", "Debt",
+        "Every debt in one place, with the interest written down and an order to kill them in."),
+      feature("benefits", "money", "Benefits",
+        "A screen for the money you're entitled to and nobody told you about."),
+
+      feature("job-search", "career", "The job search",
+        "A paced search, and applications written from your real history."),
+      feature("interviews", "career", "Interviews",
+        "Preparation from the listing, and practice out loud with someone who remembers."),
+      feature("pay", "career", "Pay and raises",
+        "Your stub explained, your wins logged, and the case built from both."),
+
+      feature("curriculum", "education", "The curriculum",
+        "Every subject as a map of topics, per learner, with mastery you have to earn."),
+      feature("review", "education", "Review",
+        "Spaced repetition, so what was learned in March survives to September."),
+      feature("records", "education", "Learning records",
+        "Portfolios, hours logs and transcripts, generated from the year you already recorded."),
+
+      feature("circles", "people", "Circles",
+        "The people you'd regret losing, and the groups real social life actually happens in."),
+
+      feature("reader", "hobbies", "The reader",
+        "Your feeds, chronologically, with no ranking and nothing leaving the box."),
+
+      feature("world-map", "travel", "The world map",
+        "Everywhere you've been, drawn from your own photos, fetching nothing."),
+      feature("trips", "travel", "Trips",
+        "Booked or only discussed, where you'll be in March, and somewhere to sleep between."),
+
+      feature("letters", "rights", "The letters",
+        "The formal letter, the deadline on your calendar, and no invented statutes.")
     ].freeze
 
     module_function

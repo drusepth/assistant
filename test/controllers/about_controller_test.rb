@@ -190,6 +190,26 @@ class AboutControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # --- sitemap ---------------------------------------------------------
+
+  test "the sitemap lists every page the tree serves" do
+    get about_sitemap_path
+
+    assert_response :success
+    expected = 2 + About::Page::TOP_LEVEL.size + About::Page::HUBS.size +
+      About::Page::FEATURES.size + Tool::SLUGS.size
+    assert_equal expected, response.body.scan("<loc>").size
+    assert_includes response.body, about_tool_path("deposit_demand")
+  end
+
+  test "the sitemap is behind the switch too" do
+    @household.update!(public_pages_enabled: false)
+
+    get about_sitemap_path
+
+    assert_response :not_found
+  end
+
   # The pages are the same bytes on every install, so a tool page must not
   # depend on anything a household did.
   test "a tool page renders for a household with no data at all" do

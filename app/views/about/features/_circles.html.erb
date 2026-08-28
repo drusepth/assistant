@@ -1,0 +1,75 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Your phone's contacts list is a graveyard: three hundred names, most of
+    them dead weight, all of them presented as equals. Nothing in it
+    distinguishes the person you'd want at your funeral from a plumber you
+    used once in 2019.
+  </p>
+  <p>
+    A circle is that distinction, made explicit — and it turns out to be the
+    difference between a directory and something that can actually help you
+    keep the relationships you care about.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What you get</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "The people who matter, first") do %>
+      <p class="text-sm text-soft">
+        The page opens on your actual circle, not the full roster. The
+        roster still exists for when you need the plumber; it just isn't
+        what greets you.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "One line of signal each") do %>
+      <p class="text-sm text-soft">
+        When you last spoke, what's coming up for them, what you meant to
+        follow up on. Enough to know who needs you this week without opening
+        anything.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Groups as first-class things") do %>
+      <p class="text-sm text-soft">
+        The choir, the team, the parents from school, the mutual aid group.
+        Most real social life happens in groups, and software that only
+        modelled one-to-one friendships would miss most of it.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Actions that end in contact") do %>
+      <p class="text-sm text-soft">
+        Every button here leads somewhere real — a message drafted, a date
+        proposed, a visit logged. Nothing leads to a more complete profile,
+        because that isn't a relationship.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Logging takes seconds</h2>
+  <p class="mt-4 text-soft">
+    Recording that you saw someone is meant to cost about four seconds,
+    because anything more expensive doesn't get done and the whole thing
+    silently stops being true. The app does the filing; you do the seeing.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The drift, named gently</h2>
+  <p class="mt-4 text-soft">
+    The friendship that's gone eleven months without either of you deciding
+    anything is the thing this exists to catch. It's surfaced with something
+    you could actually send — not as a guilt counter, and not as a metric
+    you're failing.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Private, obviously</h2>
+  <p class="mt-4 text-soft">
+    What you've recorded about a relationship is nobody's business,
+    including the rest of your household's. The dinner can be on a shared
+    calendar without your notes about the guest going anywhere.
+  </p>
+</section>

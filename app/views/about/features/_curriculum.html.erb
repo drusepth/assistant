@@ -1,0 +1,71 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    You cannot teach to mastery without knowing what the pieces are and
+    which ones somebody has. That map is the thing schools replace with a
+    calendar, and it's the thing a tutor builds in their head over the first
+    few sessions.
+  </p>
+  <p>
+    Here it's explicit: every subject as a tree of topics, one per learner,
+    with each topic's state visible.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">How it's built</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Starts from published standards") do %>
+      <p class="text-sm text-soft">
+        The shape of a subject is not a secret — public curricula describe
+        it in detail. So a new subject arrives already broken into topics in
+        a sensible order, rather than as an empty page.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Then it's yours") do %>
+      <p class="text-sm text-soft">
+        Add, remove, reorder, ignore. A standard is a starting point, not an
+        authority — especially for a household that has deliberately opted
+        out of one.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "One tree per learner") do %>
+      <p class="text-sm text-soft">
+        Two children learning the same subject are at different places in
+        it, and so is the adult in the house learning it for the first time.
+        Nobody is measured against anyone else's position.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Start where you actually are") do %>
+      <p class="text-sm text-soft">
+        A short conversation finds your real edge rather than assuming a
+        grade level — which matters most for the adult who is fine at some
+        of it and has a hole in the middle.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Green has to be earned</h2>
+  <p class="mt-4 text-soft">
+    A topic doesn't become mastered because somebody ticked it. It moves
+    when there's evidence — a retrieval check passed, work produced, a
+    conversation that demonstrated it. That's slightly annoying in the
+    moment and it's the only thing that makes the map worth believing a
+    year later, when you're deciding what to do next or writing a record of
+    the year.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Taught through what they like</h2>
+  <p class="mt-4 text-soft">
+    The tutor knows the learner's hobbies, because the app already does.
+    Ratios through a recipe, or through fret spacing on a guitar, are the
+    same ratios — learned by somebody who is actually paying attention,
+    which is most of the battle.
+  </p>
+  <p class="mt-5">
+    <%= link_to "How review keeps it →", about_feature_path("review"), class: "text-primary-700 hover:underline" %>
+  </p>
+</section>

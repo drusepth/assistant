@@ -1,0 +1,67 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Two thirds of households have one, and for most of them the pet isn't a
+    hobby — it's a dependent with a medical history, a monthly cost, a
+    prescription, and no ability to tell you what hurts or when something
+    changed.
+  </p>
+  <p>
+    Which is why a pet isn't a section here. A pet is a <em>whom</em>: vet
+    visits are health, food is money, the photos are already in the library,
+    and teaching the dog to walk on a lead is a goal like any other.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What each animal gets</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "A page that gathers everything") do %>
+      <p class="text-sm text-soft">
+        Every appointment, receipt, note and photograph that's about Rex, in
+        one place — without any of it having been filed away from where it
+        also belongs.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The care that's due") do %>
+      <p class="text-sm text-soft">
+        Boosters, worming, the annual check, the medication that needs
+        renewing. The same radar that watches the humans, pointed at the
+        animal who can't book their own appointments.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "When the food runs out") do %>
+      <p class="text-sm text-soft">
+        From the bag size and how much they eat, the app works out roughly
+        when you'll need more — and what it costs a month, which turns out
+        to be a budget line most people have never actually seen.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "The vet conversation") do %>
+      <p class="text-sm text-soft">
+        The questions worth asking, the history the vet will ask you for,
+        and an itemised estimate translated into what each line is actually
+        for — before you agree to it in a stressful room.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">The bad days</h2>
+  <p class="mt-4 text-soft">
+    A missing animal is an hour where you need a checklist rather than
+    ideas: who to ring, in what order, and a poster you can print now. It's
+    here because the moment you need it is the moment you can least think
+    straight.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Never a diagnosis</h2>
+  <p class="mt-4 text-soft">
+    The same line the rest of Health holds. It'll talk through food,
+    behaviour, routines and what's worth watching for, and it will tell you
+    when something warrants a vet. It won't tell you what's wrong with your
+    animal.
+  </p>
+</section>

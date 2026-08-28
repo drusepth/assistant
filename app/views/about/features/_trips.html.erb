@@ -1,0 +1,78 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Planning travel with other people fails in a specific, recognisable way:
+    somebody has booked the flights, somebody else thinks the place in
+    McCall is sorted when it was only discussed, and nobody is sure where
+    anyone sleeps on the Tuesday.
+  </p>
+  <p>
+    The fix isn't a better spreadsheet. It's making the difference between
+    <em>booked</em> and <em>talked about</em> visible to everyone at a
+    glance.
+  </p>
+</section>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">What a trip holds</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Stays, with their status") do %>
+      <p class="text-sm text-soft">
+        Each place you'll sleep, and whether it's actually confirmed. The
+        single most common cause of holiday panic is a stay everybody
+        assumed somebody else had booked.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Legs between them") do %>
+      <p class="text-sm text-soft">
+        Flights, trains, the drive, the hire car. Laid end to end, so the
+        gap between Tuesday's checkout and Thursday's flight is visible in
+        February rather than on the Tuesday.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Where you'll be, ahead") do %>
+      <p class="text-sm text-soft">
+        An outlook across the coming months and a band on your ordinary
+        calendar — so a trip collides visibly with the dentist and the
+        school term instead of invisibly.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Everything a trip drags in") do %>
+      <p class="text-sm text-soft">
+        The passport, the insurance policy, the budget line, the friend
+        you're staying with. All of it can belong to the trip without being
+        filed away from where it also belongs.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Shared with the people who are going</h2>
+  <p class="mt-4 text-soft">
+    A trip can be shared with the household members on it, so everybody
+    reads the same plan rather than four screenshots in a group chat. What
+    doesn't travel with that share: anything derived from photo coordinates,
+    which stays with the person whose library it came from.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">One record, before and after</h2>
+  <p class="mt-4 text-soft">
+    The trip you planned in February is the trip the photographs attach to
+    in July. It doesn't graduate from a planning tool into a scrapbook, and
+    nothing gets retyped — the thing that tracked the booking is the thing
+    that ends up holding the memory of it.
+    <%= link_to "The map it feeds →", about_feature_path("world-map"), class: "text-primary-700 hover:underline" %>
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">It doesn't book anything</h2>
+  <p class="mt-4 text-soft">
+    No searching for flights, no prices, no affiliate links, and no
+    connection to a booking service. You book however you already book; this
+    is the place that knows what you booked, which is the part that was
+    actually missing.
+  </p>
+</section>

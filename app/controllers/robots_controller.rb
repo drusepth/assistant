@@ -22,6 +22,8 @@ class RobotsController < ApplicationController
         User-agent: *
         Allow: /about
         Disallow: /
+
+        Sitemap: #{about_sitemap_url}
       TXT
     end
 end
