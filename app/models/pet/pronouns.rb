@@ -10,7 +10,12 @@ class Pet
   # one. Unknown sex is a real answer rather than a gap — it yields "they",
   # which is also what a household who'd rather not say gets by leaving the
   # box alone.
-  Pronouns = Data.define(:subject, :object, :possessive, :reflexive) do
+  #
+  # A subclass rather than `Data.define do … end`: a constant assigned inside
+  # that block binds to the lexically enclosing scope, so SETS and UNKNOWN
+  # would land on `Pet` itself, beside SPECIES, where `Pet::UNKNOWN` reads as
+  # an unknown pet.
+  class Pronouns < Data.define(:subject, :object, :possessive, :reflexive)
     SETS = {
       "female" => %w[ she her her herself ],
       "male" => %w[ he him his himself ]

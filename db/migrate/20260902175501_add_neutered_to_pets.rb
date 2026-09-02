@@ -8,9 +8,11 @@ class AddNeuteredToPets < ActiveRecord::Migration[8.1]
     add_column :pets, :neutered, :boolean, default: false, null: false
 
     # The only free-text values the form's own placeholder ever suggested.
-    # Anything else a household typed is not a sex we can act on, so it is
-    # cleared rather than guessed at — the field is optional, and "unknown"
-    # is a real answer that yields "they".
+    # Anything else a household typed is not a sex the app can act on, so it
+    # is not guessed at — but it is not thrown away either: the original text
+    # goes to `notes`, which is a field the owner reads and every pet tool
+    # already sends to the model, so the fact survives where it is still
+    # useful and the column ends up honest.
     known = {
       "female" => [ "female", false ], "f" => [ "female", false ],
       "male" => [ "male", false ], "m" => [ "male", false ],
@@ -22,8 +24,15 @@ class AddNeuteredToPets < ActiveRecord::Migration[8.1]
 
     Pet.reset_column_information
     Pet.where.not(sex: nil).find_each do |pet|
-      sex, neutered = known.fetch(pet.sex.to_s.strip.downcase, [ nil, false ])
-      pet.update_columns(sex: sex, neutered: neutered)
+      typed = pet.sex.to_s.strip
+      sex, neutered = known.fetch(typed.downcase, [ nil, false ])
+      notes = if sex.nil? && typed.present?
+        [ pet.notes.presence, "Sex, as it was typed before that field became a list: #{typed}" ].compact.join("\n\n")
+      else
+        pet.notes
+      end
+
+      pet.update_columns(sex: sex, neutered: neutered, notes: notes)
     end
   end
 
