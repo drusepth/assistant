@@ -2,10 +2,17 @@ module Health
   # Insurance lives in the vault as ordinary Documents (Q3: coverage and
   # care navigation belong to Health; billing disputes stay in Rights).
   # This finds the plan-shaped ones — insurance cards, Summaries of
-  # Benefits, EOBs — by keyword over title and AI summary, a heuristic the
-  # Health page's coverage card and the find-care tool share. Visible
-  # documents, not just owned: coverage is often a household fact, and a
-  # spouse's shared plan document is exactly what these tools should read.
+  # Benefits, EOBs — a heuristic the Health page's coverage card and the
+  # find-care tool share. Visible documents, not just owned: coverage is
+  # often a household fact, and a spouse's shared plan document is exactly
+  # what these tools should read.
+  #
+  # The `health_plan` pin decides whenever it is set — by the owner, or by
+  # the reader at analysis time (D-document-intake: the model says whether
+  # the document *is* a plan, and the job pins it unless the owner already
+  # has). The keyword patterns below therefore only ever see documents no
+  # model has read: the D-no-keyword-logic cleanup, taken as far as an
+  # instance without a model allows.
   class Coverage
     PATTERNS = [
       /insurance/i, /summary of benefits/i, /\bsbc\b/i, /explanation of benefits/i, /\beob\b/i,

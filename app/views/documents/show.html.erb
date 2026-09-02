@@ -46,6 +46,14 @@
         <p class="mt-3 text-xs text-soft">Nothing is saved until you say so on the review page.</p>
       <% end %>
     <% end %>
+    <%# The tool the reader pointed at (D28, on a document): one prefilled
+        next step, never a menu. %>
+    <% if own && (next_tool = @document.extracted_facts["next_tool"]) && (tool = Tool.find(next_tool["slug"])) %>
+      <%= render Ui::CardComponent.new(title: tool.title, subtitle: next_tool["reason"] || tool.description) do |card| %>
+        <% card.with_actions { link_to "Open", new_tool_run_path(tool.slug, inputs: { document_id: @document.id }), class: "btn btn-secondary btn-sm" } %>
+        <p class="text-sm text-soft">The reader thought this tool fits this document. It opens with the document already chosen.</p>
+      <% end %>
+    <% end %>
     <% if (produced = @document.produced_items).any? %>
       <%= render Ui::CardComponent.new(title: "Saved from this document", count: produced.size, padded: false) do %>
         <div class="divide-y divide-edge">

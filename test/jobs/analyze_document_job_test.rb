@@ -164,6 +164,44 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     assert_equal "Lease agreement", @document.reload.title
   end
 
+  test "the reader pins a health plan unless the owner already ruled, and the pin retires the keyword match" do
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: { summary: "A dental bill mentioning insurance.", sections: [ "health" ], health_plan: false }.to_json } } ] }.to_json
+    )
+    @document.update!(title: "Insurance statement for the dental visit")
+    assert Health::Coverage.match?(@document), "before analysis the keywords catch the bill"
+
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_equal false, @document.reload.health_plan
+    assert_not Health::Coverage.match?(@document), "the reader's word replaced the keywords"
+
+    pinned = users(:one).documents.create!(title: "Car policy", health_plan: true)
+    pinned.file.attach(io: StringIO.new("x"), filename: "car.txt", content_type: "text/plain")
+    AnalyzeDocumentJob.perform_now(pinned)
+    assert_equal true, pinned.reload.health_plan, "the owner's pin is never overwritten"
+  end
+
+  test "the reader may point the document at one allowed tool, and nothing else" do
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A denial.", sections: [], next_tool: { slug: "insurance_appeal", reason: "It denies a claim." }
+      }.to_json } } ] }.to_json
+    )
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_nil @document.reload.extracted_facts["next_tool"], "insurance_appeal is not on the document's list"
+
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A letter.", sections: [], next_tool: { slug: "decode_letter", reason: "It's dense." }
+      }.to_json } } ] }.to_json
+    )
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_equal({ "slug" => "decode_letter", "reason" => "It's dense." }, @document.reload.extracted_facts["next_tool"])
+  end
+
   test "documents with no pay-stub facts store an empty facts hash" do
     stub_llm(summary: "A lease.", sections: [ "renting" ])
 

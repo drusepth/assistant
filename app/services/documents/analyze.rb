@@ -15,8 +15,14 @@ module Documents
     STORED_TEXT_LIMIT = 20_000
     MAX_SUGGESTIONS = 3
 
-    Result = Data.define(:summary, :section_slugs, :extracted_text, :facts, :landings, :title)
+    Result = Data.define(:summary, :section_slugs, :extracted_text, :facts, :landings, :title, :health_plan)
     TITLE_LIMIT = 120
+
+    # Tools the reader may point a document at (D28, on a document instead
+    # of a run): each takes the document as its input. A slug outside this
+    # list is dropped, so a retired tool can never break the page.
+    NEXT_TOOLS = %w[ decode_letter results_explainer insurance_explainer decode_vet_estimate
+                     check_pay_stub decode_offer debt_collector_response ].freeze
 
     # Career-aware extraction (D-career-signal, docs/CAREER.md §1): the fields kept from
     # a pay-stub read. Code whitelists, so the stored JSON never grows keys
@@ -40,7 +46,8 @@ module Documents
         extracted_text: stored_text(content, response),
         facts: extracted_facts(response),
         landings: Landing.propose(response["landings"], @context),
-        title: response["title"].to_s.squish.truncate(TITLE_LIMIT).presence
+        title: response["title"].to_s.squish.truncate(TITLE_LIMIT).presence,
+        health_plan: response["health_plan"] == true
       )
     end
 
@@ -59,7 +66,14 @@ module Documents
           advisors, suggest which life sections the document belongs to, and list what in the
           document belongs somewhere else in the household's records.
           Respond with a JSON object: {"summary": "...", "title": "...", "sections": ["slug", ...],
+          "health_plan": true or false, "next_tool": {"slug": "...", "reason": "..."} or null,
           "landings": [{"kind": "...", ...}, ...]#{', "text": "..."' if content.images?}}.
+          "health_plan" is true only when the document is itself a health insurance plan document —
+          an insurance card, a summary of benefits, an explanation of benefits, a policy — for a
+          person or a pet; a bill, a claim form or a letter mentioning insurance is false.
+          "next_tool" names one tool from the list below that would help the reader with this
+          document, with a one-line reason, or null when none fits:
+          #{next_tools_listing}
           The summary is 2-4 sentences; mention any deadlines, amounts, or required actions.
           The title is a short, specific name for the document (at most 8 words), e.g.
           "Rex — vet discharge sheet, 12 Aug 2026".
@@ -75,6 +89,11 @@ module Documents
           Copy numbers exactly as printed and omit any field the stub doesn't state;
           for any other kind of document, omit "pay_stub" entirely.
         PROMPT
+      end
+
+      def next_tools_listing
+        NEXT_TOOLS.filter_map { |slug| Tool.find(slug) }
+          .map { |tool| "#{tool.slug} — #{tool.title}: #{tool.description}" }.join("\n")
       end
 
       def transcription_instruction
@@ -126,7 +145,25 @@ module Documents
       end
 
       def extracted_facts(response)
-        stub = response["pay_stub"]
+        facts = {}
+        if (tool = next_tool(response["next_tool"]))
+          facts["next_tool"] = tool
+        end
+        facts.merge(pay_stub_facts(response["pay_stub"]))
+      end
+
+      # The tool the reader pointed at, validated against the allowed list
+      # and stored as {slug, reason} — the D28 sanitization, for documents.
+      def next_tool(proposal)
+        return nil unless proposal.is_a?(Hash)
+
+        slug = proposal["slug"].to_s
+        return nil unless NEXT_TOOLS.include?(slug) && Tool.find(slug)
+
+        { "slug" => slug, "reason" => proposal["reason"].to_s.squish.truncate(200).presence }.compact
+      end
+
+      def pay_stub_facts(stub)
         return {} unless stub.is_a?(Hash)
 
         kept = stub.slice(*PAY_STUB_FIELDS)

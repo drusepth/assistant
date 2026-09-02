@@ -221,6 +221,15 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", document_path(document), text: "Vet discharge sheet"
   end
 
+  test "the document page offers the tool the reader pointed at, prefilled" do
+    document = users(:one).documents.create!(title: "Denial letter", analysis_status: "analyzed",
+      extracted_facts: { "next_tool" => { "slug" => "results_explainer", "reason" => "It has lab values." } })
+
+    get document_path(document)
+    assert_select "a[href=?]", new_tool_run_path("results_explainer", inputs: { document_id: document.id }), text: "Open"
+    assert_match "It has lab values.", response.body
+  end
+
   test "applying a suggestion tags the document and consumes the suggestion" do
     document = users(:one).documents.create!(title: "Lease",
       suggested_sections: [ "renting", "money" ], analysis_status: "analyzed", summary: "A lease.")
