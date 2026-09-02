@@ -16,7 +16,8 @@ Decisions here are logged as **D-landing-registry** and **D-document-intake**.
 **Q-intake-stated-due** is open; **Q-intake-edit-in-review** was resolved
 before the build started (§5: the review page edits, not just toggles).
 
-**Status: designed 2026-09, not started.** §8 is the wave plan.
+**Status: built, W1–W5 (2026-09).** §8 is the wave plan; §11 records what
+the build changed about it — six things, all found by writing the code.
 
 ---
 
@@ -384,7 +385,7 @@ happened whether or not you keep the scan.
 
 ## 8. Waves
 
-**W1 — Read the image.** `Documents::Analyze#extract_text` becomes
+**✅ W1 — Read the image.** `Documents::Analyze#extract_text` becomes
 `Documents::Read` with four rungs — text, text-bearing PDF, image (resized
 data URL through the vision client), scanned PDF (page renders, capped) — and
 the honest no-vision message. The document page shows the image. No registry
@@ -392,7 +393,7 @@ yet; the vet photo now gets the summary and the section suggestion a PDF
 gets today. Smallest wave, general value (receipts, letters, lab results),
 independent of everything below.
 
-**W2 — The registry, and the kinds that already have writers.**
+**✅ W2 — The registry, and the kinds that already have writers.**
 `Landing` + `Landing::Base` + the field DSL; `event`, `task`, `note`,
 `person`, and the document's own `title`; `documents.landings` and
 `document_items`; `Landing.prompt_block` in the analyze prompt; the review
@@ -401,19 +402,19 @@ page with its DSL-rendered, editable cards; the duplicate flag; the drift-guard 
 seven-line change and the proof that the seam is shared. `pay_stub` moves in
 as the fact-shaped kind so `PAY_STUB_FIELDS` has one home.
 
-**W3 — The health and pet kinds.** `medication`, `allergy`, `pet_facts`
+**✅ W3 — The health and pet kinds.** `medication`, `allergy`, `pet_facts`
 (the amendment machinery, with old → new previews), `pet_food`, the
 `care_kind` choice on `event`, and the pet and person refs with their
 listings. This is the wave that lands the vet report. Add the "from this
 document" line to the rows' pages.
 
-**W4 — Money and coverage.** `spending` (moved from `Suggestion#materialize`,
+**✅ W4 — Money and coverage.** `spending` (moved from `Suggestion#materialize`,
 which then calls the registry for it), `health_plan` (retiring the keyword
 match in `Health::Coverage` for analyzed documents — the pin column keeps
 its meaning as the owner's override). Route lease- and bill-shaped documents
 to `decode_letter` through a document-side `next_tools`.
 
-**W5 — Guards and growth.** The presence/detail split when
+**✅ W5 — Guards and growth.** The presence/detail split when
 `Landing.prompt_block` crosses `SCHEMA_BUDGET`; the skipped-landings revisit
 strip; `Suggestion#materialize`'s remaining keys onto the registry where they
 are creates (task, event) — `agent_level` and `schedule_task` are not
@@ -471,3 +472,59 @@ calendar entries and contacts; W3 is the request.
 `Landing::NOT_INTAKE` with a reason. The registry test fails until you do
 one or the other; that is the whole anti-drift mechanism, and it is
 deliberately a test rather than a convention.
+
+---
+
+## 11. What the build changed
+
+Six corrections, kept because each was invisible from the plan and obvious
+from the code.
+
+**Pay-stub facts stayed where they were.** §2 had them moving into the
+registry as a fact-shaped kind. They didn't: the owner's call before the
+build was that the hard-coded pay-stub path could keep doing its own thing
+for now, and nothing in the registry needed it — facts live on the
+document, landings become rows elsewhere, and the two never share a code
+path. `PAY_STUB_FIELDS` is still one constant in one file; it is simply not
+the registry's.
+
+**`health_plan` is a document fact, not a landing kind.** §4 listed it as a
+kind that "sets `documents.health_plan`". Building it that way meant a
+review-page card whose whole content was one checkbox about the document
+itself — and a document's own attributes are exactly what D16 already
+files without a click (its sections, its title). So the reader answers
+`health_plan` alongside `sections`, the job pins it when the owner hasn't
+ruled, and the owner's pin still beats everything. The consequence the plan
+wanted holds: `Health::Coverage`'s keyword patterns now only ever see a
+document no model has read.
+
+**`Suggestion#materialize` kept its task and event keys.** W5 had them
+moving onto the registry "where they are creates". Their semantics differ
+from a document's: a suggestion's task always lands in Today (the nudge's
+whole point) and its event carries a datetime and an all-day flag from the
+watcher, where a landing's task buckets by due date and its event is a
+date plus an optional time. Routing them through the registry would have
+changed behaviour for no user benefit; only `spending` moved, because its
+write was genuinely the same. The registry is the seam for *model-proposed*
+rows; a watcher's payload is code-authored and needs no validation into a
+closed set.
+
+**The PDF loader had to be re-enabled.** Active Storage blocks every libvips
+loader that hasn't been fuzzed, poppler's PDF loader included, and the scan
+rung needs it. It is re-enabled inside `Documents::Read`, on the render
+path only, idempotently — the input is a file an authenticated household
+member uploaded to their own instance, and the same bytes have already been
+through pdf-reader (which found no text) before the loader sees them. A
+security decision, made in one place with its reasoning beside it.
+
+**A document may point at a tool.** §8 W4's "document-side `next_tools`"
+became one `next_tool` — a slug from a code-held allowlist of tools that
+take a document, validated like D28's routing and stored in
+`extracted_facts` — rendered as a single prefilled card. One next step,
+never a menu.
+
+**Model constants inside the registry are fully qualified.** The day
+`Landing::Person` existed, `Person` inside `Landing::Context` stopped
+meaning the contact. Every model reference under `app/landings/` is
+`::Person`, `::Event`, `::Note` — worth knowing before adding a kind whose
+name matches a model.

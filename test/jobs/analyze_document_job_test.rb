@@ -202,6 +202,43 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     assert_equal({ "slug" => "decode_letter", "reason" => "It's dense." }, @document.reload.extracted_facts["next_tool"])
   end
 
+  test "past the schema budget the call splits: a presence pass names the kinds, a detail pass carries only their fields" do
+    Documents::Analyze.schema_budget = 100
+    stub_request(:post, ENDPOINT)
+      .to_return(status: 200, body: { choices: [ { message: { content: {
+        summary: "A discharge sheet.", sections: [ "health" ], present_kinds: [ "event", "nonsense" ]
+      }.to_json } } ] }.to_json).then
+      .to_return(status: 200, body: { choices: [ { message: { content: {
+        landings: [ { kind: "event", title: "Rex — vaccinations", on: "2026-08-12" } ]
+      }.to_json } } ] }.to_json)
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    @document.reload
+    assert_equal "A discharge sheet.", @document.summary
+    assert_equal [ "event" ], @document.landings.map { |entry| entry["kind"] }
+    requests = []
+    assert_requested(:post, ENDPOINT, times: 2) { |request| requests << JSON.parse(request.body)["messages"].first["content"] }
+    assert_includes requests.first, "present_kinds"
+    assert_not_includes requests.first, "- event — an appointment, visit, deadline or renewal date the document states. Fields:"
+    assert_includes requests.last, "- event — an appointment, visit, deadline or renewal date the document states. Fields:"
+    assert_not_includes requests.last, "- task — ", "the detail pass carries only the present kinds"
+  ensure
+    Documents::Analyze.schema_budget = 8_000
+  end
+
+  test "a presence pass that finds nothing costs no second call" do
+    Documents::Analyze.schema_budget = 100
+    stub_llm(summary: "A poem.", sections: [])
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert_empty @document.reload.landings
+    assert_requested :post, ENDPOINT, times: 1
+  ensure
+    Documents::Analyze.schema_budget = 8_000
+  end
+
   test "documents with no pay-stub facts store an empty facts hash" do
     stub_llm(summary: "A lease.", sections: [ "renting" ])
 

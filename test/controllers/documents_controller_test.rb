@@ -181,6 +181,21 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Nothing left to review", response.body
   end
 
+  test "a skipped landing can be brought back" do
+    document = proposing_document
+    post land_document_path(document)
+    assert_equal %w[ skipped skipped skipped ], document.reload.landings.map { |entry| entry["status"] }
+
+    get review_document_path(document)
+    assert_select "button", text: "Bring back", count: 3
+
+    patch unskip_document_path(document, fingerprint: "person:dr-alvarez")
+    assert_redirected_to review_document_path(document)
+    assert_equal %w[ skipped proposed skipped ], document.reload.landings.map { |entry| entry["status"] }
+    get review_document_path(document)
+    assert_select "input[name='landings[1][attributes][name]'][value='Dr. Alvarez']"
+  end
+
   test "a landing that duplicates something the user already has renders unticked with a link to it" do
     document = proposing_document
     existing = users(:one).events.create!(title: "Rex — vaccinations", starts_at: Time.zone.local(2026, 8, 12, 10))

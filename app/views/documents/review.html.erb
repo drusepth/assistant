@@ -54,5 +54,25 @@
         <% empty.with_action { link_to "Back to the document", @document, class: "btn btn-primary" } %>
       <% end %>
     <% end %>
+
+    <%# The way back (D-document-intake): skipped is remembered, not gone. %>
+    <% if @skipped.any? %>
+      <%= render Ui::CardComponent.new(title: "Skipped", count: @skipped.size,
+            subtitle: "Left out earlier. Bring one back to put it on the list above.", padded: false) do %>
+        <div class="divide-y divide-edge">
+          <% @skipped.each do |draft| %>
+            <% preview = draft.landing_class.new(context).preview(draft.attributes) %>
+            <div class="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div class="flex min-w-0 items-center gap-2">
+                <span class="chip chip-inferred shrink-0"><%= landing_kind_label(draft.kind) %></span>
+                <span class="truncate text-sm text-soft"><%= preview.title %></span>
+              </div>
+              <%= button_to "Bring back", unskip_document_path(@document, fingerprint: draft.fingerprint), method: :patch,
+                    class: "btn btn-ghost btn-sm shrink-0" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
   </div>
 </div>

@@ -59,10 +59,15 @@ module Landing
           notes << "one of: #{field.options(context).map(&:last).join(", ")}" if field.choice?
           notes << "one of the #{field.ref.to_s.pluralize} listed below, by its key" if field.ref?
           notes << "required" if field.required?
-          "#{field.name} (#{notes.compact.join("; ")})"
+          notes.compact!
+          notes.any? ? "#{field.name} (#{notes.join("; ")})" : field.name
         end
         "- #{kind} — #{description}. Fields: #{described.join(", ")}."
       end
+
+      # The one-line version, for the presence pass (INTAKE_PLAN §3): the
+      # name and what it is, none of the fields.
+      def name_line = "- #{kind} — #{description}"
 
       # Label for chips and previews: "calendar", "task", "contact".
       def label = kind.humanize.downcase

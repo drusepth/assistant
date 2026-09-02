@@ -50,14 +50,27 @@ module Landing
   # The paragraph that tells the model what the household stores — generated
   # from the kinds' declarations, never hand-written, so it cannot fall
   # behind the code that validates and writes (D-landing-registry).
-  def prompt_block(context)
-    lines = all.map { |kind| kind.prompt_line(context) }
+  def prompt_block(context, kinds: all)
+    lines = kinds.map { |kind| kind.prompt_line(context) }
     parts = [ "The household stores these kinds of things. For each, add an entry to \"landings\" " \
               "only when the document plainly states it:\n#{lines.join("\n")}" ]
     parts << rules
-    listings = all.flat_map(&:fields).filter_map { |field| field.ref }.uniq.filter_map { |ref| context.ref_listing(ref) }
+    listings = kinds.flat_map(&:fields).filter_map { |field| field.ref }.uniq.filter_map { |ref| context.ref_listing(ref) }
     parts.concat(listings)
     parts.join("\n\n")
+  end
+
+  # The presence pass's block (INTAKE_PLAN §3): kind names and what they
+  # are, so a small model can say *which* kinds a document contains before
+  # being shown any kind's fields — asking about less, never swapping the
+  # mechanism (D-no-keyword-logic).
+  def names_block
+    "The household stores these kinds of things:\n#{all.map(&:name_line).join("\n")}\n" \
+    "List in \"present_kinds\" the kinds this document plainly contains something of, by name; [] if none."
+  end
+
+  def present_kinds(raw)
+    Array(raw).map(&:to_s).uniq.filter_map { |kind| find(kind) }
   end
 
   def rules

@@ -59,7 +59,20 @@ class DocumentsController < ApplicationController
   # owner's rows.
   def review
     @document = Current.user.documents.find(params[:id])
-    @drafts = @document.landing_drafts(landing_context).select { |draft| draft.status == "proposed" }
+    drafts = @document.landing_drafts(landing_context)
+    @drafts = drafts.select { |draft| draft.status == "proposed" }
+    @skipped = drafts.select { |draft| draft.status == "skipped" }
+  end
+
+  # The way back to a skipped landing: it becomes proposed again and
+  # returns to the checklist, unticked-by-default no longer.
+  def unskip
+    @document = Current.user.documents.find(params[:id])
+    landings = @document.landings.deep_dup
+    entry = landings.find { |candidate| candidate["fingerprint"] == params[:fingerprint] && candidate["status"] == "skipped" }
+    entry["status"] = "proposed" if entry
+    @document.update!(landings: landings)
+    redirect_to review_document_path(@document)
   end
 
   # The Save click. Every kept card goes back through its kind; a card that
@@ -76,6 +89,7 @@ class DocumentsController < ApplicationController
       redirect_to @document, notice: notice
     else
       @drafts = result.drafts
+      @skipped = @document.landing_drafts(landing_context).select { |draft| draft.status == "skipped" }
       render :review, status: :unprocessable_entity
     end
   end

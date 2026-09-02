@@ -94,6 +94,7 @@ Rails.application.routes.draw do
       patch :apply_suggestion
       get :review
       post :land
+      patch :unskip
     end
   end
   namespace :people do
