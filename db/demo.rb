@@ -217,7 +217,7 @@ module Demo
 
   def build_pets(kay, people)
     biscuit = kay.pets.create!(
-      name: "Biscuit", species: "dog", breed: "Staffordshire terrier mix", sex: "female",
+      name: "Biscuit", species: "dog", breed: "Staffordshire terrier mix", sex: "female", neutered: true,
       color: "brindle and white", born_on: Date.new(2018, 5, 1), born_on_estimated: true,
       adopted_on: Date.new(2019, 6, 22), weight_kg: 17.4, microchip: "985141000284471",
       vet: people[:pryor], section: Pets::Lens.create!("Biscuit"),
@@ -233,7 +233,7 @@ module Demo
     )
 
     sable = kay.pets.create!(
-      name: "Sable", species: "cat", breed: "domestic shorthair", sex: "male",
+      name: "Sable", species: "cat", breed: "domestic shorthair", sex: "male", neutered: true,
       color: "black", born_on: Date.new(2013, 8, 15), born_on_estimated: true,
       adopted_on: Date.new(2014, 2, 1), weight_kg: 4.1, vet: people[:pryor],
       section: Pets::Lens.create!("Sable"),

@@ -69,4 +69,49 @@ class PetTest < ActiveSupport::TestCase
     assert_not pet.valid?
     assert_includes pet.errors.full_messages.to_sentence, "Species"
   end
+
+  test "sex is a closed list, because the app's copy reads it for a pronoun" do
+    pet = users(:one).pets.new(name: "Iggy", species: "other", sex: "tomcat", section: @rex.section)
+    assert_not pet.valid?
+    assert_includes pet.errors.full_messages.to_sentence, "Sex"
+
+    pet.sex = ""
+    pet.validate
+    assert_empty pet.errors[:sex], "an unrecorded sex is a real answer, not an invalid one"
+  end
+
+  test "pronouns follow the recorded sex, and an unrecorded one is they" do
+    rex = @rex
+    assert_equal "they", rex.pronouns.subject, "nothing recorded, so nothing assumed"
+    assert_equal "their", rex.pronouns.possessive
+    assert rex.pronouns.plural?
+    assert_equal "eat", rex.pronouns.verb("eats", "eat")
+    assert_equal "they're", rex.pronouns.is
+
+    rex.update!(sex: "male")
+    assert_equal %w[ he him his himself ],
+      [ rex.pronouns.subject, rex.pronouns.object, rex.pronouns.possessive, rex.pronouns.reflexive ]
+    assert_not rex.pronouns.plural?
+    assert_equal "eats", rex.pronouns.verb("eats", "eat")
+    assert_equal "he's", rex.pronouns.is
+
+    rex.update!(sex: "female")
+    assert_equal %w[ she her her herself ],
+      [ rex.pronouns.subject, rex.pronouns.object, rex.pronouns.possessive, rex.pronouns.reflexive ]
+  end
+
+  test "the sex label carries the spay or neuter, which is a status and not a sex" do
+    rex = @rex
+    assert_nil rex.sex_label, "nothing recorded, nothing printed"
+
+    rex.update!(sex: "male")
+    assert_equal "Male", rex.sex_label
+
+    rex.update!(neutered: true)
+    assert_equal "Neutered male", rex.sex_label
+    assert_equal "he", rex.pronouns.subject, "neutering does not change the pronoun"
+
+    rex.update!(sex: "female")
+    assert_equal "Spayed female", rex.sex_label
+  end
 end

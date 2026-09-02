@@ -25,24 +25,26 @@ module Tool
       1. **The first hour** — the things that actually find animals, most
          effective first: search the house and immediate area thoroughly
          (frightened cats hide *inside*, close by, and silently), take a torch
-         even in daylight, call her in a normal voice at dusk and dawn, and
-         leave her bed, litter tray or a worn piece of clothing outside the
-         door.
-      2. **Who to call now** — the microchip registry (to flag her missing and
-         confirm the contact details are current), local vets and emergency
-         clinics, shelters and rescues, the council or animal warden, and any
-         local lost-and-found groups. Say what to give each: microchip number,
-         description, where and when last seen.
+         even in daylight, call the animal in a normal voice at dusk and
+         dawn, and leave their bed, litter tray or a worn piece of clothing
+         outside the door.
+      2. **Who to call now** — the microchip registry (to flag the animal
+         missing and confirm the contact details are current), local vets and
+         emergency clinics, shelters and rescues, the council or animal
+         warden, and any local lost-and-found groups. Say what to give each:
+         microchip number, description, where and when last seen.
       3. **The poster and the posts** — what a poster must carry to work, and
          where to put them.
       4. **Over the next days** — what to keep doing, and what usually changes
          (many animals are found within a mile, and days later).
       Then, as a clearly separated final block headed "Poster text", write the
-      poster itself: LOST, her name, species, breed, colour and distinguishing
+      poster itself: LOST, the name, species, breed, colour and distinguishing
       marks, where and when last seen, and a [PHONE NUMBER] placeholder — never
       invent a phone number, address or reward.
       Be calm, direct and specific. No reassurance that isn't true, and no
-      speculation about what happened to her.
+      speculation about what happened to the animal.
+      The record says which pronoun the household uses for this pet. Use it
+      throughout, and never guess a different one.
       follow_ups are the calls and posts, so they can be ticked off.
       #{DRAFT_FORMAT}
     PROMPT
@@ -69,7 +71,8 @@ module Tool
         parts = [ "Name: #{pet.name}", "Species: #{pet.species_label}" ]
         parts << "Breed: #{pet.breed}" if pet.breed.present?
         parts << "Colour and markings: #{pet.color}" if pet.color.present?
-        parts << "Sex: #{pet.sex}" if pet.sex.present?
+        parts << "Sex: #{pet.sex_label}" if pet.sex_label
+        parts << "Refer to this pet as: #{pet.pronouns.subject}/#{pet.pronouns.object}/#{pet.pronouns.possessive}"
         parts << "Age: #{pet.age_phrase}" if pet.age_phrase
         parts << "Microchip number: #{pet.microchip}" if pet.microchip.present?
         parts << "MICROCHIP: not recorded in the app — tell the user to find the paperwork or ask their vet, " \

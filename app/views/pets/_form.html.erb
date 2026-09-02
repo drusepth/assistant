@@ -8,9 +8,18 @@
     <%= form.field :breed, placeholder: "Golden retriever, tabby, lop…" %>
   </div>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%= form.field :sex, placeholder: "Female, male, neutered male…" %>
+    <%# Sex is also what the app reads to decide whether to write "she", "he"
+        or "they" about this pet (D-pet-pronouns), which is why the hint says
+        so — leaving it blank is a real answer, not an unfinished form. %>
+    <%= form.field :sex, hint: "Also how the app refers to #{pet.name.presence || "your pet"} — leave it blank for “they”." do %>
+      <%= form.select :sex, Pet::SEXES.map { |slug| [ Pet::SEX_LABELS[slug], slug ] }, include_blank: "Not recorded" %>
+    <% end %>
     <%= form.field :color, label_text: "Colour and markings", placeholder: "Black with a white chest" %>
   </div>
+  <label class="flex items-start gap-2 text-sm">
+    <%= form.check_box :neutered, class: "mt-0.5" %>
+    <span class="text-soft">Spayed or neutered</span>
+  </label>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <%= form.field :born_on, as: :date_field, label_text: "Date of birth" %>
@@ -39,7 +48,7 @@
   <% if pet.persisted? %>
     <%= render layout: "shared/advanced", locals: { hint: "The end of a life, or a rehoming." } do %>
       <div class="space-y-4">
-        <p class="hint">Either date stops every reminder about <%= pet.name %> and moves her to Remembered. Nothing is deleted — her photos, papers and history stay exactly where they are.</p>
+        <p class="hint">Either date stops every reminder about <%= pet.name %> and moves <%= pet.pronouns.object %> to Remembered. Nothing is deleted — <%= pet.pronouns.possessive %> photos, papers and history stay exactly where they are.</p>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <%= form.field :died_on, as: :date_field, label_text: "Died" %>
           <%= form.field :left_on, as: :date_field, label_text: "Rehomed" %>
@@ -52,7 +61,7 @@
     <% if Current.user.household.users.where.not(id: Current.user.id).exists? %>
       <label class="flex items-start gap-2 text-sm">
         <%= check_box_tag :share_with_household, "1", true, class: "mt-0.5" %>
-        <span class="text-soft">Everyone in the household looks after this pet — share her, and everything filed under her name</span>
+        <span class="text-soft">Everyone in the household looks after this pet — share <%= pet.pronouns.object %>, and everything filed under <%= pet.pronouns.possessive %> name</span>
       </label>
     <% end %>
   <% end %>

@@ -192,13 +192,16 @@ module Tool
       end
 
       # What's known about a pet, assembled once for every pet tool
-      # (D-pet-primitive): the record, the diet with its history, her
-      # medications and her recent care. All of it read rather than asked
+      # (D-pet-primitive): the record, the diet with its history, the
+      # medications and the recent care. All of it read rather than asked
       # for — the D16 rule, and the reason a `:pet` input is one dropdown.
       def pet_context(pet, viewer: user)
         parts = [ "Name: #{pet.name}", "Species: #{pet.species_label}" ]
         parts << "Breed: #{pet.breed}" if pet.breed.present?
-        parts << "Sex: #{pet.sex}" if pet.sex.present?
+        parts << "Sex: #{pet.sex_label}" if pet.sex_label
+        # So a model writes "he" about a male dog and "they" about a pet whose
+        # sex nobody recorded, instead of defaulting to one of them.
+        parts << "Refer to this pet as: #{pet.pronouns.subject}/#{pet.pronouns.object}/#{pet.pronouns.possessive}"
         parts << "Age: #{pet.age_phrase}" if pet.age_phrase
         parts << "Weight: #{pet.weight_kg} kg" if pet.weight_kg
         parts << "What the owner has noted:\n#{pet.notes.truncate(1_500)}" if pet.notes.present?

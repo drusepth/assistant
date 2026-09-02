@@ -2,7 +2,7 @@
     what it costs. Every number here is arithmetic over what the owner typed
     — nothing is estimated from breed or weight, and nothing is rated. %>
 <%= render Ui::CardComponent.new(title: "Food",
-      subtitle: shelf.monthly_cost_cents ? "About #{money_amount(shelf.monthly_cost_cents)} a month#{" for the foods that carry a price" if shelf.partial_cost?}." : "What she eats, and since when.") do |card| %>
+      subtitle: shelf.monthly_cost_cents ? "About #{money_amount(shelf.monthly_cost_cents)} a month#{" for the foods that carry a price" if shelf.partial_cost?}." : "What #{pet.pronouns.subject} #{pet.pronouns.verb("eats", "eat")}, and since when.") do |card| %>
   <% if own && shelf.current.any? %>
     <% card.with_actions do %>
       <%= link_to "Add a food", "#add-food", class: "btn btn-ghost btn-sm" %>
@@ -86,7 +86,7 @@
           </div>
           <label class="flex items-start gap-2 text-sm">
             <%= check_box_tag :replaces_current, "1", false, class: "mt-0.5 size-4 rounded accent-primary-600" %>
-            <span class="text-soft">This replaces what she's on now — move the old one to the diet history</span>
+            <span class="text-soft">This replaces what <%= pet.pronouns.is %> on now — move the old one to the diet history</span>
           </label>
           <%= form.submit "Add to the shelf", class: "btn btn-primary btn-sm" %>
         <% end %>

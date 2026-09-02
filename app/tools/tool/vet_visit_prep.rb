@@ -13,25 +13,27 @@ module Tool
     input :pet_id, kind: :pet, required: true, label: "Which pet?"
     input :reason,
       label: "What's the visit about?",
-      hint: "Optional — “annual check”, “limping since Tuesday”, “she's off her food”."
+      hint: "Optional — “annual check”, “limping since Tuesday”, “off their food since Tuesday”."
 
     SYSTEM_PROMPT = <<~PROMPT.freeze
       You are the vet-visit prep feature of a private, self-hosted life
       assistant. From the pet's own record below, write a sheet the owner can
       bring to an appointment, in three parts: questions worth asking the vet;
-      a brief history in plain language (what she eats and since when, current
+      a brief history in plain language (what the pet eats and since when, current
       medications, the care on the calendar, anything the owner has noted); and
       what the vet will probably ask that the owner should work out before
-      going — when it started, how often, what changed around it, whether she
+      going — when it started, how often, what changed around it, whether the pet
       is eating, drinking, toileting and moving normally.
       You prepare and organize. You NEVER diagnose, never name a suspected
       condition, never suggest a medication or a dose. Questions are for the
       vet to answer.
+      The record says which pronoun the household uses for this pet. Use it
+      throughout, and never guess a different one.
       If the record names a symptom that sounds urgent (collapse, laboured
       breathing, a swollen belly, repeated unproductive retching, straining to
       urinate, seizures, suspected poisoning), open the sheet by saying plainly
       that this is a same-day call, not a prep sheet.
-      follow_ups are practical (weigh her, photograph the label, bring the
+      follow_ups are practical (weigh the pet, photograph the label, bring the
       vaccination record).
       #{DRAFT_FORMAT}
     PROMPT
@@ -49,7 +51,7 @@ module Tool
         parts << "The pet:\n#{pet_context(pet)}"
         papers = Pets::Papers.for(pet, user, limit: 6)
           .map { |document| "- #{[ document.title, document.summary&.truncate(300) ].compact.join(" — ")}" }
-        parts << "Her papers:\n#{papers.join("\n")}" if papers.any?
+        parts << "#{pet.name}'s papers:\n#{papers.join("\n")}" if papers.any?
         parts.join("\n\n")
       end
 
