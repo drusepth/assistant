@@ -3,19 +3,30 @@
     as inputs with the proposed values already in them — rendered from the
     field DSL, so this one partial serves every kind. Locals: draft, context. %>
 <% kind = draft.landing_class %>
-<% duplicate = draft.duplicate? && kind.new(context).duplicate_of(draft.attributes) %>
+<% landing = kind.new(context) %>
+<% preview = landing.preview(draft.attributes) %>
+<% duplicate = draft.duplicate? && landing.duplicate_of(draft.attributes) %>
 <div class="card p-5 space-y-4" data-controller="landing-card">
   <div class="flex flex-wrap items-center gap-3">
     <label class="inline-flex cursor-pointer items-center gap-2">
       <%= check_box_tag "landings[#{draft.index}][keep]", "1", draft.keep?,
             class: "size-5 rounded accent-primary-600", data: { action: "landing-card#toggle", landing_card_target: "keep" } %>
-      <span class="text-sm font-semibold text-ink"><%= draft.attributes["title"] || draft.attributes["name"] || kind.label.capitalize %></span>
+      <span class="text-sm font-semibold text-ink"><%= preview.title.presence || kind.label.capitalize %></span>
     </label>
     <span class="chip chip-inferred"><%= landing_chip_text(draft, context) %></span>
     <% if context.filing.any? %>
       <span class="text-xs text-soft">filed under <%= (context.filing + kind.new(context).default_sections).uniq.map(&:qualified_name).to_sentence %></span>
     <% end %>
   </div>
+
+  <% if kind.amends %>
+    <%# An amendment: what the record says now, and what it would say. %>
+    <% if preview.detail.present? %>
+      <p class="whitespace-pre-line text-sm text-ink"><%= preview.detail %></p>
+    <% else %>
+      <p class="text-sm text-soft">Nothing here differs from the record as it stands.</p>
+    <% end %>
+  <% end %>
 
   <% if duplicate %>
     <p class="text-sm text-soft">

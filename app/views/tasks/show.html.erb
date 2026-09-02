@@ -15,6 +15,7 @@
 
 <%= turbo_stream_from @conversation if @conversation %>
 
+<%= render "shared/provenance", item: @task %>
 <div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
     <%= render Ui::CardComponent.new(title: "Details") do %>

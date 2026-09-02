@@ -191,6 +191,36 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='landings[1][keep]'][checked]"
   end
 
+  test "an amendment card shows old → new, and saving it updates the record rather than adding one" do
+    rex = create_pet(user: users(:one), weight_kg: 31.2)
+    document = users(:one).documents.create!(title: "Vet discharge sheet", analysis_status: "analyzed")
+    document.update!(landings: [
+      { "kind" => "pet_facts", "fingerprint" => "pet_facts:rex:32-6", "status" => "proposed",
+        "attributes" => { "pet" => rex.section.slug, "weight_kg" => "32.6" } }
+    ])
+
+    get review_document_path(document)
+    assert_response :success
+    assert_match "Weight: 31.2 kg → 32.6 kg", response.body
+    assert_select "select[name='landings[0][attributes][pet]'] option[selected][value=?]", rex.section.slug
+
+    assert_no_difference "Pet.count" do
+      post land_document_path(document), params: { landings: { "0" => { keep: "1", attributes: { pet: rex.section.slug, weight_kg: "32.8" } } } }
+    end
+    assert_equal 32.8, rex.reload.weight_kg.to_f, "the edit on the card won"
+    assert_equal [ rex ], document.reload.produced_items
+  end
+
+  test "a row saved from a document says where it came from" do
+    document = users(:one).documents.create!(title: "Vet discharge sheet")
+    event = users(:one).events.create!(title: "Rex — vaccinations", starts_at: Time.current)
+    document.document_items.create!(item: event, fingerprint: "event:x")
+
+    get event_path(event)
+    assert_match "From", response.body
+    assert_select "a[href=?]", document_path(document), text: "Vet discharge sheet"
+  end
+
   test "applying a suggestion tags the document and consumes the suggestion" do
     document = users(:one).documents.create!(title: "Lease",
       suggested_sections: [ "renting", "money" ], analysis_status: "analyzed", summary: "A lease.")

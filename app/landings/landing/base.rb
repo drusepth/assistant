@@ -30,6 +30,9 @@ module Landing
     Preview = Data.define(:kind, :title, :detail, :date)
 
     class_attribute :description, :produces, instance_accessor: false, default: nil
+    # An amendment kind updates a row the ref names instead of creating one;
+    # the review card shows its preview's old → new lines.
+    class_attribute :amends, instance_accessor: false, default: false
     class_attribute :field_definitions, instance_accessor: false, default: []
 
     class << self
@@ -168,8 +171,15 @@ module Landing
       end
 
       def tag(record, sections)
-        record.sections = (Array(sections) + default_sections).uniq
+        record.sections = (Array(sections) + default_sections).uniq if record.respond_to?(:sections=)
         record
+      end
+
+      # A landing about a pet is filed under her lens — "about Rex" is a tag
+      # (D-pet-primitive), so the pet page and everything-about-Rex see it.
+      def with_pet(sections, attributes)
+        pet = attributes["pet"].present? && context.resolve(:pet, attributes["pet"])
+        pet ? (Array(sections) + [ pet.section ]).uniq : Array(sections)
       end
   end
 end

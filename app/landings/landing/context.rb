@@ -49,12 +49,25 @@ module Landing
       "#{heading}:\n#{options.map { |label, key| "#{key} — #{label}" }.join("\n")}"
     end
 
+    # ── Closed sets ──────────────────────────────────────────────────
+
+    # Every care kind an event of this user's could be: their own radar's
+    # kinds (tuned), each visible pet's, and "none" for the events that are
+    # health-tagged but not visits. [label, key] pairs, keyed uniquely.
+    def care_kind_options
+      @care_kind_options ||= begin
+        kinds = Health::CareRadar.new(user).kinds + pets.flat_map { |pet| Pets::CareKinds.for(pet) }
+        options = kinds.uniq(&:key).map { |kind| [ kind.label, kind.key ] }
+        options << [ "Not a visit (a due date, a refill)", Health::CareRadar::EXCLUDED ]
+      end
+    end
+
     def pets
-      @pets ||= Pet.visible_to(user).active.includes(:section).limit(MAX_LISTED).to_a
+      @pets ||= ::Pet.visible_to(user).active.includes(:section).limit(MAX_LISTED).to_a
     end
 
     def people
-      @people ||= Person.visible_to(user).order(:name).limit(MAX_LISTED).to_a
+      @people ||= ::Person.visible_to(user).order(:name).limit(MAX_LISTED).to_a
     end
 
     private

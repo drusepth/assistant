@@ -10,7 +10,7 @@
 # Registered here, on the Tool::SLUGS pattern, so the registry is code —
 # first-party only (D11) — and the drift guard in test/landings can read it.
 module Landing
-  KINDS = %w[ event task note person ].freeze
+  KINDS = %w[ event task note person medication allergy pet_facts pet_food ].freeze
 
   # Primitives paper does not produce, each with the reason (INTAKE_PLAN
   # §2). The registry test holds every key of Users::Export::MODELS to one
@@ -28,10 +28,7 @@ module Landing
     "recipe_books" => "curation, as albums",
     "spending_accounts" => "an account is set up, not extracted",
     "budget_categories" => "envelopes are the user's own budget decisions",
-    "spending_rules" => "the user's explicit rules (D-no-keyword-logic), never inferred",
-    # Until W3 lands the pet kinds (INTAKE_PLAN §8).
-    "pets" => "W3: pet_facts amends a pet's weight, microchip and vet",
-    "pet_foods" => "W3: pet_food from a discharge sheet's prescription diet"
+    "spending_rules" => "the user's explicit rules (D-no-keyword-logic), never inferred"
   }.freeze
 
   # The most a single document may propose. A discharge sheet is six or
