@@ -54,6 +54,32 @@ class DocumentsController < ApplicationController
     end
   end
 
+  # The review page (D-document-intake): what the document proposes, as
+  # prefilled, editable cards. Owner-only — the landings would be the
+  # owner's rows.
+  def review
+    @document = Current.user.documents.find(params[:id])
+    @drafts = @document.landing_drafts(landing_context).select { |draft| draft.status == "proposed" }
+  end
+
+  # The Save click. Every kept card goes back through its kind; a card that
+  # fails re-renders the page with its error in place and nothing lands.
+  def land
+    @document = Current.user.documents.find(params[:id])
+    result = Documents::Land.new(document: @document, user: Current.user,
+      submissions: params.fetch(:landings, {}).permit!).call
+
+    if result.ok?
+      count = result.saved.size
+      notice = count.zero? ? "Nothing saved — the file stays in the vault." :
+        "Saved #{count} #{"thing".pluralize(count)} from “#{@document.title}”."
+      redirect_to @document, notice: notice
+    else
+      @drafts = result.drafts
+      render :review, status: :unprocessable_entity
+    end
+  end
+
   def apply_suggestion
     @document = Current.user.documents.find(params[:id])
     section = Section.find_by!(slug: params.expect(:slug))
@@ -66,6 +92,10 @@ class DocumentsController < ApplicationController
   private
     def set_own_document
       @document = Current.user.documents.find(params[:id])
+    end
+
+    def landing_context
+      Landing::Context.new(user: Current.user, document: @document)
     end
 
     def document_params

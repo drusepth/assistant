@@ -92,6 +92,8 @@ Rails.application.routes.draw do
     member do
       post :analyze
       patch :apply_suggestion
+      get :review
+      post :land
     end
   end
   namespace :people do

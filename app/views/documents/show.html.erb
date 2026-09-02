@@ -21,10 +21,42 @@
         the picture above the facts, so the summary can be checked against
         the paper without a download. A bounded variant, never the original. %>
     <% if @document.image? %>
-      <div class="card overflow-hidden">
+      <div class="card card-flush overflow-hidden">
         <%= image_tag url_for(@document.file.variant(resize_to_limit: [ 1200, 1200 ], format: :webp, saver: { quality: 85, strip: true })),
               alt: @document.title, class: "mx-auto max-h-[36rem] w-auto" %>
       </div>
+    <% end %>
+
+    <%# What the document proposes (D-document-intake): the front door to the
+        review page while anything is still waiting, and the record of what
+        was saved from it once something has. %>
+    <% if own && @document.landings_to_review? %>
+      <% count = @document.proposed_landings.size %>
+      <%= render Ui::CardComponent.new(title: "Worth saving somewhere?",
+            subtitle: "The reader found #{count} #{"thing".pluralize(count)} in here that could go on the calendar, in your notes, or in the Address Book.") do |card| %>
+        <% card.with_actions { link_to "Review #{count}", review_document_path(@document), class: "btn btn-primary btn-sm" } %>
+        <ul class="space-y-1 text-sm text-ink">
+          <% @document.proposed_landings.first(6).each do |entry| %>
+            <li class="flex items-center gap-2">
+              <span class="chip chip-inferred"><%= landing_kind_label(entry["kind"]) %></span>
+              <span class="truncate"><%= entry.dig("attributes", "title") || entry.dig("attributes", "name") %></span>
+            </li>
+          <% end %>
+        </ul>
+        <p class="mt-3 text-xs text-soft">Nothing is saved until you say so on the review page.</p>
+      <% end %>
+    <% end %>
+    <% if (produced = @document.produced_items).any? %>
+      <%= render Ui::CardComponent.new(title: "Saved from this document", count: produced.size, padded: false) do %>
+        <div class="divide-y divide-edge">
+          <% produced.each do |item| %>
+            <div class="flex items-center gap-3 px-4 py-2.5">
+              <span class="chip chip-inferred"><%= item.model_name.human.downcase %></span>
+              <%= link_to item.try(:title) || item.try(:name), item, class: "min-w-0 truncate text-sm text-ink hover:text-primary-700" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
     <% end %>
 
     <%= render Ui::CardComponent.new(title: "Details") do %>

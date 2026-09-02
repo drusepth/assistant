@@ -90,6 +90,80 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     assert_equal [ sections(:career) ], event.sections.to_a
   end
 
+  # ── Landings (D-document-intake) ───────────────────────────────────────
+
+  test "what the document proposes is validated and stored, and nothing lands" do
+    @document.sections << sections(:health)
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A discharge sheet.", sections: [ "health" ],
+        landings: [
+          { kind: "event", title: "Rex — vaccinations", on: "2026-08-12", extra: "dropped" },
+          { kind: "person", name: "Dr. Alvarez", relationship: "Vet" },
+          { kind: "nonsense", title: "x" }
+        ]
+      }.to_json } } ] }.to_json
+    )
+
+    assert_no_difference [ -> { Event.count }, -> { Person.count } ] do
+      AnalyzeDocumentJob.perform_now(@document)
+    end
+
+    landings = @document.reload.landings
+    assert_equal %w[ event person ], landings.map { |entry| entry["kind"] }
+    assert_equal %w[ proposed proposed ], landings.map { |entry| entry["status"] }
+    assert_equal({ "title" => "Rex — vaccinations", "on" => "2026-08-12" }, landings.first["attributes"])
+    assert @document.landings_to_review?
+    # The prompt carried the registry and the document's filing.
+    assert_requested(:post, ENDPOINT) do |request|
+      body = JSON.parse(request.body)
+      body["messages"].first["content"].include?("- event — ") &&
+        body["messages"].last["content"].include?("Filed under: Health")
+    end
+  end
+
+  test "re-analysis keeps what the user already ruled on and never re-proposes it" do
+    @document.update!(landings: [
+      { "kind" => "event", "fingerprint" => "event:rex-vaccinations:2026-08-12", "status" => "saved",
+        "attributes" => { "title" => "Rex — vaccinations", "on" => "2026-08-12" } },
+      { "kind" => "task", "fingerprint" => "task:call-the-vet", "status" => "skipped", "attributes" => { "title" => "Call the vet" } },
+      { "kind" => "note", "fingerprint" => "note:old-proposal", "status" => "proposed", "attributes" => { "title" => "Old proposal" } }
+    ])
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "Again.", sections: [],
+        landings: [
+          { kind: "event", title: "Rex — vaccinations", on: "2026-08-12" },
+          { kind: "task", title: "Call the vet" },
+          { kind: "note", title: "New fact" }
+        ]
+      }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    landings = @document.reload.landings
+    assert_equal [ %w[ event saved ], %w[ task skipped ], %w[ note proposed ] ],
+      landings.map { |entry| [ entry["kind"], entry["status"] ] }
+    assert_equal "New fact", landings.last.dig("attributes", "title"), "the stale proposal was replaced"
+  end
+
+  test "the reader's title replaces a file-name title and never a typed one" do
+    stub_llm(summary: "ok", sections: [], title: "Rex — vet discharge sheet")
+
+    named = users(:one).documents.new(title: "")
+    named.file.attach(io: StringIO.new("x"), filename: "IMG_4032.txt", content_type: "text/plain")
+    named.save!
+    assert_equal "IMG 4032", named.title
+    AnalyzeDocumentJob.perform_now(named)
+    assert_equal "Rex — vet discharge sheet", named.reload.title
+
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_equal "Lease agreement", @document.reload.title
+  end
+
   test "documents with no pay-stub facts store an empty facts hash" do
     stub_llm(summary: "A lease.", sections: [ "renting" ])
 
@@ -244,10 +318,10 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
   end
 
   private
-    def stub_llm(summary:, sections:)
+    def stub_llm(summary:, sections:, title: nil)
       stub_request(:post, ENDPOINT).to_return(
         status: 200,
-        body: { choices: [ { message: { content: { summary: summary, sections: sections }.to_json } } ] }.to_json
+        body: { choices: [ { message: { content: { summary: summary, sections: sections, title: title }.compact.to_json } } ] }.to_json
       )
     end
 end

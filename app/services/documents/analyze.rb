@@ -15,7 +15,8 @@ module Documents
     STORED_TEXT_LIMIT = 20_000
     MAX_SUGGESTIONS = 3
 
-    Result = Data.define(:summary, :section_slugs, :extracted_text, :facts)
+    Result = Data.define(:summary, :section_slugs, :extracted_text, :facts, :landings, :title)
+    TITLE_LIMIT = 120
 
     # Career-aware extraction (D-career-signal, docs/CAREER.md §1): the fields kept from
     # a pay-stub read. Code whitelists, so the stored JSON never grows keys
@@ -26,6 +27,7 @@ module Documents
     def initialize(document:, profile:)
       @document = document
       @profile = profile
+      @context = Landing::Context.new(user: document.user, document: document)
     end
 
     def call
@@ -36,7 +38,9 @@ module Documents
         summary: response["summary"].to_s.strip,
         section_slugs: valid_slugs(response["sections"]),
         extracted_text: stored_text(content, response),
-        facts: extracted_facts(response)
+        facts: extracted_facts(response),
+        landings: Landing.propose(response["landings"], @context),
+        title: response["title"].to_s.squish.truncate(TITLE_LIMIT).presence
       )
     end
 
@@ -52,11 +56,18 @@ module Documents
         <<~PROMPT
           You are the document-understanding feature of a private, self-hosted life assistant.
           Summarize documents in plain, jargon-free language for someone without professional
-          advisors, and suggest which life sections the document belongs to.
-          Respond with a JSON object: {"summary": "...", "sections": ["slug", ...]#{', "text": "..."' if content.images?}}.
+          advisors, suggest which life sections the document belongs to, and list what in the
+          document belongs somewhere else in the household's records.
+          Respond with a JSON object: {"summary": "...", "title": "...", "sections": ["slug", ...],
+          "landings": [{"kind": "...", ...}, ...]#{', "text": "..."' if content.images?}}.
           The summary is 2-4 sentences; mention any deadlines, amounts, or required actions.
+          The title is a short, specific name for the document (at most 8 words), e.g.
+          "Rex — vet discharge sheet, 12 Aug 2026".
           Choose at most #{MAX_SUGGESTIONS} sections, only from the provided list, ordered by relevance.
           #{transcription_instruction if content.images?}
+
+          #{Landing.prompt_block(@context)}
+
           If — and only if — the document is a pay stub or paycheck record, also include
           "pay_stub": {"employer": "...", "pay_date": "YYYY-MM-DD", "period_start": "YYYY-MM-DD",
           "period_end": "YYYY-MM-DD", "rate": "hourly pay rate", "hours": "...", "overtime_hours": "...",
@@ -82,8 +93,13 @@ module Documents
       end
 
       def user_prompt(text)
-        parts = [ "Title: #{@document.title}" ]
+        parts = [ "Today's date: #{Date.current.iso8601}", "Title: #{@document.title}" ]
         parts << "Description: #{@document.description}" if @document.description.present?
+        # Where the document was filed is what it is *about* — "Filed about:
+        # Rex" is how a discharge sheet's landings know whose they are.
+        if (filed = @context.filing).any?
+          parts << "Filed under: #{filed.map(&:qualified_name).join(", ")}"
+        end
         parts << "Available sections (slug — meaning):\n#{taxonomy}"
         parts << if text.present?
           "Document text:\n#{text.truncate(PROMPT_TEXT_LIMIT)}"

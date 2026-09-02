@@ -58,18 +58,16 @@ class ToolRun < ApplicationRecord
 
   # ── Prepared work (D-agent-prepared-work) ────────────────────────────
 
-  Landing = Data.define(:kind, :title, :detail, :date)
-
   # What a prepared run would create, for the review page to show before
-  # the user commits to any of it. Re-read from the payload each time
-  # rather than cached, since a discard can empty it.
+  # the user commits to any of it — each intent previewed by its landing
+  # kind (D-landing-registry). Re-read from the payload each time rather
+  # than cached, since a discard can empty it.
   def landings
     Array(output["landings"]).filter_map do |landing|
       next unless landing.is_a?(Hash) && landing["title"].present?
 
-      Landing.new(kind: landing["kind"], title: landing["title"],
-        detail: landing["body"].presence || landing["notes"].presence || landing["description"].presence,
-        date: landing["due_on"].presence || landing["on"].presence)
+      kind = ::Landing.find(landing["kind"]) or next
+      kind.new(landing_context).preview(landing.except("kind", "sections"))
     end
   end
 
@@ -139,37 +137,25 @@ class ToolRun < ApplicationRecord
   end
 
   private
-    # One staged intent becomes one row. Unknown kinds are dropped rather
-    # than raised on: the payload was written by an earlier version of the
-    # app as easily as by this one, and a half-landed draft is worse than a
-    # slightly short one.
+    # One staged intent becomes one row, through the landing registry
+    # (D-landing-registry) — the same validation and write a document's
+    # landing gets. Unknown kinds and intents that no longer validate are
+    # dropped rather than raised on: the payload was written by an earlier
+    # version of the app as easily as by this one, and a half-landed draft
+    # is worse than a slightly short one.
     def land_one(landing)
       return unless landing.is_a?(Hash) && landing["title"].present?
 
-      item = case landing["kind"]
-      when "note"
-        user.notes.create!(title: landing["title"], body: landing["body"])
-      when "task"
-        due_on = parsed_date(landing["due_on"])
-        user.tasks.create!(title: landing["title"], notes: landing["notes"], due_on: due_on,
-          bucket: due_on && due_on <= Date.current ? :today : :later)
-      when "event"
-        on = parsed_date(landing["on"]) or return
-        user.events.create!(title: landing["title"], description: landing["description"],
-          starts_at: on.in_time_zone, all_day: true)
-      end
-      return unless item
+      kind = ::Landing.find(landing["kind"]) or return
+      instance = kind.new(landing_context)
+      attributes = instance.validate(landing.except("kind", "sections")) or return
 
-      item.sections = Section.where(id: landing["sections"])
+      item = instance.land!(attributes, sections: Section.where(id: landing["sections"]))
       tool_run_items.create!(item: item)
       item
     end
 
-    def parsed_date(value)
-      Date.iso8601(value.to_s) if value.present?
-    rescue Date::Error
-      nil
-    end
+    def landing_context = @landing_context ||= ::Landing::Context.new(user: user)
 
     def required_inputs_present
       return unless (tool = Tool.find(tool_slug))

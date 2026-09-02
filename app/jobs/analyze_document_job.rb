@@ -14,6 +14,12 @@ class AnalyzeDocumentJob < ApplicationJob
       extracted_text: result.extracted_text,
       extracted_facts: result.facts,
       suggested_sections: result.section_slugs,
+      # What the document proposes (D-document-intake): waits on the
+      # review page; nothing below lands a row.
+      landings: document.merge_landings(result.landings),
+      # A title the reader chose beats "IMG 4032" and never beats one a
+      # person typed (D16).
+      title: document.filename_titled? && result.title ? result.title : document.title,
       analysis_status: :analyzed,
       analysis_error: nil
     )

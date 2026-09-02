@@ -1,0 +1,58 @@
+<%# The review page (D-document-intake): what the document proposes, as
+    prefilled, editable cards. Nothing on this page exists as a row yet; the
+    copy's one job is to keep that true in the reader's mind. %>
+<% context = Landing::Context.new(user: Current.user, document: @document) %>
+
+<%= render Ui::PageHeaderComponent.new(title: "What's in this document",
+      subtitle: "#{@document.title} — nothing is saved yet. Read it, fix anything the reader got wrong, then decide.") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Back to the document", @document, class: "btn btn-secondary" %>
+  <% end %>
+<% end %>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <div class="space-y-4 lg:col-span-1">
+    <%# The evidence: every card on the right should be checkable against this. %>
+    <% if @document.image? %>
+      <div class="card card-flush overflow-hidden">
+        <%= image_tag url_for(@document.file.variant(resize_to_limit: [ 1200, 1200 ], format: :webp, saver: { quality: 85, strip: true })),
+              alt: @document.title, class: "w-full" %>
+      </div>
+    <% end %>
+    <% if @document.summary.present? %>
+      <%= render Ui::CardComponent.new(title: "What the reader saw") do %>
+        <p class="whitespace-pre-wrap text-sm text-ink"><%= @document.summary %></p>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="space-y-4 lg:col-span-2">
+    <% if @drafts.any? %>
+      <%= form_with url: land_document_path(@document), method: :post, class: "space-y-4", data: { turbo: false } do |form| %>
+        <% @drafts.each do |draft| %>
+          <%= render "landings/card", draft: draft, context: context %>
+        <% end %>
+
+        <div class="card p-5 space-y-3">
+          <div class="row-actions">
+            <%= form.submit "Save the ticked ones", class: "btn btn-primary", name: nil %>
+            <%= link_to "Skip all", land_document_path(@document), class: "btn btn-ghost",
+                  data: { turbo_method: :post, turbo_confirm: "Skip everything? The file stays in the vault; nothing else is saved, and these won't be proposed again." } %>
+          </div>
+          <p class="text-xs text-soft">
+            Saving files each ticked card where its own page expects it — the calendar, your tasks, your notes, the
+            Address Book — and notes where it came from. Unticked cards are remembered as skipped. The file stays
+            in the vault either way.
+          </p>
+        </div>
+      <% end %>
+    <% else %>
+      <%= render Ui::EmptyStateComponent.new(
+            title: "Nothing left to review",
+            description: "Everything this document proposed has been saved or skipped."
+          ) do |empty| %>
+        <% empty.with_action { link_to "Back to the document", @document, class: "btn btn-primary" } %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
