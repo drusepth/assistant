@@ -13,7 +13,8 @@ the rows must be one object, or they drift.** Today they are three objects in
 three files, none of them shared, and it has already drifted (§1.2).
 
 Decisions here are logged as **D-landing-registry** and **D-document-intake**.
-Open questions are **Q-intake-stated-due** and **Q-intake-edit-in-review**.
+**Q-intake-stated-due** is open; **Q-intake-edit-in-review** was resolved
+before the build started (§5: the review page edits, not just toggles).
 
 **Status: designed 2026-09, not started.** §8 is the wave plan.
 
@@ -117,7 +118,7 @@ class Landing::Event < Landing::Base
 end
 ```
 
-Four things fall out of the declaration, and none of them is written twice:
+Five things fall out of the declaration, and none of them is written twice:
 
 - **The prompt block.** `Landing.prompt_block(context)` renders every kind as
   one paragraph — its description, its fields, and for `:choice` and `:ref`
@@ -136,6 +137,14 @@ Four things fall out of the declaration, and none of them is written twice:
   exists.
 - **The preview.** `preview` gives the review page and `_prepared.html.erb`
   the same `Landing` value object `ToolRun#landings` already builds by hand.
+- **The form.** The same field list renders as inputs — text, textarea,
+  the native date picker with the D16 shortcut chips, a select over a
+  `:choice` field's closed set, a select over a `:ref` field's visible
+  records — through `ApplicationFormBuilder`, so no kind writes a form
+  partial. What the user submits goes back through the same `validate` as
+  the model's answer: an edited landing is checked against the closed set
+  by exactly the code that checked the proposed one, and a hand-typed value
+  that fails it is a form error, never a silent drop.
 
 **What a kind is not.** Not a new primitive, not a table, not a form: a kind
 is *how paper becomes a row that already has a model*. `Landing::Medication`
@@ -306,24 +315,34 @@ Anatomy, top to bottom:
 1. **The document** — the image or first page, its summary, and its filing.
    This is the page's evidence: every card below should be checkable against
    what is visibly on the paper.
-2. **The landings**, one card per entry, grouped by kind in registry order,
-   each with its checkbox (on), the kind's preview (title, detail, a chip:
-   "calendar · 12 Aug 2026", "medication", "amends Rex"), and the sections it
-   would be filed under. Amendments show old → new. A landing the
-   deterministic duplicate check flags (same kind, same fingerprint, already
-   a row this user can see — the same date and care kind on the same pet)
-   renders **unchecked** with the reason and a link to the existing row.
+2. **The landings**, one card per entry, grouped by kind in registry order.
+   Each card is a **prefilled form**, not a summary: its checkbox (on), a
+   chip naming what it becomes ("calendar · 12 Aug 2026", "medication",
+   "amends Rex"), then the kind's fields as inputs with the model's values
+   already in them — rendered from the field DSL (§2), so a date is the
+   date picker, a care kind is a select over the closed set, a pet is a
+   select over the household's pets. Fix the misread date, retitle the
+   event, pick the right pet, and save; there is no second trip to the
+   row's edit form for the things you could see were wrong while the paper
+   was in front of you. Amendments show the current value beside the
+   proposed one. A landing the deterministic duplicate check flags (same
+   kind, same fingerprint, already a row this user can see — the same date
+   and care kind on the same pet) renders **unchecked** with the reason and
+   a link to the existing row.
 3. **Save** and **Skip all**, with the `_prepared` copy: nothing is saved
    until you say so; skipping leaves the file exactly where it is.
 
-What it deliberately isn't, in v1: an editor. A wrong date is fixed in the
-row's own edit form after saving, where every field is (the D16 rule for
-mis-filed items). Inline editing before the click is Q-intake-edit-in-review
-and waits for real use to say which field is wrong often enough to earn it.
+The whole page is one form: every checked card's fields post together, each
+goes back through its kind's `validate`, and a card that fails re-renders
+with its error in place while the others wait — nothing lands until the
+whole page passes, so a typo in one date can't half-save the visit. Values
+the user changed are theirs from then on (D16's hand-set guard): the
+landed row carries them, and no categorize job second-guesses a date or a
+title typed on this page.
 
-On mobile the cards are the page; the checkbox is the row's tap target, and
-Save sits in the sticky bar the chat shell already uses (CHAT_PLAN's
-screen/panel split).
+On mobile the cards are the page; the checkbox is the card's header tap
+target and the fields sit beneath it, and Save sits in the sticky bar the
+chat shell already uses (CHAT_PLAN's screen/panel split).
 
 ---
 
@@ -377,7 +396,7 @@ independent of everything below.
 `Landing` + `Landing::Base` + the field DSL; `event`, `task`, `note`,
 `person`, and the document's own `title`; `documents.landings` and
 `document_items`; `Landing.prompt_block` in the analyze prompt; the review
-page; the duplicate flag; the drift-guard tests with the not-intake list.
+page with its DSL-rendered, editable cards; the duplicate flag; the drift-guard tests with the not-intake list.
 `ToolRun#land_one` moves onto the registry in the same wave — it's a
 seven-line change and the proof that the seam is shared. `pay_stub` moves in
 as the fact-shaped kind so `PAY_STUB_FIELDS` has one home.
@@ -412,7 +431,6 @@ calendar entries and contacts; W3 is the request.
   documents in v1, each read alone. A "pages" join on Document is a real
   later rung (the vault would want it for any scanned bundle) and waits for
   the single-page version to prove the page.
-- **Editing in the review** (Q-intake-edit-in-review).
 - **A stated due date beating the registry interval on the care radar**
   (Q-intake-stated-due). The vet's "next rabies 2029" is better information
   than "12 months from the last one", and the radar can't yet hold it.
@@ -444,7 +462,7 @@ calendar entries and contacts; W3 is the request.
 | Analysis | `app/services/documents/analyze.rb` (prompt assembly from the registry; validation into `documents.landings`) |
 | Saving | `app/services/documents/land.rb` (checked entries → `land!` in one transaction → `document_items`) |
 | Schema | `db/migrate/*_add_landings_to_documents.rb`, `*_create_document_items.rb` |
-| Review page | `DocumentsController#review`/`#land`, `app/views/documents/review.html.erb`, `app/views/landings/_<kind>.html.erb` previews |
+| Review page | `DocumentsController#review`/`#land`, `app/views/documents/review.html.erb`, `app/views/landings/_card.html.erb` (one partial: chip + DSL-rendered fields for any kind) |
 | Shared seams touched | `ToolRun#land_one` (W2), `Suggestion#materialize` (W4/W5), `Health::Coverage.match?` (W4) |
 | Tests | `test/landings/registry_test.rb` (the drift guard), `test/landings/<kind>_test.rb`, `test/jobs/analyze_document_job_test.rb`, `test/controllers/documents_controller_test.rb` |
 | Registries touched | `Users::Export::MODELS` (nothing new to export — `document_items` is provenance, not owned data; the drift test *reads* this list) |
