@@ -17,6 +17,16 @@
 
 <div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
+    <%# A photographed document is its own evidence (INTAKE_PLAN W1): show
+        the picture above the facts, so the summary can be checked against
+        the paper without a download. A bounded variant, never the original. %>
+    <% if @document.image? %>
+      <div class="card overflow-hidden">
+        <%= image_tag url_for(@document.file.variant(resize_to_limit: [ 1200, 1200 ], format: :webp, saver: { quality: 85, strip: true })),
+              alt: @document.title, class: "mx-auto max-h-[36rem] w-auto" %>
+      </div>
+    <% end %>
+
     <%= render Ui::CardComponent.new(title: "Details") do %>
       <dl class="space-y-3 text-sm">
         <% if @document.file.attached? %>

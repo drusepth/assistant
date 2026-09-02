@@ -14,6 +14,11 @@ class Document < ApplicationRecord
     queued: "queued", processing: "processing", analyzed: "analyzed", failed: "failed"
   }, prefix: :analysis
 
+  # A photographed or scanned document shows its picture on its page; a
+  # PDF or text file shows its facts. Delegated to the blob so a document
+  # with no file answers false rather than raising.
+  def image? = file.attached? && file.image?
+
   def analyzable_profile
     profile = user.household.model_profile
     profile if profile&.configured?

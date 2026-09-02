@@ -40,6 +40,19 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Not analyzed yet", response.body
   end
 
+  test "a photographed document shows its picture on its page" do
+    document = users(:one).documents.create!(title: "Vet report")
+    attach_image(document)
+
+    get document_path(document)
+    assert_response :success
+    assert_select "img[alt='Vet report']"
+
+    plain = users(:one).documents.create!(title: "Lease")
+    get document_path(plain)
+    assert_select "img[alt='Lease']", count: 0
+  end
+
   test "the document page and vault rows offer the decode-letter front door" do
     document = users(:one).documents.create!(title: "Scary envelope")
 

@@ -146,12 +146,91 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
   end
 
   test "unsupported file types fail without calling the provider" do
-    @document.file.attach(io: StringIO.new("pretend-bytes"), filename: "scan.png", content_type: "image/png")
+    @document.file.attach(io: StringIO.new("pretend-bytes"), filename: "archive.zip", content_type: "application/zip")
 
     AnalyzeDocumentJob.perform_now(@document)
 
     assert @document.reload.analysis_failed?
-    assert_match "image/png", @document.analysis_error
+    assert_match "application/zip", @document.analysis_error
+    assert_not_requested :post, ENDPOINT
+  end
+
+  # ── Reading images and scans (INTAKE_PLAN W1) ──────────────────────────
+
+  test "a PDF with a text layer is read as text, no vision needed" do
+    attach_pdf(@document, text: "Rent is due on the first")
+    stub_llm(summary: "A lease.", sections: [ "renting" ])
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_analyzed?
+    assert_match "Rent is due", @document.extracted_text
+    assert_requested(:post, ENDPOINT) do |request|
+      content = JSON.parse(request.body)["messages"].last["content"]
+      content.is_a?(String) && content.include?("Rent is due on the first")
+    end
+  end
+
+  test "an image without a vision model fails honestly, without calling the provider" do
+    attach_image(@document)
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_failed?
+    assert_match "can't read images", @document.analysis_error
+    assert_match "vision in Settings", @document.analysis_error
+    assert_not_requested :post, ENDPOINT
+  end
+
+  test "an image goes to a vision model as a page image, and the transcription becomes the document's text" do
+    model_profiles(:smith).update!(vision: true)
+    attach_image(@document)
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A vet's discharge sheet for Rex.", sections: [ "health" ],
+        text: "ANIMAL HOSPITAL\nPatient: Rex\nRabies booster given 12 Aug 2026"
+      }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    @document.reload
+    assert @document.analysis_analyzed?
+    assert_match "Rabies booster", @document.extracted_text
+    assert_requested(:post, ENDPOINT) do |request|
+      body = JSON.parse(request.body)
+      content = body["messages"].last["content"]
+      image = content.is_a?(Array) && content.find { |part| part["type"] == "image_url" }
+      image && image.dig("image_url", "url").start_with?("data:image/webp;base64,") &&
+        body["messages"].first["content"].include?("transcription")
+    end
+  end
+
+  test "a scanned PDF with no text layer is rendered to page images for a vision model" do
+    model_profiles(:smith).update!(vision: true)
+    attach_pdf(@document)
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: { summary: "A scan.", sections: [], text: "[unreadable]" }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_analyzed?
+    assert_requested(:post, ENDPOINT) do |request|
+      content = JSON.parse(request.body)["messages"].last["content"]
+      content.is_a?(Array) && content.count { |part| part["type"] == "image_url" } == 1
+    end
+  end
+
+  test "a scanned PDF without a vision model says which rung is missing" do
+    attach_pdf(@document)
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_failed?
+    assert_match "scan with no text", @document.analysis_error
     assert_not_requested :post, ENDPOINT
   end
 

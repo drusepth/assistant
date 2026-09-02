@@ -21,10 +21,10 @@ class AnalyzeDocumentJob < ApplicationJob
     # tagged a document themselves, suggestions stay suggest-and-click.
     document.sections = document.suggested_section_records if document.sections.none?
     record_comp_change(document)
-  rescue Llm::Error, Documents::Analyze::UnsupportedFileType => e
+  rescue Llm::Error, Documents::Read::Unreadable => e
     # A retry is coming: leave the document showing "processing" rather than
-    # flashing a failure the next attempt may well clear. (An unsupported file
-    # type is never transient, so it lands here on the first pass.)
+    # flashing a failure the next attempt may well clear. (An unreadable file
+    # is never transient, so it lands here on the first pass.)
     raise if will_retry?(e)
 
     document.update!(analysis_status: :failed, analysis_error: e.message)
