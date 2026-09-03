@@ -45,6 +45,12 @@
             <dd class="min-w-0 wrap-anywhere"><%= @person.address %></dd>
           </div>
         <% end %>
+        <% if @person.pronoun.present? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Pronouns</dt>
+            <dd class="min-w-0 wrap-anywhere"><%= Pronouns::LABELS[@person.pronoun] %></dd>
+          </div>
+        <% end %>
         <% if @person.birthday %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Birthday</dt>

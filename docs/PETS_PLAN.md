@@ -62,7 +62,9 @@ prompt's good intentions.
 Two halves.
 
 **A `Pet` record**, because a pet has attributes nothing else can hold: species,
-breed, sex, date of birth (usually estimated), adoption date, colour and
+breed, sex (a closed set, because the app's own copy reads it to pick a
+pronoun — D-pronouns), whether they're spayed or neutered, date of birth
+(usually estimated), adoption date, colour and
 markings, microchip number, an avatar, and the vet. It joins the shared pool on
 the D5 contract — `belongs_to :user`, `include Visible`, `include Sectionable`,
 `include Avatarable` — so sharing, tagging, and the face machinery all apply

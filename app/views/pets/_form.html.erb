@@ -8,8 +8,27 @@
     <%= form.field :breed, placeholder: "Golden retriever, tabby, lop…" %>
   </div>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%= form.field :sex, placeholder: "Female, male, neutered male…" %>
+    <%# Sex is what the app reads to decide whether to write "she", "he" or
+        "they" about this pet (D-pronouns), which is why the hint says so —
+        leaving it blank is a real answer, not an unfinished form. The
+        override beside it is the household that calls their male cat "they"
+        not being argued with. %>
+    <%= form.field :sex, hint: "Also picks the pronoun the app uses, unless you set one beside it." do %>
+      <%= form.select :sex, Pet::SEXES.map { |slug| [ Pet::SEX_LABELS[slug], slug ] }, include_blank: "Not recorded" %>
+    <% end %>
+    <%= form.field :pronoun, label_text: "Refer to #{pet.name.presence || "them"} as",
+          hint: "Only if the sex beside it gets it wrong." do %>
+      <%= form.select :pronoun, Pronouns.options, include_blank: "Follow the sex" %>
+    <% end %>
+  </div>
+  <label class="flex items-start gap-2 text-sm">
+    <%= form.check_box :neutered, class: "mt-0.5" %>
+    <span class="text-soft">Spayed or neutered</span>
+  </label>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <%= form.field :color, label_text: "Colour and markings", placeholder: "Black with a white chest" %>
+    <%= form.field :microchip, label_text: "Microchip number" %>
   </div>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -24,11 +43,8 @@
     <span class="text-soft">That date of birth is an estimate</span>
   </label>
 
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%= form.field :weight_kg, as: :number_field, label_text: "Weight (kg)", step: "0.01",
-          hint: "The current number, for vet prep — not a log." %>
-    <%= form.field :microchip, label_text: "Microchip number" %>
-  </div>
+  <%= form.field :weight_kg, as: :number_field, label_text: "Weight (kg)", step: "0.01",
+        hint: "The current number, for vet prep — not a log." %>
 
   <%= form.field :vet_id, label_text: "Vet", hint: "An ordinary contact, so you can call them from here." do %>
     <%= form.collection_select :vet_id, Person.visible_to(Current.user).order(:name), :id, :name, include_blank: "No vet on file" %>
@@ -39,7 +55,7 @@
   <% if pet.persisted? %>
     <%= render layout: "shared/advanced", locals: { hint: "The end of a life, or a rehoming." } do %>
       <div class="space-y-4">
-        <p class="hint">Either date stops every reminder about <%= pet.name %> and moves her to Remembered. Nothing is deleted — her photos, papers and history stay exactly where they are.</p>
+        <p class="hint">Either date stops every reminder about <%= pet.name %> and moves <%= pet.pronouns.object %> to Remembered. Nothing is deleted — <%= pet.pronouns.possessive %> photos, papers and history stay exactly where they are.</p>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <%= form.field :died_on, as: :date_field, label_text: "Died" %>
           <%= form.field :left_on, as: :date_field, label_text: "Rehomed" %>
@@ -52,7 +68,7 @@
     <% if Current.user.household.users.where.not(id: Current.user.id).exists? %>
       <label class="flex items-start gap-2 text-sm">
         <%= check_box_tag :share_with_household, "1", true, class: "mt-0.5" %>
-        <span class="text-soft">Everyone in the household looks after this pet — share her, and everything filed under her name</span>
+        <span class="text-soft">Everyone in the household looks after this pet — share <%= pet.pronouns.object %>, and everything filed under <%= pet.pronouns.possessive %> name</span>
       </label>
     <% end %>
   <% end %>

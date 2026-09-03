@@ -17,7 +17,7 @@
   <%# Nothing nags about a pet who is gone, and nothing was deleted. %>
   <div class="card mb-6 border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
     <%= @pet.died? ? "#{@pet.name} died #{@pet.died_on.strftime("%B %-d, %Y")}." : "#{@pet.name} was rehomed #{@pet.left_on.strftime("%B %-d, %Y")}." %>
-    Her reminders have stopped. Everything filed under her name is still here.
+    <%= @pet.pronouns.possessive.capitalize %> reminders have stopped. Everything filed under <%= @pet.pronouns.possessive %> name is still here.
   </div>
 <% end %>
 
@@ -25,10 +25,10 @@
   <div class="space-y-6 lg:col-span-2">
     <%= render Ui::CardComponent.new(title: "Details") do %>
       <dl class="space-y-3 text-sm">
-        <% if @pet.sex.present? %>
+        <% if @pet.sex_label %>
           <div class="flex gap-2">
             <dt class="w-28 shrink-0 text-soft">Sex</dt>
-            <dd class="min-w-0 wrap-anywhere"><%= @pet.sex %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= @pet.sex_label %></dd>
           </div>
         <% end %>
         <% if @pet.color.present? %>
@@ -125,7 +125,7 @@
           calendar when each member shares their own side. Nothing implies it;
           this is the button that makes it one click. %>
       <%= render Ui::CardComponent.new(title: "Your #{@pet.name} items",
-            subtitle: "#{@pet.name} was shared with you. What you file under her name is still private until you share it.") do %>
+            subtitle: "#{@pet.name} was shared with you. What you file under #{@pet.pronouns.possessive} name is still private until you share it.") do %>
         <%= button_to "Share my #{@pet.name} items with the household",
               access_grants_path(subject_type: "Section", subject_id: @pet.section_id, everyone: 1),
               method: :post, class: "btn btn-secondary btn-sm w-full" %>

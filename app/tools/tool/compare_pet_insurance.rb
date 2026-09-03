@@ -13,7 +13,7 @@ module Tool
 
     input :policy_a_id, kind: :document, required: true, label: "First policy document"
     input :policy_b_id, kind: :document, required: true, label: "Second policy document"
-    input :pet_id, kind: :pet, label: "Which pet?", hint: "Optional — her age and breed change which clauses matter."
+    input :pet_id, kind: :pet, label: "Which pet?", hint: "Optional — their age and breed change which clauses matter."
 
     MAX_POLICY_CHARS = 9_000
 
@@ -38,7 +38,7 @@ module Tool
       chronic condition diagnosed at five and treated for life, and an old age.
       End with the questions to ask the insurer before buying.
       #{DRAFT_FORMAT}
-      follow_ups are small concrete actions ("ask whether her existing skin
+      follow_ups are small concrete actions ("ask whether the pet's existing skin
       condition counts as pre-existing", "check the per-condition cap").
     PROMPT
 

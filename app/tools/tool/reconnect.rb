@@ -22,6 +22,8 @@ module Tool
       under it, 3 bullet talking points drawn from what's known about the
       person. Sound like a person, not a card: specific over generic, no
       guilt about the gap, one genuine question they'd actually want to answer.
+      The record says which pronoun the user uses for this person. Use it
+      throughout, and never guess one from a name.
       follow_ups: at most one — send it.
       #{DRAFT_FORMAT}
     PROMPT
