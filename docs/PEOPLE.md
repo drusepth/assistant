@@ -195,6 +195,18 @@ What-do-I-say need the identical block, so extract it into a shared helper on
 consumers, one assembly, and when Q17 links land the helper is the single
 place shared-history context gets added.
 
+**And the one thing that assembly must never leave out: the pronoun**
+(D-pronouns). Every tool here writes prose the user then *sends to that
+person*, so a model left to infer "she" or "he" from a name is guessing in the
+one place a guess is most expensive. `person_context` carries
+`Refer to them as: she/her/her` on every call — including when nothing is
+recorded, where the line reads `they/them/their`, because an absent line is
+exactly what invites the fallback. The `pronoun` column behind it is the
+narrow exception to the anti-CRM rule in §2: one closed-set select, blank by
+default, that exists because a *draft* consumes it — not because a record
+looks tidier filled in. Anything that describes a person to a model adds this
+line or it is not finished.
+
 ## 5. Agent (D20 watchers — SQL-first)
 
 - ✅ **Stay in touch** (built, Q8) — unchanged.

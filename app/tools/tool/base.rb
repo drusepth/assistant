@@ -201,7 +201,7 @@ module Tool
         parts << "Sex: #{pet.sex_label}" if pet.sex_label
         # So a model writes "he" about a male dog and "they" about a pet whose
         # sex nobody recorded, instead of defaulting to one of them.
-        parts << "Refer to this pet as: #{pet.pronouns.subject}/#{pet.pronouns.object}/#{pet.pronouns.possessive}"
+        parts << "Refer to this pet as: #{pet.pronouns.slashed}"
         parts << "Age: #{pet.age_phrase}" if pet.age_phrase
         parts << "Weight: #{pet.weight_kg} kg" if pet.weight_kg
         parts << "What the owner has noted:\n#{pet.notes.truncate(1_500)}" if pet.notes.present?
@@ -227,6 +227,11 @@ module Tool
       # When Q17 person↔item links land, shared history joins here.
       def person_context(person)
         parts = [ "Name: #{person.name}" ]
+        # Without this a model picks a pronoun off the name, which is a guess
+        # dressed as knowledge and lands in a draft the user is about to send
+        # to that person. Sent even when nothing is recorded, because
+        # "they/them/their" is the answer then, not an absent line (D-pronouns).
+        parts << "Refer to them as: #{person.pronouns.slashed}"
         parts << "Relationship: #{person.relationship}" if person.relationship.present?
         parts << "Birthday: #{person.birthday.strftime("%B %-d")}" if person.birthday
         parts << "Last logged contact: #{person.last_contacted_on.iso8601}" if person.last_contacted_on

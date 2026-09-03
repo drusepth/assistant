@@ -1,5 +1,5 @@
 # A pet's sex becomes a closed set, because it is what the app's copy uses to
-# decide between "she", "he" and "they" (D-pet-pronouns) — and a free-text
+# decide between "she", "he" and "they" (D-pronouns) — and a free-text
 # column can't answer that question. What the old placeholder invited into the
 # same box ("neutered male") is the pet's *status*, not its sex, so it gets its
 # own flag: the lost-pet poster and the insurance tool both want it separately.

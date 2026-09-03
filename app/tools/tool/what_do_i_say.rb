@@ -50,6 +50,8 @@ module Tool
         you need anything").
       - The user decides what they're willing to say; when they push back on a
         draft, follow them, not the technique.
+      - Where a person's record is given, it says which pronoun the user uses
+        for them. Use it, and never guess one from a name.
     PROMPT
 
     private

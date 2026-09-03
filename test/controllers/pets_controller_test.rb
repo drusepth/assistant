@@ -18,6 +18,17 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert luna.section.custom?
   end
 
+  test "both pet forms render, including the pronoun override beside the sex" do
+    get new_pet_path
+    assert_response :success
+    assert_match "Follow the sex", response.body
+
+    @rex.update!(sex: "female", pronoun: "they")
+    get edit_pet_path(@rex)
+    assert_response :success
+    assert_select "select[name=?] option[selected][value=?]", "pet[pronoun]", "they"
+  end
+
   test "the page and the flash call a pet what the record says, never always her" do
     @rex.update!(sex: "male", neutered: true)
     get pet_path(@rex)

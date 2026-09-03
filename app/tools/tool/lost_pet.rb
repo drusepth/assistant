@@ -72,7 +72,7 @@ module Tool
         parts << "Breed: #{pet.breed}" if pet.breed.present?
         parts << "Colour and markings: #{pet.color}" if pet.color.present?
         parts << "Sex: #{pet.sex_label}" if pet.sex_label
-        parts << "Refer to this pet as: #{pet.pronouns.subject}/#{pet.pronouns.object}/#{pet.pronouns.possessive}"
+        parts << "Refer to this pet as: #{pet.pronouns.slashed}"
         parts << "Age: #{pet.age_phrase}" if pet.age_phrase
         parts << "Microchip number: #{pet.microchip}" if pet.microchip.present?
         parts << "MICROCHIP: not recorded in the app — tell the user to find the paperwork or ask their vet, " \

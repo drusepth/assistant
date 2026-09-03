@@ -1,7 +1,15 @@
 <%= form_with model: person, class: "space-y-4" do |form| %>
   <%= render "people/photo_field", form: form, person: person %>
   <%= form.field :name %>
-  <%= form.field :relationship, placeholder: "Mom, landlord, cardiologist…" %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :relationship, placeholder: "Mom, landlord, cardiologist…" %>
+    <%# What the app calls them in a nudge or a draft (D-pronouns). Blank is
+        the normal state and reads as "they" — the app would rather be plain
+        than guess from a name. %>
+    <%= form.field :pronoun, label_text: "Pronouns", hint: "What the app calls them. Blank means “they”." do %>
+      <%= form.select :pronoun, Pronouns.options, include_blank: "Not recorded" %>
+    <% end %>
+  </div>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <%= form.field :email, as: :email_field %>
     <%= form.field :phone, as: :telephone_field %>

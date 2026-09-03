@@ -141,7 +141,7 @@ module Demo
     people = {}
 
     people[:ada] = kay.people.create!(
-      name: "Ada Okafor", relationship: "Mother", birthday: Date.new(1954, 3, 2),
+      name: "Ada Okafor", relationship: "Mother", pronoun: "she", birthday: Date.new(1954, 3, 2),
       phone: "(330) 555-0193", address: "22 Halloway Court\nMillbrook, OH 44432",
       keep_in_touch: true, last_contacted_on: TODAY - 2,
       notes: "Mum. Fell in the kitchen in June — nothing broken, but she's slower and won't say so. " \
@@ -149,26 +149,26 @@ module Demo
              "Doesn't drive after dark any more, so any appointment after 4pm means I'm collecting her."
     )
     people[:colm] = kay.people.create!(
-      name: "Colm Lynch", relationship: "Brother-in-law", birthday: Date.new(1979, 11, 8),
+      name: "Colm Lynch", relationship: "Brother-in-law", pronoun: "he", birthday: Date.new(1979, 11, 8),
       phone: "+353 85 555 0112", keep_in_touch: true, last_contacted_on: TODAY - 41,
       notes: "Danny's brother, in Galway. Two kids — Saoirse (9) and Fintan (6). " \
              "Runs the family place since their dad died. Bad on email, fine on the phone Sunday evenings."
     )
     people[:marisol] = kay.people.create!(
-      name: "Marisol Vega", relationship: "Best friend", birthday: Date.new(1982, 6, 19),
+      name: "Marisol Vega", relationship: "Best friend", pronoun: "she", birthday: Date.new(1982, 6, 19),
       phone: "(330) 555-0177", keep_in_touch: true, last_contacted_on: TODAY - 96,
       notes: "Nursing at Mercy with me for eleven years before she moved to the Cleveland job. " \
              "Coeliac — the brown bread is out, bring the almond thing. Her mother died in February and " \
              "I have been quietly rubbish about it since."
     )
     people[:hollis] = kay.people.create!(
-      name: "Wendell Hollis", relationship: "Landlord", phone: "(330) 555-0102",
+      name: "Wendell Hollis", relationship: "Landlord", pronoun: "he", phone: "(330) 555-0102",
       email: "whollis@example.com",
       notes: "Owns the Prentice Street building. Fine in person, useless in writing. " \
              "Everything with him goes in an email afterwards — learned that the hard way over the boiler."
     )
     people[:adeyemi] = kay.people.create!(
-      name: "Dr Funmi Adeyemi", relationship: "Mum's cardiologist", phone: "(330) 555-0166",
+      name: "Dr Funmi Adeyemi", relationship: "Mum's cardiologist", pronoun: "she", phone: "(330) 555-0166",
       notes: "Mercy Regional, cardiology. Sees Mum every six months. Wants the blood pressure log " \
              "brought to appointments — she asks for it every time and we forget it every time."
     )
@@ -177,35 +177,35 @@ module Demo
       notes: "Millbrook Animal Hospital. Straight with you about cost, which is rarer than it should be."
     )
     people[:teresa] = kay.people.create!(
-      name: "Teresa Okonjo", relationship: "Church", birthday: Date.new(1961, 9, 30),
+      name: "Teresa Okonjo", relationship: "Church", pronoun: "she", birthday: Date.new(1961, 9, 30),
       keep_in_touch: true, last_contacted_on: TODAY - 12,
       notes: "Runs the Sunday kitchen. Knew Mum before I was born. If anything is actually wrong " \
              "in this family she knows before I do."
     )
     people[:ruiz] = kay.people.create!(
-      name: "Gabriel Ruiz", relationship: "Neighbour", phone: "(330) 555-0155",
+      name: "Gabriel Ruiz", relationship: "Neighbour", pronoun: "he", phone: "(330) 555-0155",
       keep_in_touch: true, last_contacted_on: TODAY - 6,
       notes: "Apt 1, downstairs. Takes the bins out for us when we're away; we do his post. " \
              "Also had the deposit fight with Hollis in 2021 and won it — worth asking what he sent."
     )
     people[:bex] = kay.people.create!(
-      name: "Bex Nakamura", relationship: "Ify's birding mentor",
+      name: "Bex Nakamura", relationship: "Ify's birding mentor", pronoun: "she",
       notes: "Runs the Saturday walks at Millbrook Reserve. Retired ornithologist, endlessly patient " \
              "with a fifteen-year-old asking the same question four ways. Ify would follow her off a cliff."
     )
 
     danny.people.create!(
-      name: "Ray Kessler", relationship: "Former boss", phone: "(330) 555-0139",
+      name: "Ray Kessler", relationship: "Former boss", pronoun: "he", phone: "(330) 555-0139",
       notes: "Ran Kessler Mechanical. Not a villain — the contract went and he cut four of us the same " \
              "Friday. Said he'd be a reference and I think he means it. Still owes me the overtime."
     )
     danny.people.create!(
-      name: "Ahmed Farouk", relationship: "Union rep", phone: "(330) 555-0184",
+      name: "Ahmed Farouk", relationship: "Union rep", pronoun: "he", phone: "(330) 555-0184",
       notes: "Local 47. Said to put the overtime claim in writing before the sixty days are up and to " \
              "copy him. Knows more about this than anyone I've met."
     )
     danny.people.create!(
-      name: "Colm Lynch", relationship: "Brother", phone: "+353 85 555 0112",
+      name: "Colm Lynch", relationship: "Brother", pronoun: "he", phone: "+353 85 555 0112",
       keep_in_touch: true, last_contacted_on: TODAY - 9,
       notes: "Galway. Rings on Sundays. Hasn't asked about the job once, which is his way of being kind."
     )

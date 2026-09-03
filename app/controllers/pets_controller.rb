@@ -77,7 +77,7 @@ class PetsController < ApplicationController
     end
 
     def pet_params
-      params.expect(pet: [ :name, :species, :breed, :sex, :neutered, :color, :microchip, :born_on, :born_on_estimated,
+      params.expect(pet: [ :name, :species, :breed, :sex, :pronoun, :neutered, :color, :microchip, :born_on, :born_on_estimated,
         :adopted_on, :weight_kg, :died_on, :left_on, :notes, :vet_id, :avatar ])
     end
 end

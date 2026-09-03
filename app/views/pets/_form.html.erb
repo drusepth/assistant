@@ -8,18 +8,28 @@
     <%= form.field :breed, placeholder: "Golden retriever, tabby, lop…" %>
   </div>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%# Sex is also what the app reads to decide whether to write "she", "he"
-        or "they" about this pet (D-pet-pronouns), which is why the hint says
-        so — leaving it blank is a real answer, not an unfinished form. %>
-    <%= form.field :sex, hint: "Also how the app refers to #{pet.name.presence || "your pet"} — leave it blank for “they”." do %>
+    <%# Sex is what the app reads to decide whether to write "she", "he" or
+        "they" about this pet (D-pronouns), which is why the hint says so —
+        leaving it blank is a real answer, not an unfinished form. The
+        override beside it is the household that calls their male cat "they"
+        not being argued with. %>
+    <%= form.field :sex, hint: "Also picks the pronoun the app uses, unless you set one beside it." do %>
       <%= form.select :sex, Pet::SEXES.map { |slug| [ Pet::SEX_LABELS[slug], slug ] }, include_blank: "Not recorded" %>
     <% end %>
-    <%= form.field :color, label_text: "Colour and markings", placeholder: "Black with a white chest" %>
+    <%= form.field :pronoun, label_text: "Refer to #{pet.name.presence || "them"} as",
+          hint: "Only if the sex beside it gets it wrong." do %>
+      <%= form.select :pronoun, Pronouns.options, include_blank: "Follow the sex" %>
+    <% end %>
   </div>
   <label class="flex items-start gap-2 text-sm">
     <%= form.check_box :neutered, class: "mt-0.5" %>
     <span class="text-soft">Spayed or neutered</span>
   </label>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :color, label_text: "Colour and markings", placeholder: "Black with a white chest" %>
+    <%= form.field :microchip, label_text: "Microchip number" %>
+  </div>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <%= form.field :born_on, as: :date_field, label_text: "Date of birth" %>
@@ -33,11 +43,8 @@
     <span class="text-soft">That date of birth is an estimate</span>
   </label>
 
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%= form.field :weight_kg, as: :number_field, label_text: "Weight (kg)", step: "0.01",
-          hint: "The current number, for vet prep — not a log." %>
-    <%= form.field :microchip, label_text: "Microchip number" %>
-  </div>
+  <%= form.field :weight_kg, as: :number_field, label_text: "Weight (kg)", step: "0.01",
+        hint: "The current number, for vet prep — not a log." %>
 
   <%= form.field :vet_id, label_text: "Vet", hint: "An ordinary contact, so you can call them from here." do %>
     <%= form.collection_select :vet_id, Person.visible_to(Current.user).order(:name), :id, :name, include_blank: "No vet on file" %>
