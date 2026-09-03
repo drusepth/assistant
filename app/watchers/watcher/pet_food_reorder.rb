@@ -53,7 +53,7 @@ module Watcher
         else "runs out in about #{ActionController::Base.helpers.pluralize(days, "day")}"
         end
 
-        "#{pet.name}'s #{food.display_name} #{when_phrase}, going by the bag size and what she eats."
+        "#{pet.name}'s #{food.display_name} #{when_phrase}, going by the bag size and what #{pet.pronouns.subject} #{pet.pronouns.verb("eats", "eat")}."
       end
 
       # The pull surface writes an Event with this exact title; the watcher

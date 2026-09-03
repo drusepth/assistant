@@ -34,7 +34,7 @@ class PetsController < ApplicationController
 
     if @pet.save
       share_with_household if params[:share_with_household].present?
-      redirect_to @pet, notice: "#{@pet.name} added. Anything about her can be filed under her name now."
+      redirect_to @pet, notice: "#{@pet.name} added. Anything about #{@pet.pronouns.object} can be filed under #{@pet.pronouns.possessive} name now."
     else
       render :new, status: :unprocessable_entity
     end
@@ -57,7 +57,7 @@ class PetsController < ApplicationController
   # path removes both — this one only says so.
   def destroy
     @pet.destroy!
-    redirect_to section_path("people"), notice: "#{@pet.name} removed. Everything filed under her name kept its other tags."
+    redirect_to section_path("people"), notice: "#{@pet.name} removed. Everything filed under #{@pet.pronouns.possessive} name kept its other tags."
   end
 
   private
@@ -77,7 +77,7 @@ class PetsController < ApplicationController
     end
 
     def pet_params
-      params.expect(pet: [ :name, :species, :breed, :sex, :color, :microchip, :born_on, :born_on_estimated,
+      params.expect(pet: [ :name, :species, :breed, :sex, :pronoun, :neutered, :color, :microchip, :born_on, :born_on_estimated,
         :adopted_on, :weight_kg, :died_on, :left_on, :notes, :vet_id, :avatar ])
     end
 end

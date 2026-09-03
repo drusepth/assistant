@@ -23,12 +23,14 @@ module Tool
       line: the idea, then a dash and why it fits *this* person specifically,
       grounded in what's known about them. Rules:
       - Never invent facts about the person; where knowledge runs out, make the
-        idea a [BRACKETED PLACEHOLDER] naming what to find out ("[ask her
-        sister] which authors she's into lately").
+        idea a [BRACKETED PLACEHOLDER] naming what to find out ("[ask their
+        sister] which authors they're into lately").
       - Respect the budget when one is given; lean cheap-and-thoughtful over
         expensive-and-generic. No gift cards unless the known facts argue for
         one.
       - Experiences and homemade things count.
+      The record says which pronoun the user uses for this person. Use it
+      throughout, and never guess one from a name.
       follow_ups: at most one — get the gift, dated ahead of the occasion when
       a real date is stated.
       #{DRAFT_FORMAT}

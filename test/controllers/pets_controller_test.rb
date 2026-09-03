@@ -18,6 +18,38 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert luna.section.custom?
   end
 
+  test "both pet forms render, including the pronoun override beside the sex" do
+    get new_pet_path
+    assert_response :success
+    assert_match "Follow the sex", response.body
+
+    @rex.update!(sex: "female", pronoun: "they")
+    get edit_pet_path(@rex)
+    assert_response :success
+    assert_select "select[name=?] option[selected][value=?]", "pet[pronoun]", "they"
+  end
+
+  test "the page and the flash call a pet what the record says, never always her" do
+    @rex.update!(sex: "male", neutered: true)
+    get pet_path(@rex)
+    assert_response :success
+    assert_match "Neutered male", response.body
+    assert_match "His name is a tag, so his vet visits stay Health", response.body
+    assert_no_match(/Her name is a tag/, response.body)
+
+    luna = create_pet(name: "Luna", species: "cat", sex: "female")
+    get pet_path(luna)
+    assert_match "Her name is a tag, so her vet visits stay Health", response.body
+
+    pip = create_pet(name: "Pip", species: "bird", died_on: Date.current)
+    get pet_path(pip)
+    assert_match "Their reminders have stopped. Everything filed under their name is still here.", response.body
+
+    post pets_path, params: { pet: { name: "Pip", species: "bird" } }
+    assert_equal "Pip added. Anything about them can be filed under their name now.", flash[:notice],
+      "an unrecorded sex is not a reason to guess one"
+  end
+
   test "the household box writes two visible grants; unticked writes none" do
     post pets_path, params: { pet: { name: "Luna", species: "cat" }, share_with_household: "1" }
     luna = Pet.find_by!(name: "Luna")

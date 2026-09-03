@@ -17,10 +17,10 @@ module Tool
     self.description = "Talk through food, behaviour, routines and what to watch for. Never a diagnosis."
     self.section_slugs = %w[ health ]
     self.quick_replies = [
-      "Is this food safe for her?",
-      "Help me plan her routine",
+      "Is this food safe for them?",
+      "Help me plan their routine",
       "What should I ask the vet?",
-      "She's doing something new — help me think it through"
+      "They're doing something new — help me think it through"
     ]
 
     input :pet_id, kind: :pet, required: true, label: "Which pet?"

@@ -54,7 +54,7 @@ module About
       entry("rights", "/sections/rights",
         "Rights: a collections letter with a window that is still open."),
       entry("education", "/sections/education",
-        "A learner's own subjects, and what she has actually mastered.",
+        "A learner's own subjects, and what they have actually mastered.",
         as: "ify@example.com"),
       entry("people", "/people",
         "The circle — the people you'd regret losing touch with."),

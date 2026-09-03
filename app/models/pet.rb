@@ -1,5 +1,5 @@
 # A member of the household who can't log in (D-pet-primitive). A pet is a
-# *whom*, not a *what*: filing her care under a "Pets" section would pull the
+# *whom*, not a *what*: filing their care under a "Pets" section would pull the
 # vet appointment off the care radar and the kibble out of the budget, which
 # is the standalone failure the lens model exists to avoid. So the vet visit
 # is tagged `Health + Rex` and both pages are right.
@@ -17,6 +17,7 @@
 class Pet < ApplicationRecord
   include Visible
   include Sectionable
+  include Pronounced
   # Her face on every card, through the same component and the same square
   # variant as a household member's (D-user-avatars).
   include Avatarable
@@ -29,6 +30,20 @@ class Pet < ApplicationRecord
     "dog" => "Dog", "cat" => "Cat", "rabbit" => "Rabbit", "bird" => "Bird",
     "reptile" => "Reptile", "fish" => "Fish", "horse" => "Horse", "other" => "Other"
   }.freeze
+
+  # A closed set, because the app's own copy reads it to pick a pronoun
+  # (D-pronouns) and free text can't be read that way. Blank is the
+  # default and a real answer — a stray cat's sex is often nobody's to know —
+  # and it yields "they". Spayed/neutered is a status rather than a sex, so it
+  # is its own flag; the lost-pet poster and the insurance tool want it apart.
+  SEXES = %w[ female male ].freeze
+  SEX_LABELS = { "female" => "Female", "male" => "Male" }.freeze
+
+  # The pronoun a recorded sex implies, which is the whole reason the set
+  # above is closed. A household that disagrees sets `pronoun` and this stops
+  # being consulted — the escape hatch costs one nullable column and means
+  # the app never argues with an owner about their own animal.
+  SEX_PRONOUNS = { "female" => "she", "male" => "he" }.freeze
 
   belongs_to :section
   # The vet is an ordinary contact, so she's in the Address Book, callable,
@@ -48,6 +63,7 @@ class Pet < ApplicationRecord
 
   validates :name, presence: true
   validates :species, inclusion: { in: SPECIES }
+  validates :sex, inclusion: { in: SEXES }, allow_blank: true
   validates :weight_kg, numericality: { greater_than: 0, less_than: 2_000 }, allow_nil: true
 
   # Present tense first, then the ones who are remembered — the People page
@@ -64,7 +80,15 @@ class Pet < ApplicationRecord
   def died? = died_on.present?
   def species_label = SPECIES_LABELS.fetch(species, "Other")
 
-  # Everything tagged with her lens, for any primitive — the whole point of
+  # "Female" / "Neutered male" / nil — the one line the details list, the
+  # poster and the vet-prep sheet all print.
+  def sex_label
+    return nil if sex.blank?
+
+    neutered? ? "#{sex == "female" ? "Spayed" : "Neutered"} #{sex}" : SEX_LABELS[sex]
+  end
+
+  # Everything tagged with their lens, for any primitive — the whole point of
   # D-pet-primitive in one method. Reads through visible_to, so a household
   # member sees exactly what was shared with them.
   def items(model, viewer)
@@ -95,4 +119,9 @@ class Pet < ApplicationRecord
 
     nil
   end
+
+  private
+    # A pet is the one record with a second place to look: an owner who set a
+    # pronoun outright wins, and otherwise the sex on file answers it.
+    def pronoun_key = pronoun.presence || SEX_PRONOUNS[sex]
 end

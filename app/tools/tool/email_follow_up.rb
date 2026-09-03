@@ -14,7 +14,7 @@ module Tool
       label: "Which email?"
     input :note,
       label: "Anything to add?",
-      hint: "Optional — “it's now urgent”, “soften it, she's a friend”."
+      hint: "Optional — “it's now urgent”, “soften it, they're a friend”."
 
     THREAD_MESSAGES = 5
     MESSAGE_CHARS = 1_200
@@ -66,7 +66,9 @@ module Tool
       def counterparty_label
         person = message.person
         name = person&.name || message.counterparty_email || "them"
-        person ? "#{name} (in your People)" : name
+        return name unless person
+
+        "#{name} (in your People) — refer to them as #{person.pronouns.slashed}"
       end
 
       def fallback_title = "Follow-up: #{message.subject.presence || "quiet thread"}"

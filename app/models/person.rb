@@ -7,6 +7,10 @@ class Person < ApplicationRecord
   # A face for every contact, not only the ones with a household login
   # (D-contact-photos): same attachment and same square variant as a member's.
   include Avatarable
+  # How the app refers to this contact in its own copy, and how it tells a
+  # model to refer to them (D-pronouns). Blank means "they" — a contact
+  # record has no business guessing, and nothing here asks for anyone's sex.
+  include Pronounced
 
   AUTO_SORT_JOB = CategorizePersonJob
 

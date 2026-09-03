@@ -14,7 +14,7 @@ module Tool
       hint: "However you'd say it — “my dad”, “Grandma June”."
     input :details,
       label: "Anything that shapes what needs doing?",
-      hint: "Optional — “I'm the executor”, “she lived alone out of state”, “no will that I know of”."
+      hint: "Optional — “I'm the executor”, “they lived alone out of state”, “no will that I know of”."
 
     BRIEF = <<~BRIEF.freeze
       This goal is navigating the weeks after a family member's death. The

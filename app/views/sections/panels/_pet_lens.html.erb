@@ -6,7 +6,7 @@
     <%= render Ui::AvatarComponent.new(person: panel.pet, size: :lg, tone: :sage) %>
     <div class="min-w-0 flex-1">
       <%= link_to panel.pet.name, pet_path(panel.pet), class: "text-sm font-semibold text-ink hover:text-primary-700" %>
-      <p class="text-xs text-soft"><%= panel.pet.descriptor.presence || "Everything filed under her name" %></p>
+      <p class="text-xs text-soft"><%= panel.pet.descriptor.presence || "Everything filed under #{panel.pet.pronouns.possessive} name" %></p>
     </div>
     <%= link_to "Open #{panel.pet.name}'s page", pet_path(panel.pet), class: "btn btn-secondary" %>
   </div>

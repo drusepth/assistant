@@ -15,7 +15,7 @@ module Tool
     self.kind = :draft
 
     input :document_id, kind: :document, required: true, label: "Which estimate or invoice?"
-    input :pet_id, kind: :pet, label: "Which pet?", hint: "Optional — lets the sheet read her record too."
+    input :pet_id, kind: :pet, label: "Which pet?", hint: "Optional — lets the sheet read their record too."
 
     SYSTEM_PROMPT = <<~PROMPT.freeze
       You are the estimate-decoding feature of a private, self-hosted life
@@ -27,7 +27,7 @@ module Tool
       doesn't (a low and high estimate usually means "if it's simple" and "if
       it isn't"); and the questions to ask before agreeing — what happens if we
       wait, what happens if we do only part of this, is there a staged version,
-      what will you do if you find something else while she's under.
+      what will you do if you find something else while they're under.
       Read only what the document states. Invent no prices, no procedures and
       no veterinary opinion; where a line is unreadable or ambiguous, say so
       and make it one of the questions.

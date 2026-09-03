@@ -2,7 +2,7 @@
     ordinary section, so every capture form in the app can file to her — and
     the one place worth explaining that is her own page. %>
 <%= render Ui::CardComponent.new(title: "Filed under #{pet.name}",
-      subtitle: "Her name is a tag, so her vet visits stay Health and her food stays Money.") do %>
+      subtitle: "#{pet.pronouns.possessive.capitalize} name is a tag, so #{pet.pronouns.possessive} vet visits stay Health and #{pet.pronouns.possessive} food stays Money.") do %>
   <div class="space-y-3">
     <div class="flex flex-wrap gap-2">
       <%= link_to "Add an event", new_event_path(section_ids: [ pet.section_id ]), class: "btn btn-secondary btn-sm" %>

@@ -61,4 +61,24 @@ class PersonTest < ActiveSupport::TestCase
     assert_equal [ december, january ],
       @user.people.birthday_within(30, from: Date.new(2026, 12, 20))
   end
+
+  test "a contact's pronoun is what the app calls them, and blank means they" do
+    person = @user.people.create!(name: "Rosa Iyer")
+    assert_equal "they", person.pronouns.subject, "nothing recorded, nothing guessed from the name"
+    assert_equal "they/them/their", person.pronouns.slashed
+
+    person.update!(pronoun: "she")
+    assert_equal "her", person.pronouns.possessive
+    assert_equal "she/her/her", person.pronouns.slashed
+    assert_not person.pronouns.plural?
+  end
+
+  test "a pronoun outside the closed set is rejected, and blank is not" do
+    person = @user.people.new(name: "Rosa Iyer", pronoun: "ze")
+    assert_not person.valid?
+    assert_includes person.errors.full_messages.to_sentence, "Pronoun"
+
+    person.pronoun = ""
+    assert person.valid?, "declining to say is a real answer"
+  end
 end
