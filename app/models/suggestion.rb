@@ -170,15 +170,13 @@ class Suggestion < ApplicationRecord
       if (attrs = action["spending"])
         # The one path from a mirror to the ledger (docs/MONEY.md §2.1):
         # a receipt becomes a transaction only when the user says so, and
-        # it lands on their Cash account like any hand-logged row.
-        account = Spending::QuickLog.cash_account(user)
+        # it lands on their Cash account like any hand-logged row — through
+        # the landing registry's write (D-landing-registry), the same one a
+        # receipt in the vault takes.
         occurred_on = (Date.iso8601(attrs["occurred_on"].to_s) rescue Date.current)
-        created << SpendingTransaction.create!(
-          user_id: user_id, spending_account_id: account.id,
-          occurred_on: occurred_on, amount_cents: attrs["amount_cents"].to_i,
-          descriptor: attrs["descriptor"], merchant: attrs["merchant"],
-          fingerprint: "receipt-#{SecureRandom.hex(10)}", source: "email_receipt")
-        Spending::Categorize.new(user: user).apply_deterministic
+        created << Landing::Spending.log!(user,
+          amount_cents: attrs["amount_cents"].to_i, occurred_on: occurred_on,
+          merchant: attrs["merchant"], descriptor: attrs["descriptor"], source: "email_receipt")
       end
 
       if (attrs = action["agent_level"])

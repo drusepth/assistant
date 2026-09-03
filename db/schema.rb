@@ -198,6 +198,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
     t.index ["user_id"], name: "index_diary_settings_on_user_id", unique: true
   end
 
+  create_table "document_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "document_id", null: false
+    t.string "fingerprint", null: false
+    t.integer "item_id", null: false
+    t.string "item_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_id"], name: "index_document_items_on_document_id"
+    t.index ["item_type", "item_id"], name: "index_document_items_on_item"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.string "analysis_error"
     t.string "analysis_status"
@@ -206,6 +217,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
     t.json "extracted_facts", default: {}, null: false
     t.text "extracted_text"
     t.boolean "health_plan"
+    t.json "landings", default: [], null: false
     t.json "suggested_sections", default: []
     t.text "summary"
     t.string "title", null: false
@@ -1009,6 +1021,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
   add_foreign_key "diary_imports", "users"
   add_foreign_key "diary_revisions", "diary_entries"
   add_foreign_key "diary_settings", "users"
+  add_foreign_key "document_items", "documents"
   add_foreign_key "documents", "users"
   add_foreign_key "email_sender_rules", "users"
   add_foreign_key "emergency_contacts", "users"

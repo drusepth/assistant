@@ -22,6 +22,7 @@
   <% end %>
 <% end %>
 
+<%= render "shared/provenance", item: @person %>
 <div class="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-3">
   <div class="lg:col-span-2">
     <%= render Ui::CardComponent.new(title: "Details") do %>

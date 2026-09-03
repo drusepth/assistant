@@ -12,6 +12,9 @@
       <% papers.each do |document| %>
         <li class="flex flex-wrap items-center gap-2 py-2.5 first:pt-0 last:pb-0">
           <%= link_to document.title, document, class: "min-w-0 flex-1 truncate text-sm text-ink hover:text-primary-700" %>
+          <% if document.user_id == Current.user.id && document.landings_to_review? %>
+            <%= link_to "Review #{document.proposed_landings.size}", review_document_path(document), class: "chip chip-inferred shrink-0 hover:opacity-80" %>
+          <% end %>
           <% if Pets::Papers.policy?(document) %>
             <span class="chip bg-primary-100 text-primary-800">Policy</span>
           <% end %>

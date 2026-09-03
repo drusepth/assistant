@@ -1,0 +1,10 @@
+<%# Where a row came from, when a document produced it (D-document-intake):
+    the same sentence Career::RecordCompChange writes, as a line rather than
+    a description, so it is visible on every kind of row without living in
+    any of their columns. Silent for rows typed by hand. Local: item. %>
+<% if (source = DocumentItem.source_for(item)) && source.visible_to?(Current.user) %>
+  <p class="mb-4 text-xs text-soft">
+    From <%= link_to source.title, source, class: "underline" %>
+    (<%= source.created_at.strftime("%-d %b %Y") %>) — edit or delete this if it isn't right; your word beats the reader's.
+  </p>
+<% end %>

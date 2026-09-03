@@ -5,7 +5,7 @@
 # are soft ids resolved in Ruby. Amounts are signed cents: negative is
 # money out, positive is money in.
 class SpendingTransaction < MirrorRecord
-  SOURCES = %w[ statement manual email_receipt ].freeze
+  SOURCES = %w[ statement manual email_receipt document ].freeze
   CATEGORIZERS = %w[ rule keyword model user ].freeze
 
   validates :occurred_on, :fingerprint, presence: true

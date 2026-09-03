@@ -90,6 +90,155 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     assert_equal [ sections(:career) ], event.sections.to_a
   end
 
+  # ── Landings (D-document-intake) ───────────────────────────────────────
+
+  test "what the document proposes is validated and stored, and nothing lands" do
+    @document.sections << sections(:health)
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A discharge sheet.", sections: [ "health" ],
+        landings: [
+          { kind: "event", title: "Rex — vaccinations", on: "2026-08-12", extra: "dropped" },
+          { kind: "person", name: "Dr. Alvarez", relationship: "Vet" },
+          { kind: "nonsense", title: "x" }
+        ]
+      }.to_json } } ] }.to_json
+    )
+
+    assert_no_difference [ -> { Event.count }, -> { Person.count } ] do
+      AnalyzeDocumentJob.perform_now(@document)
+    end
+
+    landings = @document.reload.landings
+    assert_equal %w[ event person ], landings.map { |entry| entry["kind"] }
+    assert_equal %w[ proposed proposed ], landings.map { |entry| entry["status"] }
+    assert_equal({ "title" => "Rex — vaccinations", "on" => "2026-08-12" }, landings.first["attributes"])
+    assert @document.landings_to_review?
+    # The prompt carried the registry and the document's filing.
+    assert_requested(:post, ENDPOINT) do |request|
+      body = JSON.parse(request.body)
+      body["messages"].first["content"].include?("- event — ") &&
+        body["messages"].last["content"].include?("Filed under: Health")
+    end
+  end
+
+  test "re-analysis keeps what the user already ruled on and never re-proposes it" do
+    @document.update!(landings: [
+      { "kind" => "event", "fingerprint" => "event:rex-vaccinations:2026-08-12", "status" => "saved",
+        "attributes" => { "title" => "Rex — vaccinations", "on" => "2026-08-12" } },
+      { "kind" => "task", "fingerprint" => "task:call-the-vet", "status" => "skipped", "attributes" => { "title" => "Call the vet" } },
+      { "kind" => "note", "fingerprint" => "note:old-proposal", "status" => "proposed", "attributes" => { "title" => "Old proposal" } }
+    ])
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "Again.", sections: [],
+        landings: [
+          { kind: "event", title: "Rex — vaccinations", on: "2026-08-12" },
+          { kind: "task", title: "Call the vet" },
+          { kind: "note", title: "New fact" }
+        ]
+      }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    landings = @document.reload.landings
+    assert_equal [ %w[ event saved ], %w[ task skipped ], %w[ note proposed ] ],
+      landings.map { |entry| [ entry["kind"], entry["status"] ] }
+    assert_equal "New fact", landings.last.dig("attributes", "title"), "the stale proposal was replaced"
+  end
+
+  test "the reader's title replaces a file-name title and never a typed one" do
+    stub_llm(summary: "ok", sections: [], title: "Rex — vet discharge sheet")
+
+    named = users(:one).documents.new(title: "")
+    named.file.attach(io: StringIO.new("x"), filename: "IMG_4032.txt", content_type: "text/plain")
+    named.save!
+    assert_equal "IMG 4032", named.title
+    AnalyzeDocumentJob.perform_now(named)
+    assert_equal "Rex — vet discharge sheet", named.reload.title
+
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_equal "Lease agreement", @document.reload.title
+  end
+
+  test "the reader pins a health plan unless the owner already ruled, and the pin retires the keyword match" do
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: { summary: "A dental bill mentioning insurance.", sections: [ "health" ], health_plan: false }.to_json } } ] }.to_json
+    )
+    @document.update!(title: "Insurance statement for the dental visit")
+    assert Health::Coverage.match?(@document), "before analysis the keywords catch the bill"
+
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_equal false, @document.reload.health_plan
+    assert_not Health::Coverage.match?(@document), "the reader's word replaced the keywords"
+
+    pinned = users(:one).documents.create!(title: "Car policy", health_plan: true)
+    pinned.file.attach(io: StringIO.new("x"), filename: "car.txt", content_type: "text/plain")
+    AnalyzeDocumentJob.perform_now(pinned)
+    assert_equal true, pinned.reload.health_plan, "the owner's pin is never overwritten"
+  end
+
+  test "the reader may point the document at one allowed tool, and nothing else" do
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A denial.", sections: [], next_tool: { slug: "insurance_appeal", reason: "It denies a claim." }
+      }.to_json } } ] }.to_json
+    )
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_nil @document.reload.extracted_facts["next_tool"], "insurance_appeal is not on the document's list"
+
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A letter.", sections: [], next_tool: { slug: "decode_letter", reason: "It's dense." }
+      }.to_json } } ] }.to_json
+    )
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_equal({ "slug" => "decode_letter", "reason" => "It's dense." }, @document.reload.extracted_facts["next_tool"])
+  end
+
+  test "past the schema budget the call splits: a presence pass names the kinds, a detail pass carries only their fields" do
+    Documents::Analyze.schema_budget = 100
+    stub_request(:post, ENDPOINT)
+      .to_return(status: 200, body: { choices: [ { message: { content: {
+        summary: "A discharge sheet.", sections: [ "health" ], present_kinds: [ "event", "nonsense" ]
+      }.to_json } } ] }.to_json).then
+      .to_return(status: 200, body: { choices: [ { message: { content: {
+        landings: [ { kind: "event", title: "Rex — vaccinations", on: "2026-08-12" } ]
+      }.to_json } } ] }.to_json)
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    @document.reload
+    assert_equal "A discharge sheet.", @document.summary
+    assert_equal [ "event" ], @document.landings.map { |entry| entry["kind"] }
+    requests = []
+    assert_requested(:post, ENDPOINT, times: 2) { |request| requests << JSON.parse(request.body)["messages"].first["content"] }
+    assert_includes requests.first, "present_kinds"
+    assert_not_includes requests.first, "- event — an appointment, visit, deadline or renewal date the document states. Fields:"
+    assert_includes requests.last, "- event — an appointment, visit, deadline or renewal date the document states. Fields:"
+    assert_not_includes requests.last, "- task — ", "the detail pass carries only the present kinds"
+  ensure
+    Documents::Analyze.schema_budget = 8_000
+  end
+
+  test "a presence pass that finds nothing costs no second call" do
+    Documents::Analyze.schema_budget = 100
+    stub_llm(summary: "A poem.", sections: [])
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert_empty @document.reload.landings
+    assert_requested :post, ENDPOINT, times: 1
+  ensure
+    Documents::Analyze.schema_budget = 8_000
+  end
+
   test "documents with no pay-stub facts store an empty facts hash" do
     stub_llm(summary: "A lease.", sections: [ "renting" ])
 
@@ -146,12 +295,91 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
   end
 
   test "unsupported file types fail without calling the provider" do
-    @document.file.attach(io: StringIO.new("pretend-bytes"), filename: "scan.png", content_type: "image/png")
+    @document.file.attach(io: StringIO.new("pretend-bytes"), filename: "archive.zip", content_type: "application/zip")
 
     AnalyzeDocumentJob.perform_now(@document)
 
     assert @document.reload.analysis_failed?
-    assert_match "image/png", @document.analysis_error
+    assert_match "application/zip", @document.analysis_error
+    assert_not_requested :post, ENDPOINT
+  end
+
+  # ── Reading images and scans (INTAKE_PLAN W1) ──────────────────────────
+
+  test "a PDF with a text layer is read as text, no vision needed" do
+    attach_pdf(@document, text: "Rent is due on the first")
+    stub_llm(summary: "A lease.", sections: [ "renting" ])
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_analyzed?
+    assert_match "Rent is due", @document.extracted_text
+    assert_requested(:post, ENDPOINT) do |request|
+      content = JSON.parse(request.body)["messages"].last["content"]
+      content.is_a?(String) && content.include?("Rent is due on the first")
+    end
+  end
+
+  test "an image without a vision model fails honestly, without calling the provider" do
+    attach_image(@document)
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_failed?
+    assert_match "can't read images", @document.analysis_error
+    assert_match "vision in Settings", @document.analysis_error
+    assert_not_requested :post, ENDPOINT
+  end
+
+  test "an image goes to a vision model as a page image, and the transcription becomes the document's text" do
+    model_profiles(:smith).update!(vision: true)
+    attach_image(@document)
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: {
+        summary: "A vet's discharge sheet for Rex.", sections: [ "health" ],
+        text: "ANIMAL HOSPITAL\nPatient: Rex\nRabies booster given 12 Aug 2026"
+      }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    @document.reload
+    assert @document.analysis_analyzed?
+    assert_match "Rabies booster", @document.extracted_text
+    assert_requested(:post, ENDPOINT) do |request|
+      body = JSON.parse(request.body)
+      content = body["messages"].last["content"]
+      image = content.is_a?(Array) && content.find { |part| part["type"] == "image_url" }
+      image && image.dig("image_url", "url").start_with?("data:image/webp;base64,") &&
+        body["messages"].first["content"].include?("transcription")
+    end
+  end
+
+  test "a scanned PDF with no text layer is rendered to page images for a vision model" do
+    model_profiles(:smith).update!(vision: true)
+    attach_pdf(@document)
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: { summary: "A scan.", sections: [], text: "[unreadable]" }.to_json } } ] }.to_json
+    )
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_analyzed?
+    assert_requested(:post, ENDPOINT) do |request|
+      content = JSON.parse(request.body)["messages"].last["content"]
+      content.is_a?(Array) && content.count { |part| part["type"] == "image_url" } == 1
+    end
+  end
+
+  test "a scanned PDF without a vision model says which rung is missing" do
+    attach_pdf(@document)
+
+    AnalyzeDocumentJob.perform_now(@document)
+
+    assert @document.reload.analysis_failed?
+    assert_match "scan with no text", @document.analysis_error
     assert_not_requested :post, ENDPOINT
   end
 
@@ -165,10 +393,10 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
   end
 
   private
-    def stub_llm(summary:, sections:)
+    def stub_llm(summary:, sections:, title: nil)
       stub_request(:post, ENDPOINT).to_return(
         status: 200,
-        body: { choices: [ { message: { content: { summary: summary, sections: sections }.to_json } } ] }.to_json
+        body: { choices: [ { message: { content: { summary: summary, sections: sections, title: title }.compact.to_json } } ] }.to_json
       )
     end
 end
