@@ -108,13 +108,17 @@ class HobbiesReaderPanelTest < ActionDispatch::IntegrationTest
     dated = Hobbies::Lens.find_or_create!("Guitar")
     users(:one).feeds.create!(url: "https://example.com/bake.xml", sections: [ quiet ])
     users(:one).feeds.create!(url: "https://example.com/guitar.xml", sections: [ dated ])
-    users(:one).events.create!(title: "Open mic night", starts_at: Date.new(2026, 9, 3).noon)
+    # Relative, and the expectation derives from the same value: the card's
+    # signal reads `Sections::Summary`, whose `next_event` is `upcoming` —
+    # so a hardcoded date silently stops being upcoming the day it passes.
+    open_mic = 3.days.from_now.noon
+    users(:one).events.create!(title: "Open mic night", starts_at: open_mic)
       .sections = [ dated ]
 
     get section_path("hobbies")
 
     page = Nokogiri::HTML(response.body)
-    assert_match "Sep 3", page.at_css("[data-hobby-card='#{dated.slug}']").text
+    assert_match open_mic.strftime("%b %-d"), page.at_css("[data-hobby-card='#{dated.slug}']").text
     assert_equal "Open mic night", page.at_css("[data-hobby-card='#{dated.slug}'] [title]")["title"],
       "the short version says what it is short for"
     assert_no_match(/Nothing planned yet|dive back in/, page.at_css("[data-hobby-card='#{quiet.slug}']").text)

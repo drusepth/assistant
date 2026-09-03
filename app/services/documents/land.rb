@@ -17,7 +17,10 @@ module Documents
     def initialize(document:, user:, submissions:)
       @document = document
       @user = user
-      @submissions = (submissions.respond_to?(:to_unsafe_h) ? submissions.to_unsafe_h : submissions.to_h).stringify_keys
+      # Permitted params or a plain hash; `to_h` raises on unpermitted
+      # Parameters, which is the guard rather than a nuisance — the
+      # controller permits per kind against the registry.
+      @submissions = submissions.to_h.stringify_keys
       @context = Landing::Context.new(user: user, document: document)
     end
 

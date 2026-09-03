@@ -79,8 +79,7 @@ class DocumentsController < ApplicationController
   # fails re-renders the page with its error in place and nothing lands.
   def land
     @document = Current.user.documents.find(params[:id])
-    result = Documents::Land.new(document: @document, user: Current.user,
-      submissions: params.fetch(:landings, {}).permit!).call
+    result = Documents::Land.new(document: @document, user: Current.user, submissions: landing_params).call
 
     if result.ok?
       count = result.saved.size
@@ -110,6 +109,23 @@ class DocumentsController < ApplicationController
 
     def landing_context
       Landing::Context.new(user: Current.user, document: @document)
+    end
+
+    # The review form's params, permitted per card against the fields the
+    # registry declares for *that card's kind* (D-landing-registry). The
+    # closed set that validates the model's answer permits the form's
+    # answer too, so a blanket `permit!` never has to appear here: a key no
+    # kind declares is dropped at the boundary rather than trusted to be
+    # ignored downstream, and an index the document doesn't have is not a
+    # card at all.
+    def landing_params
+      permitted = @document.landings.each_with_index.filter_map do |entry, index|
+        kind = Landing.find(entry["kind"]) or next
+
+        [ index.to_s, [ :keep, { attributes: kind.fields.map { |field| field.name.to_sym } } ] ]
+      end.to_h
+
+      params.fetch(:landings, ActionController::Parameters.new).permit(permitted)
     end
 
     def document_params

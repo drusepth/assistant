@@ -158,6 +158,21 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_not document.landings_to_review?
   end
 
+  test "a submitted key the kind doesn't declare never reaches the row" do
+    document = proposing_document
+
+    post land_document_path(document), params: { landings: {
+      # `care_kind` is an event field, not a person one; `user_id` is
+      # nobody's. Both are dropped at the boundary by the kind's own field
+      # list, not trusted to be ignored downstream.
+      "1" => { keep: "1", attributes: { name: "Dr. Alvarez", relationship: "Vet", care_kind: "dental", user_id: users(:two).id } }
+    } }
+
+    person = Person.last
+    assert_equal "Dr. Alvarez", person.name
+    assert_equal users(:one), person.user
+  end
+
   test "a card that fails validation re-renders the page with its error, and nothing lands" do
     document = proposing_document
 

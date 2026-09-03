@@ -90,7 +90,9 @@ module Landing
 
     # Form path: a Draft carrying attributes and every error.
     def coerce(raw, lenient: false)
-      raw = (raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw.to_h).stringify_keys
+      # A plain hash either way by here — the model's parsed JSON, or params
+      # the controller already permitted against this kind's own fields.
+      raw = raw.to_h.stringify_keys
       draft = Draft.new(kind: kind)
 
       fields.each do |field|
