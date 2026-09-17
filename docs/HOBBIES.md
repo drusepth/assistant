@@ -211,8 +211,12 @@ classes, listings).
   is all deadlines and zero hobby-tagged anything, the synthesis says so.
   Hobbies as the wellbeing counterweight — the mission's meaning-making line
   showing up in the product's voice.
-- **Event radar** *(Tier B, deferred)* — local happenings, releases, exhibits.
-  Waits on Q9/Q10 like everything external.
+- **Event radar** — local happenings, releases, exhibits. Was deferred as
+  Tier B behind Q9; now designed without it in `docs/EVENT_RADAR_PLAN.md`
+  (D-place-subscriptions, D-listing-feeds, D-event-radar): the user
+  subscribes to places and the calendars that publish what's on there, the
+  app polls them the way the reader polls feeds, and the model judges what
+  it is holding rather than searching for it.
 
 ## 5. Cross-section dividends (the lens model selling itself)
 
@@ -249,4 +253,7 @@ classes, listings).
 5. ✅ **The reader** (D-feed-reader, `docs/READER.md`) — feeds per hobby,
    one chronological river, and per-item verbs that end in a task. The
    daily surface the section was missing.
-6. **Tier B upgrades** (real meetups/classes/event radar) when Q9 resolves.
+6. **Tier B upgrades** (real meetups/classes/event radar) when Q9 resolves —
+   except the event radar, which `docs/EVENT_RADAR_PLAN.md` designs without
+   Q9 by making the sources the user's (as the reader did), and which gives
+   Find-your-people its "follow the listings" follow-up.
