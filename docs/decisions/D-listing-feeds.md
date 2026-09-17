@@ -1,5 +1,5 @@
 <!-- decided -->
-**D-listing-feeds. Events reach the app through listing sources the user attaches to a place — iCalendar feeds, pages carrying schema.org Event data, and opt-in keyed providers — polled on the reader's politeness rules; near is by construction and by arithmetic, never by geocoding**
+**D-listing-feeds. Events reach the app through listing sources the user attaches to a place — iCalendar feeds, pages carrying schema.org Event or volunteer JobPosting data, and opt-in keyed providers — polled on the reader's politeness rules; near is by construction and by arithmetic, never by geocoding**
 
 The obvious build — ask the model for events near the user — fails the way
 the reader's obvious build failed: the models this project argues for cannot
@@ -11,9 +11,11 @@ is the app's; judging it is the model's. A **ListingSource** belongs to a
 place and is one of three kinds behind one seam: an **`ics`** feed
 (`webcal:` rewritten, parsed by `Events::Import::Ics`, which gains `uid`,
 `url` and `geo` on `ParsedEvent` additively); a **`page`** carrying schema.org
-`Event` JSON-LD — the block Eventbrite, Meetup, venues and city calendars
-publish for machines, read as structured data and never as prose, which
-keeps it on the right side of D-no-keyword-logic; and, later and opt-in, a
+JSON-LD in either of two shapes — `Event`, the block Eventbrite, Meetup,
+venues and city calendars publish for machines, and `JobPosting` with
+`employmentType` `VOLUNTEER`, the documented way to mark a volunteer role —
+read as structured data and never as prose, which keeps it on the right
+side of D-no-keyword-logic; and, later and opt-in, a
 **`provider`** — a keyed API such as Ticketmaster's Discovery API queried by
 point, radius and window, deterministic HTTP rather than a model browsing
 (so not Q9 either), switched on per place under a sentence saying it sends
@@ -28,7 +30,15 @@ instead of the reader's hour because listings are not news. What lands is a
 **Happening**, not an `Event`: a candidate with its own table and verbs,
 idempotent by `uid`, one row per occurrence sharing a `series_uid`, that
 reaches the calendar only by "Add to calendar" or an accepted suggestion
-(`event_id` then links them). **Near is by construction, then by
+(`event_id` then links them). A volunteer role with no date is an
+**opening** — `kind: opening`, no `starts_at`, expiring when the posting
+says and withdrawn when its source stops listing it — whose verb is "Make a
+task" (`task_id` links it), because the board is where "I should look into
+that" becomes "I did". The per-place help card names the institutions
+people actually mean — the library first (LibCal, Communico and
+BiblioCommons all publish iCal), then the city, the campus, the venues, the
+Meetup groups, the volunteer center — each with a "Find it" link that opens
+a web search in the user's own browser, so the app looks nothing up. **Near is by construction, then by
 arithmetic**: a happening is at its source's place unless it carries a point
 (iCal `GEO`, JSON-LD `location.geo`, a provider's venue), in which case the
 haversine `Datasets::Places` already has gives its distance and a row beyond
