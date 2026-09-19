@@ -233,20 +233,36 @@ Each landed green and independent; W1 was pure refactor.
   `app/views/about/tools/_outcome.html.erb` is the one about-page mention to
   reread.
 
-## 8. Deferred, and one open question
+## 8. The rest of it (built), and one open question
 
-- **An end date.** `UNTIL` in the picker ("until Dec 31") — the grammar has
-  it; wait for someone to want it.
-- **A completed task's reminders.** `Task#complete!` does not touch
-  reminders, so a one-shot about a finished task still fires. Probably
-  wrong for one-shots, and the question of what completion means for a
-  *standing* reminder on that task (stop? keep going — it's a chore?) is
-  the reason not to decide it inside this plan.
-- **Natural-language capture.** "Remind me every Thursday night to take the
-  trash out" typed into chat cannot create a reminder — chat writes nothing
-  but a recap Note (D20/D29). A capture that parses a sentence into a
-  reminder is a *tool* proposing a draft the user confirms, and it belongs
-  with the other tool work, not here.
+The three things §8 first deferred landed in the same day, once the ask
+was "finish it":
+
+- **An end date.** An **Until** date field unfolds beside the chips for any
+  repeat, blank by default ("until you remove it", which is what most
+  want). It rides the rule as `UNTIL=YYYYMMDD` — inclusive of that day —
+  reads back into the edit form, must follow the first day, and a series
+  whose last day has already passed is refused as "already run out". The
+  dispatcher was ready for it (§5): the last delivery retires the row the
+  one-shot way.
+- **A completed task's reminders.** Decided: `Task#complete!` retires the
+  task's pending *one-shot* reminders — a ping about something already done
+  reads as the app not noticing — and keeps its *standing* ones, because
+  "take the trash out" checked off this week is the chore done once, not
+  the chore over. Reopening restores nothing; a fresh reminder is one tap.
+- **Plain words.** "Take the trash out every Thursday night" typed into
+  the **Or just say it** box on Today has the household's model fill in the
+  form — body, first day, time, Repeat, chips, Until — for the user to
+  check and send. It is not a Tool and not chat: `Reminders::Parse` is one
+  call in the `Tasks::Categorize` shape, its answer validated into the
+  closed sets (`REPEAT_OPTIONS`, the weekday codes; anything else is
+  dropped, never trusted), and `reminders#parse` **saves nothing** — it
+  returns the prefilled form over a Turbo Stream, so the click on Remind me
+  is still the only write (D20). With no model configured the box is gone
+  and a line says what setting one up would give you (the standing rule in
+  CLAUDE.md); a model that can't answer leaves the form alone and keeps what
+  was typed. Chat still cannot create a reminder (D29), and that stays true.
+
 - **Q-routines (open).** A chore that *appears on the board* each Thursday
   — reopened and pulled into Today by its own cadence, checked off, gone
   until next week — is the recurring-task feature §2 declined to build on

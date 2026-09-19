@@ -201,6 +201,36 @@ class ReminderTest < ActiveSupport::TestCase
     assert_nil task.reload.completed_at
   end
 
+  test "a last day rides the rule, reads back, and has to follow the first day" do
+    reminder = @user.reminders.create!(body: "Water the seedlings", deliver_on: local_today + 1, deliver_time: "08:00",
+      repeat: "daily", repeat_until: local_today + 30)
+
+    assert_equal "FREQ=DAILY;UNTIL=#{(local_today + 30).strftime('%Y%m%d')}", reminder.rule
+    assert_equal local_today + 30, Reminder.find(reminder.id).repeat_until
+    assert_match(/until/, reminder.cadence)
+
+    early = @user.reminders.new(body: "Odd", deliver_on: local_today + 5, repeat: "daily", repeat_until: local_today + 1)
+    assert_not early.valid?
+    assert_match(/before the first/, early.errors.full_messages.to_sentence)
+
+    spent = @user.reminders.new(body: "Odd", deliver_on: local_today - 10, repeat: "daily", repeat_until: local_today - 5)
+    assert_not spent.valid?
+    assert_match(/already run out/, spent.errors.full_messages.to_sentence)
+  end
+
+  test "finishing a task retires its one-shot reminders and keeps its standing ones" do
+    task = @user.tasks.create!(title: "Take the trash out", due_on: local_today + 1)
+    once = @user.reminders.create!(subject: task, lead_minutes: 60)
+    exact = @user.reminders.create!(subject: task, deliver_on: local_today + 1, deliver_time: "07:00")
+    weekly = @user.reminders.create!(subject: task, deliver_on: local_today + 1, deliver_time: "20:00", repeat: "weekly")
+
+    task.complete!
+
+    assert_not Reminder.exists?(once.id), "a ping about something already done reads as the app not noticing"
+    assert_not Reminder.exists?(exact.id)
+    assert Reminder.exists?(weekly.id), "checked off this week is the chore done once, not the chore over"
+  end
+
   test "deleting the item takes its reminders with it" do
     event = create_event(title: "Dentist", starts_date: local_today + 2, starts_time: "14:00")
     @user.reminders.create!(subject: event, lead_minutes: 60)

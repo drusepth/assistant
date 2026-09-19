@@ -61,9 +61,11 @@ class Reminder < ApplicationRecord
   # (D16): a day plus a time, never a raw datetime typed by hand.
   attribute :deliver_on, :date
   attribute :deliver_time, :string
-  # The picker's two parts: a REPEAT_OPTIONS key and, for the weekly keys,
-  # the chosen weekday codes. Composed into `rule` before validation.
+  # The picker's parts: a REPEAT_OPTIONS key, the chosen weekday codes for
+  # the weekly keys, and an optional last day. Composed into `rule` before
+  # validation.
   attribute :repeat, :string
+  attribute :repeat_until, :date
 
   scope :pending, -> { where(delivered_at: nil) }
   scope :upcoming, -> { pending.order(:deliver_at) }
@@ -81,6 +83,7 @@ class Reminder < ApplicationRecord
   validates :subject_type, inclusion: { in: SUBJECT_TYPES }, allow_nil: true
   validate :subject_is_the_users_own
   validate :rule_is_standing_safe
+  validate :end_follows_start
   # A standing reminder never fails this: `align_to_rule` has already moved
   # it to the first occurrence still ahead.
   validate :moment_has_not_passed, if: -> { !standing? && deliver_at_changed? }
@@ -115,6 +118,10 @@ class Reminder < ApplicationRecord
   end
 
   def repeat_days = @repeat_days || recurrence&.weekdays || []
+
+  def repeat_until
+    super || recurrence&.until_date
+  end
 
   def repeat_days=(codes)
     @repeat_days = Array(codes).map { |code| code.to_s.strip.upcase }.select { |code| Recurrence::Rule::WEEKDAYS.key?(code) }
@@ -223,7 +230,7 @@ class Reminder < ApplicationRecord
       key = self[:repeat]
       return if key.nil?
 
-      self.rule = case key
+      text = case key
       when "none" then nil
       when "daily" then "FREQ=DAILY"
       when "weekdays" then "FREQ=WEEKLY;BYDAY=#{Recurrence::Rule::WORKDAYS.join(',')}"
@@ -233,6 +240,15 @@ class Reminder < ApplicationRecord
       when "yearly" then "FREQ=YEARLY"
       else key
       end
+      # The last day is inclusive: UNTIL as a date runs to the end of it.
+      text = "#{text};UNTIL=#{repeat_until.strftime('%Y%m%d')}" if text && repeat_until
+      self.rule = text
+    end
+
+    def end_follows_start
+      return unless standing? && repeat_until && deliver_on && repeat_until < deliver_on
+
+      errors.add(:base, "That end date is before the first reminder.")
     end
 
     # The chips, or the picked day's weekday when none were touched.

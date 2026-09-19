@@ -10,5 +10,6 @@
     </ul>
   <% end %>
 
+  <%= render "reminders/capture", text: "" %>
   <%= render "reminders/form", reminder: Reminder.new(deliver_on: Date.current), subject: nil, show_body: true %>
 <% end %>

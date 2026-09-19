@@ -50,8 +50,13 @@ class Task < ApplicationRecord
     due_on&.in_time_zone(user.household.zone)&.change(hour: Remindable::DAY_START_HOUR)
   end
 
+  # Finishing a task retires the one-shot reminders about it — a ping about
+  # something already done reads as the app not noticing. A standing
+  # reminder stays: "take the trash out" checked off this week is the chore
+  # done once, not the chore over (D-standing-reminders).
   def complete!
     update!(completed_at: Time.current)
+    reminders.pending.where(rule: nil).destroy_all
     goal&.finish_if_done!
   end
 

@@ -1,16 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 // The reminder form's Repeat picker (D-standing-reminders). A weekly repeat
-// unfolds the weekday chips and pre-checks the picked date's weekday; the
-// monthly option names the picked day ("Every month on the 19th"). All of
-// it is presentation: the server composes the rule from whatever the form
-// sends, so with JavaScript off the same form still works — the chips are
-// simply always visible and the default day is the date's.
+// unfolds the weekday chips and pre-checks the picked date's weekday; any
+// repeat unfolds the "Until" field and turns the date's label into
+// "Starting"; the monthly option names the picked day ("Every month on the
+// 19th"). All of it is presentation: the server composes the rule from
+// whatever the form sends, so with JavaScript off the same form still works
+// — the chips are simply always visible and the default day is the date's.
 const CODES = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
 const WEEKLY = ["weekly", "biweekly"]
 
 export default class extends Controller {
-  static targets = ["date", "repeat", "days", "day"]
+  static targets = ["date", "repeat", "days", "day", "until"]
 
   connect() {
     this.autoCode = null
@@ -20,6 +21,7 @@ export default class extends Controller {
 
   repeatChanged() {
     this.sync()
+    this.relabel()
   }
 
   dateChanged() {
@@ -37,8 +39,13 @@ export default class extends Controller {
     return WEEKLY.includes(this.repeatTarget.value)
   }
 
+  get repeating() {
+    return this.repeatTarget.value !== "none"
+  }
+
   sync() {
     this.daysTarget.hidden = !this.weekly
+    if (this.hasUntilTarget) this.untilTarget.hidden = !this.repeating
     if (this.weekly && this.checkedCodes().length === 0) this.checkDateWeekday()
   }
 
@@ -71,6 +78,9 @@ export default class extends Controller {
     const monthly = this.repeatTarget.querySelector('option[value="monthly"]')
     const parts = this.dateParts()
     if (monthly) monthly.textContent = parts ? `Every month on the ${ordinal(parts.day)}` : "Every month"
+
+    const label = this.element.querySelector(`label[for="${this.dateTarget.id}"]`)
+    if (label) label.textContent = this.repeating ? "Starting" : "On"
   }
 }
 

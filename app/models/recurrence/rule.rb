@@ -55,6 +55,14 @@ module Recurrence
     def weekdays = parts["BYDAY"].to_s.split(",").map(&:strip).select { |code| WEEKDAYS.key?(code) }
     def month_day = parts["BYMONTHDAY"]&.to_i
 
+    # The last day the series runs, as a calendar date, when it has one.
+    def until_date
+      value = parts["UNTIL"].to_s
+      Date.strptime(value[0, 8], "%Y%m%d") if value.match?(/\A\d{8}(T\d{6}Z?)?\z/i)
+    rescue Date::Error
+      nil
+    end
+
     # The rules real calendars produce. YEARLY BYMONTH/BYMONTHDAY are assumed
     # to restate the start (they always do in exports); anything cleverer is
     # left to the caller to keep as text.

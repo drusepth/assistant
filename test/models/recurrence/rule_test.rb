@@ -82,6 +82,13 @@ class Recurrence::RuleTest < ActiveSupport::TestCase
       rule("FREQ=DAILY;UNTIL=20260920T130000Z").occurrences(at(2026, 9, 19, 9)).to_a
   end
 
+  test "reads its last day back as a date" do
+    assert_equal Date.new(2027, 9, 20), rule("FREQ=YEARLY;UNTIL=20270920").until_date
+    assert_equal Date.new(2027, 9, 20), rule("FREQ=YEARLY;UNTIL=20270920T130000Z").until_date
+    assert_nil rule("FREQ=YEARLY").until_date
+    assert_nil rule("FREQ=YEARLY;UNTIL=soon").until_date
+  end
+
   test "next_after walks forward from the current occurrence" do
     r = rule("FREQ=WEEKLY;BYDAY=TH")
     thursday = at(2026, 9, 24, 20)

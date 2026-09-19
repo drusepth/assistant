@@ -5,12 +5,14 @@
       show_body — whether to ask what to be reminded of (an item's reminder
                   already knows: it's the item's title)
     Three fields and a Repeat picker, on one line where the screen allows.
-    Weekly repeats unfold a row of weekday chips; the server composes the
-    rule from whatever is picked, so the form works with JavaScript off. %>
+    Repeats unfold a row of weekday chips (weekly) and an optional last day;
+    the server composes the rule from whatever is picked, so the form works
+    with JavaScript off. %>
 <% weekly = Reminder::WEEKLY_REPEATS.include?(reminder.repeat) %>
+<% repeating = reminder.repeat != "none" %>
 <% scope = reminder.persisted? ? "reminder_#{reminder.id}" : "new_reminder" %>
 <%= form_with model: reminder, url: (reminder.persisted? ? reminder_path(reminder) : reminders_path),
-      namespace: scope, class: "space-y-3", data: { controller: "reminder-form" } do |form| %>
+      namespace: scope, id: scope, class: "space-y-3", data: { controller: "reminder-form" } do |form| %>
   <% if subject %>
     <%= form.hidden_field :subject_type, value: subject.class.name, id: nil %>
     <%= form.hidden_field :subject_id, value: subject.id, id: nil %>
@@ -25,7 +27,7 @@
       bottom alignment would lift its label out of line with the others. %>
   <div class="flex flex-wrap items-start gap-2">
     <div class="min-w-36 flex-1">
-      <%= form.field :deliver_on, as: :date_field, label_text: reminder.standing? || weekly ? "Starting" : "On",
+      <%= form.field :deliver_on, as: :date_field, label_text: repeating ? "Starting" : "On",
             value: reminder.deliver_on || Date.current, required: true,
             data: { reminder_form_target: "date", action: "reminder-form#dateChanged" } %>
     </div>
@@ -50,6 +52,13 @@
         <span class="chip chip-toggle"><%= Recurrence::Rule::DAY_NAMES[code].first(3) %></span>
       </label>
     <% end %>
+  </div>
+
+  <%# A last day, for a repeat that shouldn't run forever ("through March").
+      Blank means it keeps going until removed, which is what most want. %>
+  <div class="max-w-48" data-reminder-form-target="until" <%= "hidden" unless repeating %>>
+    <%= form.field :repeat_until, as: :date_field, label_text: "Until", hint: "Blank = until you remove it",
+          value: reminder.repeat_until %>
   </div>
 
   <%= form.submit (reminder.persisted? ? "Save" : "Remind me"), class: "btn btn-secondary" %>
