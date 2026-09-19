@@ -162,47 +162,60 @@ when the item it hangs on is deleted (`dependent: :destroy`, as today). The
 grammar understands `UNTIL` and `COUNT`; the picker does not offer them in
 W3 (§8).
 
-## 6. The picker
+## 6. The picker (built)
 
-The Google Calendar shape, because people already know it and it is one
-select added to the two forms that exist rather than a new form: a
-**Repeat** select next to the date and time.
+One form for every way a reminder is set or changed — `reminders/_form` —
+and the shape is the one people already know from Apple Reminders and
+Todoist: the date and time, a **Repeat** select, and for the weekly repeats
+a row of **weekday chips**. "Every Thursday night, take the trash out" is:
+type it, Repeat → Every week, tap Thu, set 8:00 PM, Remind me. The date
+defaults to today and never has to be a Thursday — it is where the series
+*starts* (§4), so the picker doesn't make you hunt the calendar for the
+right weekday, and the confirmation says which day it landed on.
 
-| Option | Rule composed from the picked date |
+| Option | Rule composed |
 |---|---|
 | Doesn't repeat | *(nil)* |
 | Every day | `FREQ=DAILY` |
 | Every weekday | `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR` |
-| Every week on *Thursday* | `FREQ=WEEKLY;BYDAY=TH` |
-| Every 2 weeks on *Thursday* | `FREQ=WEEKLY;INTERVAL=2;BYDAY=TH` |
+| Every week (chips: Thu) | `FREQ=WEEKLY;BYDAY=TH` |
+| Every 2 weeks (chips: Mon, Fri) | `FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR` |
 | Every month on the *19th* | `FREQ=MONTHLY;BYMONTHDAY=19` |
 | Every year | `FREQ=YEARLY` |
 
-`Reminder::REPEAT_OPTIONS` is the closed list of option keys; the model
-composes the rule from the key plus `deliver_on` in `before_validation`, the
-same slot `compose_deliver_at` already occupies, so the controller permits
-one more virtual attribute (`repeat`) and nothing else. The option labels
-that name a weekday or a day-of-month are rendered generically ("Every week
-on the day you pick") — the form is server-rendered and the date is chosen
-after the page loads; a Stimulus controller that rewrites the label as the
-date changes is a nicety, not W3.
+`Reminder::REPEAT_OPTIONS` is the closed list of keys; the model composes
+the rule from the key, the chips, and `deliver_on` in `before_validation`,
+the same slot `compose_deliver_at` occupies, so the controller permits two
+virtual attributes (`repeat`, `repeat_days`) and nothing else. A rule reads
+back into those two for the edit form (`repeat_key_for`), so a row opens on
+what was chosen.
+
+The chips are checkboxes wearing chips (`.chip-toggle`, a `peer` pattern),
+so one tap is a Thursday and three are Mon, Wed, Fri, and the keyboard still
+reaches them. A small Stimulus controller (`reminder-form`) shows the chip
+row only for weekly repeats, pre-checks the picked date's weekday, follows
+the date while the chips still say what it set, and renames the monthly
+option to "Every month on the 19th". All of it is presentation: with
+JavaScript off the chips are simply always visible and the server takes the
+date's weekday when none are checked.
 
 Where it appears:
 
 - **Today's standalone form** (`reminders/_upcoming`) — the case the feature
-  exists for, now with a fourth field.
-- **The item page's exact-time form** (`reminders/_controls`, inside the
-  disclosure). The lead-time form does not get it: relative reminders are
-  not standing (§4).
+  exists for.
+- **The item page** (`reminders/_controls`): the lead-time select as before
+  (a relative reminder can't repeat, §4), and the same form under "Pick a
+  time — once, or on repeat".
+- **Every row**, opened in place. A reminder in a list (`reminders/_reminder`)
+  is the fact — "Take the trash out · Weekly on Thursday · next Thu Sep 24 at
+  8:00 PM" — and **Change** unfolds the same form prefilled, so "make it 8pm"
+  or "actually, every day" is one tap and one form, never remove-and-redo.
+  `update` joined `create` and `destroy` for this; the plan had deferred
+  editing and the streamlining ask brought it forward.
 
-What the lists show: the next time as today, plus the cadence in the soft
-text — `rule.describe`, "every week on Thursday" — and "Remove" reads as
-"stop", which it is. The Today card's subtitle gains nothing; it already
-says these ignore the dials and you set them yourself.
+## 7. Waves (all built 2026-09-19)
 
-## 7. Waves
-
-Each lands green and independent; W1 is pure refactor.
+Each landed green and independent; W1 was pure refactor.
 
 - **W1 — `Recurrence::Rule`.** Extract from `Events::Import::Ics`; the
   importer delegates; `test/services/events/import_test.rb` pins unchanged
@@ -213,9 +226,10 @@ Each lands green and independent; W1 is pure refactor.
   Tests: advances rather than tombstones; skips missed occurrences without
   pinging; the conditional claim loses to a concurrent advance; a standing
   rule with a lead time is invalid; created-in-the-past rolls forward.
-- **W3 — the picker.** `REPEAT_OPTIONS`, the composing hook, the select on
-  both forms, the cadence text in both lists, the controller permit,
-  a controller test per form. The reminders sentence in
+- **W3 — the picker.** `REPEAT_OPTIONS`, the composing hook, the select and
+  chips on both forms, the row that opens in place with `update`, the
+  cadence text in both lists, the controller permit, a controller test per
+  form. The reminders sentence in
   `app/views/about/tools/_outcome.html.erb` is the one about-page mention to
   reread.
 
@@ -223,8 +237,6 @@ Each lands green and independent; W1 is pure refactor.
 
 - **An end date.** `UNTIL` in the picker ("until Dec 31") — the grammar has
   it; wait for someone to want it.
-- **Editing in place.** Reminders are create/destroy today; changing a
-  cadence is remove-and-re-add. Fine until it isn't.
 - **A completed task's reminders.** `Task#complete!` does not touch
   reminders, so a one-shot about a finished task still fires. Probably
   wrong for one-shots, and the question of what completion means for a

@@ -111,6 +111,96 @@ class ReminderTest < ActiveSupport::TestCase
     assert_not @user.reminders.new(subject: other_event, lead_minutes: 60).valid?
   end
 
+  # --- standing reminders (D-standing-reminders) ---------------------------
+
+  test "a repeat composes an explicit rule from the picked day" do
+    thursday = local_today + ((4 - local_today.wday) % 7)
+    reminder = @user.reminders.create!(body: "Take the trash out", deliver_on: thursday + 7, deliver_time: "20:00", repeat: "weekly")
+
+    assert_equal "FREQ=WEEKLY;BYDAY=TH", reminder.rule
+    assert reminder.standing?
+    assert_equal "weekly on Thursday", reminder.cadence
+    assert_equal "weekly", reminder.reload.repeat, "the picker reads its key back off the stored rule"
+    assert_equal [ "TH" ], reminder.repeat_days
+  end
+
+  test "the weekday chips win over the picked date, and the series starts on the first chosen day" do
+    saturday = local_today + ((6 - local_today.wday) % 7) + 7
+    reminder = @user.reminders.create!(body: "Take the trash out", deliver_on: saturday, deliver_time: "20:00",
+      repeat: "weekly", repeat_days: %w[ TH ])
+
+    assert_equal "FREQ=WEEKLY;BYDAY=TH", reminder.rule
+    assert_equal 4, reminder.local_deliver_at.wday, "the coming Thursday, not the Saturday that was picked"
+    assert_equal 20, reminder.local_deliver_at.hour
+    assert reminder.deliver_at > saturday.in_time_zone(@zone)
+  end
+
+  test "every option composes, and reads back as itself" do
+    date = local_today + 3
+    expected = {
+      "daily" => "FREQ=DAILY",
+      "weekdays" => "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR",
+      "biweekly" => "FREQ=WEEKLY;INTERVAL=2;BYDAY=#{Recurrence::Rule::WEEKDAY_CODES[date.wday]}",
+      "monthly" => "FREQ=MONTHLY;BYMONTHDAY=#{date.day}",
+      "yearly" => "FREQ=YEARLY"
+    }
+
+    expected.each do |key, rule|
+      reminder = @user.reminders.create!(body: key, deliver_on: date, deliver_time: "09:00", repeat: key)
+      assert_equal rule, reminder.rule, key
+      assert_equal key, Reminder.find(reminder.id).repeat, key
+    end
+  end
+
+  test "a standing reminder whose first moment has passed rolls forward instead of refusing" do
+    reminder = @user.reminders.create!(body: "Meds", deliver_on: local_today - 1, deliver_time: "08:00", repeat: "daily")
+
+    assert reminder.deliver_at > Time.current
+    assert reminder.deliver_at <= 1.day.from_now
+    assert_equal 8, reminder.local_deliver_at.hour
+  end
+
+  test "a one-shot in the past is still refused, on update too" do
+    reminder = @user.reminders.create!(body: "Call the pharmacy", deliver_on: local_today + 1, deliver_time: "16:00")
+
+    assert_not reminder.update(deliver_on: local_today - 1)
+    assert_match(/already passed/, reminder.errors.full_messages.to_sentence)
+  end
+
+  test "choosing 'doesn't repeat' clears the rule; a form that never sent a repeat leaves it alone" do
+    reminder = @user.reminders.create!(body: "Meds", deliver_on: local_today + 1, deliver_time: "08:00", repeat: "daily")
+
+    reminder = Reminder.find(reminder.id)
+    reminder.update!(deliver_time: "09:00")
+    assert_equal "FREQ=DAILY", reminder.rule, "an edit that didn't touch Repeat keeps the cadence"
+
+    reminder.update!(repeat: "none")
+    assert_nil reminder.rule
+    assert_not reminder.standing?
+  end
+
+  test "a repeat cannot ride a lead time — there is nothing for it to repeat over" do
+    event = create_event(title: "Dentist", starts_date: local_today + 2, starts_time: "14:00")
+    reminder = @user.reminders.new(subject: event, lead_minutes: 60, repeat: "weekly")
+
+    assert_not reminder.valid?
+    assert_match(/needs its own time/, reminder.errors.full_messages.to_sentence)
+  end
+
+  test "a rule the grammar can't stand on is refused" do
+    assert_not @user.reminders.new(body: "Odd", deliver_on: local_today + 1, repeat: "FREQ=HOURLY").valid?
+    assert_not @user.reminders.new(body: "Odd", deliver_on: local_today + 1, repeat: "fortnightly-ish").valid?
+  end
+
+  test "a standing reminder on a task pings like any other and leaves the task alone" do
+    task = @user.tasks.create!(title: "Take the trash out")
+    reminder = @user.reminders.create!(subject: task, deliver_on: local_today + 1, deliver_time: "20:00", repeat: "weekly")
+
+    assert_equal "Take the trash out", reminder.body
+    assert_equal "Reminder: Take the trash out", reminder.message, "the cadence is the card's business, not the ping's"
+    assert_nil task.reload.completed_at
+  end
+
   test "deleting the item takes its reminders with it" do
     event = create_event(title: "Dentist", starts_date: local_today + 2, starts_time: "14:00")
     @user.reminders.create!(subject: event, lead_minutes: 60)

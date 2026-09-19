@@ -1,0 +1,14 @@
+<%# A reminder that counts back from its item's own date (D-reminders):
+    one select, set or changed. Locals: reminder (new or existing), subject. %>
+<%= form_with model: reminder, url: (reminder.persisted? ? reminder_path(reminder) : reminders_path),
+      namespace: (reminder.persisted? ? "reminder_#{reminder.id}" : "new_lead"), class: "flex flex-wrap items-end gap-2" do |form| %>
+  <%= form.hidden_field :subject_type, value: subject.class.name, id: nil %>
+  <%= form.hidden_field :subject_id, value: subject.id, id: nil %>
+  <div class="min-w-48 flex-1">
+    <%= form.field :lead_minutes, label_text: "Remind me" do %>
+      <%= form.select :lead_minutes,
+            Reminder::LEAD_OPTIONS.map { |minutes, text| [ text, minutes ] }, selected: reminder.lead_minutes || 60 %>
+    <% end %>
+  </div>
+  <%= form.submit (reminder.persisted? ? "Save" : "Set reminder"), class: "btn btn-secondary" %>
+<% end %>
