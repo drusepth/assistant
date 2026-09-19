@@ -1,6 +1,7 @@
 <%# The verbs on a happening (D-event-radar): the one click that lands
-    anything, and the ways of saying no. Locals: happening, surface. %>
+    anything, and the ways of saying no. Locals: happening, surface, match. %>
 <% surface = local_assigns[:surface] %>
+<% match = local_assigns[:match] %>
 <% if happening.on_calendar? %>
   <%= link_to "Open event", event_path(happening.event_id), class: "reader-verb" %>
 <% elsif happening.kind_event? %>
@@ -10,6 +11,16 @@
   <%= link_to "Open task", task_path(happening.task_id), class: "reader-verb" %>
 <% else %>
   <%= button_to "Task", task_happening_path(happening, surface: surface), class: "reader-verb", form_class: "contents" %>
+<% end %>
+<%# The one verb a matched row needs: the model put this here, and it can
+    be wrong. The tombstone keeps a re-read from putting it back and the
+    title becomes an example for the next batch (D-event-radar §5.4). %>
+<% if match %>
+  <%= button_to "Not this", reject_happening_path(happening, target: match.target, surface: surface), method: :patch,
+        class: "reader-verb", form_class: "contents" %>
+<% elsif (rejected = happening.happening_matches.rejected.first) %>
+  <%= button_to "Undo not-this", unreject_happening_path(happening, target: rejected.target, surface: surface), method: :patch,
+        class: "reader-verb", form_class: "contents" %>
 <% end %>
 <% if happening.hidden? %>
   <%= button_to "Unhide", unhide_happening_path(happening, surface: surface), method: :patch, class: "reader-verb", form_class: "contents" %>

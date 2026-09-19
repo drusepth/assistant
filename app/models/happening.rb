@@ -21,6 +21,13 @@ class Happening < ApplicationRecord
   belongs_to :event, optional: true
   belongs_to :task, optional: true
 
+  # The model's judgments about this row (D-event-radar). `matches` is the
+  # live set — what a row wears and what the watcher reads; a rejected one
+  # is a tombstone that stays as an example.
+  has_many :happening_matches, dependent: :destroy
+  has_many :matches, -> { live }, class_name: "HappeningMatch", inverse_of: :happening, dependent: nil
+  has_many :matched_sections, through: :matches, source: :section
+
   enum :kind, { event: "event", opening: "opening" }, default: :event, prefix: true
   enum :provenance, { listed: "listed", saved: "saved" }, default: :listed, prefix: true
 
@@ -42,6 +49,11 @@ class Happening < ApplicationRecord
   scope :withdrawn, -> { where.not(withdrawn_at: nil) }
   scope :unmatched, -> { where(matched_at: nil) }
   scope :unlinked, -> { where(event_id: nil, task_id: nil) }
+  # Judged for this person — by the model, or by the person themselves
+  # (a saved row carries its own judgment and never needed one).
+  scope :matched, -> {
+    where(id: HappeningMatch.live.select(:happening_id)).or(where(provenance: "saved"))
+  }
   # Still to come: a dated row whose end hasn't passed, or an opening still
   # listed and not past its own closing date.
   scope :upcoming, ->(now = Time.current) {
@@ -61,6 +73,11 @@ class Happening < ApplicationRecord
 
   def hide! = update!(hidden_at: Time.current)
   def unhide! = update!(hidden_at: nil)
+
+  def matched? = provenance_saved? || matches.any?
+
+  # The one chip a row wears: the first live match.
+  def match = matches.first
 
   def source_name = listing_source.display_title
 
@@ -97,12 +114,15 @@ class Happening < ApplicationRecord
     created
   end
 
-  # What the event or task is filed under: the section the radar lives in.
-  # A matched happening adds the lens it matched (W2) and a trip window
-  # adds Travel (W5); those layer on this.
+  # What the event or task is filed under: the section the radar lives in,
+  # plus the lens it matched — a bird walk that matched Birding lands
+  # tagged Hobbies and Birding, which is the multi-tagging the lens model
+  # exists for. A cause files under People, communities being what the
+  # section is.
   def calendar_sections
     slugs = kind_opening? ? %w[ people ] : %w[ hobbies ]
-    Section.where(slug: slugs).to_a
+    slugs << "people" if matches.any?(&:causes?)
+    (Section.where(slug: slugs).to_a + matched_sections.to_a).uniq
   end
 
   private

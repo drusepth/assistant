@@ -45,6 +45,34 @@
   <% end %>
 <% end %>
 
+<%# What's on near you for this hobby (D-event-radar): the rows the model
+    judged to be this hobby's, from the calendars followed under your
+    places. Only once there are places — an empty card asking for one
+    belongs on /places, not on every hobby. %>
+<% if panel.places? && panel.brief? %>
+  <div class="mt-4">
+    <%= render Ui::CardComponent.new(title: "#{section.name}, near you", padded: false) do |card| %>
+      <% card.with_actions do %>
+        <%= link_to "What's on", happenings_path, class: "reader-filter" %>
+      <% end %>
+      <% if panel.nearby.any? %>
+        <div class="divide-y divide-edge py-1" data-hobby-nearby>
+          <%= render partial: "happenings/happening", collection: panel.nearby, as: :happening,
+                locals: { section: section } %>
+        </div>
+      <% elsif panel.model? %>
+        <p class="px-5 py-4 text-sm text-soft">
+          Nothing near you matched to <%= section.name %> yet. The calendars you follow are read as they publish.
+        </p>
+      <% else %>
+        <p class="px-5 py-4 text-sm text-soft">
+          No model is configured, so nothing is matched to <%= section.name %> — everything near you is under What's on.
+        </p>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
 <%# How the river above gets fed out of feeds filed somewhere else
     (D-story-matching). Under the river rather than over it: what arrived is
     what you came for, and how it got here is the answer to a question you

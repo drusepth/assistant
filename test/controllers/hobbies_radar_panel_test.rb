@@ -14,7 +14,8 @@ class HobbiesRadarPanelTest < ActionDispatch::IntegrationTest
     assert_match CGI.escapeHTML(places_path), response.body
   end
 
-  test "with places the card lists what's on next, date-first" do
+  test "with places and no model the card lists everything on next, date-first" do
+    users(:one).household.model_profile.update!(api_key: "")
     place = users(:one).places.create!(name: "Tulsa")
     source = place.listing_sources.create!(url: "https://library.example/cal.ics", title: "Library")
     source.happenings.create!(uid: "walk", title: "Fall bird walk", starts_at: 3.days.from_now)

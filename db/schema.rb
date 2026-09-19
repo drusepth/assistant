@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_051946) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_053032) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -324,6 +324,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_051946) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_goals_on_user_id"
+  end
+
+  create_table "happening_matches", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "happening_id", null: false
+    t.string "reason"
+    t.datetime "rejected_at"
+    t.integer "section_id"
+    t.string "source", default: "model", null: false
+    t.string "target", null: false
+    t.datetime "updated_at", null: false
+    t.index ["happening_id", "target"], name: "index_happening_matches_on_happening_id_and_target", unique: true
+    t.index ["happening_id"], name: "index_happening_matches_on_happening_id"
+    t.index ["section_id", "rejected_at"], name: "index_happening_matches_on_section_id_and_rejected_at"
+    t.index ["section_id"], name: "index_happening_matches_on_section_id"
   end
 
   create_table "happenings", force: :cascade do |t|
@@ -1038,6 +1053,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_051946) do
 
   create_table "users", force: :cascade do |t|
     t.boolean "admin", default: false, null: false
+    t.text "causes_brief"
     t.boolean "celebrations", default: true, null: false
     t.datetime "created_at", null: false
     t.text "digest"
@@ -1054,6 +1070,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_051946) do
     t.datetime "onboarded_at"
     t.string "password_digest", null: false
     t.boolean "prepare_work", default: true, null: false
+    t.text "radar_brief"
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["household_id"], name: "index_users_on_household_id"
@@ -1105,6 +1122,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_051946) do
   add_foreign_key "feed_items", "feeds"
   add_foreign_key "feeds", "users"
   add_foreign_key "goals", "users"
+  add_foreign_key "happening_matches", "happenings"
+  add_foreign_key "happening_matches", "sections"
   add_foreign_key "happenings", "events"
   add_foreign_key "happenings", "listing_sources"
   add_foreign_key "happenings", "tasks"

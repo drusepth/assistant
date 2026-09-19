@@ -9,7 +9,13 @@ class HappeningsController < ApplicationController
     @places = Current.user.places.includes(:listing_sources).to_a
     @place = @places.find { |place| place.id.to_s == params[:place].to_s }
     @source = @place&.listing_sources&.find { |source| source.id.to_s == params[:source].to_s }
-    @river = Radar::River.new(Current.user, place: @place, source: @source, show: params[:show].to_s)
+    # "Matched only" is on by default when a model is configured and absent
+    # when it isn't — a filter that can never have anything in it is a
+    # control that does nothing.
+    @model = Current.user.household.model_profile&.configured?
+    @matched_only = @model && params[:all].blank? && params[:show].blank?
+    @river = Radar::River.new(Current.user, place: @place, source: @source, show: params[:show].to_s,
+      matched: @matched_only)
     @days = @river.days
     @place&.touch_opened!
   end
@@ -26,6 +32,13 @@ class HappeningsController < ApplicationController
 
   def hide = act { @happening.hide! }
   def unhide = act { @happening.unhide! }
+
+  # "Not this" (D-event-radar §5.4): the model said this was for you, and
+  # it can be wrong. Rejecting tombstones the match — a re-read can't put
+  # it back, the watcher retires its nudge, and the title becomes an
+  # example the next batch is shown. Undo restores it.
+  def reject = act { @happening.matches.find_by(target: params[:target])&.reject! }
+  def unreject = act { @happening.happening_matches.rejected.find_by(target: params[:target])&.restore! }
 
   private
     # Rows are reachable only through the user's own places.

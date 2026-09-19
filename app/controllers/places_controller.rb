@@ -10,6 +10,7 @@ class PlacesController < ApplicationController
     @place = Current.user.places.new
     @home = home_suggestion
     @next_up = next_up_by_place
+    @model = Current.user.household.model_profile&.configured?
     # Somebody looked: the sweep backs off sources nobody opens, and this is
     # the page that says somebody did.
     @places.each(&:touch_opened!)

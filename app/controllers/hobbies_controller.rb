@@ -16,6 +16,10 @@ class HobbiesController < ApplicationController
     Feeds::Briefs::Author.enqueue(Current.user, lens)
     Feeds::RouteStories.resweep!(Current.user)
     Feeds::RouteStories.enqueue(Current.user)
+    # And a new hobby is a question about the listings near you already
+    # here (D-event-radar) — same re-read, same bound.
+    Radar::Match.resweep!(Current.user)
+    Radar::Match.enqueue(Current.user)
     redirect_to section_path("hobbies"), notice: created_notice(lens, moved)
   rescue ArgumentError
     redirect_to section_path("hobbies"), alert: "A hobby needs a name."

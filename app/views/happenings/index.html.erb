@@ -5,6 +5,11 @@
   <h1 class="display text-2xl text-ink">What's on</h1>
   <div class="flex flex-wrap items-baseline gap-3 text-xs">
     <%= link_to "Places", places_path, class: "reader-filter" %>
+    <%# Matched-only exists only where a model can have matched anything. %>
+    <% if @model && @river.show == "upcoming" %>
+      <%= link_to "For you", happenings_path(request.query_parameters.except("all")), class: "reader-filter #{"reader-filter-on" if @matched_only}" %>
+      <%= link_to "Everything", happenings_path(request.query_parameters.merge(all: 1)), class: "reader-filter #{"reader-filter-on" unless @matched_only}" %>
+    <% end %>
     <% if @river.show == "upcoming" %>
       <%= link_to "Hidden", happenings_path(request.query_parameters.merge(show: "hidden")), class: "reader-filter" %>
       <%= link_to "Out of range", happenings_path(request.query_parameters.merge(show: "out_of_range")), class: "reader-filter" %>
@@ -59,9 +64,22 @@
     No calendars followed yet. <%= link_to "Follow one", places_path, class: "reader-filter" %> —
     the library's, the city's, a Meetup group's — and what it publishes lands here by date.
   </p>
+<% elsif @matched_only %>
+  <p class="px-3 py-8 text-center text-sm text-soft">
+    Nothing matched to you<%= " in #{@place.name}" if @place %> yet — new listings are read as they arrive.
+    <%= link_to "See everything upcoming", happenings_path(request.query_parameters.merge(all: 1)), class: "reader-filter" %>,
+    or tell the radar more under <%= link_to "Places", places_path(anchor: "briefs"), class: "reader-filter" %>.
+  </p>
 <% else %>
   <p class="px-3 py-8 text-center text-sm text-soft">
     Nothing upcoming<%= " in #{@place.name}" if @place %> right now. New listings arrive on their own as the
     calendars you follow are checked.
+  </p>
+<% end %>
+
+<% if @places.any? && !@model %>
+  <p class="mt-3 px-3 text-xs text-soft">
+    No model is configured, so nothing here is matched to your hobbies — everything near each place is
+    listed by date.
   </p>
 <% end %>

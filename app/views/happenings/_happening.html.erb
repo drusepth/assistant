@@ -1,11 +1,15 @@
-<%# One row in the river (D-event-radar): when, what, where, and the verbs.
-    Text and a link out, never the publisher's HTML (stripped at parse time).
-    Locals: happening; optional surface ("hub" for the Hobbies card, which
-    renders the shorter shape). %>
+<%# One row in the river (D-event-radar): when, what, where, why it's here,
+    and the verbs. Text and a link out, never the publisher's HTML (stripped
+    at parse time).
+    Locals: happening; optional surface ("hub" for the Hobbies card);
+    optional section — the lens page the row is under, whose own chip would
+    only repeat the page. %>
 <% surface = local_assigns[:surface] %>
+<% current = local_assigns[:section] %>
 <% url = reader_safe_url(happening.url) %>
+<% match = happening.match %>
 <article id="<%= dom_id(happening) %>" class="reader-line group <%= "is-read" if happening.hidden? %>"
-         data-happening data-kind="<%= happening.kind %>">
+         data-happening data-kind="<%= happening.kind %>"<%= " data-matched" if happening.matched? %>>
   <span class="w-16 shrink-0 text-xs tabular-nums text-soft"><%= happening_when(happening) %></span>
   <div class="min-w-0 flex-1">
     <h3 class="reader-headline">
@@ -27,6 +31,15 @@
       <% if happening.kind_opening? %>
         <span class="chip <%= section_chip_classes(Section.find_by(slug: "people")) %>">volunteer</span>
       <% end %>
+      <%# Why it's here: the target it matched and the model's own sentence,
+          on hover — "why is the council meeting under Birding" has to be
+          answerable on the row itself. Under the lens's own page the chip
+          would repeat the title, so only the sentence shows. %>
+      <% if match && !(current && match.section == current) %>
+        <span class="chip chip-inferred" title="<%= happening_match_title(match) %>"><%= match.label %></span>
+      <% elsif match %>
+        <span class="chip chip-inferred" title="<%= happening_match_title(match) %>">for you</span>
+      <% end %>
       <% if happening.provenance_saved? %>
         <span class="chip chip-inferred" title="You saved this yourself">saved by you</span>
       <% end %>
@@ -38,6 +51,6 @@
     </div>
   </div>
   <div class="reader-verbs">
-    <%= render "happenings/verbs", happening: happening, surface: surface %>
+    <%= render "happenings/verbs", happening: happening, surface: surface, match: match %>
   </div>
 </article>

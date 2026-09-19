@@ -13,7 +13,10 @@
       </div>
     <% else %>
       <p class="px-5 py-4 text-sm text-soft">
-        <% if radar.sources? %>
+        <% if radar.sources? && radar.waiting.positive? %>
+          Nothing matched to you yet — <%= link_to "#{radar.waiting} upcoming", happenings_path(all: 1), class: "reader-filter" %>
+          near you are read as they arrive.
+        <% elsif radar.sources? %>
           Nothing upcoming from the calendars you follow yet — new listings arrive on their own.
         <% else %>
           No calendars followed yet. <%= link_to "Follow one for #{radar.place_names}", places_path, class: "reader-filter" %> —

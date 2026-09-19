@@ -298,8 +298,16 @@ Rails.application.routes.draw do
       post :task
       patch :hide
       patch :unhide
+      # "Not this" and its Undo — the correcting verb on a match the model
+      # made (D-event-radar §5.4).
+      patch :reject
+      patch :unreject
     end
   end
+  # The radar's two sentences — what else you'd go to, what you'd give time
+  # to — and the button that drafts one.
+  patch "radar_brief" => "radar_briefs#update", as: :radar_brief
+  post  "radar_brief/author" => "radar_briefs#author", as: :author_radar_brief
 
   # The reader (D-feed-reader): the river of everything your feeds carried,
   # the subscriptions behind it, and the per-item verbs that make a river a

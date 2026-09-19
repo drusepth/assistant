@@ -5,17 +5,21 @@ module Radar
   # through it, so no grant can widen what a river shows.
   #
   # Upcoming, in range, not hidden, not withdrawn, by date. The filters
-  # narrow that; `show` swaps the pile (the hidden rows, or the ones a
+  # narrow that: a place, a source, a section the row matched, or matched
+  # rows only. `show` swaps the pile (the hidden rows, or the ones a
   # place's radius put out of range) so a wrong radius or a hasty Hide is
   # diagnosable rather than silent.
   class River
     SHOWS = %w[ upcoming hidden out_of_range ].freeze
     PREVIEW = 5
 
-    def initialize(user, place: nil, source: nil, show: "upcoming", horizon: Happening::HORIZON)
+    def initialize(user, place: nil, source: nil, section: nil, matched: false, show: "upcoming",
+                   horizon: Happening::HORIZON)
       @user = user
       @place = place
       @source = source
+      @section = section
+      @matched = matched
       @show = SHOWS.include?(show) ? show : "upcoming"
       @horizon = horizon
     end
@@ -39,7 +43,7 @@ module Radar
       def base
         scope = Happening.for_user(@user).live.upcoming
           .where("happenings.starts_at IS NULL OR happenings.starts_at <= ?", @horizon.from_now)
-          .includes(listing_source: :place).by_start
+          .includes({ listing_source: :place }, { matches: :section }).by_start
         scope = case @show
         when "hidden" then scope.hidden
         when "out_of_range" then scope.visible.where(out_of_range: true)
@@ -47,6 +51,8 @@ module Radar
         end
         scope = scope.where(listing_source_id: @place.listing_sources.select(:id)) if @place
         scope = scope.where(listing_source: @source) if @source
+        scope = scope.where(id: HappeningMatch.live.where(section: @section).select(:happening_id)) if @section
+        scope = scope.matched if @matched
         scope
       end
   end

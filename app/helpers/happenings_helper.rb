@@ -26,6 +26,12 @@ module HappeningsHelper
     "#{happening.starts_at.strftime("%a %-d %b")} · #{happening.title}"
   end
 
+  # What the match chip says on hover: the target, and the model's own
+  # sentence about this row when it wrote one.
+  def happening_match_title(match)
+    [ "For #{match.label}", match.because ].compact.join(" — ")
+  end
+
   def happening_distance(happening)
     return nil if happening.distance_km.blank?
 

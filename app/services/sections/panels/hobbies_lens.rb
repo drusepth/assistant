@@ -45,6 +45,16 @@ module Sections
       def broad_feeds = @broad_feeds ||= viewer.feeds.active.where(broad: true).to_a
 
       def model? = viewer.household.model_profile&.configured?
+
+      # What's on near the user's places that the model judged to be *this*
+      # hobby's (D-event-radar) — the "Birding, near you" list the whole
+      # feature exists to produce, on the page where somebody has already
+      # decided to spend time on birding. Nothing when there are no places.
+      def nearby
+        @nearby ||= viewer.places.exists? ? ::Radar::River.new(viewer, section: section).items(PREVIEW) : []
+      end
+
+      def places? = viewer.places.exists?
     end
   end
 end

@@ -3,8 +3,11 @@ require "test_helper"
 # The river of what's on (D-event-radar) and its verbs: nothing lands
 # without the click, and the click lands exactly one thing.
 class HappeningsControllerTest < ActionDispatch::IntegrationTest
+  # The no-AI wave: with no model the river is everything, by date. What a
+  # model adds — the For-you filter, chips, Not this — is radar_match_surfaces_test.
   setup do
     sign_in_as users(:one)
+    users(:one).household.model_profile.update!(api_key: "")
     @place = users(:one).places.create!(name: "Tulsa")
     @source = @place.listing_sources.create!(url: "https://library.example/cal.ics", title: "Library")
     @walk = @source.happenings.create!(uid: "walk", title: "Fall bird walk",

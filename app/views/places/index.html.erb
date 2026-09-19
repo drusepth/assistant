@@ -31,6 +31,10 @@
     <%= render "places/place", place: place, next_up: @next_up.fetch(place, []) %>
   <% end %>
 
+  <% if @places.any? %>
+    <%= render "places/briefs", model: @model %>
+  <% end %>
+
   <% if @places.empty? %>
     <p class="px-3 text-sm text-soft">
       Once a place is here, follow its library's calendar, the city's events feed, a Meetup group,
