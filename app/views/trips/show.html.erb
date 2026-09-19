@@ -137,6 +137,11 @@
     <% end %>
   <% end %>
 
+  <%# What's on where you'll be (D-place-subscriptions): each stay's nights
+      against the calendars followed for the place it lands in, and the
+      stays with no place yet offered as one to add. %>
+  <%= render "trips/while_there", nearby: @nearby, unplaced: @unplaced_stays unless @trip.past? %>
+
   <%= render "trips/comments_card" %>
 
   <%= render "trips/travelers_card" %>

@@ -34,6 +34,9 @@ class User < ApplicationRecord
   has_many :feed_items, through: :feeds
   has_many :spotted_hobbies, dependent: :destroy
   has_many :hobby_briefs, dependent: :destroy
+  has_many :places, -> { order(:position, :id) }, dependent: :destroy
+  has_many :listing_sources, through: :places
+  has_many :happenings, through: :listing_sources
   has_many :linked_accounts, dependent: :destroy
   has_many :email_sender_rules, dependent: :destroy
   has_many :notification_channels, dependent: :destroy

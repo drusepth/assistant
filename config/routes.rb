@@ -282,6 +282,33 @@ Rails.application.routes.draw do
   resources :share_links, only: %i[ create destroy ]
   get "s/:token" => "public#show", as: :shared
 
+  # The event radar (D-place-subscriptions, D-listing-feeds, D-event-radar):
+  # the places you subscribe to, the calendars followed under each, and the
+  # river of what they publish — with the verbs that turn a candidate into
+  # something on your own calendar or board.
+  resources :places, only: %i[ index create update destroy ] do
+    resources :listing_sources, only: %i[ create ], shallow: true
+  end
+  resources :listing_sources, only: %i[ destroy ] do
+    member { post :refresh }
+  end
+  resources :happenings, only: %i[ index ] do
+    member do
+      post :calendar
+      post :task
+      patch :hide
+      patch :unhide
+      # "Not this" and its Undo — the correcting verb on a match the model
+      # made (D-event-radar §5.4).
+      patch :reject
+      patch :unreject
+    end
+  end
+  # The radar's two sentences — what else you'd go to, what you'd give time
+  # to — and the button that drafts one.
+  patch "radar_brief" => "radar_briefs#update", as: :radar_brief
+  post  "radar_brief/author" => "radar_briefs#author", as: :author_radar_brief
+
   # The reader (D-feed-reader): the river of everything your feeds carried,
   # the subscriptions behind it, and the per-item verbs that make a river a
   # reader rather than a list.

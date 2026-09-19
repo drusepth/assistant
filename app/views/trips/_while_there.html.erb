@@ -1,0 +1,39 @@
+<%# While you're there (D-place-subscriptions): for each stay whose point
+    lands inside a place you follow calendars for, what's on between
+    check-in and check-out — the same rows, the same verbs, and an event
+    added from here is also filed under Travel. A stay with no place nearby
+    is one click from becoming one; nothing is followed for you.
+    Locals: nearby ([[window, rows]]), unplaced ([stay]). %>
+<% if nearby.any? || unplaced.any? %>
+  <%= render Ui::CardComponent.new(title: "While you're there", padded: false) do |card| %>
+    <% card.with_actions do %>
+      <%= link_to "Places", places_path, class: "reader-filter" %>
+    <% end %>
+    <% nearby.each do |window, rows| %>
+      <div class="border-b border-edge last:border-b-0" data-trip-window="<%= window.stay.id %>">
+        <p class="flex items-baseline justify-between gap-3 px-5 pt-4 pb-1 text-xs text-soft">
+          <span><strong class="text-ink"><%= window.place.name %></strong> · <%= window.stay.period %></span>
+          <%= link_to "Everything in #{window.place.name}", happenings_path(place: window.place.id, all: 1), class: "reader-filter" %>
+        </p>
+        <% if rows.any? %>
+          <div class="divide-y divide-edge py-1">
+            <%= render partial: "happenings/happening", collection: rows, as: :happening, locals: { surface: "hub" } %>
+          </div>
+        <% else %>
+          <p class="px-5 pb-4 text-sm text-soft">
+            Nothing listed for those dates yet from the <%= pluralize(window.place.listing_sources.size, "calendar") %> you follow there.
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+    <% unplaced.each do |stay| %>
+      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4" data-trip-unplaced="<%= stay.id %>">
+        <p class="text-sm text-soft">
+          <strong class="text-ink"><%= stay.location %></strong> · <%= stay.period %> — no calendars followed there yet.
+        </p>
+        <%= button_to "Add #{stay.location} as a place", places_path, params: { place: { name: stay.location }, return_to: trip_path(stay.trip) },
+              class: "btn btn-secondary btn-sm" %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

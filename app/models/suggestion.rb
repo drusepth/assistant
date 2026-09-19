@@ -42,6 +42,7 @@ class Suggestion < ApplicationRecord
   def dismiss!
     update!(status: :dismissed)
     discard_prepared_work
+    tell_watcher_dismissed
   end
 
   # The world handled it — book the checkup yourself and the nudge about
@@ -144,6 +145,16 @@ class Suggestion < ApplicationRecord
       tool_run.discard! if tool_run&.prepared?
     end
 
+    # A dismissal is the user's correction, and the watcher that made the
+    # proposal may have something to learn from it (Watcher::Base#dismissed).
+    # Isolated: a watcher that raises here must not cost the user the
+    # dismissal itself.
+    def tell_watcher_dismissed
+      Watcher.find(watcher_slug)&.new(user)&.dismissed(self)
+    rescue StandardError => e
+      AppError.record(e, source: "Suggestion#dismiss!", user: user, context: { suggestion_id: id })
+    end
+
     # A payload may carry several keys (birthday radar lands a gift task
     # *and* the day on the calendar); each present key materializes, and the
     # first creation names the flash notice.
@@ -165,6 +176,19 @@ class Suggestion < ApplicationRecord
         )
         event.sections = sections.to_a
         created << event
+      end
+
+      if (id = action["happening"])
+        # A listing near one of the user's places (D-event-radar): the row is
+        # the truth, so the payload carries its id rather than a copy of its
+        # fields and a publisher's correction reaches the click. Lands
+        # through the same path as the river's own verb; a row since pruned
+        # is simply nothing left to add.
+        happening = Happening.for_user(user).find_by(id: id)
+        if happening
+          created << (happening.kind_opening? ? happening.make_task!(sections: sections.to_a)
+                                              : happening.add_to_calendar!(sections: sections.to_a))
+        end
       end
 
       if (attrs = action["spending"])

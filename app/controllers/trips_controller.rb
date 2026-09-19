@@ -42,6 +42,17 @@ class TripsController < ApplicationController
     @itinerary_map = Travel::ItineraryMap.new(@trip.stays.by_date) unless @trip.past?
     @comments = @trip.comments.chronological.includes(:user)
     @travelers = @trip.travelers
+    # What's on where you'll be (D-place-subscriptions): each stay's nights
+    # read against the places you follow calendars for, and the stays with
+    # no place nearby offered as one to add. Only ahead — a past trip's
+    # listings are gone with the calendar window.
+    unless @trip.past?
+      windows = Radar::Windows.new(Current.user)
+      @nearby = windows.for_trip(@trip).map { |window|
+        [ window, Radar::River.new(Current.user, place: window.place, range: window.range).items(8) ]
+      }
+      @unplaced_stays = windows.unplaced_for(@trip)
+    end
     # A planned trip whose dates have come and gone, with photos to show
     # for them, can earn its box (D-trip-spine) — the offer only when it
     # would actually work.

@@ -6,6 +6,8 @@
 
 <%= render "sections/pets_strip", pets: panel.pets, remembered: panel.remembered_pets %>
 
+<%= render "sections/give_time", openings: panel.openings %>
+
 <%= render "sections/people_hub",
       cards: panel.circle_cards, reach_out: panel.reach_out, candidates: panel.member_candidates,
       birthdays: panel.upcoming_birthdays, events: @events, address_book_size: panel.address_book_size %>

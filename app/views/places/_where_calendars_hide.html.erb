@@ -1,0 +1,47 @@
+<%# Where calendars hide (D-listing-feeds §4.5): the institutions people mean
+    by "events near me", each with what to look for and a Find-it link that
+    opens a web search in the user's own browser — the app sends nothing and
+    looks nothing up. Offered, never subscribed; no global list of cities'
+    calendars, because that would be a promise to keep enumerating the world.
+    Locals: place. %>
+<details class="mt-4 text-xs text-soft">
+  <summary class="reader-filter cursor-pointer">Where calendars hide around <%= place.name %></summary>
+  <ul class="mt-3 space-y-2">
+    <li>
+      <strong class="text-ink">The library.</strong> The richest free calendar in any town — story
+      times, author talks, maker space, tax help. Look for “Subscribe” or the calendar icon on
+      its events page; most library calendars publish an iCal link.
+      <%= find_calendar_link(place, "public library events calendar") %>
+    </li>
+    <li>
+      <strong class="text-ink">The city and county.</strong> Parks and recreation, the civic
+      calendar, the farmers' market. Nearly all have an iCal “subscribe” link.
+      <%= find_calendar_link(place, "city events calendar") %>
+    </li>
+    <li>
+      <strong class="text-ink">The university or community college.</strong> Lectures, recitals,
+      games, open houses — usually one big calendar with a subscribe link.
+      <%= find_calendar_link(place, "university events calendar") %>
+    </li>
+    <li>
+      <strong class="text-ink">Museums, theatres, venues, the zoo.</strong> Paste their “upcoming”
+      page; it nearly always carries the event data this reads.
+      <%= find_calendar_link(place, "concert venue upcoming events") %>
+    </li>
+    <li>
+      <strong class="text-ink">Meetup groups.</strong> Paste the group's address — every group has
+      a calendar export, and the link gets found.
+      <%= find_calendar_link(place, "site:meetup.com") %>
+    </li>
+    <li>
+      <strong class="text-ink">Places of worship, clubs, leagues.</strong> Usually a Google Calendar
+      embedded on a page; a public one has an iCal address the paste box knows.
+    </li>
+    <li>
+      <strong class="text-ink">The volunteer center.</strong> The United Way, the community
+      foundation, the food bank, the shelter — their events calendar, or a “volunteer with us”
+      page that lists roles.
+      <%= find_calendar_link(place, "volunteer opportunities") %>
+    </li>
+  </ul>
+</details>

@@ -39,6 +39,10 @@
   <%= render "sections/hobby_capture", suggestions: panel.suggestions %>
 <% end %>
 
+<%# What's on near the places you follow (D-event-radar) — after the
+    hobbies, because what you do stays above what's on offer. %>
+<%= render "sections/hobby_radar", radar: panel.radar %>
+
 <% if panel.starters.present? %>
   <div class="card p-5">
     <%= render "feeds/starters", starters: panel.starters,

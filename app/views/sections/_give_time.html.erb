@@ -1,0 +1,16 @@
+<%# Give time (D-event-radar §4.6): the volunteer roles and shifts near you
+    that matched what you said you'd give time to. Organization-first, with
+    "Task" on each — the board is where "I should look into that" becomes
+    "I did". Nothing at all until something matched: an empty card asking
+    is the wrong invitation on a page about your people. Locals: openings. %>
+<% if openings.any? %>
+  <%= render Ui::CardComponent.new(title: "Give time",
+        subtitle: "Volunteer roles and shifts near you, matched to what you said you'd give time to.", padded: false) do |card| %>
+    <% card.with_actions do %>
+      <%= link_to "All openings", happenings_path(kind: "opening"), class: "reader-filter" %>
+    <% end %>
+    <div class="divide-y divide-edge py-1" data-give-time>
+      <%= render partial: "happenings/happening", collection: openings, as: :happening, locals: { surface: "hub" } %>
+    </div>
+  <% end %>
+<% end %>

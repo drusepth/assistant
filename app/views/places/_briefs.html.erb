@@ -1,0 +1,39 @@
+<%# The radar's two sentences (D-event-radar §5.1): what else this household
+    would go to, and what this person would give time to. Prose the user
+    owns, beside the hobby briefs the hobby pages already keep — nothing
+    compares them to anything, so they can be written in a person's own
+    voice, argued with, and left blank. A blank causes line is the
+    volunteering switch. Locals: model (whether a model can draft one). %>
+<%= render Ui::CardComponent.new(title: "What the radar is told about you", anchor: "briefs",
+      subtitle: "Beside your hobbies, two sentences in your own words. The model reads them when it judges a listing; a blank line means that half is off.") do %>
+  <%= form_with url: radar_brief_path, method: :patch, class: "space-y-4" do |form| %>
+    <div>
+      <div class="flex items-baseline justify-between gap-3">
+        <%= label_tag :radar_brief, "What else you'd go to", class: "label" %>
+        <% if model %>
+          <%= button_to "Suggest a sentence", author_radar_brief_path(kind: "radar"), class: "reader-filter", form_class: "contents" %>
+        <% end %>
+      </div>
+      <%= text_area_tag :radar_brief, Current.user.radar_brief, rows: 2, class: "input",
+            placeholder: "Two kids under six — farmers' markets, free outdoor concerts, anything at the science museum; not bars, not late nights." %>
+      <p class="hint">Beyond any one hobby. A sentence, not a list of words.</p>
+    </div>
+    <div>
+      <div class="flex items-baseline justify-between gap-3">
+        <%= label_tag :causes_brief, "What you'd give time to", class: "label" %>
+        <% if model %>
+          <%= button_to "Suggest a sentence", author_radar_brief_path(kind: "causes"), class: "reader-filter", form_class: "contents" %>
+        <% end %>
+      </div>
+      <%= text_area_tag :causes_brief, Current.user.causes_brief, rows: 2, class: "input",
+            placeholder: "Animals, food security, anything outdoors with a shovel; weekends only; not phone banking." %>
+      <p class="hint">Volunteer roles and shifts are judged against this. Leave it blank and none are suggested to you.</p>
+    </div>
+    <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
+  <% end %>
+  <% unless model %>
+    <p class="mt-3 text-xs text-soft">
+      No model is configured, so nothing is matched to these yet — they are read the moment one is.
+    </p>
+  <% end %>
+<% end %>

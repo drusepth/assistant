@@ -144,6 +144,13 @@ class Events::Import::Ics
       location = unescape(value_of(props, "LOCATION")).strip.presence
       description = compose_description(props, repeat_note)
       span_days, duration = extent(props, start_value, start_time, all_day)
+      uid = value_of(props, "UID").to_s.strip.presence
+      url = value_of(props, "URL").to_s.strip.presence
+      geo = parse_geo(value_of(props, "GEO"))
+      # An expanded occurrence and an edited instance both share the master's
+      # UID, so a consumer keying on UID needs to know it must add the start.
+      recurring = rule.present? || find(props, "RECURRENCE-ID").present?
+      status = value_of(props, "STATUS").to_s.strip.upcase.presence
 
       starts.map do |t|
         Events::Import::ParsedEvent.new(
@@ -152,9 +159,19 @@ class Events::Import::Ics
           location: location,
           starts_at: t,
           ends_at: all_day ? (span_days && t.advance(days: span_days)) : (duration && t + duration),
-          all_day: all_day
+          all_day: all_day,
+          uid: uid, url: url, geo: geo, recurring: recurring, status: status
         )
       end
+    end
+
+    # GEO:lat;lng (RFC 5545 §3.8.1.6). Anything that isn't two numbers inside
+    # the globe is no coordinate at all.
+    def parse_geo(value)
+      lat, lng = value.to_s.split(";", 2).map { |part| Float(part.to_s.strip, exception: false) }
+      return nil unless lat && lng && lat.abs <= 90 && lng.abs <= 180
+
+      [ lat, lng ]
     end
 
     # How long each occurrence lasts: whole days beyond the first for all-day

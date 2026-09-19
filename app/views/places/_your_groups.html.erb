@@ -1,0 +1,18 @@
+<%# Your groups (D-radar-accounts): the Meetup groups on your linked account
+    whose calendars aren't followed for this place yet — one tick each,
+    matched to a place by nothing cleverer than your tick. Offered, never
+    subscribed. Locals: place, groups. %>
+<% if groups.any? %>
+  <div class="mt-3 text-xs text-soft" data-your-groups>
+    <p class="font-medium text-ink">Your Meetup groups</p>
+    <ul class="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+      <% groups.each do |group| %>
+        <li class="flex items-center gap-1.5">
+          <span><%= group.name %></span>
+          <%= button_to "Follow here", place_listing_sources_path(place), params: { listing_source: { url: group.url }, return_to: places_path(anchor: dom_id(place)) },
+                class: "reader-verb", form_class: "contents" %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

@@ -40,6 +40,13 @@ module Datasets
     def self.current = @current ||= new
     def self.reset! = @current = nil
 
+    # The one distance the app computes, exposed so a place's radius
+    # (D-place-subscriptions) and a pin's nearest town agree on what a
+    # kilometre is.
+    def self.distance_km(lat1, lng1, lat2, lng2) = current.distance_km(lat1, lng1, lat2, lng2)
+
+    def distance_km(lat1, lng1, lat2, lng2) = haversine(lat1, lng1, lat2, lng2)
+
     def initialize(path: Datasets.read_path(FILENAME))
       @bands = build_index(path)
       @size = @bands.values.sum(&:size)

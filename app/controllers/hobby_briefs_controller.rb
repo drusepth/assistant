@@ -50,6 +50,9 @@ class HobbyBriefsController < ApplicationController
     def resweep
       Feeds::RouteStories.resweep!(Current.user)
       Feeds::RouteStories.enqueue(Current.user)
+      # The same sentence rides the event radar's prompt (D-event-radar).
+      Radar::Match.resweep!(Current.user)
+      Radar::Match.enqueue(Current.user)
     end
 
     def back(notice: nil, alert: nil)

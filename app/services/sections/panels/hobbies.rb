@@ -61,6 +61,35 @@ module Sections
       # field and doesn't need it.
       def starters = feeds.empty? ? ::Feeds::Starters.groups : nil
 
+      # What's on near the places this user follows (D-event-radar): the
+      # hub's Near-you card, batched across places, never per place.
+      def radar = @radar ||= Radar.new(viewer)
+
+      Radar = Struct.new(:viewer) do
+        def places = @places ||= viewer.places.includes(:listing_sources).to_a
+        def places? = places.any?
+        def sources? = places.any? { |place| place.listing_sources.any? }
+        def place_names = places.map(&:name).to_sentence
+        def model? = viewer.household.model_profile&.configured?
+
+        # With a model, the card is what it judged to be yours; without one
+        # it is everything upcoming, and says so.
+        def items
+          @items ||= ::Radar::River.new(viewer, matched: model?).items(::Radar::River::PREVIEW)
+        end
+
+        def waiting = @waiting ||= model? ? ::Radar::River.new(viewer).count : 0
+
+        # Honest about what is and isn't being judged here.
+        def note
+          return nil unless sources?
+          return "No model is configured, so nothing here is matched to your hobbies — everything near each place is listed by date." unless model?
+          return "#{waiting} upcoming near you; none matched to you yet." if items.empty? && waiting.positive?
+
+          nil
+        end
+      end
+
       Card = Struct.new(:summary, :river, keyword_init: true) do
         def section = summary.section
         def catch_all? = river.catch_all?

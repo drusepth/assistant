@@ -33,10 +33,17 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
     assert_includes note.sections, @lens
 
     tasks = @run.items.grep(Task).sort_by(&:id)
-    assert_equal 2, tasks.count
+    assert_equal 3, tasks.count
     assert tasks.first.today?
     assert tasks.second.later?
     assert_includes tasks.first.sections, @lens
+
+    # The listings half arrived without Q9 (docs/EVENT_RADAR_PLAN.md): one
+    # deterministic follow-up points at Places, and still names no club.
+    follow = tasks.last
+    assert_equal "Follow the calendars where Climbing people gather", follow.title
+    assert_match "add Tulsa", follow.notes
+    assert_match "/places", follow.notes
   end
 
   test "the model call carries the hobby, the area, and the lens's notes" do
@@ -60,7 +67,8 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
 
     ToolRunJob.perform_now(@run)
 
-    assert_equal 3, @run.reload.items.grep(Task).count
+    # Three from the model, plus the one deterministic Places follow-up.
+    assert_equal 4, @run.reload.items.grep(Task).count
   end
 
   test "a missing guide fails the run with a friendly error" do

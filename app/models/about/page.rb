@@ -176,6 +176,8 @@ module About
 
       feature("reader", "hobbies", "The reader",
         "Your feeds, chronologically, with no ranking and nothing leaving the box."),
+      feature("event-radar", "hobbies", "The event radar",
+        "What's on near the places you care about, judged against your hobbies — from calendars you chose, never a search."),
 
       feature("world-map", "travel", "The world map",
         "Everywhere you've been, drawn from your own photos, fetching nothing."),
