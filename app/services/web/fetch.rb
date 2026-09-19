@@ -182,6 +182,9 @@ module Web
         when /\A<\?xml|\A<(rss|feed|rdf:RDF)\b/i then "application/xml"
         when /\A<(!doctype html|html)\b/i then "text/html"
         when /\A[\[{]/ then "application/json"
+        # A calendar export from a server that says nothing about it
+        # (D-listing-feeds) — the same silent-server case as above.
+        when /\ABEGIN:VCALENDAR\b/i then "text/calendar"
         else ""
         end
       end

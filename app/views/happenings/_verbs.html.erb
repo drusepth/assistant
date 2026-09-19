@@ -1,0 +1,18 @@
+<%# The verbs on a happening (D-event-radar): the one click that lands
+    anything, and the ways of saying no. Locals: happening, surface. %>
+<% surface = local_assigns[:surface] %>
+<% if happening.on_calendar? %>
+  <%= link_to "Open event", event_path(happening.event_id), class: "reader-verb" %>
+<% elsif happening.kind_event? %>
+  <%= button_to "Add to calendar", calendar_happening_path(happening, surface: surface), class: "reader-verb", form_class: "contents" %>
+<% end %>
+<% if happening.on_board? %>
+  <%= link_to "Open task", task_path(happening.task_id), class: "reader-verb" %>
+<% else %>
+  <%= button_to "Task", task_happening_path(happening, surface: surface), class: "reader-verb", form_class: "contents" %>
+<% end %>
+<% if happening.hidden? %>
+  <%= button_to "Unhide", unhide_happening_path(happening, surface: surface), method: :patch, class: "reader-verb", form_class: "contents" %>
+<% else %>
+  <%= button_to "Hide", hide_happening_path(happening, surface: surface), method: :patch, class: "reader-verb", form_class: "contents" %>
+<% end %>

@@ -1,0 +1,27 @@
+<%# One followed calendar, on one line, honest about its last fetch — a
+    source failing for a week says so here rather than going quiet.
+    Locals: source. %>
+<div class="reader-line group">
+  <div class="min-w-0 flex-1">
+    <%= link_to source.display_title, happenings_path(place: source.place_id, source: source.id),
+          class: "text-sm font-semibold text-ink hover:underline" %>
+    <p class="flex flex-wrap items-center gap-x-1.5 text-xs text-soft">
+      <span class="truncate"><%= source.host || source.url %></span>
+      <span>· <%= source.kind == "page" ? "event data on a page" : source.kind == "ics" ? "calendar feed" : source.kind %></span>
+      <% unless source.active? %><span>· paused</span><% end %>
+      <% if !source.healthy? %>
+        <span class="text-primary-800">· failing — <%= source.last_error %></span>
+      <% elsif source.last_fetched_at %>
+        <span>· checked <%= reader_age(source.last_fetched_at) %> ago</span>
+      <% else %>
+        <span>· first check on its way</span>
+      <% end %>
+    </p>
+  </div>
+  <div class="reader-verbs">
+    <%= button_to "Check", refresh_listing_source_path(source), class: "reader-verb", form_class: "contents" %>
+    <%= button_to "Unfollow", listing_source_path(source), method: :delete, class: "reader-verb",
+          form_class: "contents",
+          form: { data: { turbo_confirm: "Unfollow #{source.display_title}? Its listings go too — anything you added to your calendar stays." } } %>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<%# The places you subscribe to (D-place-subscriptions), and under each the
+    calendars followed for it (D-listing-feeds). A place is a gazetteer-named
+    point with two knobs — radius and lead time — and the help card under it
+    is the feature: nobody knows their library's iCal URL by heart. %>
+<%= render Ui::PageHeaderComponent.new(title: "Places",
+      subtitle: "Where you want to hear about what's on — and the calendars that publish it") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "What's on", happenings_path, class: "btn btn-secondary" %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <%= render Ui::CardComponent.new(title: @places.any? ? "Add a place" : "Start with a place") do %>
+    <p class="text-sm text-soft">
+      A town from the map the app ships — nothing is looked up anywhere. Add a country if the name
+      is ambiguous (“Paris, France”).
+    </p>
+    <%= form_with model: @place, url: places_path, class: "capture-row mt-3" do |form| %>
+      <%= form.text_field :name, class: "input min-w-0 flex-1", placeholder: "Tulsa · Lisbon, Portugal · where Grandma lives",
+            value: @home %>
+      <%= form.submit "Add place", class: "btn btn-primary" %>
+    <% end %>
+    <% if @home %>
+      <p class="mt-2 text-xs text-soft">
+        That's the town on your household address — press Add if it's right, or type another.
+      </p>
+    <% end %>
+  <% end %>
+
+  <% @places.each do |place| %>
+    <%= render "places/place", place: place, next_up: @next_up.fetch(place, []) %>
+  <% end %>
+
+  <% if @places.empty? %>
+    <p class="px-3 text-sm text-soft">
+      Once a place is here, follow its library's calendar, the city's events feed, a Meetup group,
+      a venue — and everything they publish lands under <%= link_to "What's on", happenings_path, class: "reader-filter" %>,
+      by date, one click from your own calendar.
+    </p>
+  <% end %>
+</div>

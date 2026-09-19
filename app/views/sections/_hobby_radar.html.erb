@@ -1,0 +1,33 @@
+<%# Near you (D-event-radar): the next few things on near the places the
+    user follows, date-first, on the Hobbies hub. A household with no places
+    gets a one-line doorway instead of a card. Locals: radar (Panels::Hobbies::Radar). %>
+<% if radar.places? %>
+  <%= render Ui::CardComponent.new(title: "Near you", padded: false) do |card| %>
+    <% card.with_actions do %>
+      <%= link_to "See what's on →", happenings_path, class: "reader-filter" %>
+      <%= link_to "Places", places_path, class: "reader-filter" %>
+    <% end %>
+    <% if radar.items.any? %>
+      <div class="divide-y divide-edge py-1" data-hobby-radar>
+        <%= render partial: "happenings/happening", collection: radar.items, as: :happening, locals: { surface: "hub" } %>
+      </div>
+    <% else %>
+      <p class="px-5 py-4 text-sm text-soft">
+        <% if radar.sources? %>
+          Nothing upcoming from the calendars you follow yet — new listings arrive on their own.
+        <% else %>
+          No calendars followed yet. <%= link_to "Follow one for #{radar.place_names}", places_path, class: "reader-filter" %> —
+          the library's, the city's, a Meetup group's.
+        <% end %>
+      </p>
+    <% end %>
+    <% if radar.note %>
+      <p class="border-t border-edge px-5 py-3 text-xs text-soft"><%= radar.note %></p>
+    <% end %>
+  <% end %>
+<% else %>
+  <p class="px-1 text-sm text-soft" data-hobby-radar-doorway>
+    Want to hear about what's on nearby? <%= link_to "Add a place", places_path, class: "reader-filter" %>
+    and follow the calendars that publish it — the library, the city, a Meetup group.
+  </p>
+<% end %>

@@ -8,8 +8,14 @@ class Events::Import
   # are times (all-day events carry midnight in the app zone, ends_at nil for
   # a single day); anything the Event columns can't hold is folded into
   # description by the parser so nothing is dropped.
+  #
+  # `uid`, `url`, `geo` ([lat, lng]) and `recurring` are what the event radar
+  # keeps that the calendar import doesn't need (D-listing-feeds): the import
+  # folds the link into the description and dedupes by title + time, exactly
+  # as before, and never reads these four.
   ParsedEvent = Struct.new(
     :title, :description, :location, :starts_at, :ends_at, :all_day,
+    :uid, :url, :geo, :recurring,
     keyword_init: true
   )
 

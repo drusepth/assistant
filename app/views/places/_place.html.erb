@@ -1,0 +1,61 @@
+<%# One place: its knobs, its sources with the reader's health tell, what's
+    on next, the paste box, and the where-calendars-hide fold.
+    Locals: place, next_up. %>
+<%= render Ui::CardComponent.new(title: place.qualified_name,
+      subtitle: "Within #{place.radius_km} km · nudges up to #{pluralize(place.lead_days, "day")} ahead#{" · alerts off" unless place.alerts?}",
+      anchor: dom_id(place)) do |card| %>
+  <% card.with_actions do %>
+    <%= link_to "What's on here", happenings_path(place: place.id), class: "reader-filter" %>
+    <details class="relative inline-block text-xs">
+      <summary class="reader-filter cursor-pointer">Settings</summary>
+      <%= form_with model: place, url: place_path(place), method: :patch,
+            class: "absolute right-0 z-10 mt-2 w-64 space-y-3 rounded-xl border border-edge bg-surface p-4 shadow-md" do |form| %>
+        <%= form.field :radius_km, label_text: "Counts as here within (km)", hint: "When an event says where it is." do %>
+          <%= form.number_field :radius_km, min: Place::RADIUS_RANGE.min, max: Place::RADIUS_RANGE.max, class: "input" %>
+        <% end %>
+        <%= form.field :lead_days, label_text: "Nudge me up to (days) ahead" do %>
+          <%= form.number_field :lead_days, min: Place::LEAD_RANGE.min, max: Place::LEAD_RANGE.max, class: "input" %>
+        <% end %>
+        <label class="flex items-center gap-2 text-sm text-ink">
+          <%= form.check_box :alerts, class: "size-4 accent-primary-600" %>
+          Suggest things here
+        </label>
+        <div class="flex items-center justify-between gap-2">
+          <%= form.submit "Save", class: "btn btn-secondary btn-sm" %>
+          <%= button_to "Remove place", place_path(place), method: :delete, class: "btn btn-ghost btn-sm",
+                form: { data: { turbo_confirm: "Remove #{place.name} and unfollow its #{pluralize(place.listing_sources.size, "calendar")}? Anything you added to your own calendar stays." } } %>
+        </div>
+      <% end %>
+    </details>
+  <% end %>
+
+  <% if next_up.any? %>
+    <ul class="mb-4 space-y-1.5 text-sm">
+      <% next_up.each do |happening| %>
+        <li class="flex items-baseline gap-2">
+          <span class="shrink-0 text-xs tabular-nums text-soft"><%= happening.kind_opening? ? "open" : happening.starts_at.strftime("%a %-d %b") %></span>
+          <span class="min-w-0 flex-1 truncate text-ink" title="<%= happening.title %>"><%= happening.title %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if place.listing_sources.any? %>
+    <div class="-mx-5 divide-y divide-edge border-y border-edge">
+      <%= render partial: "listing_sources/source", collection: place.listing_sources, as: :source %>
+    </div>
+  <% end %>
+
+  <%= form_with model: ListingSource.new, url: place_listing_sources_path(place), class: "capture-row mt-4" do |form| %>
+    <%= hidden_field_tag :return_to, places_path(anchor: dom_id(place)) %>
+    <%= form.url_field :url, class: "input min-w-0 flex-1",
+          placeholder: "A calendar link, a Meetup group, a venue's events page, the library…" %>
+    <%= form.submit "Follow", class: "btn btn-secondary" %>
+  <% end %>
+  <p class="mt-2 text-xs text-soft">
+    Paste an iCal/webcal link, or a page — the calendar behind it gets found. Only calendars
+    publishers offer: nothing is scraped from a page that doesn't.
+  </p>
+
+  <%= render "places/where_calendars_hide", place: place %>
+<% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_051946) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -326,6 +326,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
     t.index ["user_id"], name: "index_goals_on_user_id"
   end
 
+  create_table "happenings", force: :cascade do |t|
+    t.boolean "all_day", default: false, null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.decimal "distance_km", precision: 8, scale: 1
+    t.datetime "ends_at"
+    t.integer "event_id"
+    t.date "expires_on"
+    t.datetime "hidden_at"
+    t.string "kind", default: "event", null: false
+    t.datetime "last_seen_at"
+    t.decimal "latitude", precision: 10, scale: 6
+    t.integer "listing_source_id", null: false
+    t.string "location"
+    t.decimal "longitude", precision: 10, scale: 6
+    t.datetime "matched_at"
+    t.boolean "out_of_range", default: false, null: false
+    t.string "provenance", default: "listed", null: false
+    t.string "series_uid"
+    t.datetime "starts_at"
+    t.integer "task_id"
+    t.string "title", null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.datetime "withdrawn_at"
+    t.index ["event_id"], name: "index_happenings_on_event_id"
+    t.index ["listing_source_id", "starts_at"], name: "index_happenings_on_listing_source_id_and_starts_at"
+    t.index ["listing_source_id", "uid"], name: "index_happenings_on_listing_source_id_and_uid", unique: true
+    t.index ["listing_source_id"], name: "index_happenings_on_listing_source_id"
+    t.index ["matched_at"], name: "index_happenings_on_matched_at"
+    t.index ["series_uid"], name: "index_happenings_on_series_uid"
+    t.index ["task_id"], name: "index_happenings_on_task_id"
+  end
+
   create_table "hobby_briefs", force: :cascade do |t|
     t.datetime "authored_at"
     t.datetime "created_at", null: false
@@ -408,6 +443,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
     t.integer "user_id", null: false
     t.index ["user_id", "provider"], name: "index_linked_accounts_on_user_id_and_provider"
     t.index ["user_id"], name: "index_linked_accounts_on_user_id"
+  end
+
+  create_table "listing_sources", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.text "credentials"
+    t.string "etag"
+    t.integer "failure_count", default: 0, null: false
+    t.string "kind", default: "ics", null: false
+    t.string "last_error"
+    t.datetime "last_fetched_at"
+    t.datetime "last_item_at"
+    t.string "last_modified"
+    t.integer "place_id", null: false
+    t.string "provider"
+    t.json "settings", default: {}, null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.index ["last_fetched_at"], name: "index_listing_sources_on_last_fetched_at"
+    t.index ["place_id", "url"], name: "index_listing_sources_on_place_id_and_url", unique: true
+    t.index ["place_id"], name: "index_listing_sources_on_place_id"
   end
 
   create_table "model_profiles", force: :cascade do |t|
@@ -539,6 +596,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
     t.integer "user_id", null: false
     t.index ["user_id", "taken_at"], name: "index_photos_on_user_id_and_taken_at"
     t.index ["user_id"], name: "index_photos_on_user_id"
+  end
+
+  create_table "places", force: :cascade do |t|
+    t.boolean "alerts", default: true, null: false
+    t.string "country"
+    t.datetime "created_at", null: false
+    t.datetime "last_opened_at"
+    t.decimal "latitude", precision: 10, scale: 6, null: false
+    t.integer "lead_days", default: 14, null: false
+    t.decimal "longitude", precision: 10, scale: 6, null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "radius_km", default: 40, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "position"], name: "index_places_on_user_id_and_position"
+    t.index ["user_id"], name: "index_places_on_user_id"
   end
 
   create_table "recipe_book_entries", force: :cascade do |t|
@@ -1031,6 +1105,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
   add_foreign_key "feed_items", "feeds"
   add_foreign_key "feeds", "users"
   add_foreign_key "goals", "users"
+  add_foreign_key "happenings", "events"
+  add_foreign_key "happenings", "listing_sources"
+  add_foreign_key "happenings", "tasks"
   add_foreign_key "hobby_briefs", "sections"
   add_foreign_key "hobby_briefs", "users"
   add_foreign_key "invitations", "households"
@@ -1038,6 +1115,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
   add_foreign_key "job_feeds", "users"
   add_foreign_key "keyrings", "users"
   add_foreign_key "linked_accounts", "users"
+  add_foreign_key "listing_sources", "places"
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"
   add_foreign_key "notification_channels", "users"
@@ -1050,6 +1128,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_011826) do
   add_foreign_key "photo_people", "people"
   add_foreign_key "photo_people", "photos"
   add_foreign_key "photos", "users"
+  add_foreign_key "places", "users"
   add_foreign_key "recipe_book_entries", "recipe_books"
   add_foreign_key "recipe_book_entries", "recipes"
   add_foreign_key "recipe_books", "recipes", column: "cover_recipe_id", on_delete: :nullify

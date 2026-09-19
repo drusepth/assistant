@@ -1,0 +1,67 @@
+<%# What's on near your places (D-event-radar): the everything-view, in the
+    reader's density — upcoming, by day, filtered by place or source. Every
+    row ends in a verb: onto your calendar, onto your board, or out of the way. %>
+<div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+  <h1 class="display text-2xl text-ink">What's on</h1>
+  <div class="flex flex-wrap items-baseline gap-3 text-xs">
+    <%= link_to "Places", places_path, class: "reader-filter" %>
+    <% if @river.show == "upcoming" %>
+      <%= link_to "Hidden", happenings_path(request.query_parameters.merge(show: "hidden")), class: "reader-filter" %>
+      <%= link_to "Out of range", happenings_path(request.query_parameters.merge(show: "out_of_range")), class: "reader-filter" %>
+    <% else %>
+      <%= link_to "Upcoming", happenings_path(request.query_parameters.except("show")), class: "reader-filter" %>
+    <% end %>
+  </div>
+</div>
+
+<% if @places.size > 1 %>
+  <p class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 text-xs">
+    <%= link_to "Everywhere", happenings_path(show: params[:show]), class: "reader-filter #{"reader-filter-on" unless @place}" %>
+    <% @places.each do |place| %>
+      <%= link_to place.name, happenings_path(place: place.id, show: params[:show]),
+            class: "reader-filter #{"reader-filter-on" if @place == place}" %>
+    <% end %>
+  </p>
+<% end %>
+
+<% if @source %>
+  <p class="mb-3 px-3 text-xs text-soft">
+    From <%= @source.display_title %> only ·
+    <%= link_to "all of #{@place.name}", happenings_path(place: @place.id, show: params[:show]), class: "reader-filter" %>
+  </p>
+<% end %>
+
+<% if @river.show != "upcoming" %>
+  <p class="mb-3 px-3 text-xs text-soft">
+    <% if @river.show == "hidden" %>
+      Things you hid. Unhide one to put it back.
+    <% else %>
+      Listed by a calendar you follow, but further away than the place's radius allows — widen
+      the radius under <%= link_to "Places", places_path, class: "reader-filter" %> if these should count.
+    <% end %>
+  </p>
+<% end %>
+
+<% if @days.any? %>
+  <div class="card divide-y divide-edge py-1" data-happenings>
+    <% @days.each do |day, rows| %>
+      <h2 class="px-4 pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-soft"><%= happening_day_label(day) %></h2>
+      <%= render partial: "happenings/happening", collection: rows, as: :happening %>
+    <% end %>
+  </div>
+<% elsif @places.empty? %>
+  <p class="px-3 py-8 text-center text-sm text-soft">
+    Nothing here until there is somewhere to look.
+    <%= link_to "Add a place", places_path, class: "reader-filter" %> and follow a calendar or two for it.
+  </p>
+<% elsif @places.sum { |place| place.listing_sources.size }.zero? %>
+  <p class="px-3 py-8 text-center text-sm text-soft">
+    No calendars followed yet. <%= link_to "Follow one", places_path, class: "reader-filter" %> —
+    the library's, the city's, a Meetup group's — and what it publishes lands here by date.
+  </p>
+<% else %>
+  <p class="px-3 py-8 text-center text-sm text-soft">
+    Nothing upcoming<%= " in #{@place.name}" if @place %> right now. New listings arrive on their own as the
+    calendars you follow are checked.
+  </p>
+<% end %>
