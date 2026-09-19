@@ -19,9 +19,9 @@ class PlacesController < ApplicationController
   def create
     @place = Current.user.places.new(place_params)
     if @place.save
-      redirect_to places_path, notice: "Added #{@place.qualified_name}. Now follow a calendar or two for it."
+      redirect_to return_to_path(places_path), notice: "Added #{@place.qualified_name}. Now follow a calendar or two for it."
     else
-      redirect_to places_path, alert: @place.errors.full_messages.to_sentence
+      redirect_to return_to_path(places_path), alert: @place.errors.full_messages.to_sentence
     end
   end
 

@@ -17,6 +17,15 @@ module Watcher
     MAX_PER_PLACE = 5
 
     def scan
+      # Trip windows first (D-place-subscriptions): a stay's nights are the
+      # lead time for the place it lands in, and a row proposed here wears
+      # Travel — so the trip page's "While you're there" and the hub's card
+      # show the same nudge.
+      Radar::Windows.new(user).all.each do |window|
+        next unless window.place.alerts?
+
+        candidates(window.place, range: window.range).first(MAX_PER_PLACE).each { |row| propose_for(row, travel: true) }
+      end
       user.places.alerting.each do |place|
         candidates(place).first(MAX_PER_PLACE).each { |row| propose_for(row) }
       end
@@ -49,17 +58,17 @@ module Watcher
     end
 
     private
-      def candidates(place)
+      def candidates(place, range: place.lead_window)
         rows = Happening.where(listing_source_id: place.listing_sources.select(:id))
           .live.visible.in_range.unlinked.matched.upcoming
           .includes(:matches, listing_source: :place).by_start.to_a
-        rows = rows.select { |row| row.kind_opening? || place.lead_window.cover?(row.starts_at.to_date) }
+        rows = rows.select { |row| row.kind_opening? || range.cover?(row.starts_at.to_date) }
         rows = rows.reject { |row| user.suggestions.exists?(fingerprint: "#{self.class.slug}/happening:#{row.id}") }
         seen = Set.new
         rows.select { |row| seen.add?(row.series_uid.presence || row.uid) }
       end
 
-      def propose_for(row)
+      def propose_for(row, travel: false)
         match = row.match
         propose(
           fingerprint: "happening:#{row.id}",
@@ -70,7 +79,7 @@ module Watcher
             "accept_label" => row.kind_opening? ? "Make a task" : "Add to calendar",
             "expires_on" => expiry_for(row)&.iso8601
           }.compact,
-          sections: sections_for(row, match)
+          sections: sections_for(row, match) + (travel ? [ "travel" ] : [])
         )
       end
 

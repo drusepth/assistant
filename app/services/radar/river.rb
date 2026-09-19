@@ -13,9 +13,10 @@ module Radar
     SHOWS = %w[ upcoming hidden out_of_range ].freeze
     PREVIEW = 5
 
-    def initialize(user, place: nil, source: nil, section: nil, matched: false, kind: nil, show: "upcoming",
-                   horizon: Happening::HORIZON)
+    def initialize(user, place: nil, source: nil, section: nil, matched: false, kind: nil, range: nil,
+                   show: "upcoming", horizon: Happening::HORIZON)
       @user = user
+      @range = range
       @place = place
       @source = source
       @section = section
@@ -55,6 +56,7 @@ module Radar
         scope = scope.where(id: HappeningMatch.live.where(section: @section).select(:happening_id)) if @section
         scope = scope.matched if @matched
         scope = scope.where(kind: @kind) if @kind
+        scope = scope.starting_within(@range) if @range
         scope
       end
   end

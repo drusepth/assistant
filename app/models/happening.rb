@@ -122,6 +122,9 @@ class Happening < ApplicationRecord
   def calendar_sections
     slugs = kind_opening? ? %w[ people ] : %w[ hobbies ]
     slugs << "people" if matches.any?(&:causes?)
+    # Inside one of the user's trip windows, it is also a Travel item —
+    # the thing you'll do in Lisbon belongs to the trip (D-place-subscriptions).
+    slugs << "travel" if Radar::Windows.new(user).cover?(self)
     (Section.where(slug: slugs).to_a + matched_sections.to_a).uniq
   end
 
