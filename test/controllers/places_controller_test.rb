@@ -107,3 +107,23 @@ class PlacesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 end
+
+class PlacesGroupsShelfTest < ActionDispatch::IntegrationTest
+  setup { sign_in_as users(:one) }
+
+  # Offered, never subscribed (D-radar-accounts): the groups on the linked
+  # account are a shelf under each place, one tick each.
+  test "a linked Meetup account's groups are offered under each place" do
+    users(:one).linked_accounts.create!(provider: "meetup",
+      credentials: { "calendar_url" => "webcal://www.meetup.com/ical/abc", "groups" => "tulsa-birders" })
+    place = users(:one).places.create!(name: "Tulsa")
+
+    get places_path
+
+    assert_select "[data-your-groups]"
+    assert_match "Tulsa birders", response.body
+    assert_select "form[action=?] input[name='listing_source[url]'][value=?]", place_listing_sources_path(place),
+      "https://www.meetup.com/tulsa-birders/events/ical/"
+    assert_empty place.listing_sources, "nothing followed until the tick"
+  end
+end

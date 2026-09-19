@@ -71,9 +71,45 @@ class LinkedAccount < ApplicationRecord
         "write" => "Add and update events"
       }
     },
+    # Your own Meetup and Eventbrite (D-radar-accounts): what you committed to
+    # is calendar sync, what you said "maybe" to is a happening you already
+    # judged, and the groups you belong to are offered as calendars to
+    # follow — never followed for you. Read-only; nothing is ever posted,
+    # RSVP'd or joined through these.
+    "meetup" => {
+      label: "Meetup",
+      description: "Your Meetup calendar: events you've RSVP'd to land on your calendar, “maybe” ones become nudges, and your groups are offered as calendars to follow under a place.",
+      sync_service: "Meetup::CalendarSync",
+      sync_every: 6.hours,
+      fields: [
+        { key: "calendar_url", label: "Your Meetup calendar link", secret: true,
+          placeholder: "webcal://www.meetup.com/…",
+          hint: "On meetup.com open your calendar and choose Export / Add to calendar — the private iCal link. Treated as a password." },
+        { key: "groups", label: "Groups you're in", optional: true,
+          placeholder: "tulsa-birders, okc-hikers",
+          hint: "The group names from their meetup.com addresses, comma-separated. Offered as calendars to follow for a place — never followed for you." }
+      ],
+      scopes: {
+        "read" => "Read the events you're going to, and the ones you said maybe to",
+        "groups" => "Offer your groups' calendars under your places"
+      }
+    },
+    "eventbrite" => {
+      label: "Eventbrite",
+      description: "Your Eventbrite tickets, via a private API token: events you hold tickets for land on your calendar. (Eventbrite's API exposes orders, not likes.)",
+      sync_service: "Eventbrite::OrdersSync",
+      sync_every: 6.hours,
+      fields: [
+        { key: "token", label: "Private token", secret: true,
+          hint: "eventbrite.com → Account settings → Developer links → API keys — the private token." }
+      ],
+      scopes: {
+        "read" => "Read the events you have tickets for"
+      }
+    },
     "facebook" => {
       label: "Facebook",
-      description: "Your Facebook profile, friends, and events, via a Graph API token.",
+      description: "Your Facebook profile, friends, and events, via a Graph API token. Facebook offers no public interface to events any more, so nothing syncs from here yet.",
       fields: [
         { key: "access_token", label: "Access token", secret: true,
           hint: "Generate a user token at developers.facebook.com → Tools → Graph API Explorer." }

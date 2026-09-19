@@ -7,9 +7,11 @@
           class: "text-sm font-semibold text-ink hover:underline" %>
     <p class="flex flex-wrap items-center gap-x-1.5 text-xs text-soft">
       <span class="truncate"><%= source.host || source.url %></span>
-      <span>· <%= source.kind == "page" ? "event data on a page" : source.kind == "ics" ? "calendar feed" : source.kind %></span>
+      <span>· <%= { "page" => "event data on a page", "ics" => "calendar feed", "account" => "from your linked account", "provider" => "provider search" }.fetch(source.kind, source.kind) %></span>
       <% unless source.active? %><span>· paused</span><% end %>
-      <% if !source.healthy? %>
+      <% if !source.fetched? %>
+        <span>· updated when the account syncs</span>
+      <% elsif !source.healthy? %>
         <span class="text-primary-800">· failing — <%= source.last_error %></span>
       <% elsif source.last_fetched_at %>
         <span>· checked <%= reader_age(source.last_fetched_at) %> ago</span>
@@ -19,7 +21,9 @@
     </p>
   </div>
   <div class="reader-verbs">
-    <%= button_to "Check", refresh_listing_source_path(source), class: "reader-verb", form_class: "contents" %>
+    <% if source.fetched? %>
+      <%= button_to "Check", refresh_listing_source_path(source), class: "reader-verb", form_class: "contents" %>
+    <% end %>
     <%= button_to "Unfollow", listing_source_path(source), method: :delete, class: "reader-verb",
           form_class: "contents",
           form: { data: { turbo_confirm: "Unfollow #{source.display_title}? Its listings go too — anything you added to your calendar stays." } } %>

@@ -27,7 +27,7 @@ class SyncLinkedAccountJob < ApplicationJob
     if result.respond_to?(:new_live_ids) && result.new_live_ids.present?
       Email::TriageJob.perform_later(linked_account, result.new_live_ids)
     end
-  rescue Dav::Client::Error, Email::ImapClient::Error => e
+  rescue Dav::Client::Error, Email::ImapClient::Error, Meetup::CalendarSync::Error, Eventbrite::OrdersSync::Error => e
     linked_account.update!(sync_error: e.message)
   rescue StandardError
     # A bug, not a user-facing condition: record that the sync didn't land,

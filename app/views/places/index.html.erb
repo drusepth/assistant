@@ -28,7 +28,7 @@
   <% end %>
 
   <% @places.each do |place| %>
-    <%= render "places/place", place: place, next_up: @next_up.fetch(place, []) %>
+    <%= render "places/place", place: place, next_up: @next_up.fetch(place, []), groups: @groups.unfollowed_for(place) %>
   <% end %>
 
   <% if @places.any? %>

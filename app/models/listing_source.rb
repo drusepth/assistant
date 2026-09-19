@@ -14,7 +14,11 @@ class ListingSource < ApplicationRecord
   has_one :user, through: :place
   has_many :happenings, dependent: :destroy, inverse_of: :listing_source
 
-  KINDS = %w[ ics page provider ].freeze
+  # `account` is fed by a linked account's sync (D-radar-accounts) rather
+  # than fetched: the rows the user saved on Meetup, filed under the place
+  # they are nearest.
+  KINDS = %w[ ics page provider account ].freeze
+  FETCHED_KINDS = %w[ ics page ].freeze
 
   REFRESH_EVERY = 6.hours
   DORMANT_AFTER = 30.days
@@ -36,8 +40,9 @@ class ListingSource < ApplicationRecord
 
   scope :active, -> { where(active: true) }
   scope :failing, -> { where.not(last_error: nil) }
+  scope :fetchable, -> { where(kind: FETCHED_KINDS) }
   scope :due_for_refresh, ->(now = Time.current) {
-    active.where(last_fetched_at: [ nil, ..(now - REFRESH_EVERY) ])
+    active.fetchable.where(last_fetched_at: [ nil, ..(now - REFRESH_EVERY) ])
   }
 
   def display_title = title.presence || host || url
@@ -51,6 +56,7 @@ class ListingSource < ApplicationRecord
   def healthy? = last_error.blank?
 
   def provider? = kind == "provider"
+  def fetched? = FETCHED_KINDS.include?(kind)
 
   def refresh_interval(now = Time.current)
     interval = REFRESH_EVERY
@@ -60,7 +66,7 @@ class ListingSource < ApplicationRecord
   end
 
   def due_for_refresh?(now = Time.current)
-    active? && (last_fetched_at.nil? || last_fetched_at <= now - refresh_interval(now))
+    active? && fetched? && (last_fetched_at.nil? || last_fetched_at <= now - refresh_interval(now))
   end
 
   # Nothing new in a month and nobody has opened this place in a month.

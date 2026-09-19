@@ -11,6 +11,7 @@ class PlacesController < ApplicationController
     @home = home_suggestion
     @next_up = next_up_by_place
     @model = Current.user.household.model_profile&.configured?
+    @groups = Radar::Groups.new(Current.user)
     # Somebody looked: the sweep backs off sources nobody opens, and this is
     # the page that says somebody did.
     @places.each(&:touch_opened!)

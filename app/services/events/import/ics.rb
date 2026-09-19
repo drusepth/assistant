@@ -150,6 +150,7 @@ class Events::Import::Ics
       # An expanded occurrence and an edited instance both share the master's
       # UID, so a consumer keying on UID needs to know it must add the start.
       recurring = rule.present? || find(props, "RECURRENCE-ID").present?
+      status = value_of(props, "STATUS").to_s.strip.upcase.presence
 
       starts.map do |t|
         Events::Import::ParsedEvent.new(
@@ -159,7 +160,7 @@ class Events::Import::Ics
           starts_at: t,
           ends_at: all_day ? (span_days && t.advance(days: span_days)) : (duration && t + duration),
           all_day: all_day,
-          uid: uid, url: url, geo: geo, recurring: recurring
+          uid: uid, url: url, geo: geo, recurring: recurring, status: status
         )
       end
     end

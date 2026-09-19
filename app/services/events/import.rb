@@ -15,7 +15,7 @@ class Events::Import
   # as before, and never reads these four.
   ParsedEvent = Struct.new(
     :title, :description, :location, :starts_at, :ends_at, :all_day,
-    :uid, :url, :geo, :recurring,
+    :uid, :url, :geo, :recurring, :status,
     keyword_init: true
   )
 
@@ -30,26 +30,27 @@ class Events::Import
 
   # Takes either an uploaded file or raw content + filename — the latter is
   # how live syncs (Events::CaldavSync) reuse this exact pipeline, so a
-  # sync and an upload can never parse or dedupe differently.
-  def initialize(user:, file: nil, content: nil, filename: nil)
+  # sync and an upload can never parse or dedupe differently. A sync that
+  # already holds ParsedEvents (a ticketing API's JSON, an account calendar
+  # split into "going" and "maybe" — D-radar-accounts) hands them in as
+  # `events:` and skips the parse, keeping the same dedupe and write.
+  def initialize(user:, file: nil, content: nil, filename: nil, events: nil)
     @user = user
+    @events = events
     if file
       @filename = file.respond_to?(:original_filename) ? file.original_filename : File.basename(file.to_path)
       @content = normalize_encoding(file.read)
-    else
+    elsif events.nil?
       @filename = filename.to_s
       @content = normalize_encoding(content.to_s.dup)
     end
   end
 
   def call
-    parser = FORMATS.find { |format| format.handles?(@filename, @content) }
-    unless parser
-      return Result.new(imported: 0, skipped: 0,
-        error: "That file doesn't look like a calendar export. Use an iCalendar (.ics) or CSV export from your calendar app.")
-    end
+    events = @events || parse
+    return events if events.is_a?(Result)
 
-    events = parser.new(@content).events.select { |e| e.title.present? && e.starts_at.present? }
+    events = events.select { |e| e.title.present? && e.starts_at.present? }
     if events.empty?
       return Result.new(imported: 0, skipped: 0, error: "No events found in that file.")
     end
@@ -58,6 +59,16 @@ class Events::Import
   end
 
   private
+    def parse
+      parser = FORMATS.find { |format| format.handles?(@filename, @content) }
+      unless parser
+        return Result.new(imported: 0, skipped: 0,
+          error: "That file doesn't look like a calendar export. Use an iCalendar (.ics) or CSV export from your calendar app.")
+      end
+
+      parser.new(@content).events
+    end
+
     # Deliberately no section tagging and no auto-sort: a calendar can carry
     # hundreds of events and per-item categorize jobs would hammer the model
     # (same call as People::Import made). The Calendar view shows every event

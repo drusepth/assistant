@@ -27,6 +27,7 @@ module Listings
 
     def call
       return failure("provider sources are not fetched yet") if @source.provider?
+      return Result.new(added: 0, updated: 0, withdrawn: 0, error: nil) unless @source.fetched?
 
       page = Web::Fetch.raw(@source.url, headers: request_headers, max_bytes: Discover::MAX_BYTES)
       return unchanged(page) if page.not_modified?
