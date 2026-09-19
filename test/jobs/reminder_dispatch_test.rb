@@ -85,7 +85,67 @@ class ReminderDispatchTest < ActiveJob::TestCase
     assert_requested @hook, times: 1
   end
 
+  # --- standing reminders (D-standing-reminders) ---------------------------
+
+  test "a due standing reminder fires and is re-armed for the next occurrence, not retired" do
+    reminder = due_standing("Take the trash out", "FREQ=WEEKLY;BYDAY=TH")
+
+    perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
+
+    assert_requested(:post, "https://ntfy.example/topic") do |request|
+      JSON.parse(request.body)["message"] == "Reminder: Take the trash out"
+    end
+    reminder.reload
+    assert_nil reminder.delivered_at, "a standing reminder never wears the tombstone"
+    assert_not_nil reminder.last_delivered_at
+    assert reminder.deliver_at > Time.current
+    assert_equal 4, reminder.local_deliver_at.wday, "a Thursday"
+    assert reminder.deliver_at <= 7.days.from_now
+  end
+
+  test "a standing reminder fires exactly once per occurrence even if the dispatcher runs again first" do
+    due_standing("Take the trash out", "FREQ=WEEKLY;BYDAY=TH")
+
+    perform_enqueued_jobs do
+      Reminders::DispatchJob.dispatch_due
+      Reminders::DispatchJob.dispatch_due
+    end
+
+    assert_requested @hook, times: 1
+  end
+
+  test "a standing reminder that missed occurrences skips them silently and the series survives" do
+    reminder = due_standing("Water the plants", "FREQ=DAILY", at: 3.days.ago)
+
+    perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
+
+    # Three late pings would read as the app being broken.
+    assert_not_requested @hook
+    reminder.reload
+    assert_nil reminder.delivered_at, "skipped, not retired"
+    assert reminder.deliver_at > Time.current
+    assert reminder.deliver_at <= 1.day.from_now, "the coming occurrence, not one of the missed ones"
+  end
+
+  test "a standing reminder whose rule has run out is retired after its last delivery" do
+    reminder = due_standing("Last one", "FREQ=DAILY;UNTIL=#{Date.current.strftime('%Y%m%d')}")
+
+    perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
+
+    assert_requested @hook, times: 1
+    assert_not_nil reminder.reload.delivered_at
+  end
+
   private
+    def due_standing(body, rule, at: 1.minute.ago)
+      reminder = @user.reminders.new(body: body, deliver_on: Date.current + 1, deliver_time: "09:00")
+      reminder.save!
+      # A standing reminder aligns itself to its rule on save; the dispatcher's
+      # job is what happens once one comes due, so plant the moment directly.
+      reminder.update_columns(rule: rule, deliver_at: at)
+      reminder
+    end
+
     def due_reminder(body, at: 1.minute.ago)
       reminder = @user.reminders.new(body: body, deliver_on: Date.current + 1, deliver_time: "09:00")
       # Past times are rejected on create for the user's sake; the

@@ -329,6 +329,13 @@
   .chip-inferred {
     @apply border border-dashed border-edge text-soft;
   }
+  /* A chip that is a checkbox (the reminder form's weekday picker): the
+     input sits just before it as a visually hidden `peer`, and the chip
+     wears the checked state — one tap for a Thursday, three for Mon, Wed,
+     Fri, and the keyboard still reaches it through the input. */
+  .chip-toggle {
+    @apply cursor-pointer select-none border border-edge text-soft hover:border-primary-500 hover:text-primary-800 peer-checked:border-primary-600 peer-checked:bg-primary-600 peer-checked:text-primary-50 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500/30;
+  }
 
   /* A page's surface switch (D-tasks-two-surfaces): links, not buttons —
      each tab is a URL, so back and bookmark work. The active tab sits on

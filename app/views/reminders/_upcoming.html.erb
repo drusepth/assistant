@@ -1,36 +1,15 @@
 <%# The Today page's reminder card (D-reminders). Locals: reminders.
     The standalone form is the case the feature exists for — "remind me to
-    call the pharmacy at 4pm" hangs on nothing and shouldn't have to. %>
+    call the pharmacy at 4pm" hangs on nothing and shouldn't have to; nor
+    should "take the trash out, every Thursday" (D-standing-reminders). %>
 <%= render Ui::CardComponent.new(title: "Reminders",
       subtitle: "What you asked to be told, and when — these ignore the agent dials, you set them yourself") do %>
   <% if reminders.any? %>
     <ul class="mb-4 space-y-2">
-      <% reminders.each do |reminder| %>
-        <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-edge px-3 py-2 text-sm">
-          <span class="min-w-0 wrap-anywhere">
-            <span class="text-ink"><%= reminder.body %></span>
-            <span class="text-soft">— <%= reminder.local_deliver_at.strftime("%a %b %-d at %-l:%M %p") %></span>
-            <% if reminder.subject %>
-              <%= link_to "on this #{reminder.subject_type.downcase}", reminder.subject,
-                    class: "text-primary-700 hover:underline" %>
-            <% end %>
-          </span>
-          <%= button_to "Remove", reminder_path(reminder), method: :delete, class: "btn btn-ghost btn-sm" %>
-        </li>
-      <% end %>
+      <%= render partial: "reminders/reminder", collection: reminders, locals: { show_body: true } %>
     </ul>
   <% end %>
 
-  <%= form_with model: Reminder.new, url: reminders_path, class: "flex flex-wrap items-end gap-2" do |form| %>
-    <div class="min-w-56 flex-1">
-      <%= form.field :body, label_text: "Remind me to", placeholder: "Call the pharmacy" %>
-    </div>
-    <div class="min-w-36">
-      <%= form.field :deliver_on, as: :date_field, label_text: "On" %>
-    </div>
-    <div class="min-w-28">
-      <%= form.field :deliver_time, as: :time_field, label_text: "At" %>
-    </div>
-    <%= form.submit "Remind me", class: "btn btn-secondary" %>
-  <% end %>
+  <%= render "reminders/capture", text: "" %>
+  <%= render "reminders/form", reminder: Reminder.new(deliver_on: Date.current), subject: nil, show_body: true %>
 <% end %>
