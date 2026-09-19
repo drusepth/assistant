@@ -23,6 +23,7 @@ module Watcher
     email_deadline email_reply_wanted email_no_reply email_unanswered
     budget_pace new_recurring_charge price_hike month_close email_receipt
     pet_care_cadence pet_food_reorder
+    event_radar
   ].freeze
 
   module_function

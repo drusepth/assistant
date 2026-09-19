@@ -41,6 +41,14 @@ module Watcher
     # what costs something and staying out costs nothing.
     def self.retires? = instance_method(:resolved?).owner != Watcher::Base
 
+    # The user waved this one away (D-event-radar §5.4). A watcher whose
+    # proposals rest on a judgment it can be corrected on — the event radar
+    # rejecting the match behind a dismissed nudge, so the title comes back
+    # as an example — answers here; the default is nothing, so every other
+    # watcher keeps today's behavior. Never a model call, never a proposal.
+    def dismissed(suggestion)
+    end
+
     private
       attr_reader :user
 
