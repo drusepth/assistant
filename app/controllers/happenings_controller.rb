@@ -15,7 +15,7 @@ class HappeningsController < ApplicationController
     @model = Current.user.household.model_profile&.configured?
     @matched_only = @model && params[:all].blank? && params[:show].blank?
     @river = Radar::River.new(Current.user, place: @place, source: @source, show: params[:show].to_s,
-      matched: @matched_only)
+      matched: @matched_only, kind: params[:kind])
     @days = @river.days
     @place&.touch_opened!
   end

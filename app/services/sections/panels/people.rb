@@ -58,6 +58,16 @@ module Sections
       def pets = pet_cards.active_cards
 
       def remembered_pets = pet_cards.gone_cards
+
+      # Give time (D-event-radar §4.6): volunteer openings and shifts near
+      # the user's places that were judged to be a cause of theirs, on the
+      # section whose whole premise is showing up. A blank causes brief and
+      # no matched rows is zero pixels — not an empty card asking.
+      def openings
+        @openings ||= viewer.places.exists? ? ::Radar::River.new(viewer, matched: true).items(20).select { |row|
+          row.kind_opening? || row.matches.any?(&:causes?)
+        }.first(::Radar::River::PREVIEW) : []
+      end
     end
   end
 end

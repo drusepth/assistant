@@ -10,7 +10,14 @@
       <%= link_to "For you", happenings_path(request.query_parameters.except("all")), class: "reader-filter #{"reader-filter-on" if @matched_only}" %>
       <%= link_to "Everything", happenings_path(request.query_parameters.merge(all: 1)), class: "reader-filter #{"reader-filter-on" unless @matched_only}" %>
     <% end %>
+    <%# Volunteer roles have no date; they get their own pile rather than
+        a day heading they don't belong under (D-listing-feeds §4.6). %>
     <% if @river.show == "upcoming" %>
+      <% if params[:kind] == "opening" %>
+        <%= link_to "Events too", happenings_path(request.query_parameters.except("kind")), class: "reader-filter reader-filter-on" %>
+      <% else %>
+        <%= link_to "Openings", happenings_path(request.query_parameters.merge(kind: "opening")), class: "reader-filter" %>
+      <% end %>
       <%= link_to "Hidden", happenings_path(request.query_parameters.merge(show: "hidden")), class: "reader-filter" %>
       <%= link_to "Out of range", happenings_path(request.query_parameters.merge(show: "out_of_range")), class: "reader-filter" %>
     <% else %>
@@ -50,7 +57,9 @@
 <% if @days.any? %>
   <div class="card divide-y divide-edge py-1" data-happenings>
     <% @days.each do |day, rows| %>
-      <h2 class="px-4 pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-soft"><%= happening_day_label(day) %></h2>
+      <h2 class="px-4 pt-3 pb-1 text-xs font-medium uppercase tracking-wide text-soft">
+        <%= rows.first.kind_opening? ? "Openings · seen #{happening_day_label(day).downcase}" : happening_day_label(day) %>
+      </h2>
       <%= render partial: "happenings/happening", collection: rows, as: :happening %>
     <% end %>
   </div>
