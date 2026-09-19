@@ -1,0 +1,74 @@
+<section class="mt-12 max-w-3xl space-y-5">
+  <p>
+    Every town has more going on than anyone hears about: the library's
+    author talks, the city's festival, the bird walk on Saturday, the
+    shelter that needs weekend dog walkers. It's all published — on a dozen
+    calendars nobody subscribes to.
+  </p>
+  <p>
+    The event radar reads those calendars for you, and then does the part
+    a calendar can't: it says which of it you'd actually go to.
+  </p>
+</section>
+
+<%# No screenshot yet: the demo household (db/demo.rb) has no places to
+    photograph. Seed one and register "event_radar" in About::Shot before
+    calling about_screenshot here — the pin test catches either half missing. %>
+
+<section class="mt-14">
+  <h2 class="display text-2xl">How it works</h2>
+  <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= render Ui::CardComponent.new(title: "Places you name") do %>
+      <p class="text-sm text-soft">
+        Your town, the one you drive to on weekends, where the grandparents
+        live, the city you're visiting in March. A place is a point on a map
+        the app already carries — nothing is looked up anywhere.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Calendars you follow") do %>
+      <p class="text-sm text-soft">
+        Under each place, the calendars that publish what's on there: the
+        library, the city, a Meetup group, a venue's upcoming page. Paste an
+        address and the calendar behind it gets found. Only calendars
+        publishers offer; nothing is scraped.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "Judged, not filtered") do %>
+      <p class="text-sm text-soft">
+        Your assistant reads each new listing against your hobbies and two
+        sentences you write — what else you'd go to, and what you'd give
+        time to — and says why. No keyword lists. Tell it “not this” and it
+        remembers.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A nudge, in time") do %>
+      <p class="text-sm text-soft">
+        The ones that are for you become suggestions inside the lead time
+        you set, on your phone if you've asked for that, and retire on their
+        own the day the event passes. One tap puts it on your calendar.
+      </p>
+    <% end %>
+  </div>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">Volunteering, and trips</h2>
+  <p class="mt-4 text-soft">
+    A volunteer role has no date, so it gets its own shape: a “weekend dog
+    walkers wanted” listing is judged against what you said you'd give
+    time to, shown with your people, and lands as a task rather than a
+    calendar entry. And a trip's stay counts as a place for its nights, so
+    a city you'll be in next month shows what's on while you're there.
+  </p>
+</section>
+
+<section class="mt-14 max-w-3xl">
+  <h2 class="display text-2xl">It never searches for you</h2>
+  <p class="mt-4 text-soft">
+    Asking a service for “events near me” would send your location and your
+    interests to somebody else's server, on a timer, forever. This reads the
+    calendars you chose instead, from your own box. The one exception is a
+    ticketing search you can turn on per place, with a plain sentence on
+    the switch saying exactly what it sends — and it's off until you do.
+  </p>
+</section>

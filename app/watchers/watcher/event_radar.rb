@@ -127,6 +127,7 @@ module Watcher
       def sections_for(row, match)
         slugs = row.kind_opening? ? %w[ people ] : %w[ hobbies ]
         slugs << "people" if match&.causes?
+        slugs << "education" if match&.subject?
         slugs << match.section.slug if match&.section
         slugs.uniq
       end

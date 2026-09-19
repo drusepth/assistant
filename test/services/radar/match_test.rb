@@ -49,6 +49,18 @@ class Radar::MatchTest < ActiveJob::TestCase
     assert_equal %w[ hobbies people ], shelter.add_to_calendar!.sections.map(&:slug).sort
   end
 
+  test "a subject someone is learning is a target, and a match files under Education" do
+    astronomy = @user.subjects.create!(title: "Astronomy", interest_frame: "Loves the planets; nine years old.")
+    talk = listing("Planetarium: the outer planets")
+    stub_matches({ index: 1, target: "subject:#{astronomy.id}", why: "the planets, for a nine-year-old" })
+
+    Radar::Match.call(@user)
+
+    assert_equal "Learning Astronomy", talk.reload.match.label
+    assert_match "Loves the planets", prompt_sent
+    assert_equal %w[ education hobbies ], talk.add_to_calendar!.sections.map(&:slug).sort
+  end
+
   test "a series is judged once, and the answer reaches every occurrence" do
     tuesdays = 3.times.map { |n| listing("Tuesday bird walk", uid: "tue/#{n}", series: "tue", at: (n + 1).weeks.from_now) }
     stub_matches({ index: 1, target: "section:#{@birding.id}", why: "birds" })
@@ -112,7 +124,8 @@ class Radar::MatchTest < ActiveJob::TestCase
 
     @user.household.model_profile.update!(api_key: "key")
     @birding.destroy!
-    assert_not Radar::Match.enqueue(@user), "no hobbies and no briefs is nothing to match against"
+    @user.subjects.update_all(status: Subject.statuses[:finished])
+    assert_not Radar::Match.enqueue(@user), "no hobbies, no subjects and no briefs is nothing to match against"
   end
 
   test "another member's listings are never read for your hobbies" do

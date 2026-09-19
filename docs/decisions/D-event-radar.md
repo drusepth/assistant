@@ -47,4 +47,4 @@ no model configured** the listings still show, by date, and every surface
 that would show a match carries one line saying nothing is matched and why;
 no watcher runs for listed rows — only for the ones a linked account
 says the user saved themselves. Design in `docs/EVENT_RADAR_PLAN.md`
-§4.6–§7. — *Not started.*
+§4.6–§7. — *Built 2026-09 (W2, W3, W4, W7). Education subjects joined the closed set with W7; `Watcher::Base#dismissed` is the hook that lets a dismissal teach the matcher.*

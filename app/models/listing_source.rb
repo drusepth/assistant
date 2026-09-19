@@ -18,7 +18,24 @@ class ListingSource < ApplicationRecord
   # than fetched: the rows the user saved on Meetup, filed under the place
   # they are nearest.
   KINDS = %w[ ics page provider account ].freeze
-  FETCHED_KINDS = %w[ ics page ].freeze
+  FETCHED_KINDS = %w[ ics page provider ].freeze
+
+  # The opt-in searches (D-listing-feeds §8): keyed APIs queried by a
+  # place's point and radius. One entry per provider, the D26 registry
+  # shape — its fields, and the sentence its switch has to say out loud.
+  PROVIDERS = {
+    "ticketmaster" => {
+      label: "Ticketmaster",
+      service: "Listings::Providers::Ticketmaster",
+      url: "https://app.ticketmaster.com/discovery/v2/events.json",
+      blurb: "Concerts, sports and theatre with tickets on sale — the paid-ticket world no city calendar lists.",
+      consent: "This sends the place's coordinates and radius to Ticketmaster on every check.",
+      fields: [
+        { key: "api_key", label: "Ticketmaster API key", secret: true,
+          hint: "Free from developer.ticketmaster.com — the Consumer Key of an app you create there." }
+      ]
+    }
+  }.freeze
 
   REFRESH_EVERY = 6.hours
   DORMANT_AFTER = 30.days
@@ -34,6 +51,7 @@ class ListingSource < ApplicationRecord
     format: { with: %r{\Ahttps?://\S+\z}i, message: "must be an http(s) link" },
     uniqueness: { scope: :place_id, message: "is already followed for this place" }
   validates :kind, inclusion: { in: KINDS }
+  validates :provider, inclusion: { in: PROVIDERS.keys }, if: :provider?
   validates :title, length: { maximum: 200 }
 
   normalizes :title, with: ->(value) { value.to_s.squish.presence }
@@ -57,6 +75,8 @@ class ListingSource < ApplicationRecord
 
   def provider? = kind == "provider"
   def fetched? = FETCHED_KINDS.include?(kind)
+  def provider_settings = PROVIDERS.fetch(provider.to_s, {})
+  def provider_service = provider_settings[:service]&.constantize
 
   def refresh_interval(now = Time.current)
     interval = REFRESH_EVERY

@@ -45,5 +45,4 @@ haversine `Datasets::Places` already has gives its distance and a row beyond
 the radius is kept but marked out of range; an address string is never
 turned into a point by anything. Titles and descriptions are stripped to
 text at parse time and URLs refused unless `http(s)`, the reader's hostile-
-input posture. Design in `docs/EVENT_RADAR_PLAN.md` §4 and §8. — *Not
-started.*
+input posture. Design in `docs/EVENT_RADAR_PLAN.md` §4 and §8. — *Built 2026-09 (W1, W4, W7). The volunteer `JobPosting` branch shipped with the parser; an `account` kind, fed by a linked account's sync and never fetched, joined the three; the Ticketmaster provider landed behind its consent box.*

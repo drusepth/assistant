@@ -59,5 +59,7 @@
 
   <%= render "places/your_groups", place: place, groups: local_assigns.fetch(:groups, []) %>
 
+  <%= render "places/providers", place: place %>
+
   <%= render "places/where_calendars_hide", place: place %>
 <% end %>

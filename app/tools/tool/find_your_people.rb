@@ -2,8 +2,10 @@ module Tool
   # The Q9 reframe of "find meetups nearby" (docs/HOBBIES.md §3): Tier A, so
   # no live listings — instead a guide to where people who share the hobby
   # actually gather, with search recipes and check-this-week follow-ups.
-  # The prompt forbids inventing specific local clubs or schedules; when
-  # capabilities land (Q9), this same tool upgrades to real listings.
+  # The prompt forbids inventing specific local clubs or schedules. The
+  # listings half arrived without Q9 (docs/EVENT_RADAR_PLAN.md): the draft
+  # now ends in one deterministic follow-up that points at Places, where
+  # the club the user finds becomes a calendar the radar reads.
   class FindYourPeople < Base
     self.title = "Find your people"
     self.description = "Where the folks who share this hobby gather — and how to go meet them."
@@ -35,6 +37,20 @@ module Tool
     PROMPT
 
     private
+      # The Tier-A draft plus the one step the radar made possible: a task
+      # whose notes say where to point the calendar you find. No model
+      # writes this line, and it never names a real club.
+      def handle(response)
+        super
+        create_task(title: "Follow the calendars where #{hobby_name} people gather", notes: follow_note)
+      end
+
+      def follow_note
+        where = inputs[:area].presence || "your town"
+        "Under Places, add #{where} and paste the Meetup group, venue or club calendar you find — " \
+          "what it publishes lands under What's on, judged against #{hobby_name}. /places"
+      end
+
       def messages
         [
           { role: "system", content: SYSTEM_PROMPT },

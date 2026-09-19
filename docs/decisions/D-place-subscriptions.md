@@ -24,4 +24,4 @@ confirmed by the user. An upcoming located `Stay` on a trip the user is on
 is a **dated place** — the stay's point, the default radius, check-in to
 check-out as both window and lead — with no row of its own, so "what's on
 in Lisbon while we're there" needs nothing but the trip the household
-already planned. Design in `docs/EVENT_RADAR_PLAN.md` §3. — *Not started.*
+already planned. Design in `docs/EVENT_RADAR_PLAN.md` §3. — *Built 2026-09 (W1, W5). A stay is a dated place by matching it against the user's own places (`Radar::Windows`), since a source needs a place to hang off; the trip page offers an unplaced stay as one click to add.*

@@ -32,11 +32,15 @@ class HappeningMatch < ApplicationRecord
 
   def household? = target == HOUSEHOLD
   def causes? = target == CAUSES
+  def subject? = target.start_with?("subject:")
+
+  def subject = subject? ? Subject.find_by(id: target.delete_prefix("subject:")) : nil
 
   # What the chip on the row says.
   def label
     return "For you" if household?
     return "A cause" if causes?
+    return "Learning #{subject&.title || "something"}" if subject?
 
     section&.name
   end

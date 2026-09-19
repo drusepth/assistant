@@ -201,8 +201,9 @@ the feature, because nobody knows their library's iCal URL by heart:
   and libraries) are tried, capped like the reader's guesses;
 - **known hosts are rewritten**, the way the reader rewrites a subreddit to
   its RSS: a Meetup group URL becomes that group's iCal export, a public
-  Google Calendar embed becomes its `.ics`, a LibCal calendar page becomes
-  its iCal link, an Eventbrite organizer page is kept as a `page` source.
+  Google Calendar embed becomes its `.ics`, an Eventbrite organizer page is
+  kept as a `page` source. (LibCal's per-calendar iCal link is what the
+  paste box wants; the page itself carries no rewrite rule.)
   The table is small, hand-maintained and tested, and it is a URL rewrite,
   not a classification.
 
@@ -692,7 +693,10 @@ it does not query the platform with your radius.
 
 ## 10. Waves
 
-**W1 — places, sources, the river (no AI).** `Place`, `ListingSource`,
+All seven are built (2026-09). What the building changed is at the end of
+this section.
+
+**W1 ✅ — places, sources, the river (no AI).** `Place`, `ListingSource`,
 `Happening`; `Listings::Discover` with the rewrite table (Meetup groups,
 Google Calendar embeds, LibCal), `::Parse::Ics` (over the extended
 `Events::Import::Ics`), `::Parse::Schema` for `Event` JSON-LD, `::Refresh`,
@@ -704,7 +708,7 @@ Hide and the link; the hub's Near you card in its model-less form
 polite, date-sorted view of every calendar you care about — the library's,
 the city's, the venue's — one click from your own.*
 
-**W2 — the match.** `users.radar_brief`, `users.causes_brief` and their
+**W2 ✅ — the match.** `users.radar_brief`, `users.causes_brief` and their
 author; `Radar::Targets`, `Radar::Match`, `HappeningMatch`,
 `MatchHappeningsJob`, the resweep; "Not this" and Undo; the matched-only
 filter; the target chip and reason on rows; `HobbiesLens#nearby`; the
@@ -713,33 +717,33 @@ promise: the no-model path, the injection path (a happening titled with
 instructions files itself wrongly at worst), the closed-set drop,
 once-per-series.
 
-**W3 — the watcher.** `Watcher::EventRadar` in `Watcher::SLUGS`; the
+**W3 ✅ — the watcher.** `Watcher::EventRadar` in `Watcher::SLUGS`; the
 `happening` action key in `Suggestion#materialize`, sharing one
 event-from-happening path with the river's verb; `expires_on` and the
 `resolved?` cases; `Watcher::Base#dismissed` and the rejection it writes;
 the per-place `alerts` switch and `lead_days`; the five-per-place cap.
 Notification needs nothing — it is the D22 pipeline seeing a new watcher.
 
-**W4 — openings.** The `JobPosting` shape in `Parse::Schema`; `kind`,
+**W4 ✅ — openings.** The `JobPosting` shape in `Parse::Schema`; `kind`,
 `expires_on`, `last_seen_at` and withdrawal on `Happening`; the task path in
 the river verb and in `materialize`; `Panels::People#openings` and the Give
 time card; the Openings filter; the People dial on the watcher and the
 once-when-seen rule; the volunteer-center row on the help card.
 
-**W5 — trips.** Upcoming located stays as dated windows in both the match
+**W5 ✅ — trips.** Upcoming located stays as dated windows in both the match
 and the watcher; the trip page's "While you're there" card and its paste box
 prefilled with the destination; Travel as a second section on trip-window
 suggestions and the events they create; the standing-place reuse when a stay
 lands inside one.
 
-**W6 — your accounts.** `meetup` and `eventbrite` in
+**W6 ✅ — your accounts.** `meetup` and `eventbrite` in
 `LinkedAccount::PROVIDERS` with read-only scopes; `Meetup::CalendarSync` and
 `Eventbrite::OrdersSync` over `Events::Import`; `provenance: saved` rows and
 their no-model nudge; the Your groups shelf; attended and saved titles in
 the brief authors. Whichever of saved-events and likes a platform exposes,
 with the card saying which.
 
-**W7 — providers, and the wider set.** The `provider` kind and the
+**W7 ✅ — providers, and the wider set.** The `provider` kind and the
 Ticketmaster adapter behind the opt-in switch; Education subjects as
 targets; the Find-your-people / Find-a-class follow-up that ends in
 `/places`; the about page (`about/features/_event_radar`, one row in
@@ -748,6 +752,24 @@ targets; the Find-your-people / Find-a-class follow-up that ends in
 W2 needs W1; W3 needs W2; W4 needs W3 (it is a second kind through the same
 match and watcher); W5, W6 and W7 need W3 and are independent of each
 other. W1 alone is a shippable feature and should ship alone.
+
+Five things the build changed. **A trip window is a place, not a row.**
+The design said a stay is "a dated place with no Place row", but a source
+belongs to a place, so a stay with nothing followed for it has nothing to
+read; `Radar::Windows` therefore matches each located stay against the
+user's *own* places and uses the stay's nights as that place's window, and
+the trip page offers a stay with no place nearby as one click to add. **A
+"maybe" is the saved row.** Neither platform exposes likes, so `provenance:
+saved` is fed by the one thing the Meetup export does say: `STATUS:TENTATIVE`
+on an RSVP — the user's own "maybe", which is exactly the judgment the row
+was meant to carry. The groups are typed on the account rather than read
+from an API. **Saved rows need a place too**, and land under the user's
+place whose radius covers them, else the first, else nowhere. **The
+volunteer parser landed in W1**, since it is one more branch of the same
+JSON-LD walk; W4 added the surfaces. **An `account` source kind** exists so
+the account sync's rows have a home the river already knows how to read,
+and it is never in the sweep. The about page ships without a screenshot
+until the demo household has a place to photograph.
 
 ### 10.1 Files
 

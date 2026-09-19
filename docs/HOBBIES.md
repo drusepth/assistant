@@ -253,7 +253,8 @@ classes, listings).
 5. ✅ **The reader** (D-feed-reader, `docs/READER.md`) — feeds per hobby,
    one chronological river, and per-item verbs that end in a task. The
    daily surface the section was missing.
-6. **Tier B upgrades** (real meetups/classes/event radar) when Q9 resolves —
-   except the event radar, which `docs/EVENT_RADAR_PLAN.md` designs without
-   Q9 by making the sources the user's (as the reader did), and which gives
-   Find-your-people its "follow the listings" follow-up.
+6. ✅ **The event radar** (`docs/EVENT_RADAR_PLAN.md`, built 2026-09) —
+   the "real meetups" half of the Tier B upgrades, without Q9: the sources
+   are the user's (as the reader's are), the model judges what it holds,
+   and Find-your-people ends in a "follow the calendars" follow-up.
+   Classes as a first-class thing still wait.

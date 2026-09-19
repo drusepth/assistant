@@ -22,7 +22,7 @@ module Radar
     end
 
     def all
-      @all ||= hobby_targets + [ household_target, causes_target ].compact
+      @all ||= hobby_targets + subject_targets + [ household_target, causes_target ].compact
     end
 
     def by_key = @by_key ||= all.index_by(&:key)
@@ -35,6 +35,15 @@ module Radar
         briefs = HobbyBrief.where(user: @user, section: lenses).index_by(&:section_id)
         lenses.map do |lens|
           Target.new(key: "section:#{lens.id}", name: lens.name, brief: briefs[lens.id]&.description, section: lens)
+        end
+      end
+
+      # What someone in the house is learning (D-event-radar §5.1): a
+      # planetarium talk reaches the astronomy course. The subject's
+      # interest frame is the sentence; the subject is the user's own.
+      def subject_targets
+        @user.subjects.active.map do |subject|
+          Target.new(key: "subject:#{subject.id}", name: "Learning #{subject.title}", brief: subject.interest_frame, section: nil)
         end
       end
 

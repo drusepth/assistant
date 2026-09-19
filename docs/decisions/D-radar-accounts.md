@@ -28,4 +28,4 @@ this writing — so each lands where the platform exposes it and the account
 card says which. The account never posts, RSVPs, saves or joins on the
 user's behalf (read-only until Q19's consent design exists), never shares
 across the household, and never sends the user's places or radius to the
-platform. Design in `docs/EVENT_RADAR_PLAN.md` §9. — *Not started.*
+platform. Design in `docs/EVENT_RADAR_PLAN.md` §9. — *Built 2026-09 (W6). Neither platform exposes likes, so the saved row is the Meetup export's own `STATUS:TENTATIVE` — the user's "maybe"; groups are typed on the account rather than read from an API; a saved row lands under the user's place whose radius covers it, else the first, else nowhere.*

@@ -26,8 +26,8 @@ module Listings
     end
 
     def call
-      return failure("provider sources are not fetched yet") if @source.provider?
       return Result.new(added: 0, updated: 0, withdrawn: 0, error: nil) unless @source.fetched?
+      return ask_provider if @source.provider?
 
       page = Web::Fetch.raw(@source.url, headers: request_headers, max_bytes: Discover::MAX_BYTES)
       return unchanged(page) if page.not_modified?
@@ -35,16 +35,28 @@ module Listings
       items = parse(page.text)
       return failure("that address stopped being a calendar") unless items
 
-      added, updated, seen = ingest(items)
-      withdrawn = withdraw_missing(seen)
-      record_success(page, added)
-      prune
-      Result.new(added: added, updated: updated, withdrawn: withdrawn, error: nil)
+      fold(items, page)
     rescue Web::Fetch::Error => e
       failure(e.message)
     end
 
     private
+      # A provider answers a query about the place rather than serving a
+      # document, so there are no validators to echo — the interval is the
+      # whole politeness.
+      def ask_provider
+        service = @source.provider_service or return failure("unknown provider #{@source.provider}")
+        fold(service.call(@source), nil)
+      end
+
+      def fold(items, page)
+        added, updated, seen = ingest(items)
+        withdrawn = withdraw_missing(seen)
+        record_success(page, added)
+        prune
+        Result.new(added: added, updated: updated, withdrawn: withdrawn, error: nil)
+      end
+
       def request_headers
         { "Accept" => Discover::ACCEPT }.merge(@source.conditional_headers)
       end
@@ -63,7 +75,7 @@ module Listings
 
       def record_success(page, added)
         @source.record_success!(
-          new_items: added, etag: page.headers["etag"], last_modified: page.headers["last-modified"]
+          new_items: added, etag: page&.headers&.dig("etag"), last_modified: page&.headers&.dig("last-modified")
         )
       end
 
