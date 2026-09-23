@@ -87,7 +87,7 @@ module People
 
     private
       def groups
-        @groups ||= Section.people_groups.to_a
+        @groups ||= Section.find_by(slug: "people")&.children.to_a
       end
 
       def load_people

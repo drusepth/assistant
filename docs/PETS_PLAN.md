@@ -10,6 +10,13 @@ library, and "teach Rex to walk on a leash" is a Goal. Nothing about a pet
 wants a new silo — what's missing is the ability to say *this item is about
 Rex*, and one page where all of it converges.
 
+> **Amended by D-pets-section.** Pets now has a top-level section of its own:
+> each pet's lens is a child of Pets rather than People, and the pet cards
+> moved from the People page to the Pets hub. The claim above still holds —
+> the vet visit is still Health + Rex, never Pets instead of Health — so read
+> "under People" below as "under Pets", and the People row of the hubs table
+> as the Pets hub.
+
 Decisions here are logged as **D-pet-primitive**, **D-pet-care-radar**, and
 **D-pet-food-shelf**. Open questions are **Q-pet-metrics** and
 **Q-pet-sitter**.
@@ -434,11 +441,3 @@ shut. The one shared file that did change is `Sections::Panel`, which grew the
 owned-lens rung the plan predicted, plus `Section#removable?` — because
 without it the generic "Remove this group" button sat on Rex's lens page and
 would have orphaned her.
-
-**The lens now says whose it is (D-owned-lens).** Each fix above was one more
-surface remembering to ask the pets table "is this child of People a pet?",
-and the ones that forgot kept treating the cat as a group: a vet contact was
-offered "Add to group → Dimitri", Settings listed her as an area of People,
-chips read "People · Dimitri", and switching People off took her out of every
-form's picker. `sections.owner_type` is written when the lens is created, and
-groups, subsection lists, name lookups, labels and the picker all read it.

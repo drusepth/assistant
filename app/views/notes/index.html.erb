@@ -1,12 +1,8 @@
-<div data-controller="quick-add" data-action="keydown.esc@window->quick-add#closeAll click@window->quick-add#clickOutside">
-  <%= render Ui::PageHeaderComponent.new(title: "Notes", subtitle: "Everything the assistant should know") do |header| %>
-    <% header.with_actions do %>
-      <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note", primary: true) do %>
-        <%= render "quick_form", note: @quick_note, return_to: notes_path, autofocus: false %>
-      <% end %>
-    <% end %>
+<%= render Ui::PageHeaderComponent.new(title: "Notes", subtitle: "Everything the assistant should know") do |header| %>
+  <% header.with_actions do %>
+    <%= quick_add :note, primary: true %>
   <% end %>
-</div>
+<% end %>
 
 <% if @notes.any? %>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"><%= render @notes %></div>
@@ -15,6 +11,6 @@
         title: "No notes yet",
         description: "Notes are the memory layer — context, preferences, history. Later, this is what makes the AI actually know you."
       ) do |empty| %>
-    <% empty.with_action { link_to "New note", new_note_path, class: "btn btn-primary" } %>
+    <% empty.with_action { quick_add :note, name: "empty_note", label: "New note", primary: true, align: :center } %>
   <% end %>
 <% end %>

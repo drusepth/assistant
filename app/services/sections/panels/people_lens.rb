@@ -15,11 +15,6 @@ module Sections
       # control the generic person grid has no place for.
       def hidden_browse = %i[ people ]
 
-      # A group of people is not a pet: the pet tools flow down here from the
-      # People registration, and "My pet is missing" on the book club's page
-      # is noise at best.
-      def hidden_tool_slugs = ::Pets::ALL_TOOL_SLUGS
-
       def members
         @members ||= Person.visible_to(viewer).in_section(section)
           .order(:name).preload(:linked_user).with_attached_avatar

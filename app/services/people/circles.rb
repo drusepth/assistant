@@ -35,9 +35,14 @@ module People
     def cards = [ circle_card, *group_cards ]
 
     private
-      # A pet's card is drawn by the pets strip, not here.
+      # A lens a record owns is drawn by that record's own card, never as a
+      # group. Pet lenses lived here until they moved under Pets
+      # (D-pets-section); the guard stays for whatever owns a lens next.
       def groups
-        @groups ||= Section.people_groups.to_a
+        @groups ||= begin
+          owned = Section.owned_lens_ids
+          section.children.reject { |child| owned.include?(child.id) }
+        end
       end
 
       def circle_card

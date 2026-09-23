@@ -1,8 +1,7 @@
 <%= render Ui::PageHeaderComponent.new(title: "Today", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
   <% header.with_actions do %>
-    <%= link_to new_task_path(due_on: Date.current), class: "btn btn-primary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Task for today
-    <% end %>
+    <%= quick_add :task, label: "Task for today", title: "New task for today",
+          prefill: { due_on: Date.current }, primary: true %>
   <% end %>
 <% end %>
 
@@ -53,9 +52,8 @@
         subtitle: weekend_prep ? "Saturday through Monday" : "Tasks due and events happening tomorrow",
         count: @prep_tasks.size + @prep_events.size, padded: false) do |card| %>
     <% card.with_actions do %>
-      <%= link_to new_task_path(due_on: Date.tomorrow), class: "btn btn-secondary btn-sm" do %>
-        <%= icon(:plus, css_class: "size-3.5") %> Task for tomorrow
-      <% end %>
+      <%= quick_add :task, name: "tomorrow_task", label: "Task for tomorrow", title: "New task for tomorrow",
+            prefill: { due_on: Date.tomorrow }, small: true %>
     <% end %>
 
     <% if @early_events.any? %>

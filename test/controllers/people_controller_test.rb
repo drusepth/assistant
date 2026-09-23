@@ -243,9 +243,9 @@ class PeopleControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", people_membership_path(section_id: group.id, person_id: person.id)
   end
 
-  # A pet's lens is a child of People so "about Rex" is a tag
-  # (D-pet-primitive), but Rex is not a group of people: the vet made from
-  # the pet form was being offered "Add to group → Rex".
+  # Rex is not a group of people: before pet lenses moved under Pets
+  # (D-pets-section), the vet made from the pet form was offered
+  # "Add to group → Rex".
   test "a pet's lens is never offered as a group" do
     rex = create_pet(name: "Rex")
     club = People::Group.find_or_create!("Book club")

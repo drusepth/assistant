@@ -10,7 +10,7 @@ module Tool
   class LostPet < Base
     self.title = "My pet is missing"
     self.description = "The first-hour checklist, who to call, and a poster you can print."
-    self.section_slugs = %w[ people ]
+    self.section_slugs = %w[ pets ]
     self.kind = :draft
 
     input :pet_id, kind: :pet, required: true, label: "Which pet?"

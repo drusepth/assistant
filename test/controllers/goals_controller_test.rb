@@ -78,6 +78,11 @@ class GoalsControllerTest < ActionDispatch::IntegrationTest
     assert_match "What are you working toward?", response.body
   end
 
+  test "new form takes a title carried over from a quick-add" do
+    get new_goal_path(title: "Run a 10k")
+    assert_select "input[name=?][value=?]", "goal[title]", "Run a 10k"
+  end
+
   test "cannot act on another user's goal" do
     other = users(:two).goals.create!(title: "Bob's goal")
     patch complete_goal_path(other)

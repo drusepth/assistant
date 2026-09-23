@@ -25,7 +25,7 @@ class PeopleController < ApplicationController
     # Groups this person is in, and the ones they could join
     # (D-people-circles) — the second front door for membership, because
     # "oh, she's in the book club" is a thought you have here.
-    all_groups = Section.people_groups.to_a
+    all_groups = Section.find_by(slug: "people")&.children.to_a
     @groups, @group_candidates = all_groups.partition { |group| @person.section_ids.include?(group.id) }
     @photos = Photo.visible_to(Current.user)
       .joins(:photo_people).where(photo_people: { person_id: @person.id })

@@ -15,7 +15,7 @@ module Tool
   class PetCare < ChatBase
     self.title = "Ask about your pet"
     self.description = "Talk through food, behaviour, routines and what to watch for. Never a diagnosis."
-    self.section_slugs = %w[ health ]
+    self.section_slugs = %w[ pets health ]
     self.quick_replies = [
       "Is this food safe for them?",
       "Help me plan their routine",

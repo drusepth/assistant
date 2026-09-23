@@ -138,7 +138,8 @@ class Photo < ApplicationRecord
   # and a pet lens carries her whole page with it. It may suggest; a human
   # applies (D-pet-primitive).
   def auto_filable_section_records
-    suggested_section_records.reject(&:owned?)
+    owned = Section.owned_lens_ids
+    suggested_section_records.reject { |section| owned.include?(section.id) }
   end
 
   private

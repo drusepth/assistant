@@ -49,7 +49,7 @@
               <%= @tasks.any? ? "Suggest more steps" : "Break into steps" %>
             <% end %>
           <% end %>
-          <%= link_to "Add task", new_task_path(goal_id: @goal.id), class: "btn btn-ghost btn-sm" %>
+          <%= quick_add :task, label: "Add task", prefill: { goal_id: @goal.id }, small: true %>
         <% end %>
       <% end %>
       <% if @tasks.any? %>

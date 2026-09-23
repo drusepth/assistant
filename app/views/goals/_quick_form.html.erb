@@ -1,13 +1,15 @@
 <%# Minimal capture form (D16). Locals: goal; optional return_to (local path
     to land on after create), autofocus, and cancel_url — omit cancel_url to
-    get a button that closes the enclosing quick-add panel instead. %>
-<%= form_with model: goal, class: "space-y-4" do |form| %>
+    get a button that closes the enclosing quick-add panel instead.
+    `namespace` prefixes the field ids so two copies on one page (see
+    QuickAddHelper) don't share an id. %>
+<%= form_with model: goal, class: "space-y-4", namespace: local_assigns[:namespace] do |form| %>
   <div class="space-y-1">
     <%= form.text_field :title, placeholder: "What are you working toward?", autofocus: local_assigns.fetch(:autofocus, true), required: true %>
     <%= form.errors_for :title %>
     <p class="hint"><%= goal_auto_sort_hint %></p>
   </div>
-  <%= hidden_field_tag :return_to, local_assigns[:return_to] if local_assigns[:return_to].present? %>
+  <%= hidden_field_tag :return_to, local_assigns[:return_to], id: nil if local_assigns[:return_to].present? %>
   <div class="flex items-center gap-2">
     <%= form.submit "Add goal" %>
     <% if local_assigns[:cancel_url] %>

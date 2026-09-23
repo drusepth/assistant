@@ -22,7 +22,10 @@
   } ],
   # The eighth section (D-travel-facet). Existing installs get it from
   # 20260823092731_add_travel_section.rb — keep the two in step.
-  [ "travel", "Travel" ]
+  [ "travel", "Travel" ],
+  # The ninth (D-pets-section): each pet's lens is a child of it. Existing
+  # installs get it from 20260923060034_add_pets_section.rb.
+  [ "pets", "Pets" ]
 ].each_with_index do |(slug, name, children), index|
   section = Section.find_or_initialize_by(slug: slug)
   section.update!(name: name, position: index + 1, parent: nil)
