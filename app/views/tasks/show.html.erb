@@ -52,10 +52,11 @@
     <% end %>
 
     <%# The answer (D30): where a mental task's outcome — the decision, the
-        list, the draft — is kept once it exists. %>
+        list, the draft — is kept once it exists. It leads only where there is
+        one or the task is thinking work; on an errand ("Buy batteries") it
+        folds to one line, still a click away (D-task-answer-shape). %>
     <% if own %>
-      <%= render Ui::CardComponent.new(title: "Your answer",
-            subtitle: "The decision, list, or draft this task ends with — keep it here") do %>
+      <% answer_form = capture do %>
         <%= form_with model: @task, class: "space-y-3" do |form| %>
           <%= form.text_area :resolution, rows: 4,
                 placeholder: "Write your answer, or work it out in the conversation below and save it from there." %>
@@ -66,6 +67,18 @@
             <% end %>
           </div>
         <% end %>
+      <% end %>
+      <% if @task.resolution.present? || @task.mental_work? %>
+        <%= render Ui::CardComponent.new(title: "Your answer",
+              subtitle: "The decision, list, or draft this task ends with — keep it here") do %>
+          <%= answer_form %>
+        <% end %>
+      <% else %>
+        <details class="card p-4" data-answer-drawer>
+          <summary class="cursor-pointer text-sm font-medium text-primary-700">Add an answer</summary>
+          <p class="mt-1 text-xs text-soft">For a task that ends with a decision, a list, or a draft.</p>
+          <div class="mt-3"><%= answer_form %></div>
+        </details>
       <% end %>
     <% elsif @task.resolution.present? %>
       <%= render Ui::CardComponent.new(title: "Answer") do %>
@@ -78,11 +91,16 @@
         LLM call is the reply to the user's first message. Owner-only, and
         hidden on completed tasks that never had one. %>
     <% if own && (!@task.completed? || @conversation) %>
+      <%# An errand gets only the door, at every width: a chat panel under
+          "Scoop litter" is the same misfit as an empty answer card
+          (D-task-answer-shape). Thinking work, or a conversation already
+          under way, gets the panel from `sm` up. %>
+      <% panel = @task.mental_work? || @conversation %>
       <%# Below `sm` this is a door, not a panel (D-chat-shell): a card that is
           itself a scroller inside a scrolling page is the bug the screen
           layout exists to fix, so a phone gets the conversation full-screen
           instead of squeezed into a page it has to share. %>
-      <%= link_to task_conversation_path(@task), class: "card flex items-center gap-3 p-4 transition-colors hover:bg-canvas sm:hidden" do %>
+      <%= link_to task_conversation_path(@task), class: "card flex items-center gap-3 p-4 transition-colors hover:bg-canvas #{"sm:hidden" if panel}" do %>
         <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white">
           <%= icon(:chat_bubble, css_class: "size-5") %>
         </span>
@@ -95,11 +113,13 @@
         <%= icon(:chevron_left, css_class: "size-4 shrink-0 rotate-180 text-soft") %>
       <% end %>
 
-      <div class="hidden space-y-6 sm:block">
-        <%= render "tool_runs/chat", run: @conversation, tool: Tool::TaskChat,
-              composer_url: task_conversation_path(@task),
-              openers: @task.conversation_openers, title: "Talk it through" %>
-      </div>
+      <% if panel %>
+        <div class="hidden space-y-6 sm:block">
+          <%= render "tool_runs/chat", run: @conversation, tool: Tool::TaskChat,
+                composer_url: task_conversation_path(@task),
+                openers: @task.conversation_openers, title: "Talk it through" %>
+        </div>
+      <% end %>
     <% end %>
   </div>
   <% if own %>

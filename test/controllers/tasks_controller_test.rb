@@ -164,6 +164,34 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_no_enqueued_jobs
   end
 
+  test "an errand folds the answer card and the conversation to one line each" do
+    @task.update!(guiding_questions: [])
+
+    get task_path(@task)
+    assert_response :success
+    assert_select "[data-answer-drawer] summary", "Add an answer"
+    assert_no_match "The decision, list, or draft this task ends with", response.body
+    assert_match "Talk it through", response.body
+    assert_select "form[action=?]", task_conversation_path(@task), count: 0
+  end
+
+  test "thinking work leads with the answer card and the conversation panel" do
+    @task.update!(guiding_questions: [ "What matters most in the next job?" ])
+
+    get task_path(@task)
+    assert_select "[data-answer-drawer]", count: 0
+    assert_match "The decision, list, or draft this task ends with", response.body
+    assert_select "form[action=?]", task_conversation_path(@task)
+  end
+
+  test "a saved answer shows open even on a task the model called an errand" do
+    @task.update!(guiding_questions: [], resolution: "AA, not AAA")
+
+    get task_path(@task)
+    assert_select "[data-answer-drawer]", count: 0
+    assert_match "AA, not AAA", response.body
+  end
+
   test "a shared task shows its answer but never the owner's conversation" do
     shared = users(:two).tasks.create!(title: "Shared", resolution: "The saved answer")
     AccessGrant.create!(grantor: users(:two), grantee: users(:one), subject: shared)
