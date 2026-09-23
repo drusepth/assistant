@@ -35,6 +35,29 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "with two pets, her task form offers both, so one task can be both of theirs" do
+    luna = create_pet(name: "Luna", species: "cat")
+
+    get pet_path(@rex)
+    assert_select "form[action=?] input[type=checkbox][name=?][value=?][checked]",
+      tasks_path, "task[section_ids][]", @rex.section_id.to_s
+    assert_select "form[action=?] input[type=checkbox][name=?][value=?]:not([checked])",
+      tasks_path, "task[section_ids][]", luna.section_id.to_s
+
+    post tasks_path, params: { task: { title: "Clean the litter box",
+      section_ids: [ "", @rex.section_id.to_s, luna.section_id.to_s ] } }
+    task = Task.find_by!(title: "Clean the litter box")
+    assert_equal [ @rex.section_id, luna.section_id ].sort, task.section_ids.sort
+
+    get pet_path(luna)
+    assert_match "Clean the litter box", response.body
+  end
+
+  test "with one pet, the form just says where it will be filed" do
+    get pet_path(@rex)
+    assert_select "form[action=?] input[type=checkbox][name=?]", tasks_path, "task[section_ids][]", count: 0
+  end
+
   test "adding a pet creates her lens with her, so she is taggable immediately" do
     assert_difference -> { Pet.count } => 1, -> { Section.custom.count } => 1 do
       post pets_path, params: { pet: { name: "Luna", species: "cat" } }
