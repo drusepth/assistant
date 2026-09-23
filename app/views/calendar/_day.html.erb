@@ -1,0 +1,72 @@
+<%# One day, in full: what's past due (on today only — that's when it's
+    yours to deal with), what has no time (all-day events, what's due),
+    then the day's schedule, events and reminders on one clock. Adding sits
+    at hand: the header's Task and Event land on this date, and a reminder
+    can be set for it below. %>
+<% entries = @agenda.on(@date) %>
+<% untimed, timed = entries.partition { |entry| entry.at.nil? } %>
+<% overdue = @date == Date.current ? @agenda.overdue_tasks.to_a : [] %>
+<% stays = @stays_by_day.fetch(@date, []) %>
+
+<div class="space-y-4">
+  <% if stays.any? %>
+    <div class="flex flex-wrap items-center gap-2 text-sm">
+      <% stays.each do |stay| %>
+        <%= link_to trip_path(stay.trip), class: "chip bg-sage-200/70 text-sage-900 hover:opacity-80" do %>
+          <%= stay.location %> · <%= stay.trip.name %>
+        <% end %>
+      <% end %>
+      <% if stays.count { |stay| stay.covers?(@date) } > 1 %>
+        <span class="chip bg-amber-200/80 text-amber-900">Double-booked tonight</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if overdue.any? %>
+    <%= render Ui::CardComponent.new(title: "Past due", subtitle: "Still open from earlier days — do it, or give it a new day", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <%= render partial: "tasks/task", collection: overdue, locals: { reschedule: true, dom_prefix: :overdue } %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if untimed.any? %>
+    <%= render Ui::CardComponent.new(title: "All day", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <% untimed.each do |entry| %>
+          <% if entry.kind == :task %>
+            <%= render "tasks/task", task: entry.record %>
+          <% else %>
+            <%= render "calendar/day_row", entry: entry %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if timed.any? %>
+    <%= render Ui::CardComponent.new(title: "Schedule", padded: false) do %>
+      <div class="divide-y divide-edge">
+        <% timed.each do |entry| %>
+          <%= render "calendar/day_row", entry: entry %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if entries.empty? && overdue.empty? && @layers.any? %>
+    <%= render Ui::EmptyStateComponent.new(title: "Nothing on #{@date == Date.current ? "today" : @date.strftime("%A")}",
+          description: "Add an event or a task above — they'll land on #{@date.strftime("%B %-d")}.") %>
+  <% end %>
+
+  <%# A reminder for this day. Folded, since most visits are for reading the
+      day, and the form is a full one (repeat, weekdays, until). %>
+  <details class="card card-flush">
+    <summary class="flex cursor-pointer list-none items-center gap-2 px-5 py-3.5 text-sm font-medium text-ink [&::-webkit-details-marker]:hidden">
+      <%= icon(:bell, css_class: "size-4 text-soft") %> Set a reminder on <%= @date.strftime("%B %-d") %>
+    </summary>
+    <div class="border-t border-edge px-5 py-4">
+      <%= render "reminders/form", reminder: Reminder.new(deliver_on: @date), subject: nil, show_body: true %>
+    </div>
+  </details>
+</div>
