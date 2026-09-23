@@ -12,7 +12,7 @@ class PlaceTest < ActiveSupport::TestCase
     assert_equal "Tulsa", place.name
     assert_equal "Tulsa, United States", place.qualified_name
     assert_in_delta 36.12, place.latitude.to_f, 0.01
-    assert_equal Place::DEFAULT_RADIUS_KM, place.radius_km
+    assert_equal Place::DEFAULT_RADIUS_MI, place.radius_mi
     assert_equal Place::DEFAULT_LEAD_DAYS, place.lead_days
     assert place.alerts?
   end
@@ -28,15 +28,15 @@ class PlaceTest < ActiveSupport::TestCase
     assert_match(/isn't a town the map knows/, place.errors[:name].sole)
   end
 
-  test "within? is the radius, in kilometres" do
-    place = @user.places.create!(name: "Tulsa", radius_km: 40)
+  test "within? is the radius, in miles" do
+    place = @user.places.create!(name: "Tulsa", radius_mi: 25)
 
     assert place.within?(36.15, -95.99)
     assert_not place.within?(35.47, -97.52)
   end
 
   test "the knobs are bounded" do
-    assert_not @user.places.new(name: "Tulsa", radius_km: 1000).valid?
+    assert_not @user.places.new(name: "Tulsa", radius_mi: 1000).valid?
     assert_not @user.places.new(name: "Tulsa", lead_days: 0).valid?
   end
 end

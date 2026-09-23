@@ -43,8 +43,13 @@
     <span class="text-soft">That date of birth is an estimate</span>
   </label>
 
-  <%= form.field :weight_kg, as: :number_field, label_text: "Weight (kg)", step: "0.01",
-        hint: "The current number, for vet prep — not a log." %>
+  <%# Pounds, unless the owner chose kilograms in Settings; the column is
+      pounds either way, and the controller converts `weight` on the way in. %>
+  <% units = Current.user.units %>
+  <%= form.field :weight_lb, label_text: "Weight (#{units.weight_unit})",
+        hint: "The current number, for vet prep — not a log." do %>
+    <%= form.number_field :weight, id: "pet_weight_lb", value: units.weight(pet.weight_lb), step: units.weight_step, min: 0 %>
+  <% end %>
 
   <%= form.field :vet_id, label_text: "Vet", hint: "An ordinary contact, so you can call them from here." do %>
     <%= form.collection_select :vet_id, Person.visible_to(Current.user).order(:name), :id, :name, include_blank: "No vet on file" %>

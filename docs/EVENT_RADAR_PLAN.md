@@ -112,7 +112,7 @@ A **Place** is the unit of subscription: something the user says they care
 about what happens near.
 
 ```
-Place        user_id, name, latitude, longitude (decimal 10,6), radius_km (int, 40),
+Place        user_id, name, latitude, longitude (decimal 10,6), radius_mi (int, 25),
              lead_days (int, 14), alerts (bool, true), position
 ```
 
@@ -124,7 +124,7 @@ Place        user_id, name, latitude, longitude (decimal 10,6), radius_km (int, 
   held: *when a map wants data, ship the data.* A denser dataset dropped into
   `storage/datasets/` widens what can be named without touching code.
 - **Radius and lead time are the two knobs**, and they are the only two.
-  Radius (default 40 km) decides which of a source's events count as "here"
+  Radius (default 25 miles) decides which of a source's events count as "here"
   when an event carries coordinates (§4.4). Lead time (default 14 days)
   decides how far ahead the watcher will interrupt you; the river shows
   further. There is no "importance" slider — the model's judgment plus the
@@ -234,7 +234,7 @@ the same city calendar cost the publisher one request per interval.
 Happening   listing_source_id, kind (event | opening), provenance (listed | saved),
             uid, series_uid, title, description (text, plain), location, url,
             latitude, longitude, starts_at (nullable for openings), ends_at, all_day,
-            expires_on, last_seen_at, distance_km, out_of_range (bool),
+            expires_on, last_seen_at, distance_mi, out_of_range (bool),
             event_id (nullable), task_id (nullable), hidden_at, matched_at
 ```
 
@@ -257,7 +257,7 @@ links a `task_id` the same way (§4.6).
   attached to Tulsa is *in Tulsa* unless it says otherwise. When it carries
   coordinates (iCal `GEO`, JSON-LD `location.geo` or `jobLocation`'s geo, a
   provider's venue) the haversine `Datasets::Places` already has gives
-  `distance_km`, and a row outside the place's radius is kept but marked
+  `distance_mi`, and a row outside the place's radius is kept but marked
   `out_of_range` — hidden from the river and never matched, visible under a
   fold on the source's page so a wrong radius is diagnosable. An address
   string is *never* turned into a point: no geocoder, and no model guessing
@@ -561,7 +561,7 @@ one per Tuesday).
 - **Fingerprint** `happening:<id>` — the subject is a row, so
   `subject_id` works and nothing re-proposes a dismissed one.
 - **Title** is date-first — *Sat 3 Oct · Fall Bird Walk, Lakeside Park
-  (Birding, 9 km)* — because a date is a commitment and a name is a pile;
+  (Birding, 6 mi)* — because a date is a commitment and a name is a pile;
   an opening is organization-first — *Tulsa SPCA is looking for weekend dog
   walkers (Causes)*. **Body** is the model's sentence, the venue and the
   time, or for a saved row, *you saved this on Meetup*.
@@ -582,7 +582,7 @@ one per Tuesday).
   added inside a trip window. The created event or task inherits them.
 - **Trip windows** (Wave 5): for each upcoming located `Stay` on a trip the
   user is on, the same query runs with the stay's point, the trip's radius
-  (40 km, the place default) and the stay's dates as both window and lead —
+  (25 miles, the place default) and the stay's dates as both window and lead —
   proposed under Hobbies *and* Travel, so the trip page's "While you're
   there" and the hub's card show the same rows. A stay has sources only if
   someone followed some (the trip page offers the paste box and the recipes

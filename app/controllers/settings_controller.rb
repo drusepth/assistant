@@ -52,6 +52,13 @@ class SettingsController < ApplicationController
       return redirect_to settings_path, notice: "Work profile saved."
     end
 
+    # Units (pounds and miles, or kilograms and kilometres) — its own card,
+    # posting nothing else, so the same early return.
+    if params.key?(:measurement_system)
+      Current.user.update!(measurement_system: Units.for(params[:measurement_system]).system)
+      return redirect_to settings_path, notice: "Measurements will show in #{Current.user.units.label.downcase}."
+    end
+
     enabled_ids = params.fetch(:enabled_section_ids, []).map(&:to_i)
     ordered_ids = params.fetch(:section_order, []).map(&:to_i)
     agent_levels = params.fetch(:agent_levels, {})

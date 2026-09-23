@@ -51,10 +51,10 @@
             <dd class="min-w-0 wrap-anywhere"><%= @pet.adopted_on.strftime("%B %-d, %Y") %></dd>
           </div>
         <% end %>
-        <% if @pet.weight_kg %>
+        <% if @pet.weight_lb %>
           <div class="flex gap-2">
             <dt class="w-28 shrink-0 text-soft">Weight</dt>
-            <dd class="min-w-0 wrap-anywhere"><%= number_with_precision(@pet.weight_kg, precision: 2, strip_insignificant_zeros: true) %> kg</dd>
+            <dd class="min-w-0 wrap-anywhere"><%= Current.user.units.weight_phrase(@pet.weight_lb) %></dd>
           </div>
         <% end %>
         <% if @pet.microchip.present? %>

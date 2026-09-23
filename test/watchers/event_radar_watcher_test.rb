@@ -13,13 +13,13 @@ class EventRadarWatcherTest < ActiveSupport::TestCase
   end
 
   test "a matched listing inside the lead time earns a date-first nudge whose accept adds it to the calendar" do
-    walk = matched(listing("Fall bird walk", at: 3.days.from_now.change(hour: 9), location: "Lakeside Park", distance_km: 9))
+    walk = matched(listing("Fall bird walk", at: 3.days.from_now.change(hour: 9), location: "Lakeside Park", distance_mi: 6))
     listing("Council budget meeting", at: 4.days.from_now)
 
     suggestion = scan.sole
 
     assert_equal "event_radar/happening:#{walk.id}", suggestion.fingerprint
-    assert_equal "#{walk.starts_at.strftime("%a %-d %b")} · Fall bird walk (Birding, 9 km)", suggestion.title
+    assert_equal "#{walk.starts_at.strftime("%a %-d %b")} · Fall bird walk (Birding, 6 mi)", suggestion.title
     assert_match "A guided walk for birders.", suggestion.body
     assert_match "Lakeside Park", suggestion.body
     assert_match "From Library.", suggestion.body

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_064342) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_053900) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -345,7 +345,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_064342) do
     t.boolean "all_day", default: false, null: false
     t.datetime "created_at", null: false
     t.text "description"
-    t.decimal "distance_km", precision: 8, scale: 1
+    t.decimal "distance_mi", precision: 8, scale: 1
     t.datetime "ends_at"
     t.integer "event_id"
     t.date "expires_on"
@@ -579,7 +579,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_064342) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.integer "vet_id"
-    t.decimal "weight_kg", precision: 6, scale: 2
+    t.decimal "weight_lb", precision: 6, scale: 2
     t.index ["section_id"], name: "index_pets_on_section_id", unique: true
     t.index ["user_id"], name: "index_pets_on_user_id"
     t.index ["vet_id"], name: "index_pets_on_vet_id"
@@ -623,7 +623,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_064342) do
     t.decimal "longitude", precision: 10, scale: 6, null: false
     t.string "name", null: false
     t.integer "position", default: 0, null: false
-    t.integer "radius_km", default: 40, null: false
+    t.integer "radius_mi", default: 25, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "position"], name: "index_places_on_user_id_and_position"
@@ -1068,6 +1068,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_064342) do
     t.date "mail_digest_generated_on"
     t.integer "mail_digest_hour", default: 8, null: false
     t.boolean "mail_digest_notify", default: false, null: false
+    t.string "measurement_system", default: "imperial", null: false
     t.string "name", null: false
     t.datetime "onboarded_at"
     t.string "password_digest", null: false

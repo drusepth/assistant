@@ -118,6 +118,7 @@ class User < ApplicationRecord
 
   validates :name, presence: true
   validates :email_address, presence: true, uniqueness: true
+  validates :measurement_system, inclusion: { in: Units::SYSTEMS }
 
   # The work profile (D-work-profile): two plain fields the user states once
   # in Settings instead of retyping into every Career tool. Never inferred —
@@ -126,6 +127,10 @@ class User < ApplicationRecord
   def work_summary
     [ job_title, employer&.then { |name| "at #{name}" } ].compact.join(" ").presence
   end
+
+  # Pounds and miles, or kilograms and kilometres — how every weight and
+  # distance is shown to and typed by this user. Storage is metric either way.
+  def units = Units.for(measurement_system)
 
   # Section toggles (D4): sections are enabled unless explicitly disabled,
   # so new sections appear for existing users without backfill.
