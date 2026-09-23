@@ -79,3 +79,8 @@ travel:
   slug: travel
   name: Travel
   position: 8
+
+pets:
+  slug: pets
+  name: Pets
+  position: 9

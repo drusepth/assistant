@@ -7,7 +7,7 @@ module Tool
   class VetVisitPrep < Base
     self.title = "Prep for a vet visit"
     self.description = "The questions to ask, and the history the vet will ask you for."
-    self.section_slugs = %w[ health ]
+    self.section_slugs = %w[ pets health ]
     self.kind = :draft
 
     input :pet_id, kind: :pet, required: true, label: "Which pet?"

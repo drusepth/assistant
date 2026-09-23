@@ -5,9 +5,9 @@ class Sections::PanelTest < ActiveSupport::TestCase
   test "built-out sections resolve their panel, others get nil" do
     health = Sections::Panel.for(sections(:health), users(:one))
     assert_instance_of Sections::Panels::Health, health
-    # Plus the pet tools while this household has no pets (Pets.hidden_tool_slugs) —
-    # a panel curates its Act zone for who is actually looking.
-    assert_equal Health::PANEL_TOOL_SLUGS, health.hidden_tool_slugs - Pets::CARE_TOOL_SLUGS
+    # Plus every pet tool, whose front doors are the Pets hub and the pet's
+    # own page (D-pets-section).
+    assert_equal Health::PANEL_TOOL_SLUGS + Pets::ALL_TOOL_SLUGS, health.hidden_tool_slugs
     assert_equal "sections/panels/health", health.partial
 
     assert_instance_of Sections::Panels::Hobbies, Sections::Panel.for(sections(:hobbies), users(:one))

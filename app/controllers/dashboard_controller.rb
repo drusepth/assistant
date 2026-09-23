@@ -7,12 +7,6 @@ class DashboardController < ApplicationController
     @suggestions = Current.user.suggestions.actionable.order(created_at: :desc).includes(:sections).limit(5)
     @hero = Households::Hero.new(Current.user)
     @board = Dashboard::Board.new(Current.user)
-
-    # Blank records for the header's inline quick-add forms.
-    @quick_task = Current.user.tasks.new
-    @quick_note = Current.user.notes.new
-    @quick_event = Current.user.events.new
-    @quick_goal = Current.user.goals.new
   end
 
   private

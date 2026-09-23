@@ -11,7 +11,7 @@ module Tool
   class DecodeVetEstimate < Base
     self.title = "Decode a vet estimate"
     self.description = "An itemized estimate in plain language, and the questions to ask before you agree."
-    self.section_slugs = %w[ health ]
+    self.section_slugs = %w[ pets health ]
     self.kind = :draft
 
     input :document_id, kind: :document, required: true, label: "Which estimate or invoice?"

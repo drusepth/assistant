@@ -36,7 +36,7 @@ class People::ImportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to people_path
     assert_equal "Imported 1 contact.", flash[:notice]
-    assert_equal "+1 555 050 1000", users(:one).people.find_by!(name: "Device Dana").phone
+    assert_equal "+15550501000", users(:one).people.find_by!(name: "Device Dana").phone
   end
 
   test "rejects an unsupported file" do

@@ -39,7 +39,7 @@ module NavigationHelper
   end
 
   def section_nav_link(section)
-    active = request.path == section_path(section.slug)
+    active = request.path == section_path(section.slug) || nav_section_slug == section.slug
     count = reader_unread_count if section.slug == "hobbies"
     classes = active ?
       "bg-primary-600 text-primary-50 font-semibold" :
@@ -61,6 +61,16 @@ module NavigationHelper
         tag.span("", class: "size-2 rounded-full #{section_dot_classes(section)}")
       end + tag.span(section.name, class: "nav-label") + nav_count(count, active).to_s
     end
+  end
+
+  # The top-level section a page belongs to without being that section's own
+  # page, so the rail keeps your place one level down: a subsection or lens
+  # page lights its root (Budget lights Money, a pet's lens lights Pets), and a
+  # page outside SectionsController claims one with
+  # `content_for :nav_section, "pets"`.
+  def nav_section_slug
+    content_for(:nav_section).presence ||
+      (section_root_slug(@section) if controller_name == "sections" && @section)
   end
 
   # One signals object per render, so the rail's dozen rows cost a handful of

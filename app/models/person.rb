@@ -25,6 +25,10 @@ class Person < ApplicationRecord
   has_many :patients, class_name: "Pet", foreign_key: :vet_id,
     inverse_of: :vet, dependent: :nullify
 
+  # Typed through the mask, imported from a vCard, or picked off the phone's
+  # contacts, it lands in one shape (PhoneNumber).
+  normalizes :phone, with: ->(phone) { PhoneNumber.normalize(phone) }
+
   validates :name, presence: true
 
   # The circle (D-people-dashboard): relationships the user is tending, marked explicitly —

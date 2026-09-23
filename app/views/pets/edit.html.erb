@@ -1,3 +1,4 @@
+<% content_for :nav_section, "pets" %>
 <%= render Ui::PageHeaderComponent.new(title: "Edit #{@pet.name}") %>
 
 <div class="max-w-2xl"><%= render "pets/form", pet: @pet %></div>

@@ -35,7 +35,9 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
 
   test "the header offers a task already tagged with her lens" do
     get pet_path(@rex)
-    assert_select "a[href=?]", new_task_path(section_ids: [ @rex.section_id ]), text: "Add a task"
+    assert_select "button[data-quick-add-name-param=task]", text: /Add a task/
+    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
+      tasks_path, "task[section_ids][]", @rex.section_id.to_s
 
     get new_task_path(section_ids: [ @rex.section_id ])
     assert_response :success
@@ -49,7 +51,7 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     luna = Pet.find_by!(name: "Luna")
     assert_redirected_to pet_path(luna)
     assert_equal "Luna", luna.section.name
-    assert_equal sections(:people), luna.section.parent
+    assert_equal sections(:pets), luna.section.parent
     assert luna.section.custom?
   end
 
@@ -120,7 +122,7 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     event.sections << [ sections(:health), @rex.section ]
 
     delete pet_path(@rex)
-    assert_redirected_to section_path("people")
+    assert_redirected_to section_path("pets")
 
     assert_not Section.exists?(lens_id)
     assert_equal [ sections(:health) ], event.reload.sections.to_a
@@ -228,21 +230,82 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "the People page carries pets, and a remembered one leaves the active strip" do
-    get section_path("people")
+  test "the Pets hub carries pets, and a remembered one leaves the active strip" do
+    assert_instance_of Sections::Panels::Pets, Sections::Panel.for(sections(:pets), users(:one))
+    assert_equal sections(:pets), @rex.section.parent
+
+    get section_path("pets")
     assert_response :success
     assert_select "a[href=?]", pet_path(@rex)
     assert_select "a[href=?]", new_pet_path
 
     @rex.update!(died_on: Date.current)
-    get section_path("people")
+    get section_path("pets")
     assert_select "h3", text: "Remembered"
   end
 
-  test "a pet lens is not offered as a group of people" do
+  test "the Pets hub rolls up care only once the cards stop being an overview" do
+    event = users(:one).events.create!(title: "Rex — dental", starts_at: 13.months.ago)
+    event.sections << @rex.section
+
+    get section_path("pets")
+    assert_select "h2", text: "Routine care", count: 0
+    assert_match "dental due", response.body, "the card names what's due"
+
+    create_pet(name: "Luna", species: "cat")
+    create_pet(name: "Bean", species: "rabbit")
+    get section_path("pets")
+    assert_select "h2", text: "Routine care"
+  end
+
+  test "the pet page keeps the rail on Pets and links back to the hub" do
+    get pet_path(@rex)
+    assert_select "a[href=?]", section_path("pets"), text: "← Pets"
+    assert_select "aside a[href=?].bg-primary-600", section_path("pets")
+    assert_select "a[href=?]", section_path(@rex.section.slug), text: /Everything filed under Rex/
+
+    get section_path(@rex.section.slug)
+    assert_select "aside a[href=?].bg-primary-600", section_path("pets")
+  end
+
+  test "a pet's chip reads as her name and opens her page" do
+    task = users(:one).tasks.create!(title: "Buy dog food")
+    task.sections << @rex.section
+
+    get section_path("pets")
+    assert_select "a.chip[href=?]", pet_path(@rex), text: "Rex"
+    assert_select "a.chip", text: /Pets · Rex/, count: 0
+  end
+
+  test "the People page no longer carries pets" do
     get section_path("people")
+    assert_response :success
+    assert_select "a[href=?]", pet_path(@rex), count: 0
+    assert_select "a[href=?]", new_pet_path, count: 0
     assert_select "a[href=?]", section_path(@rex.section.slug), { count: 0 },
       "a pet is not a group — her card is her own"
+  end
+
+  test "the pet tools live on the Pets hub, as buttons, and nowhere else in the rail" do
+    get section_path("pets")
+    assert_select "a.btn[href^=?]", new_tool_run_path("lost_pet"), text: "My pet is missing"
+    assert_select "a.btn[href^=?]", new_tool_run_path("new_pet"), text: "Bringing a pet home"
+    assert_select "h2", text: "Tools", count: 0
+
+    %w[ people health ].each do |slug|
+      get section_path(slug)
+      assert_no_match "My pet is missing", response.body, slug
+      assert_no_match "Bringing a pet home", response.body, slug
+    end
+  end
+
+  test "with one pet the hub's tools already know which" do
+    get section_path("pets")
+    assert_select "a[href=?]", new_tool_run_path("vet_visit_prep", inputs: { pet_id: @rex.id })
+
+    create_pet(name: "Luna", species: "cat")
+    get section_path("pets")
+    assert_select "a[href=?]", new_tool_run_path("vet_visit_prep")
   end
 
   test "the pet page carries her radar, and a remembered pet's stops" do

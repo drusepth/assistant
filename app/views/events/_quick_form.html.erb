@@ -3,7 +3,8 @@
     get a button that closes the enclosing quick-add panel instead.
     `namespace` prefixes the field ids (param names are untouched): the
     dashboard draws this form twice — in the hero and on the Next 7 days card —
-    and two copies sharing `id="event_title"` would break every label. %>
+    and two copies sharing `id="event_title"` would break every label.
+    QuickAddHelper passes it for you. %>
 <%= form_with model: event, class: "space-y-4", namespace: local_assigns[:namespace] do |form| %>
   <div class="space-y-1">
     <%= form.text_field :title, placeholder: "What's happening?", autofocus: local_assigns.fetch(:autofocus, true), required: true %>
@@ -18,7 +19,7 @@
       kind of visit it is (a vaccine card's "Book") — the event's page is
       where that is changed. %>
   <%= form.hidden_field :care_kind if event.care_kind.present? %>
-  <%= hidden_field_tag :return_to, local_assigns[:return_to] if local_assigns[:return_to].present? %>
+  <%= hidden_field_tag :return_to, local_assigns[:return_to], id: nil if local_assigns[:return_to].present? %>
   <div class="flex items-center gap-2">
     <%= form.submit "Add event" %>
     <% if local_assigns[:cancel_url] %>

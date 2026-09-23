@@ -305,7 +305,7 @@ module Tool
         return if lines.empty? && household.phone.blank?
 
         [ "The sender's own contact details (use them verbatim on the letterhead — do not invent or bracket these):",
-          user.name, *lines, household.phone.presence ].compact.join("\n")
+          user.name, *lines, PhoneNumber.format(household.phone) ].compact.join("\n")
       end
 
       # The app-side web floor (D-career-web): fetch one user-supplied URL through

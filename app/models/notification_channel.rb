@@ -156,9 +156,11 @@ class NotificationChannel < ApplicationRecord
       "Email — #{config["address"]}#{via}#{" (can't send: #{problem})" if problem}"
     end
 
-    # Numbers get pasted with spaces, dashes and parens. Carriers want
-    # E.164, so strip the decoration once here rather than in three
-    # provider classes.
+    # Numbers arrive through the phone mask as "(503) 614-9061" or pasted
+    # with any decoration; carriers want E.164, so it's settled once here
+    # rather than in three provider classes — by the same PhoneNumber every
+    # contact uses, so ten bare digits get their +1 instead of becoming a
+    # number in another country.
     def normalize_numbers
       return unless sms? || signal?
 
@@ -170,7 +172,7 @@ class NotificationChannel < ApplicationRecord
         # would quietly turn it into a wrong phone number.
         next if value.match?(/[A-Za-z]/)
 
-        config[key] = "+#{value.gsub(/[^0-9]/, "")}"
+        config[key] = PhoneNumber.normalize(value)
       end
     end
 
@@ -218,8 +220,8 @@ class NotificationChannel < ApplicationRecord
       validate_phone(config["to"], "The number to message")
     end
 
-    # Post-normalization every number is "+" plus digits, so this only has
-    # to catch blank and implausibly short.
+    # A number PhoneNumber couldn't read is left as typed, so anything that
+    # isn't "+" and digits by now is refused rather than texted.
     def validate_phone(value, subject)
       errors.add(:base, "#{subject} must be a phone number in +country-code form.") unless value.to_s.match?(/\A\+[0-9]{7,15}\z/)
     end

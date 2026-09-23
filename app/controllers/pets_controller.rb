@@ -61,7 +61,7 @@ class PetsController < ApplicationController
   # path removes both — this one only says so.
   def destroy
     @pet.destroy!
-    redirect_to section_path("people"), notice: "#{@pet.name} removed. Everything filed under #{@pet.pronouns.possessive} name kept its other tags."
+    redirect_to section_path("pets"), notice: "#{@pet.name} removed. Everything filed under #{@pet.pronouns.possessive} name kept its other tags."
   end
 
   private

@@ -13,7 +13,8 @@ class GoalsController < ApplicationController
   end
 
   def new
-    @goal = Current.user.goals.new
+    # `title` rides along from a quick-add's "Full form" link.
+    @goal = Current.user.goals.new(params.permit(:title))
   end
 
   def create

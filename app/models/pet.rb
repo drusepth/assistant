@@ -1,11 +1,11 @@
 # A member of the household who can't log in (D-pet-primitive). A pet is a
-# *whom*, not a *what*: filing their care under a "Pets" section would pull the
-# vet appointment off the care radar and the kibble out of the budget, which
-# is the standalone failure the lens model exists to avoid. So the vet visit
-# is tagged `Health + Rex` and both pages are right.
+# *whom* as well as a *what*: Pets is a section (D-pets-section), but filing
+# their care *only* there would pull the vet appointment off the care radar
+# and the kibble out of the budget. So the vet visit is tagged `Health + Rex`
+# and both pages are right.
 #
 # The lens is the load-bearing half. Every pet owns a custom child section of
-# People (Pets::Lens), which is what makes "about Rex" an ordinary tag: every
+# Pets (Pets::Lens, D-pets-section), which is what makes "about Rex" an ordinary tag: every
 # form's section picker can already file to her, `in_section` gathers every
 # primitive at once including Photos, and per-pet sharing is an ordinary
 # section grant. That is also why pets never forced Q17 — a lens answers

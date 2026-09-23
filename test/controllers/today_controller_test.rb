@@ -36,6 +36,15 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "Task for tomorrow", response.body
   end
 
+  test "the header's task quick-add is inline and due today" do
+    get today_path
+    assert_select "[data-controller=quick-add] form[action=?]", tasks_path do
+      assert_select "input[type=hidden][name=?][value=?]", "task[due_on]", Date.current.to_s
+      assert_select "input[type=hidden][name=return_to][value=?]", today_path
+    end
+    assert_select "a[href=?]", new_task_path(due_on: Date.current, return_to: today_path), text: "Full form"
+  end
+
   test "on Friday the prep section covers the weekend through Monday" do
     travel_to Time.zone.local(2026, 8, 7, 12) # a Friday
     users(:one).tasks.create!(title: "Water plants", due_on: Date.current + 1)
