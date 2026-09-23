@@ -51,6 +51,13 @@ class Pet < ApplicationRecord
   # specialty prefilled rather than a tool of its own.
   belongs_to :vet, class_name: "Person", optional: true
 
+  # What the form's vet boxes show and send back (Pets::VetContact turns them
+  # into the contact). Held here so a form that fails validation re-renders
+  # with what was typed rather than what was saved.
+  attr_writer :vet_name, :vet_phone
+  def vet_name = defined?(@vet_name) ? @vet_name : vet&.name
+  def vet_phone = defined?(@vet_phone) ? @vet_phone : vet&.phone
+
   # What she eats, and what she ate (D-pet-food-shelf).
   has_many :pet_foods, dependent: :destroy
 

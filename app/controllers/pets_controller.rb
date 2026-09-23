@@ -32,7 +32,7 @@ class PetsController < ApplicationController
     # a pet without one could not be tagged, which is the whole mechanism.
     @pet.section = Pets::Lens.create!(@pet.name) if @pet.name.present?
 
-    if @pet.save
+    if save_with_vet
       share_with_household if params[:share_with_household].present?
       redirect_to @pet, notice: "#{@pet.name} added. Anything about #{@pet.pronouns.object} can be filed under #{@pet.pronouns.possessive} name now."
     else
@@ -44,7 +44,8 @@ class PetsController < ApplicationController
   end
 
   def update
-    if @pet.update(pet_params)
+    @pet.assign_attributes(pet_params)
+    if save_with_vet
       Pets::Lens.rename!(@pet.section, @pet.name)
       redirect_to @pet, notice: "#{@pet.name} updated."
     else
@@ -61,6 +62,22 @@ class PetsController < ApplicationController
   end
 
   private
+    # The vet arrives as a typed name and phone, and a new name becomes a
+    # contact (Pets::VetContact). One transaction with the pet, so a form
+    # that fails validation doesn't leave a stray contact behind; the
+    # contact is sorted into sections only once it has really been saved.
+    def save_with_vet
+      # Only a form that carries the vet box can change the vet.
+      typed = pet_params.key?(:vet_name)
+
+      saved = Pet.transaction do
+        @pet.vet = Pets::VetContact.resolve(Current.user, name: @pet.vet_name, phone: @pet.vet_phone) if typed
+        @pet.save || raise(ActiveRecord::Rollback)
+      end
+      @pet.vet.enqueue_auto_sort! if saved && @pet.vet&.previously_new_record?
+      saved
+    end
+
     def set_own_pet
       @pet = Current.user.pets.find(params[:id])
     end
@@ -78,6 +95,6 @@ class PetsController < ApplicationController
 
     def pet_params
       params.expect(pet: [ :name, :species, :breed, :sex, :pronoun, :neutered, :color, :microchip, :born_on, :born_on_estimated,
-        :adopted_on, :weight_kg, :died_on, :left_on, :notes, :vet_id, :avatar ])
+        :adopted_on, :weight_kg, :died_on, :left_on, :notes, :avatar, :vet_name, :vet_phone ])
     end
 end

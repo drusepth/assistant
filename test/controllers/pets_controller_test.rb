@@ -136,6 +136,57 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_pet_path(@rex), count: 0
   end
 
+  test "typing a new vet makes them a contact, callable from the pet's page" do
+    assert_difference -> { Person.count } => 1 do
+      patch pet_path(@rex), params: { pet: { name: "Rex", vet_name: "Dr. Alvarez", vet_phone: "555-0100" } }
+    end
+
+    vet = @rex.reload.vet
+    assert_equal "Dr. Alvarez", vet.name
+    assert_equal "555-0100", vet.phone
+    assert_equal "Vet", vet.relationship
+    assert_equal users(:one), vet.user
+    refute vet.keep_in_touch, "the vet goes in the Address Book, not the circle"
+
+    get pet_path(@rex)
+    assert_select "a[href=?]", "tel:555-0100"
+  end
+
+  test "typing a contact's name links them instead of making a twin" do
+    existing = users(:one).people.create!(name: "Dr. Alvarez")
+
+    assert_no_difference -> { Person.count } do
+      patch pet_path(@rex), params: { pet: { vet_name: "dr. alvarez", vet_phone: "555-0100" } }
+    end
+    assert_equal existing, @rex.reload.vet
+    assert_equal "555-0100", existing.reload.phone
+  end
+
+  test "clearing the vet box leaves no vet on file and the contact untouched" do
+    vet = users(:one).people.create!(name: "Dr. Alvarez")
+    @rex.update!(vet: vet)
+
+    patch pet_path(@rex), params: { pet: { vet_name: "", vet_phone: "" } }
+    assert_nil @rex.reload.vet
+    assert Person.exists?(vet.id)
+  end
+
+  test "a pet that fails validation leaves no stray vet contact, and keeps what was typed" do
+    assert_no_difference -> { Person.count } do
+      patch pet_path(@rex), params: { pet: { name: "", vet_name: "Dr. Alvarez" } }
+    end
+    assert_response :unprocessable_entity
+    assert_select "input[name=?][value=?]", "pet[vet_name]", "Dr. Alvarez"
+  end
+
+  test "an edit that doesn't carry the vet box leaves the vet alone" do
+    vet = users(:one).people.create!(name: "Dr. Alvarez")
+    @rex.update!(vet: vet)
+
+    patch pet_path(@rex), params: { pet: { notes: "Scared of thunder" } }
+    assert_equal vet, @rex.reload.vet
+  end
+
   test "an unshared pet is invisible to the household" do
     sign_in_as users(:two)
     get pet_path(@rex)
