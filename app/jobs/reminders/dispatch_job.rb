@@ -57,6 +57,9 @@ class Reminders::DispatchJob < ApplicationJob
       # Missed by more than a day: the series is already re-armed above, and
       # the same judgment as a stale one-shot says this ping is noise.
       return if reminder.stale?(now)
+      # A repeating task with no time picked comes round without a ping
+      # (D-reminders-on-tasks): the board is the reminder.
+      return if reminder.silent?
 
       deliver(reminder)
     end

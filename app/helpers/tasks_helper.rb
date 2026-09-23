@@ -36,19 +36,9 @@ module TasksHelper
     end
   end
 
-  # The reminder a task's form manages (D-reminders-on-tasks), read from
-  # the loaded association so a list of rows costs one preload, not a
-  # query a row. Mirrors Task#schedule_reminder.
-  def task_schedule_reminder(task)
-    pending = task.reminders.reject(&:delivered_at)
-    pending.select(&:standing?).min_by(&:id) ||
-      pending.select { |reminder| reminder.relative? && Task::SAME_DAY_LEADS.cover?(reminder.lead_minutes) }.min_by(&:id)
-  end
-
   # "Mon, Wed, Fri", "Every day", "Every 2 weeks · Thu" — the short form of
   # a repeat, for a chip on a row.
-  def repeat_label(reminder)
-    rule = reminder.recurrence
+  def repeat_label(rule)
     days = rule.weekdays.sort_by { |code| Recurrence::Rule::WEEKDAYS[code] }
       .map { |code| Recurrence::Rule::DAY_NAMES[code].first(3) }.join(", ")
 
@@ -59,12 +49,13 @@ module TasksHelper
     when "biweekly" then [ "Every 2 weeks", days.presence ].compact.join(" · ")
     when "monthly" then "Monthly"
     when "yearly" then "Yearly"
-    else reminder.cadence.to_s.upcase_first
+    else rule.describe.to_s.upcase_first
     end
   end
 
-  # "4 PM", "8:30 AM".
-  def reminder_clock(reminder)
-    reminder.local_deliver_at.strftime("%-l:%M %p").sub(":00", "")
+  # "16:00" → "4 PM", "08:30" → "8:30 AM".
+  def clock_label(time_of_day)
+    hour, minute = time_of_day.to_s.split(":").map(&:to_i)
+    Time.utc(2000, 1, 1, hour.to_i, minute.to_i).strftime("%-l:%M %p").sub(":00", "")
   end
 end

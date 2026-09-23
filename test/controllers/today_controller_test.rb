@@ -26,14 +26,14 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-quick-add-name-param=reminder]", false
     assert_select "[data-quick-add-target=panel][data-name=task] form[action=?]", tasks_path do
       assert_select "select[name='task[repeat]']"
-      assert_select "input[name='task[remind_at]']"
+      assert_select "input[name='task[remind_time]']"
       assert_select "input[name='task[due_on]'][value=?]", Date.current.iso8601
     end
   end
 
   test "a repeating task's row says so, and when it pings" do
     task = users(:one).tasks.create!(title: "Dishes", due_on: Date.current, repeat: "weekly",
-      repeat_days: %w[ MO WE FR ], remind_at: "21:00")
+      repeat_days: %w[ MO WE FR ], remind_time: "21:00")
     task.update_column(:due_on, Date.current)
 
     get today_path

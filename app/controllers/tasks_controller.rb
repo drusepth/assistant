@@ -15,7 +15,7 @@ class TasksController < ApplicationController
       @paused_goals = goals.paused.order(updated_at: :desc)
       @achieved_goals = goals.done.order(updated_at: :desc)
     else
-      scope = Task.visible_to(Current.user).includes(:sections, :user, :goal, :reminders)
+      scope = Task.visible_to(Current.user).includes(:sections, :user, :goal)
       open_tasks = scope.open.order(Arel.sql("due_on IS NULL, due_on ASC, created_at ASC")).to_a
       @today_tasks, @later_tasks = open_tasks.partition(&:for_today?)
       @done_tasks = scope.completed.order(completed_at: :desc).limit(DONE_COLUMN_LIMIT)
@@ -60,7 +60,7 @@ class TasksController < ApplicationController
     parsed = Reminders::Parse.new(text: text, profile: profile, zone: Current.user.household.zone).call
     @task = Current.user.tasks.new(title: parsed.body, due_on: parsed.deliver_on, repeat: parsed.repeat,
                                    repeat_days: parsed.repeat_days, repeat_until: parsed.repeat_until,
-                                   remind_at: parsed.deliver_time)
+                                   remind_time: parsed.deliver_time)
 
     respond_to do |format|
       format.turbo_stream do
@@ -195,7 +195,7 @@ class TasksController < ApplicationController
     end
 
     def task_params
-      params.expect(task: [ :title, :notes, :due_on, :goal_id, :resolution, :repeat, :repeat_until, :remind_at,
+      params.expect(task: [ :title, :notes, :due_on, :goal_id, :resolution, :repeat, :repeat_until, :remind_time,
                             section_ids: [], repeat_days: [] ])
     end
 end

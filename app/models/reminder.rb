@@ -71,6 +71,9 @@ class Reminder < ApplicationRecord
   scope :upcoming, -> { pending.order(:deliver_at) }
   scope :relative, -> { where.not(lead_minutes: nil) }
   scope :standing, -> { where.not(rule: nil) }
+  # The one reminder a task keeps in step with its own Due / Repeat / Remind
+  # me at (D-reminders-on-tasks); every other reminder is set by hand.
+  scope :by_hand, -> { where(schedule: false) }
 
   before_validation :inherit_body
   before_validation :apply_lead_time
@@ -131,6 +134,32 @@ class Reminder < ApplicationRecord
     @repeat_days = Array(codes).map { |code| code.to_s.strip.upcase }.select { |code| Recurrence::Rule::WEEKDAYS.key?(code) }
   end
 
+  # The picker's key becomes RRULE text: "weekly" with Thu picked is
+  # "FREQ=WEEKLY;BYDAY=TH". Written explicitly — BYDAY, BYMONTHDAY — so the
+  # next occurrence is a pure function of the rule and the current one, and
+  # the row needs no anchor beyond the moment it fires next. The weekly keys
+  # take the chosen days, or the start day's weekday when none were chosen;
+  # "none" is nil. Shared by the task form (D-reminders-on-tasks).
+  def self.compose_rule(key, days: [], on: nil, until_date: nil)
+    codes = Array(days).map { |code| code.to_s.strip.upcase }.select { |code| Recurrence::Rule::WEEKDAYS.key?(code) }
+    codes = [ on && Recurrence::Rule::WEEKDAY_CODES[on.wday] ].compact if codes.empty?
+    weekly = codes.uniq.sort_by { |code| Recurrence::Rule::WEEKDAYS[code] }.join(",")
+
+    text = case key.to_s
+    when "", "none" then nil
+    when "daily" then "FREQ=DAILY"
+    when "weekdays" then "FREQ=WEEKLY;BYDAY=#{Recurrence::Rule::WORKDAYS.join(',')}"
+    when "weekly" then "FREQ=WEEKLY;BYDAY=#{weekly}"
+    when "biweekly" then "FREQ=WEEKLY;INTERVAL=2;BYDAY=#{weekly}"
+    when "monthly" then on && "FREQ=MONTHLY;BYMONTHDAY=#{on.day}"
+    when "yearly" then "FREQ=YEARLY"
+    else key
+    end
+    # The last day is inclusive: UNTIL as a date runs to the end of it.
+    text = "#{text};UNTIL=#{until_date.strftime('%Y%m%d')}" if text && until_date
+    text
+  end
+
   def self.repeat_key_for(recurrence)
     return "none" if recurrence.nil?
 
@@ -173,18 +202,6 @@ class Reminder < ApplicationRecord
   def deliver_time = super || deliver_at&.in_time_zone(zone)&.strftime("%H:%M")
 
   def local_deliver_at = deliver_at.in_time_zone(zone)
-
-  # "20:00" — the wall-clock time it goes off, for a form to read back.
-  def time_of_day = local_deliver_at.strftime("%H:%M")
-
-  # "At 4pm on the day" as a lead time: relative reminders count back from
-  # the start of an item's day (Remindable::DAY_START_HOUR), so a time later
-  # than that is a negative lead. Stored this way it moves with the task's
-  # due date for free, the same as "an hour before" does.
-  def self.lead_for_time_of_day(text)
-    hour, minute = text.to_s.split(":").map(&:to_i)
-    Remindable::DAY_START_HOUR * 60 - (hour.to_i * 60 + minute.to_i)
-  end
 
   private
     def zone = user&.household&.zone || Time.zone
@@ -249,31 +266,13 @@ class Reminder < ApplicationRecord
       key = self[:repeat]
       return if key.nil?
 
-      text = case key
-      when "none" then nil
-      when "daily" then "FREQ=DAILY"
-      when "weekdays" then "FREQ=WEEKLY;BYDAY=#{Recurrence::Rule::WORKDAYS.join(',')}"
-      when "weekly" then "FREQ=WEEKLY;BYDAY=#{weekly_days}"
-      when "biweekly" then "FREQ=WEEKLY;INTERVAL=2;BYDAY=#{weekly_days}"
-      when "monthly" then deliver_on && "FREQ=MONTHLY;BYMONTHDAY=#{deliver_on.day}"
-      when "yearly" then "FREQ=YEARLY"
-      else key
-      end
-      # The last day is inclusive: UNTIL as a date runs to the end of it.
-      text = "#{text};UNTIL=#{repeat_until.strftime('%Y%m%d')}" if text && repeat_until
-      self.rule = text
+      self.rule = self.class.compose_rule(key, days: repeat_days, on: deliver_on, until_date: repeat_until)
     end
 
     def end_follows_start
       return unless standing? && repeat_until && deliver_on && repeat_until < deliver_on
 
       errors.add(:base, "That end date is before the first reminder.")
-    end
-
-    # The chips, or the picked day's weekday when none were touched.
-    def weekly_days
-      codes = repeat_days.presence || [ deliver_on && Recurrence::Rule::WEEKDAY_CODES[deliver_on.wday] ].compact
-      codes.sort_by { |code| Recurrence::Rule::WEEKDAYS[code] }.join(",")
     end
 
     # The picked moment is where the series *starts*, not necessarily an

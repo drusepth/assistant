@@ -32,26 +32,26 @@
             <dd class="min-w-0 wrap-anywhere"><%= @task.due_on.strftime("%B %-d, %Y") %></dd>
           </div>
         <% end %>
-        <%# The schedule the task form sets (D-reminders-on-tasks): read here,
-            changed with Edit, never managed as a reminder of its own. %>
-        <% schedule = @task.schedule_reminder %>
-        <% if schedule&.standing? %>
+        <%# The schedule the task form sets (D-reminders-on-tasks): read off
+            the task's own fields, changed with Edit. %>
+        <% if (rule = @task.recurrence) %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Repeats</dt>
+            <dd class="min-w-0 wrap-anywhere"><%= rule.describe.upcase_first %></dd>
+          </div>
+        <% end %>
+        <% if own && (@task.remind_time || !@task.completed?) %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Reminder</dt>
             <dd class="min-w-0 wrap-anywhere">
-              <%= schedule.cadence.upcase_first %><% if own %> at <%= reminder_clock(schedule) %> —
-                next <%= schedule.local_deliver_at.strftime("%a %b %-d") %><% end %>
+              <% if @task.remind_time %>
+                <%= clock_label(@task.remind_time) %><%= rule ? " each time" : " on the day it's due" %>
+              <% elsif rule %>
+                None — it just comes back onto Today · <%= link_to "Add a time", edit_task_path(@task), class: "text-primary-700 hover:underline" %>
+              <% else %>
+                <%= link_to "Add a time or a repeat", edit_task_path(@task), class: "text-primary-700 hover:underline" %>
+              <% end %>
             </dd>
-          </div>
-        <% elsif schedule && own %>
-          <div class="flex gap-2">
-            <dt class="w-24 shrink-0 text-soft">Reminder</dt>
-            <dd class="min-w-0 wrap-anywhere"><%= reminder_clock(schedule) %> on the day it's due</dd>
-          </div>
-        <% elsif own && !@task.completed? %>
-          <div class="flex gap-2">
-            <dt class="w-24 shrink-0 text-soft">Reminder</dt>
-            <dd class="min-w-0"><%= link_to "Add a time or a repeat", edit_task_path(@task), class: "text-primary-700 hover:underline" %></dd>
           </div>
         <% end %>
         <% if @task.goal %>

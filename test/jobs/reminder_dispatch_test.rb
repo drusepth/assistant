@@ -162,6 +162,35 @@ class ReminderDispatchTest < ActiveJob::TestCase
     assert_not_requested @hook
   end
 
+  test "a repeating task with no time comes round on its day without a ping (D-reminders-on-tasks)" do
+    task = @user.tasks.create!(title: "Water the plants", repeat: "daily")
+    task.update!(completed_at: 1.hour.ago)
+    reminder = task.schedule_reminder
+    assert reminder.silent?
+    reminder.update_columns(deliver_at: 1.minute.ago)
+
+    perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
+
+    task.reload
+    assert_not task.completed?
+    assert_equal reminder.reload.deliver_at.in_time_zone(@user.household.zone).to_date - 1, task.due_on,
+      "due on the day it came round for; the series has moved on to the next"
+    assert_not_requested @hook
+  end
+
+  test "a repeating task with a time pings when it comes round, and the series stays where the dispatcher put it" do
+    task = @user.tasks.create!(title: "Take the trash out", repeat: "daily", remind_time: "20:00")
+    reminder = task.schedule_reminder
+    reminder.update_columns(deliver_at: 1.minute.ago)
+
+    perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
+
+    armed = reminder.reload.deliver_at
+    assert armed > Time.current
+    assert_equal armed, task.reload.schedule_reminder.deliver_at, "coming round does not restart the schedule"
+    assert_requested @hook, times: 1
+  end
+
   private
     def due_standing(body, rule, at: 1.minute.ago, subject: @user.tasks.create!(title: body))
       reminder = @user.reminders.new(subject: subject, body: body, deliver_on: Date.current + 1, deliver_time: "09:00")

@@ -14,7 +14,7 @@
       "remind me to call the pharmacy at 4pm" and "take the trash out every
       Thursday" are tasks too (D-reminders-on-tasks). A due date a page
       prefilled rides inside, still sent while folded. %>
-  <details class="rounded-lg border border-edge px-3 py-2" <%= "open" if task.repeat != "none" || task.remind_at.present? || task.errors[:base].any? %>>
+  <details class="rounded-lg border border-edge px-3 py-2" <%= "open" if task.repeat != "none" || task.remind_time.present? || task.errors[:base].any? %>>
     <summary class="cursor-pointer text-sm font-medium text-primary-700">
       Due date, repeat, reminder<%= " · due #{task.due_on == Date.current ? "today" : task.due_on.strftime("%b %-d")}" if task.due_on %>
     </summary>

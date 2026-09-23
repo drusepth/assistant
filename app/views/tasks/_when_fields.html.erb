@@ -12,10 +12,11 @@
 <% weekly = Reminder::WEEKLY_REPEATS.include?(task.repeat) %>
 <% repeating = task.repeat != "none" %>
 <div class="space-y-3" data-controller="reminder-form"
-     data-reminder-form-once-label-value="Due" data-reminder-form-repeat-label-value="Starting">
+     data-reminder-form-once-label-value="Due"
+     data-reminder-form-repeat-label-value="<%= date_label = task.routine? && task.persisted? ? "Next due" : "Starting" %>">
   <div class="flex flex-wrap items-start gap-x-3 gap-y-2">
     <div class="min-w-44 flex-1">
-      <%= form.field :due_on, label_text: repeating ? "Starting" : "Due" do %>
+      <%= form.field :due_on, label_text: repeating ? date_label : "Due" do %>
         <%= render "shared/date_shortcuts_field", form: form, method: :due_on,
               data: { reminder_form_target: "date", action: "change->reminder-form#dateChanged" } %>
       <% end %>
@@ -27,7 +28,7 @@
       <% end %>
     </div>
     <div class="min-w-32">
-      <%= form.field :remind_at, as: :time_field, label_text: "Remind me at", value: task.remind_at %>
+      <%= form.field :remind_time, as: :time_field, label_text: "Remind me at" %>
     </div>
   </div>
 
@@ -49,7 +50,8 @@
   </div>
 
   <p class="hint" data-reminder-form-target="until" <%= "hidden" unless repeating %>>
-    On each of those days this task comes back to Today, even if you checked it off last time, and you get a reminder (at 9am unless you pick a time).
+    On each of those days it comes back to Today, even if you checked it off last time.
+    Pick a time to get a reminder too, or leave it blank for no ping.
   </p>
   <p class="hint" data-reminder-form-target="once" <%= "hidden" if repeating %>>
     Pick a time to get a reminder on the day it's due. No time, no reminder.

@@ -17,13 +17,13 @@ class Task < ApplicationRecord
   enum :bucket, { later: 0, today: 1 }, default: :later
 
   validates :title, presence: true
-  # "At 4pm on the day" counts forward from the start of the due day; the
-  # range is every minute of that day, so nothing here is on another date.
-  SAME_DAY_LEADS = ((Remindable::DAY_START_HOUR - 24) * 60 + 1)..(Remindable::DAY_START_HOUR * 60)
+  has_one :schedule_reminder, -> { where(schedule: true) }, class_name: "Reminder", as: :subject
 
+  before_validation :compose_repeat_rule
   before_validation :default_schedule_day
-  validate :schedule_is_valid
-  after_save :save_schedule
+  validate :repeat_rule_is_usable
+  validate :reminder_time_is_ahead
+  after_save :sync_schedule_reminder
 
   scope :open, -> { where(completed_at: nil) }
   scope :completed, -> { where.not(completed_at: nil) }
@@ -71,7 +71,7 @@ class Task < ApplicationRecord
   # done once, not the chore over (D-standing-reminders).
   def complete!
     update!(completed_at: Time.current)
-    reminders.pending.where(rule: nil).destroy_all
+    reminders.by_hand.pending.where(rule: nil).destroy_all
     goal&.finish_if_done!
   end
 
@@ -80,65 +80,47 @@ class Task < ApplicationRecord
     goal&.reactivate!
   end
 
-  # The task's schedule (D-reminders-on-tasks): a due day, an optional
-  # repeat, and an optional time to be pinged. Three fields on the task
-  # form, one reminder row underneath — the user never manages the reminder
-  # as a thing of its own.
+  # The task's schedule (D-reminders-on-tasks) is the task's own: a due
+  # day, an optional `repeat_rule` (RRULE text), and an optional
+  # `remind_time` ("16:00"). Underneath sits one reminder row, marked
+  # `schedule`, that the task keeps in step with those three — the user
+  # never manages it, and nothing has to guess which reminder it is.
   #
-  # A routine (D-task-routines) is the repeating case: the chore's standing
-  # reminder. When it fires, the task comes back onto the board.
-  def routine
-    reminders.standing.pending.order(:id).first
-  end
+  # A repeating task is a routine (D-task-routines): its schedule reminder
+  # repeats, and each firing brings the task back onto the board. With no
+  # time picked it fires silently — the chore comes round without a ping.
+  def routine? = repeat_rule.present?
 
-  def routine? = routine.present?
+  def recurrence = Recurrence::Rule.parse(repeat_rule)
 
-  # The non-repeating case: "remind me at 4pm on the day it's due". Stored
-  # as a relative reminder counting from the start of the due day, so it
-  # moves when the task is rescheduled and retires when the date is cleared
-  # (Remindable), with no second sync to keep. Lead times that land on an
-  # earlier day ("the day before") are the task page's extra reminders, not
-  # this one.
-  def day_reminder
-    reminders.pending.relative.where(lead_minutes: SAME_DAY_LEADS).order(:id).first
-  end
+  # Reminders set by hand from the task page, beside the schedule.
+  def extra_reminders = reminders.by_hand.pending.order(:deliver_at)
 
-  # The one reminder the task form reads and writes.
-  def schedule_reminder = routine || day_reminder
-
-  # The reminders the form doesn't manage — set from the task page.
-  def extra_reminders
-    managed = schedule_reminder
-    reminders.pending.order(:deliver_at).reject { |reminder| reminder == managed }
-  end
-
-  # The form's fields. Each reads back from the schedule reminder, so an
-  # edit form opens on what was chosen; an assigned value wins until saved.
-  def repeat = @repeat || Reminder.repeat_key_for(routine&.recurrence)
-  def repeat_days = @repeat_days || routine&.repeat_days || []
-  def repeat_until = defined?(@repeat_until) ? @repeat_until : routine&.repeat_until
-  def remind_at = defined?(@remind_at) ? @remind_at : schedule_reminder&.time_of_day
+  # The Repeat picker's parts: a Reminder::REPEAT_OPTIONS key, the weekday
+  # chips, and an optional last day. Each reads back from the stored rule,
+  # so an edit opens on what was chosen; anything assigned from the form
+  # wins, and is composed into `repeat_rule` before validation.
+  def repeat = @picked&.key?(:repeat) ? @picked[:repeat] : (Reminder.repeat_key_for(recurrence) || "none")
+  def repeat_days = @picked&.key?(:days) ? @picked[:days] : (recurrence&.weekdays || [])
+  def repeat_until = @picked&.key?(:until) ? @picked[:until] : recurrence&.until_date
 
   def repeat=(key)
-    @schedule_assigned = true
-    @repeat = key.presence || "none"
+    pick(:repeat, key.presence || "none")
   end
 
   def repeat_days=(codes)
-    @schedule_assigned = true
-    @repeat_days = Array(codes).compact_blank
+    pick(:days, Array(codes).compact_blank)
   end
 
   def repeat_until=(date)
-    @schedule_assigned = true
-    @repeat_until = date.presence && Date.parse(date.to_s)
+    pick(:until, date.is_a?(Date) ? date : (Date.iso8601(date.to_s) if date.present?))
   rescue Date::Error
-    @repeat_until = nil
+    pick(:until, nil)
   end
 
-  def remind_at=(time)
-    @schedule_assigned = true
-    @remind_at = time.presence
+  def remind_time=(value)
+    @time_picked = true
+    super(value.presence)
   end
 
   # What a routine firing does to the board (Q-routines, D-task-routines):
@@ -147,8 +129,13 @@ class Task < ApplicationRecord
   # occurrence.
   def come_round!(on: Date.current)
     was_done = completed?
+    # The dispatcher has already moved the series on; this is the board
+    # catching up, not the schedule changing.
+    @coming_round = true
     update!(completed_at: nil, bucket: :today, due_on: on)
     goal&.reactivate! if was_done
+  ensure
+    @coming_round = false
   end
 
   private
@@ -156,73 +143,114 @@ class Task < ApplicationRecord
       Array(guiding_questions).grep(String).map(&:strip).reject(&:empty?)
     end
 
-    # A reminder time or a repeat needs a day to start from; with none
+    def zone = user.household.zone
+
+    def pick(part, value)
+      (@picked ||= {})[part] = value
+    end
+
+    def compose_repeat_rule
+      return unless @picked
+
+      self.repeat_rule = Reminder.compose_rule(repeat, days: repeat_days, on: due_on || Date.current, until_date: repeat_until)
+    end
+
+    # A repeat or a reminder time needs a day to start from; with none
     # picked, that day is today.
     def default_schedule_day
-      return unless @schedule_assigned
-      return if repeat == "none" && remind_at.blank?
-
-      self.due_on ||= Date.current
+      self.due_on ||= Date.current if repeat_rule.present? || remind_time.present?
     end
 
-    # Builds the one reminder the fields describe — without saving it, so a
-    # bad repeat is a form error on the task rather than a half-saved pair.
-    def schedule_is_valid
-      return unless @schedule_assigned
+    def repeat_rule_is_usable
+      return if repeat_rule.blank?
 
-      @schedule_retired = []
-      @schedule_draft = nil
-      current = schedule_reminder
+      rule = recurrence
+      if !rule&.standing?
+        errors.add(:base, "That repeat isn't one we understand.")
+      elsif rule.until_date && due_on && rule.until_date < due_on
+        errors.add(:base, "That end date is before the first one.")
+      end
+    end
 
-      if repeat != "none"
-        @schedule_retired << current if current && !current.standing?
-        @schedule_draft = current&.standing? ? current : Reminder.new
-        @schedule_draft.assign_attributes(repeat: repeat, repeat_days: repeat_days, repeat_until: repeat_until,
-                                          deliver_time: remind_at || format("%02d:00", Reminder::DEFAULT_HOUR))
-        # The due day is where a new series starts, and where a moved one
-        # restarts. Left alone otherwise: an open chore still due on a day
-        # it missed is owed, and re-reading that day as a start would skip
-        # it past the occurrence it is waiting on.
-        @schedule_draft.deliver_on = due_on if @schedule_draft.new_record? || due_on_changed?
-      elsif remind_at.present?
-        @schedule_retired << current if current&.standing?
-        @schedule_draft = current && !current.standing? ? current : Reminder.new
-        @schedule_draft.assign_attributes(lead_minutes: Reminder.lead_for_time_of_day(remind_at))
+    # "Remind me at 8am" typed at 10am for a task due today is a mistake to
+    # say out loud, not a reminder to drop silently. Only from the form:
+    # the Today/Tomorrow buttons moving a task whose reminder already went
+    # off is not an error.
+    def reminder_time_is_ahead
+      return unless @time_picked
+      return if repeat_rule.present? || remind_time.blank? || due_on.blank? || completed?
+      return unless remind_time_changed? || due_on_changed?
+
+      moment = one_shot_moment
+      errors.add(:remind_time, "is already past for that day") if moment && moment.past?
+    end
+
+    def one_shot_moment
+      hour, minute = remind_time.to_s.split(":").map(&:to_i)
+      return nil if hour.nil?
+
+      zone.local(due_on.year, due_on.month, due_on.day, hour, minute.to_i)
+    end
+
+    # Keeps the one schedule reminder saying what the task's fields say.
+    def sync_schedule_reminder
+      @picked = nil
+      @time_picked = false
+      return if @coming_round
+      return unless saved_change_to_repeat_rule? || saved_change_to_remind_time? || saved_change_to_due_on? ||
+                    saved_change_to_title? || saved_change_to_completed_at? || saved_change_to_id?
+
+      reminder = reminders.find_by(schedule: true)
+      if repeat_rule.present?
+        sync_routine(reminder)
+      elsif remind_time.present? && due_on && !completed?
+        sync_one_shot(reminder)
       else
-        @schedule_retired << current if current
+        reminder&.destroy!
       end
-      return unless @schedule_draft
-
-      @schedule_draft.assign_attributes(user: user, subject: self, body: title.to_s.truncate(Reminder::MAX_BODY))
-      # A relative reminder counts from the task's due day, which only
-      # exists once the task's own changes are in; the draft reads it from
-      # this unsaved task, so check it against what is about to be true.
-      return if @schedule_draft.valid?
-
-      @schedule_draft.errors.full_messages.each { |message| errors.add(:base, message) }
+      association(:schedule_reminder).reset
     end
 
-    # A repeating task is due on its next occurrence: the day the routine
-    # was set to start is only where the series starts, and the task's date
-    # follows the reminder rather than disagreeing with it.
-    def save_schedule
-      return unless @schedule_assigned
+    # A repeating task: one standing reminder. Its first moment is where the
+    # series starts — the due day for a new or changed rule — and the task
+    # is then due on that first occurrence. A new time keeps the series on
+    # the occurrence it is waiting for. Moving just the due day ("do it
+    # tomorrow instead") moves this time round, not the series.
+    def sync_routine(reminder)
+      restart = reminder.nil? || !reminder.standing? || reminder.rule != repeat_rule
+      reminder = reminders.build(user: user, schedule: true) if reminder.nil? || reminder.delivered_at
+      # A new or changed rule starts on the first day on or after the due
+      # day that fits it — today's chore is on today's list even when the
+      # hour for today's ping has gone. A new time keeps the series on the
+      # occurrence it is waiting for.
+      start = restart ? first_occurrence_day : reminder.local_deliver_at.to_date
+      reminder.assign_attributes(
+        rule: repeat_rule, lead_minutes: nil, body: title.to_s.truncate(Reminder::MAX_BODY),
+        silent: remind_time.blank?,
+        # A silent chore comes round at the start of its day; a pinged one
+        # at the time picked.
+        deliver_on: start, deliver_time: remind_time || "00:00"
+      )
+      reminder.save!
 
-      @schedule_retired.each(&:destroy!)
-      if @schedule_draft
-        restarted = @schedule_draft.new_record? || @schedule_draft.rule_changed? || saved_change_to_due_on?
-        @schedule_draft.save!
-        if @schedule_draft.standing? && restarted && !completed?
-          first_day = @schedule_draft.local_deliver_at.to_date
-          update_column(:due_on, first_day) if due_on != first_day
-        end
-      end
-      @schedule_assigned = false
-      @schedule_draft = nil
-      @schedule_retired = []
-      remove_instance_variable(:@repeat) if defined?(@repeat)
-      remove_instance_variable(:@repeat_days) if defined?(@repeat_days)
-      remove_instance_variable(:@repeat_until) if defined?(@repeat_until)
-      remove_instance_variable(:@remind_at) if defined?(@remind_at)
+      update_column(:due_on, start) if restart && !completed? && start && due_on != start
+    end
+
+    def first_occurrence_day
+      from = due_on || Date.current
+      recurrence.occurrences(zone.local(from.year, from.month, from.day)).first&.to_date || from
+    end
+
+    # A task with a time and no repeat: one reminder at that time on the due
+    # day, re-armed when either moves. A moment already past is left alone —
+    # the reminder that went off stays delivered rather than firing again.
+    def sync_one_shot(reminder)
+      moment = one_shot_moment
+      return if reminder && reminder.rule.nil? && reminder.deliver_at == moment
+      return reminder&.destroy! if moment.nil? || moment.past?
+
+      reminder ||= reminders.build(user: user, schedule: true)
+      reminder.update!(rule: nil, lead_minutes: nil, silent: false, delivered_at: nil, deliver_at: moment,
+                       body: title.to_s.truncate(Reminder::MAX_BODY))
     end
 end

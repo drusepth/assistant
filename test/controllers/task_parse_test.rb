@@ -25,7 +25,7 @@ class TaskParseTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action=update][target=new_task_form]" do
       assert_select "input[name='task[title]'][value='take the trash out']"
       assert_select "input[name='task[due_on]'][value=?]", thursday.iso8601
-      assert_select "input[name='task[remind_at]'][value='20:00']"
+      assert_select "input[name='task[remind_time]'][value='20:00']"
       assert_select "option[selected][value=weekly]"
       assert_select "input[name='task[repeat_days][]'][value=TH][checked]"
       assert_select "details[open]", true, "the schedule it filled in is showing"
@@ -42,7 +42,7 @@ class TaskParseTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[target=new_task_form]" do
       assert_select "input[name='task[title]'][value='trash, every other week']", true, "the user's own words when the model gives none"
       assert_select "input[name='task[due_on]'][value=?]", Date.current.iso8601
-      assert_select "input[name='task[remind_at]'][value]", false
+      assert_select "input[name='task[remind_time]'][value]", false
       assert_select "option[selected][value=none]"
       assert_select "input[name='task[repeat_days][]'][value=MO][checked]", true, "a lowercase code still counts"
       assert_select "input[name='task[repeat_days][]'][checked]", 1

@@ -104,13 +104,11 @@ class ReminderTest < ActiveSupport::TestCase
     assert_equal "Reminder: Call the pharmacy", reminder.message
   end
 
-  test "a task's reminder says when it is due, not a made-up time of day" do
-    task = @user.tasks.create!(title: "Call the pharmacy", due_on: local_today + 1)
-    reminder = @user.reminders.create!(subject: task, lead_minutes: Reminder.lead_for_time_of_day("16:00"))
+  test "a reminder counted back from a task says when it is due, not a made-up time of day" do
+    task = @user.tasks.create!(title: "Call the pharmacy", due_on: local_today + 2)
+    reminder = @user.reminders.create!(subject: task, lead_minutes: 1440)
 
-    assert_equal 16, reminder.local_deliver_at.hour
-    assert_equal "16:00", reminder.time_of_day
-    assert_equal "Reminder: Call the pharmacy — due tomorrow", reminder.message
+    assert_equal "Reminder: Call the pharmacy — due #{(local_today + 2).strftime("%a %b %-d")}", reminder.message
   end
 
   test "a reminder is always set on something (D-reminders-on-tasks)" do

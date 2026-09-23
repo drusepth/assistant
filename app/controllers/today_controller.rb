@@ -2,7 +2,7 @@ class TodayController < ApplicationController
   UNSCHEDULED_LIMIT = 5
 
   def show
-    tasks = Task.visible_to(Current.user).open.includes(:sections, :reminders)
+    tasks = Task.visible_to(Current.user).open.includes(:sections)
     @overdue_tasks = tasks.where(due_on: ...Date.current).order(:due_on)
     @today_tasks = tasks.where(due_on: Date.current)
     @prep_range = prep_range
