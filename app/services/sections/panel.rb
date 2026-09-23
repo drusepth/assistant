@@ -62,6 +62,14 @@ module Sections
     # hides the roster grid this way — the Address Book is the roster (D-people-dashboard).
     def hidden_browse = []
 
+    # The browse zone's empty state, when the panel knows better than the
+    # generic "Nothing in <Section> yet". A hub whose panel already shows
+    # the section's own records (Pets' pet cards) would otherwise tell the
+    # user the page they are looking at is empty. nil keeps the generic one.
+    EmptyState = Data.define(:title, :description, :section_ids)
+
+    def empty_state = nil
+
     # Named after the panel rather than the section: they are the same
     # string for every seeded section (`Panels::Health` → `_health`), and a
     # lens panel serves many sections at once.

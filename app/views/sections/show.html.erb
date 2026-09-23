@@ -53,17 +53,20 @@
   <% end %>
 
   <%# Browse zone: the lens itself. The empty state is quick capture
-      pre-tagged with this section — never a dead end. %>
+      pre-tagged with this section — never a dead end. A panel may reword
+      it (and retarget the tag) when "nothing here" would contradict it. %>
   <% if [ @events, @tasks, @documents, @people, @goals, @notes, @photos ].all?(&:empty?) %>
-    <%= render Ui::EmptyStateComponent.new(
-          title: "Nothing in #{@section.name} yet",
-          description: "Anything you add here starts tagged #{@section.name} — and one item can live in several sections at once."
-        ) do |empty| %>
-      <% empty.with_action do %>
+    <% empty = @panel&.empty_state || Sections::Panel::EmptyState.new(
+         title: "Nothing in #{@section.name} yet",
+         description: "Anything you add here starts tagged #{@section.name} — and one item can live in several sections at once.",
+         section_ids: [ @section.id ]
+       ) %>
+    <%= render Ui::EmptyStateComponent.new(title: empty.title, description: empty.description) do |component| %>
+      <% component.with_action do %>
         <div class="flex flex-wrap justify-center gap-2">
-          <%= quick_add :task, label: "Add a task", prefill: { section_ids: [ @section.id ] }, primary: true, align: :center %>
-          <%= quick_add :event, label: "Add an event", prefill: { section_ids: [ @section.id ] }, align: :center %>
-          <%= quick_add :note, label: "Add a note", prefill: { section_ids: [ @section.id ] }, align: :center %>
+          <%= quick_add :task, label: "Add a task", prefill: { section_ids: empty.section_ids }, primary: true, align: :center %>
+          <%= quick_add :event, label: "Add an event", prefill: { section_ids: empty.section_ids }, align: :center %>
+          <%= quick_add :note, label: "Add a note", prefill: { section_ids: empty.section_ids }, align: :center %>
         </div>
       <% end %>
     <% end %>

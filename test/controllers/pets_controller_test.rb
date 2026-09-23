@@ -244,6 +244,24 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h3", text: "Remembered"
   end
 
+  test "an empty Pets hub with a pet says what's missing, and files to her" do
+    get section_path("pets")
+    assert_no_match "Nothing in Pets yet", response.body, "the pet card is right above it"
+    assert_match "Nothing filed about Rex yet", response.body
+    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
+      tasks_path, "task[section_ids][]", @rex.section_id.to_s
+
+    create_pet(name: "Luna", species: "cat")
+    get section_path("pets")
+    assert_match "Nothing filed about your pets yet", response.body
+    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
+      tasks_path, "task[section_ids][]", sections(:pets).id.to_s
+
+    Pet.find_each(&:destroy)
+    get section_path("pets")
+    assert_match "Nothing in Pets yet", response.body
+  end
+
   test "the Pets hub rolls up care only once the cards stop being an overview" do
     event = users(:one).events.create!(title: "Rex — dental", starts_at: 13.months.ago)
     event.sections << @rex.section
