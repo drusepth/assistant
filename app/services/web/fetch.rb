@@ -17,6 +17,7 @@ module Web
     MAX_REDIRECTS = 3
     OPEN_TIMEOUT = 10
     READ_TIMEOUT = 20
+    TOO_LARGE = "the page is too large to read".freeze
 
     # The conventional well-behaved-bot form, and the change is not cosmetic:
     # this was a bare token (`assistant-self-hosted (+url)`), and the first
@@ -79,7 +80,7 @@ module Web
       uri = parsed(@url)
       MAX_REDIRECTS.succ.times do
         guard!(uri)
-        response = get(uri)
+        response, body = get(uri)
         case response
         # Before the redirect branch, and this ordering is load-bearing:
         # 304 *is* a 3xx, so Net::HTTPNotModified is a subclass of
@@ -93,7 +94,7 @@ module Web
           location = response["location"] or raise Error, "redirect with no destination"
           uri = parsed(URI.join(uri, location).to_s)
         when Net::HTTPSuccess
-          return extract(response, uri)
+          return extract(response, body, uri)
         else
           raise Error, "the site answered HTTP #{response.code}"
         end
@@ -135,7 +136,9 @@ module Web
           "User-Agent" => USER_AGENT,
           "Accept" => "text/html, application/xhtml+xml, text/*, application/json"
         }.merge(@headers))
-        http.request(request)
+        body = nil
+        response = http.request(request) { |streaming| body = read_capped(streaming) }
+        [ response, body ]
       rescue Timeout::Error, SocketError, SystemCallError, OpenSSL::SSL::SSLError => e
         raise Error, "couldn't reach the site (#{e.class.name.demodulize})"
       end
@@ -149,10 +152,28 @@ module Web
         )
       end
 
-      def extract(response, uri)
-        body = response.body.to_s
-        raise Error, "the page is too large to read" if body.bytesize > @max_bytes
+      # The cap is enforced while the body arrives, never after. This used to
+      # read the whole body and then compare its size, which is no cap at all:
+      # a feed that answered with a few hundred megabytes (or a small gzip that
+      # inflates to that — Net::HTTP decompresses transparently, and these
+      # chunks are the inflated bytes) was held in memory in full before being
+      # refused, and the kernel's OOM killer ended the worker mid-job — taking
+      # its sibling threads' jobs with it — every time the sweep came round.
+      # Binary, the encoding Net::HTTP's own buffered body has, so everything
+      # downstream sees the same string it always did.
+      def read_capped(response)
+        raise Error, TOO_LARGE if response["content-length"].to_i > @max_bytes
 
+        body = String.new(encoding: Encoding::BINARY)
+        response.read_body do |chunk|
+          body << chunk
+          raise Error, TOO_LARGE if body.bytesize > @max_bytes
+        end
+        body
+      end
+
+      def extract(response, body, uri)
+        body = body.to_s
         type = content_type(response, body)
         if type.include?("html") && @raw
           page(Nokogiri::HTML(body.scrub).title.to_s.squish.presence, body.scrub, uri, response)
