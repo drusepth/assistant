@@ -34,12 +34,12 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     get pet_path(@rex)
     assert_response :success
     assert_match "Neutered male", response.body
-    assert_match "His name is a tag, so his vet visits stay Health", response.body
-    assert_no_match(/Her name is a tag/, response.body)
+    assert_match "What he eats, and since when.", response.body
+    assert_no_match(/What she eats/, response.body)
 
     luna = create_pet(name: "Luna", species: "cat", sex: "female")
     get pet_path(luna)
-    assert_match "Her name is a tag, so her vet visits stay Health", response.body
+    assert_match "What she eats, and since when.", response.body
 
     pip = create_pet(name: "Pip", species: "bird", died_on: Date.current)
     get pet_path(pip)
