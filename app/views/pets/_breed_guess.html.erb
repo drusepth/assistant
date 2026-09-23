@@ -1,0 +1,42 @@
+<%# Under the Breed box (Pets::BreedGuess): for the owner who was never told.
+    A photo of this pet already on file is one tap; anything else is an
+    upload that is looked at and not kept. The answer fills the box and the
+    owner still saves the form — nothing lands on the guess alone. %>
+<% if Pets::BreedGuessesController.profile_for(Current.user) %>
+  <% photos = pet.persisted? ? pet.items(Photo, Current.user).with_attached_image.order(taken_at: :desc, id: :desc).limit(7) : Photo.none %>
+  <details class="group text-xs" data-breed-guess-target="panel">
+    <summary class="cursor-pointer list-none font-medium text-primary-700 hover:underline">Not sure? Guess it from a photo</summary>
+    <div class="mt-2 space-y-2 rounded-2xl border border-edge p-3">
+      <% if pet.avatar_ready? || photos.any? %>
+        <p class="text-soft">Tap a photo of <%= pet.name %>, or upload another.</p>
+        <div class="flex flex-wrap gap-1.5">
+          <% if pet.avatar_ready? %>
+            <button type="button" class="size-14 overflow-hidden rounded-xl ring-primary-500" aria-label="<%= pet.name %>'s profile photo"
+                    data-action="breed-guess#guess" data-breed-guess-pet-id-param="<%= pet.id %>">
+              <%= image_tag pet.avatar.variant(:thumb), alt: "", class: "size-full object-cover" %>
+            </button>
+          <% end %>
+          <% photos.each do |photo| %>
+            <button type="button" class="size-14 overflow-hidden rounded-xl ring-primary-500" aria-label="<%= photo.title.presence || "Photo from #{photo.taken_at.strftime("%B %-d, %Y")}" %>"
+                    data-action="breed-guess#guess" data-breed-guess-photo-id-param="<%= photo.id %>">
+              <%= image_tag photo.image.variant(:thumb), alt: "", class: "size-full object-cover" %>
+            </button>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-soft">A clear photo of the whole animal works best — face and coat.</p>
+      <% end %>
+      <label class="btn btn-secondary btn-sm cursor-pointer">
+        Upload a photo
+        <%# No name: this file never rides along when the pet form saves. %>
+        <input type="file" class="sr-only" accept="<%= Avatarable::AVATAR_CONTENT_TYPES.join(", ") %>"
+               data-breed-guess-target="file" data-action="change->breed-guess#upload">
+      </label>
+      <div id="breed_guess_result" aria-live="polite">
+        <p class="text-soft">The model looks at the photo and suggests a breed. The photo isn't kept.</p>
+      </div>
+    </div>
+  </details>
+<% else %>
+  <p class="hint">Not sure? With a model that can see images (Settings), the app can guess the breed from a photo.</p>
+<% end %>

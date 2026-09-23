@@ -116,6 +116,11 @@ Rails.application.routes.draw do
   # Pets are members of the household, not a section (D-pet-primitive): their
   # cards live on the People page, so there is no index here.
   resources :pets, except: :index do
+    # The Breed box's photo helper: answers the form, saves nothing, so it
+    # works on a pet that isn't saved yet.
+    collection do
+      resource :breed_guess, only: %i[ create ], module: :pets
+    end
     resource :avatar, only: %i[ destroy ], module: :pets
     resource :budget, only: %i[ create update ], controller: :pet_budgets
     resource :album, only: [], controller: :pet_albums do

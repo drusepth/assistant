@@ -5,7 +5,12 @@
     <%= form.field :species do %>
       <%= form.select :species, Pet::SPECIES.map { |slug| [ Pet::SPECIES_LABELS[slug], slug ] } %>
     <% end %>
-    <%= form.field :breed, placeholder: "Golden retriever, tabby, lop…" %>
+    <div data-controller="breed-guess" data-breed-guess-url-value="<%= breed_guess_path %>">
+      <%= form.field :breed do %>
+        <%= form.text_field :breed, placeholder: "Golden retriever, tabby, lop…", data: { breed_guess_target: "input" } %>
+        <%= render "pets/breed_guess", pet: pet %>
+      <% end %>
+    </div>
   </div>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <%# Sex is what the app reads to decide whether to write "she", "he" or
@@ -51,9 +56,20 @@
     <%= form.number_field :weight, id: "pet_weight_lb", value: units.weight(pet.weight_lb), step: units.weight_step, min: 0 %>
   <% end %>
 
-  <%= form.field :vet_id, label_text: "Vet", hint: "An ordinary contact, so you can call them from here." do %>
-    <%= form.collection_select :vet_id, Person.visible_to(Current.user).order(:name), :id, :name, include_blank: "No vet on file" %>
-  <% end %>
+  <%# Type the vet, don't go and make a contact first: a name you already
+      have is offered as you type and linked, a new one becomes a contact
+      (Pets::VetContact). Blank means no vet on file. %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <%= form.field :vet_name, label_text: "Vet", placeholder: "Dr. Alvarez, Riverside Animal Clinic",
+          list: "pet-vet-contacts", autocomplete: "off",
+          hint: "Pick someone from your contacts, or type a new name and they'll be added." %>
+    <%= form.field :vet_phone, as: :telephone_field, label_text: "Vet's phone", autocomplete: "off" %>
+  </div>
+  <datalist id="pet-vet-contacts">
+    <% Person.visible_to(Current.user).order(:name).distinct.pluck(:name).each do |name| %>
+      <option value="<%= name %>"></option>
+    <% end %>
+  </datalist>
 
   <%= form.field :notes, as: :text_area, hint: "Temperament, allergies, what the sitter needs to know." %>
 
