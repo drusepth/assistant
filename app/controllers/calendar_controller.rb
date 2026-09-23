@@ -1,7 +1,7 @@
 # The calendar in three zooms — month, week, day — over one Calendar::Agenda.
 # Each zoom is a URL, so back and bookmark work; the one you used last is
 # remembered, so the sidebar's bare /calendar opens where you left off. So
-# are the layers (events, tasks, reminders): a toggle is a `?layers=` link.
+# are the layers (events, tasks): a toggle is a `?layers=` link.
 class CalendarController < ApplicationController
   VIEWS = %w[ month week day ].freeze
   VIEW_COOKIE = :calendar_view

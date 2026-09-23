@@ -1,10 +1,12 @@
 <%# One day, in full: what's past due (on today only — that's when it's
     yours to deal with), what has no time (all-day events, what's due),
-    then the day's schedule, events and reminders on one clock. Adding sits
-    at hand: the header's Task and Event land on this date, and a reminder
-    can be set for it below. %>
+    then the day's timed events. Tasks stay in one list whatever their
+    reminder time — the row's bell chip says when it pings — so there is one
+    place to check them off. Adding sits at hand: the header's Task and
+    Event land on this date, and a task's form carries its own reminder
+    (D-reminders-on-tasks). %>
 <% entries = @agenda.on(@date) %>
-<% untimed, timed = entries.partition { |entry| entry.at.nil? } %>
+<% untimed, timed = entries.partition { |entry| entry.at.nil? || entry.kind != :event } %>
 <% overdue = @date == Date.current ? @agenda.overdue_tasks.to_a : [] %>
 <% stays = @stays_by_day.fetch(@date, []) %>
 
@@ -59,14 +61,4 @@
           description: "Add an event or a task above — they'll land on #{@date.strftime("%B %-d")}.") %>
   <% end %>
 
-  <%# A reminder for this day. Folded, since most visits are for reading the
-      day, and the form is a full one (repeat, weekdays, until). %>
-  <details class="card card-flush">
-    <summary class="flex cursor-pointer list-none items-center gap-2 px-5 py-3.5 text-sm font-medium text-ink [&::-webkit-details-marker]:hidden">
-      <%= icon(:bell, css_class: "size-4 text-soft") %> Set a reminder on <%= @date.strftime("%B %-d") %>
-    </summary>
-    <div class="border-t border-edge px-5 py-4">
-      <%= render "reminders/form", reminder: Reminder.new(deliver_on: @date), subject: nil, show_body: true %>
-    </div>
-  </details>
 </div>

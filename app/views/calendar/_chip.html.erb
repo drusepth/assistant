@@ -1,26 +1,29 @@
 <%# One entry as a compact line in a month cell or a week column. Locals:
     entry (Calendar::Agenda::Entry), day. Events fill with their section's
     color, tasks too but led by a check mark (so "due" never reads as
-    "booked"), reminders are the quietest line — a ping about something
-    rather than a thing. Timed entries lead with the time, so a day reads
-    top to bottom in order. Your own events and tasks drag to another day. %>
+    "booked"), or by a bell when they carry a reminder time. A repeating
+    task on a day ahead is the quietest line, led by the repeat arrows —
+    where the task will come round, not a row of its own
+    (D-reminders-on-tasks). Timed entries lead with the time, so a day
+    reads top to bottom in order. Your own events and tasks drag to another
+    day. %>
 <% record = entry.record %>
 <% shared = !entry.own?(Current.user) %>
 <% past = day < Date.current && !entry.overdue? %>
-<% section = record.sections.first if entry.kind != :reminder %>
+<% section = record.sections.first %>
 <% fill = section ? section_chip_classes(section) : "bg-stone-100 text-stone-700" %>
 <% classes = case entry.kind
    when :event then "font-medium #{fill}"
    when :task then class_names("font-medium", fill, "opacity-60" => record.completed?,
                      "border-l-2 border-l-primary-600 font-semibold" => entry.overdue?)
-   else "text-soft hover:bg-stone-100"
+   else "border border-dashed border-edge text-soft hover:bg-stone-100"
    end %>
 <% title = case entry.kind
    when :event then [ record.title, (record.user.name if shared) ].compact.join(" — ")
    when :task then [ record.title, ("overdue" if entry.overdue?), ("done" if record.completed?), (record.user.name if shared) ].compact.join(" — ")
-   else "Reminder: #{record.body} — #{entry.at.strftime("%-l:%M %p")}"
+   else [ record.title, "repeats #{record.recurrence.describe}", (record.user.name if shared) ].compact.join(" — ")
    end %>
-<%= link_to entry.kind == :reminder ? (record.subject || today_path) : record,
+<%= link_to record,
       title: title, draggable: entry.movable_by?(Current.user) || nil,
       data: calendar_drag_data(entry, day),
       class: class_names("relative z-10 flex items-center gap-1 rounded px-1.5 py-0.5 text-xs hover:opacity-80", classes,
@@ -32,12 +35,12 @@
   <% end %>
   <% case entry.kind %>
   <% when :task %>
-    <%= icon(entry.overdue? ? :warning : :check_circle, css_class: "size-3 shrink-0") %>
-  <% when :reminder %>
-    <%= icon(:bell, css_class: "size-3 shrink-0") %>
+    <%= icon(entry.overdue? ? :warning : (entry.at ? :bell : :check_circle), css_class: "size-3 shrink-0") %>
+  <% when :repeat %>
+    <%= icon(:arrow_path, css_class: "size-3 shrink-0") %>
   <% end %>
   <% if entry.at %>
-    <span class="shrink-0 tabular-nums <%= "font-normal opacity-80" unless entry.kind == :reminder %>"><%= calendar_short_time(entry.at) %></span>
+    <span class="shrink-0 tabular-nums font-normal opacity-80"><%= calendar_short_time(entry.at) %></span>
   <% end %>
   <span class="min-w-0 truncate <%= "line-through" if entry.kind == :task && record.completed? %>"><%= entry.title %></span>
 <% end %>

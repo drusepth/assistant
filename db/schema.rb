@@ -822,6 +822,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_075154) do
     t.datetime "last_delivered_at"
     t.integer "lead_minutes"
     t.string "rule"
+    t.boolean "schedule", default: false, null: false
+    t.boolean "silent", default: false, null: false
     t.integer "subject_id"
     t.string "subject_type"
     t.datetime "updated_at", null: false
@@ -1055,6 +1057,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_075154) do
     t.integer "goal_id"
     t.json "guiding_questions", default: [], null: false
     t.text "notes"
+    t.string "remind_time"
+    t.string "repeat_rule"
     t.text "resolution"
     t.string "title", null: false
     t.datetime "updated_at", null: false

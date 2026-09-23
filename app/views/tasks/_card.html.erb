@@ -32,6 +32,7 @@
             <%= task.due_on == Date.current ? "Due today" : "Due #{task.due_on.strftime("%b %-d")}" %>
           </span>
         <% end %>
+        <%= render "tasks/schedule_chips", task: task %>
         <%= render "tasks/goal_chip", task: task %>
         <%# Section tags are dropped here: on the board the card is already
             inside the Tasks lens, and three columns of chips read as noise. %>

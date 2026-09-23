@@ -46,6 +46,42 @@ class TasksController < ApplicationController
     end
   end
 
+  # Plain words into the new-task form (D-standing-reminders,
+  # D-reminders-on-tasks): "take the trash out every Thursday night" comes
+  # back as a title, a start day, a repeat and a time, filled in for the
+  # user to check. Nothing is saved here — "Add task" is still the only
+  # write (D20). Off, and said so in the view, without a model.
+  def parse
+    profile = Current.user.household.model_profile
+    text = params[:text].to_s.strip
+    raise Llm::Error, "No model is set up." unless profile&.configured?
+    raise Llm::Error, "Say what needs doing." if text.blank?
+
+    parsed = Reminders::Parse.new(text: text, profile: profile, zone: Current.user.household.zone).call
+    @task = Current.user.tasks.new(title: parsed.body, due_on: parsed.deliver_on, repeat: parsed.repeat,
+                                   repeat_days: parsed.repeat_days, repeat_until: parsed.repeat_until,
+                                   remind_time: parsed.deliver_time)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.update("new_task_form", partial: "tasks/quick_form",
+            locals: { task: @task, cancel_url: tasks_path, return_to: params[:return_to] }),
+          turbo_stream.replace("task_capture", partial: "tasks/capture", locals: { text: "", filled: true })
+        ]
+      end
+      format.html { redirect_to new_task_path, alert: "Turn on JavaScript to fill the form from plain words, or fill it in below." }
+    end
+  rescue Llm::Error => error
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace("task_capture", partial: "tasks/capture",
+          locals: { text: text, error: "Couldn't make that out — #{error.message.chomp('.')}. The form below still works." })
+      end
+      format.html { redirect_to new_task_path, alert: error.message }
+    end
+  end
+
   def edit
   end
 
@@ -159,7 +195,7 @@ class TasksController < ApplicationController
     end
 
     def task_params
-      params.expect(task: [ :title, :notes, :due_on, :goal_id, :resolution, section_ids: [],
-                            routine_attributes: [ :repeat, :deliver_on, :deliver_time, :repeat_until, repeat_days: [] ] ])
+      params.expect(task: [ :title, :notes, :due_on, :goal_id, :resolution, :repeat, :repeat_until, :remind_time,
+                            section_ids: [], repeat_days: [] ])
     end
 end

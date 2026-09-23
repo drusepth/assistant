@@ -1,8 +1,9 @@
 <%# A date input (native calendar picker, typing still works) with one-click
-    quick picks underneath. Locals: form, method, required (optional). %>
+    quick picks underneath. Locals: form, method, required (optional),
+    data (optional: extra data attributes for the input). %>
 <div data-controller="date-shortcuts">
   <%= form.date_field method, required: local_assigns.fetch(:required, false),
-        data: { date_shortcuts_target: "input" } %>
+        data: { date_shortcuts_target: "input", **local_assigns.fetch(:data, {}) } %>
   <div class="mt-1.5 flex flex-wrap gap-1.5">
     <% date_shortcuts.each do |label, date| %>
       <%= tag.button label, type: "button",

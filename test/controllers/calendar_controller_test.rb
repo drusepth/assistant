@@ -85,18 +85,20 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Bob private task", response.body
   end
 
-  test "reminders show on their day, standing ones on every occurrence ahead, only your own" do
+  test "a task's reminder time puts it on the clock, and a repeating task shows on the days ahead it comes round" do
     travel_to Time.zone.local(2026, 3, 2, 8) do
-      users(:one).reminders.create!(body: "Call the pharmacy", deliver_on: "2026-03-04", deliver_time: "16:00")
-      users(:one).reminders.create!(body: "Water plants", deliver_on: "2026-03-05", deliver_time: "09:00", repeat: "weekly")
-      users(:two).reminders.create!(body: "Bob private ping", deliver_on: "2026-03-04", deliver_time: "10:00")
+      users(:one).tasks.create!(title: "Call the pharmacy", due_on: "2026-03-04", remind_time: "16:00")
+      users(:one).tasks.create!(title: "Water plants", due_on: "2026-03-05", repeat: "weekly", repeat_days: [ "TH" ], remind_time: "09:00")
+      users(:two).tasks.create!(title: "Bob private chore", due_on: "2026-03-04", repeat: "daily")
 
       get calendar_path(year: 2026, month: 3)
     end
-    assert_select "a[title='Reminder: Call the pharmacy — 4:00 PM']", count: 1
-    # Thursdays Mar 5 through Apr 2 — the grid's last row runs into April.
-    assert_select "a[title='Reminder: Water plants — 9:00 AM']", count: 5
-    assert_no_match "Bob private ping", response.body
+    assert_select "a[title='Call the pharmacy']", text: /4p/
+    # The row on Mar 5, then Thursdays Mar 12 through Apr 2 — the grid's last
+    # row runs into April.
+    assert_select "a[title='Water plants']", count: 1
+    assert_select "a[title='Water plants — repeats weekly on Thursday']", count: 4
+    assert_no_match "Bob private chore", response.body
   end
 
   test "layers toggle what shows and are remembered" do
@@ -119,17 +121,16 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
   test "a day reads in time order, untimed first, with times on timed events" do
     users(:one).events.create!(title: "Haircut", starts_at: Time.zone.local(2026, 3, 10, 15))
     users(:one).events.create!(title: "Conference", starts_at: Date.new(2026, 3, 10).in_time_zone, all_day: true)
-    users(:one).tasks.create!(title: "Pay rent", due_on: "2026-03-10")
     travel_to Time.zone.local(2026, 3, 1, 8) do
-      users(:one).reminders.create!(body: "Call the pharmacy", deliver_on: "2026-03-10", deliver_time: "09:00")
+      users(:one).tasks.create!(title: "Pay rent", due_on: "2026-03-10")
+      users(:one).tasks.create!(title: "Call the pharmacy", due_on: "2026-03-10", remind_time: "09:00")
       get calendar_day_path(date: "2026-03-10")
     end
 
     assert_select "h1", text: "Tuesday, March 10"
     order = css_select("main a").map(&:text).map(&:squish) & [ "Conference", "Pay rent", "Call the pharmacy", "Haircut" ]
-    assert_equal [ "Conference", "Pay rent", "Haircut" ], order
-    assert_match "Call the pharmacy", response.body
-    assert_select "p", text: "9:00 AM"
+    assert_equal [ "Conference", "Pay rent", "Call the pharmacy", "Haircut" ], order, "tasks stay in one list; the bell chip carries the time"
+    assert_select "span", text: /9 AM/
     assert_select "p", text: "3:00 PM"
   end
 
@@ -171,11 +172,12 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.callout-warn", count: 0
   end
 
-  test "the day view adds on its own date" do
+  test "the day view adds on its own date, and a task's reminder is set on the task" do
     get calendar_day_path(date: "2026-03-10")
     assert_select "input[name='task[due_on]'][value='2026-03-10']"
+    assert_select "input[name='task[remind_time]']"
     assert_select "input[name='event[starts_date]'][value='2026-03-10']"
-    assert_select "input[name='reminder[deliver_on]'][value='2026-03-10']"
+    assert_select "form[action=?]", reminders_path, false
   end
 
   test "an invalid date is a 404" do

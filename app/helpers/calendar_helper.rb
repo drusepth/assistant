@@ -1,8 +1,7 @@
 module CalendarHelper
   CALENDAR_LAYER_LABELS = {
     "events" => [ "Events", :calendar ],
-    "tasks" => [ "Tasks", :check_circle ],
-    "reminders" => [ "Reminders", :bell ]
+    "tasks" => [ "Tasks", :check_circle ]
   }.freeze
 
   # The URL for one zoom of the calendar around `date`.

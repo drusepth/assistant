@@ -20,11 +20,26 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "Tonight", response.body
   end
 
-  test "the header carries + Task and + Reminder, and the reminder form lives in its dropdown" do
+  test "the header carries + Task, whose form can repeat and remind — there is no separate + Reminder" do
     get today_path
     assert_select "[data-quick-add-name-param=task]", text: /Task/
-    assert_select "[data-quick-add-name-param=reminder]", text: /Reminder/
-    assert_select "[data-quick-add-target=panel][data-name=reminder] form[action=?]", reminders_path
+    assert_select "[data-quick-add-name-param=reminder]", false
+    assert_select "[data-quick-add-target=panel][data-name=task] form[action=?]", tasks_path do
+      assert_select "select[name='task[repeat]']"
+      assert_select "input[name='task[remind_time]']"
+      assert_select "input[name='task[due_on]'][value=?]", Date.current.iso8601
+    end
+  end
+
+  test "a repeating task's row says so, and when it pings" do
+    task = users(:one).tasks.create!(title: "Dishes", due_on: Date.current, repeat: "weekly",
+      repeat_days: %w[ MO WE FR ], remind_time: "21:00")
+    task.update_column(:due_on, Date.current)
+
+    get today_path
+    assert_select "#due-today", text: /Dishes/ do
+      assert_select "span", text: /Mon, Wed, Fri · 9 PM/
+    end
   end
 
   test "shows tomorrow's tasks and events in the get-ready section" do
@@ -46,7 +61,7 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
   test "the header's task quick-add is inline and due today" do
     get today_path
     assert_select "[data-controller=quick-add] form[action=?]", tasks_path do
-      assert_select "input[type=hidden][name=?][value=?]", "task[due_on]", Date.current.to_s
+      assert_select "input[type=date][name=?][value=?]", "task[due_on]", Date.current.to_s
       assert_select "input[type=hidden][name=return_to][value=?]", today_path
     end
     assert_select "a[href=?]", new_task_path(due_on: Date.current, return_to: today_path), text: "Full form"

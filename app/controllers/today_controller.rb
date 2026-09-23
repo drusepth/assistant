@@ -1,6 +1,5 @@
 class TodayController < ApplicationController
   UNSCHEDULED_LIMIT = 5
-  REMINDER_LIMIT = 10
 
   def show
     tasks = Task.visible_to(Current.user).open.includes(:sections)
@@ -17,9 +16,6 @@ class TodayController < ApplicationController
     @today_events = events.overlapping(Time.current.beginning_of_day..Time.current.end_of_day)
     @prep_events = events.overlapping(@prep_range.first.beginning_of_day..@prep_range.last.end_of_day)
     @early_events = @prep_events.select { |event| event.starts_at.to_date == Date.tomorrow && event.early_morning? }
-    # User-armed reminders (D-reminders) — the user's own, never a
-    # household member's: a reminder is a delivery to one phone.
-    @reminders = Current.user.reminders.upcoming.includes(:subject).limit(REMINDER_LIMIT)
     @week_events_by_day = events
       .between((@prep_range.last + 1).beginning_of_day..7.days.from_now.end_of_day)
       .group_by { |event| event.starts_at.to_date }

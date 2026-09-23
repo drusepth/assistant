@@ -51,11 +51,15 @@ class Reminders::DispatchJob < ApplicationJob
       return if Reminder.pending.where(id: reminder.id, deliver_at: reminder.deliver_at).update_all(changes).zero?
       # A routine (D-task-routines): the chore comes back onto the board on
       # its day, missed ping or not — the chore is owed even when a late
-      # notification about it would be noise.
-      reminder.subject.come_round! if reminder.subject.is_a?(Task)
+      # notification about it would be noise. It is due on the day it came
+      # round for, so a missed one reads as overdue rather than vanishing.
+      reminder.subject.come_round!(on: reminder.local_deliver_at.to_date) if reminder.subject.is_a?(Task)
       # Missed by more than a day: the series is already re-armed above, and
       # the same judgment as a stale one-shot says this ping is noise.
       return if reminder.stale?(now)
+      # A repeating task with no time picked comes round without a ping
+      # (D-reminders-on-tasks): the board is the reminder.
+      return if reminder.silent?
 
       deliver(reminder)
     end
