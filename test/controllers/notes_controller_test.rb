@@ -17,6 +17,11 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     assert_match "What should your assistant remember?", response.body
   end
 
+  test "new form takes a body carried over from a quick-add" do
+    get new_note_path(body: "Allergic to penicillin")
+    assert_select "textarea[name=?]", "note[body]", text: "Allergic to penicillin"
+  end
+
   test "quick-jotting a bare body queues auto-sorting" do
     assert_enqueued_with(job: CategorizeNoteJob) do
       post notes_path, params: { note: { body: "Allergic to penicillin." } }

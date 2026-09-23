@@ -2,9 +2,7 @@
 
 <%= render Ui::PageHeaderComponent.new(title: "Tasks") do |header| %>
   <% header.with_actions do %>
-    <%= link_to new_task_path, class: "btn btn-secondary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Task
-    <% end %>
+    <%= quick_add :task %>
   <% end %>
 <% end %>
 

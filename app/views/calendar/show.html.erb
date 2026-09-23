@@ -7,9 +7,7 @@
     <%= link_to "Today", calendar_path, class: "btn btn-secondary" %>
     <%= link_to "→", calendar_path(year: next_month.year, month: next_month.month), class: "btn btn-secondary", "aria-label": "Next month" %>
     <%= link_to "Import", new_events_import_path, class: "btn btn-secondary" %>
-    <%= link_to new_event_path, class: "btn btn-primary" do %>
-      <%= icon(:plus, css_class: "size-4") %> Event
-    <% end %>
+    <%= quick_add :event, primary: true %>
   <% end %>
 <% end %>
 

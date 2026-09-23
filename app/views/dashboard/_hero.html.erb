@@ -57,22 +57,10 @@
     <%# Capture, four across. `grid-cols-4` at the base width is the point:
         equal columns, no ragged wrap, and every tile the same thumb target. %>
     <div class="mt-4 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-2">
-      <%= render Ui::QuickAddComponent.new(name: "task", label: "Task", title: "New task",
-            icon: :check_circle, tile: true) do %>
-        <%= render "tasks/quick_form", task: quick_task, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "note", label: "Note", title: "New note",
-            icon: :note, tile: true) do %>
-        <%= render "notes/quick_form", note: quick_note, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "event", label: "Event", title: "New event",
-            icon: :calendar, tile: true) do %>
-        <%= render "events/quick_form", event: quick_event, return_to: root_path, autofocus: false %>
-      <% end %>
-      <%= render Ui::QuickAddComponent.new(name: "goal", label: "Goal", title: "New goal",
-            icon: :flag, tile: true, primary: true) do %>
-        <%= render "goals/quick_form", goal: quick_goal, return_to: root_path, autofocus: false %>
-      <% end %>
+      <%= quick_add :task, icon: :check_circle, tile: true, return_to: root_path %>
+      <%= quick_add :note, icon: :note, tile: true, return_to: root_path %>
+      <%= quick_add :event, icon: :calendar, tile: true, return_to: root_path %>
+      <%= quick_add :goal, icon: :flag, tile: true, primary: true, return_to: root_path %>
     </div>
 
     <%# Today's reasons to be glad. A quiet day shows neither an empty state

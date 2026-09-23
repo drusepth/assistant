@@ -73,7 +73,12 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     get section_path("health")
     assert_response :success
     assert_match "Nothing in Health yet", response.body
-    assert_match new_task_path(section_ids: [ sections(:health).id ]), response.body
+    # Inline, with the section riding along as a pre-tag…
+    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
+      tasks_path, "task[section_ids][]", sections(:health).id.to_s
+    # …and the way out to the standalone page carries it too.
+    assert_select "a[href=?]", new_task_path(section_ids: [ sections(:health).id ], return_to: section_path("health")),
+      text: "Full form"
   end
 
   test "the Health page leads with the care radar, all kinds untracked for a fresh user" do
