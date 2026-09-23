@@ -52,6 +52,14 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal Date.new(2026, 8, 10), event.starts_at.to_date
   end
 
+  test "quick-add takes an optional location" do
+    get new_event_path
+    assert_match "Where (optional)", response.body
+
+    post events_path, params: { event: { title: "Vet checkup", starts_date: "2026-08-10", location: "Oak Street Animal Clinic" } }
+    assert_equal "Oak Street Animal Clinic", Event.last.location
+  end
+
   test "hand-tagged events are not auto-sorted" do
     assert_no_enqueued_jobs(only: CategorizeEventJob) do
       post events_path, params: { event: { title: "Cardiology", starts_date: "2026-08-20", section_ids: [ sections(:health).id ] } }
