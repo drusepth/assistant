@@ -96,7 +96,7 @@ module People
         # through the one authorized path (D9).
         scope = circle? ? viewer.people.circle : Person.visible_to(viewer)
         scope = scope.in_section(group) if group
-        scope = scope.where(search_clause, needle: "%#{Person.sanitize_sql_like(query)}%") if query.present?
+        scope = scope.where(search_clause, needle: "%#{Person.sanitize_sql_like(query)}%", digits: digits_needle) if query.present?
         # NOCASE, or SQLite's binary collation files every lowercase name
         # after Zoe — which is exactly the bug an alphabetized page exists
         # to not have.
@@ -107,7 +107,19 @@ module People
       end
 
       def search_clause
-        @search_clause ||= SEARCHABLE.map { |column| "people.#{column} LIKE :needle" }.join(" OR ")
+        @search_clause ||= (SEARCHABLE.map { |column| "people.#{column} LIKE :needle" } +
+          [ "people.phone LIKE :digits" ]).join(" OR ")
+      end
+
+      # Phones are stored as bare digits (PhoneNumber), so "503-614" finds
+      # "+15036149061" by its digits. A query that is only a number and
+      # its punctuation, with at least three digits — otherwise NULL, which
+      # LIKE never matches, so "Ann" can't reach a phone this way.
+      def digits_needle
+        digits = query.delete("^0-9")
+        return nil unless query.match?(PhoneNumber::NUMBER_ONLY) && digits.length >= 3
+
+        "%#{digits}%"
       end
 
       # One query for every chip's count, not one per chip: this is the row

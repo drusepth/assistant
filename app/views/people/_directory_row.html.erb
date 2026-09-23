@@ -74,7 +74,7 @@
     </span>
     <span class="shrink-0 sm:w-36">
       <% if person.phone.present? %>
-        <%= phone_to person.phone, nil, class: "whitespace-nowrap tabular-nums text-soft hover:text-primary-700 hover:underline",
+        <%= phone_link person.phone, class: "whitespace-nowrap tabular-nums text-soft hover:text-primary-700 hover:underline",
               title: "Call #{person.name}" %>
       <% end %>
     </span>
