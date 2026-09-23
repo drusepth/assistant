@@ -1,4 +1,9 @@
 class NotificationChannelsController < ApplicationController
+  # A test reaches out to a carrier or someone's server on every click; a
+  # stuck finger shouldn't become a bill or a flood.
+  rate_limit to: 5, within: 1.minute, only: :send_test,
+    with: -> { redirect_to settings_path, alert: "Too many tests at once — try again in a minute." }
+
   def create
     channel = Current.user.notification_channels.new(channel_attributes)
 
@@ -18,7 +23,30 @@ class NotificationChannelsController < ApplicationController
     redirect_to settings_path, notice: "Notification channel removed."
   end
 
+  # Sends one test message through this channel right now, so a mistyped
+  # topic or a stale token shows up here rather than as a silence the day
+  # something real needed saying.
+  def send_test
+    channel = Current.user.notification_channels.find(params[:id])
+
+    begin
+      Notifications::Deliver.test!(channel)
+    rescue StandardError => error
+      Rails.logger.warn("notification test #{channel.kind}##{channel.id} failed: #{error.class}: #{error.message}")
+      return redirect_to settings_path, alert: "Test failed: #{test_failure_message(error)}"
+    end
+
+    redirect_to settings_path, notice: "Test sent to #{channel.label}. If it doesn't arrive, check that channel's setup."
+  end
+
   private
+    # A DeliveryError is already written for the user; anything else (a
+    # timeout, a refused connection, an SMTP error) gets its class named so
+    # there's something to search for.
+    def test_failure_message(error)
+      error.is_a?(Notifications::DeliveryError) ? error.message : "#{error.class.name.demodulize} — #{error.message}".truncate(200)
+    end
+
     def channel_attributes
       case params.expect(:kind)
       when "webhook" then { kind: :webhook, config: { "url" => params[:url].to_s.strip } }
