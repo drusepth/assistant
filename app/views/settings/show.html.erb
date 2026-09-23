@@ -289,13 +289,40 @@
         </div>
         <%= submit_tag "Add webhook", class: "btn btn-secondary" %>
       <% end %>
-      <%= form_with url: notification_channels_path, class: "flex flex-wrap items-end gap-2" do %>
-        <%= hidden_field_tag :kind, "email" %>
-        <div class="min-w-64 flex-1 space-y-1">
-          <label class="label" for="email_address_channel">Email</label>
-          <%= text_field_tag :address, nil, class: "input", id: "email_address_channel", placeholder: "you@example.com — needs the instance to have SMTP configured" %>
+      <%# Email offers only the senders that exist (D-instance-mail): the
+          user's own linked mailboxes, then the server's SMTP if configured.
+          With neither, it says what would make it work instead of taking an
+          address it can't send to. %>
+      <% email_senders = Current.user.linked_accounts.where(provider: "email").order(:label).select(&:sends_mail?)
+           .map { |account| [ "Your #{account.label} mailbox (#{account.email_address})", account.id ] }
+         email_senders << [ "This server's email", "instance" ] if InstanceMail.configured? %>
+      <% if email_senders.any? %>
+        <%= form_with url: notification_channels_path, class: "flex flex-wrap items-end gap-2" do %>
+          <%= hidden_field_tag :kind, "email" %>
+          <div class="min-w-64 flex-1 space-y-1">
+            <label class="label" for="email_address_channel">Email</label>
+            <%= text_field_tag :address, nil, class: "input", id: "email_address_channel",
+                  placeholder: "you@example.com — blank sends to the mailbox itself" %>
+          </div>
+          <% if email_senders.size > 1 %>
+            <div class="space-y-1">
+              <label class="label" for="email_sender_channel">Send through</label>
+              <%= select_tag :sender, options_for_select(email_senders), id: "email_sender_channel", class: "input" %>
+            </div>
+          <% else %>
+            <%= hidden_field_tag :sender, email_senders.first.last %>
+          <% end %>
+          <%= submit_tag "Add email", class: "btn btn-secondary" %>
+        <% end %>
+      <% else %>
+        <div class="rounded-lg border border-edge px-4 py-3 text-sm text-soft">
+          <p class="font-medium text-ink">Email</p>
+          <p class="mt-1">
+            Email needs something to send it. Link your mailbox under Connected accounts, with sending
+            switched on, and notifications go from you to you, which spam filters trust. Or whoever runs
+            this server can set up outgoing mail.
+          </p>
         </div>
-        <%= submit_tag "Add email", class: "btn btn-secondary" %>
       <% end %>
       <div data-controller="web-push" data-web-push-vapid-key-value="<%= Rails.application.config.x.web_push.public_key %>" class="flex flex-wrap items-center gap-2">
         <button type="button" class="btn btn-secondary" data-action="web-push#subscribe">Enable browser push on this device</button>

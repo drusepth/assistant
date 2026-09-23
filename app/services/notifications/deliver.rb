@@ -103,8 +103,14 @@ module Notifications
         channel.update!(enabled: false)
       end
 
+      # Refuses rather than hands a message to an SMTP server that isn't
+      # there (D-instance-mail); the failure is logged like any channel's.
       def deliver_email(channel)
-        NotificationsMailer.suggestions(channel.config["address"], summary, @titles, @link).deliver_now
+        problem = channel.email_sender_problem
+        raise DeliveryError, problem if problem
+
+        NotificationsMailer.suggestions(channel.config["address"], summary, @titles, @link,
+          sender: channel.sending_account).deliver_now
       end
   end
 end

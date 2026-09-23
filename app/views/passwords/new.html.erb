@@ -1,13 +1,32 @@
 <div class="card p-6">
   <h1 class="mb-5 text-lg font-semibold text-ink">Forgot your password?</h1>
 
-  <%= form_with url: passwords_path, class: "space-y-4" do |form| %>
-    <div class="space-y-1">
-      <%= form.label :email_address, "Email" %>
-      <%= form.email_field :email_address, required: true, autofocus: true,
-            autocomplete: "username", placeholder: "you@example.com", value: params[:email_address] %>
+  <% if InstanceMail.password_resets? %>
+    <%= form_with url: passwords_path, class: "space-y-4" do |form| %>
+      <div class="space-y-1">
+        <%= form.label :email_address, "Email" %>
+        <%= form.email_field :email_address, required: true, autofocus: true,
+              autocomplete: "username", placeholder: "you@example.com", value: params[:email_address] %>
+      </div>
+      <%= form.submit "Email reset instructions", class: "w-full" %>
+    <% end %>
+    <p class="mt-4 text-sm text-soft">
+      No email? A household admin can also make you a reset link from the Household page.
+    </p>
+  <% else %>
+    <%# No instance mail (D-instance-mail): say so, and name the two people
+        who can hand over a link, rather than a form that sends nothing. %>
+    <div class="space-y-3 text-sm text-soft">
+      <p>This server doesn't send email, so reset links come from a person.</p>
+      <p>
+        <span class="font-medium text-ink">Ask a household admin.</span>
+        They can make you a reset link from the Household page and send it however you usually talk.
+      </p>
+      <p>
+        <span class="font-medium text-ink">If you run this server,</span> make one from its command line:
+      </p>
+      <pre class="overflow-x-auto rounded-lg border border-edge bg-stone-50 px-3 py-2 text-xs text-ink"><code>bin/rails password:reset_link EMAIL=you@example.com</code></pre>
     </div>
-    <%= form.submit "Email reset instructions", class: "w-full" %>
   <% end %>
 
   <p class="mt-4 text-center text-sm">

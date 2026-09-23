@@ -4,6 +4,25 @@ class User < ApplicationRecord
   belongs_to :household
 
   has_secure_password
+
+  # A reset link a person hands over (D-instance-mail): made by a household
+  # admin or by the operator's `bin/rails password:reset_link`, for
+  # instances that send no mail. It lives a day rather than Rails' fifteen
+  # minutes because it travels by text message or in person, not by an
+  # inbox that is open right now. Like the emailed kind, it dies the moment
+  # the password changes (the salt is in the payload), so it works once.
+  HANDED_RESET_EXPIRES_IN = 24.hours
+
+  generates_token_for :handed_password_reset, expires_in: HANDED_RESET_EXPIRES_IN do
+    password_salt&.last(10)
+  end
+
+  def handed_password_reset_token = generate_token_for(:handed_password_reset)
+
+  # Either kind of reset link opens the same form.
+  def self.find_by_any_password_reset_token(token)
+    find_by_password_reset_token(token) || find_by_token_for(:handed_password_reset, token)
+  end
   has_many :sessions, dependent: :destroy
 
   has_many :user_sections, dependent: :destroy

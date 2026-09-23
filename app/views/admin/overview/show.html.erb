@@ -142,6 +142,27 @@
     <% end %>
   <% end %>
 
+  <%# Instance mail (D-instance-mail): whether it's on, never the secrets. %>
+  <%= render Ui::CardComponent.new(
+        title: "Email",
+        subtitle: InstanceMail.configured? ? "Sending through #{InstanceMail.address}" : "Off — this server sends no email of its own") do %>
+    <p class="text-sm text-soft">
+      Optional, any provider, set by ENV (see <span class="font-mono text-xs">docs/MAIL.md</span>).
+      Nothing depends on it: reset links come from the Household page or
+      <span class="font-mono text-xs">bin/rails password:reset_link</span>, and members can send
+      notification email through their own linked mailbox.
+    </p>
+    <% if InstanceMail.configured? %>
+      <dl class="mt-3 space-y-1.5 text-sm">
+        <div class="flex flex-wrap justify-between gap-2"><dt class="text-soft">Sends as</dt><dd class="text-ink"><%= InstanceMail.from %></dd></div>
+        <div class="flex flex-wrap justify-between gap-2">
+          <dt class="text-soft">Emailed password resets</dt>
+          <dd class="text-ink"><%= InstanceMail.password_resets? ? "On" : "Off until APP_HOST is set" %></dd>
+        </div>
+      </dl>
+    <% end %>
+  <% end %>
+
   <%= render Ui::CardComponent.new(
         title: "Storage",
         subtitle: "Active Storage service: #{@storage.service}") do %>

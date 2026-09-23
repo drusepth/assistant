@@ -22,12 +22,30 @@ class NotificationChannelsController < ApplicationController
     def channel_attributes
       case params.expect(:kind)
       when "webhook" then { kind: :webhook, config: { "url" => params[:url].to_s.strip } }
-      when "email" then { kind: :email, config: { "address" => params[:address].to_s.strip } }
+      when "email" then email_attributes
       when "web_push" then { kind: :web_push, config: { "subscription" => subscription_params } }
       when "sms" then sms_attributes
       when "signal" then signal_attributes
       else raise ActionController::BadRequest, "unknown channel kind"
       end
+    end
+
+    # `sender` is a linked mailbox id, or "instance" / blank for the
+    # server's own SMTP (D-instance-mail). A mailbox with no address given
+    # sends to itself, which is the usual wish.
+    def email_attributes
+      config = { "address" => params[:address].to_s.strip }
+      sender = params[:sender].to_s
+
+      if sender.present? && sender != "instance"
+        account = Current.user.linked_accounts.find_by(id: sender, provider: "email")
+        raise ActionController::BadRequest, "unknown mailbox" if account.nil?
+
+        config["linked_account_id"] = account.id
+        config["address"] = account.email_address if config["address"].blank?
+      end
+
+      { kind: :email, config: config }
     end
 
     def subscription_params

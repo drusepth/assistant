@@ -40,7 +40,18 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    # Optional outgoing mail (docs/MAIL.md). Nothing depends on it.
+    # - SMTP_PASSWORD
   clear:
+    # This server's public address; links in notifications and email use it.
+    # APP_HOST: https://assistant.example.org
+
+    # Optional outgoing mail, any provider (docs/MAIL.md).
+    # SMTP_ADDRESS: smtp.fastmail.com
+    # SMTP_PORT: 465
+    # SMTP_USERNAME: you@fastmail.com
+    # SMTP_FROM: home@example.org
+
     # SOLID_QUEUE_IN_PUMA is set in the Dockerfile so every deploy target runs
     # the Solid Queue supervisor inside Puma. When you start using multiple
     # servers, split job processing out to a dedicated machine and unset it.

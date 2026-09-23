@@ -59,17 +59,18 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
+  # Links in mail point at APP_HOST (see AppHost). "example.com" stays the
+  # placeholder that AppHost reads as "nobody configured an address".
+  app_host = ENV["APP_HOST"].presence
+  config.action_mailer.default_url_options =
+    if app_host
+      { host: app_host.sub(%r{\Ahttps?://}, "").chomp("/"), protocol: app_host.start_with?("http://") ? "http" : "https" }
+    else
+      { host: "example.com" }
+    end
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Outgoing SMTP is optional and comes from SMTP_* ENV, any provider
+  # (InstanceMail, docs/MAIL.md). Unset, the app sends no mail of its own.
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

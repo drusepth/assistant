@@ -7,7 +7,14 @@ class PasswordsController < ApplicationController
   def new
   end
 
+  # Without instance mail (D-instance-mail) there is nothing to send, so the
+  # form isn't offered and a stray POST says so instead of claiming success.
   def create
+    unless InstanceMail.password_resets?
+      return redirect_to new_password_path,
+        alert: "This server doesn't send email. Ask a household admin for a reset link."
+    end
+
     if user = User.find_by(email_address: params[:email_address])
       PasswordsMailer.reset(user).deliver_later
     end
@@ -36,10 +43,11 @@ class PasswordsController < ApplicationController
   end
 
   private
+    # Emailed links and handed-over links (an admin's, or the operator's
+    # rake task) open the same form.
     def set_user_by_token
-      @user = User.find_by_password_reset_token!(params[:token])
-    rescue ActiveSupport::MessageVerifier::InvalidSignature
-      redirect_to new_password_path, alert: "Password reset link is invalid or has expired."
+      @user = User.find_by_any_password_reset_token(params[:token])
+      redirect_to new_password_path, alert: "Password reset link is invalid or has expired." unless @user
     end
 
     def needs_recovery_decision?

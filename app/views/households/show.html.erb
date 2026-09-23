@@ -111,6 +111,9 @@
             <%= button_to member.admin? ? "Remove admin" : "Make admin",
                   household_member_path(member, admin: !member.admin?), method: :patch,
                   class: "btn btn-ghost btn-sm" %>
+            <%= button_to "Reset link", reset_link_household_member_path(member),
+                  class: "btn btn-ghost btn-sm", form: { data: { turbo: false } },
+                  title: "Make a password reset link to send #{member.name.split.first}" %>
             <%= button_to "Remove", household_member_path(member), method: :delete, class: "btn btn-danger btn-sm",
                   data: { turbo_confirm: "Remove #{member.name} from the household? Their account and ALL of their data will be permanently deleted." } %>
           <% end %>
