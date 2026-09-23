@@ -56,4 +56,11 @@ class People::MatchesControllerTest < ActionDispatch::IntegrationTest
     assert_match "sam@work.test", response.body
     assert_match "(503) 614-9061", response.body
   end
+
+  test "a form field's suggestions reach anyone visible, nobody left out" do
+    users(:one).people.create!(name: "Rosa", keep_in_touch: true)
+
+    get people_matches_path(for: "any", q: "ros")
+    assert_select "li[data-person-id]", 1
+  end
 end

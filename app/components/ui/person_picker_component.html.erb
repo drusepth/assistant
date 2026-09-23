@@ -2,12 +2,17 @@
     sheet while the field has focus (see the atom), and the Cancel button
     only shows there. %>
 <div class="picker-sheet relative min-w-0 flex-1" data-controller="person-picker"
-     data-person-picker-url-value="<%= matches_url %>">
-  <input type="hidden" name="person_id" data-person-picker-target="id">
+     data-person-picker-url-value="<%= matches_url %>"
+     data-person-picker-submit-value="<%= submit_on_pick %>">
+  <% if id_field %>
+    <input type="hidden" name="<%= id_field %>" value="<%= person&.id %>" data-person-picker-target="id">
+  <% end %>
   <% if inline %><input type="hidden" name="inline" value="1"><% end %>
   <div class="flex items-center gap-2">
-    <input type="text" name="name" class="<%= input_classes %>" placeholder="<%= placeholder %>"
-           aria-label="<%= label %>" autocomplete="off" spellcheck="false" enterkeyhint="done" <%= "autofocus" if autofocus %>
+    <input type="text" name="<%= name_field %>" value="<%= value %>" <% if input_id %>id="<%= input_id %>"<% end %>
+           class="<%= input_classes %>" placeholder="<%= placeholder %>"
+           aria-label="<%= label %>" autocomplete="off" spellcheck="false" enterkeyhint="done"
+           <%= "autofocus" if autofocus %> <%= "required" if required %>
            role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="<%= list_id %>"
            data-person-picker-target="input"
            data-action="input->person-picker#search keydown->person-picker#navigate focus->person-picker#focus blur->person-picker#blur">

@@ -63,16 +63,15 @@
               </p>
             <% end %>
           <% elsif input.person? %>
-            <% if @person_choices.any? %>
-              <%= select_tag "inputs[#{input.name}]",
-                    options_from_collection_for_select(@person_choices, :id, :name, @tool_run.inputs[input.name]),
-                    include_blank: "Choose a person…", class: "input", id: "inputs_#{input.name}" %>
-            <% else %>
-              <p class="hint">
-                Nobody in your address book yet —
-                <%= link_to "add someone first", new_person_path, class: "text-primary-700 hover:underline" %>.
-              </p>
-            <% end %>
+            <%# Type to find, never a list of the whole address book
+                (D-person-picker). A name nobody has becomes a contact when
+                the run is started — the tool is about them either way. %>
+            <%= render Ui::PersonPickerComponent.new(place: :any, label: input.label,
+                  id_field: "inputs[#{input.name}]", name_field: "person_names[#{input.name}]",
+                  input_id: "inputs_#{input.name}", submit_on_pick: false, required: input.required,
+                  person: @tool_run.inputs[input.name].presence && Person.visible_to(Current.user).find_by(id: @tool_run.inputs[input.name]),
+                  value: params.dig(:person_names, input.name),
+                  placeholder: "Type a name — pick someone, or add someone new") %>
           <% elsif input.pet? %>
             <% if @pet_choices.any? %>
               <%= select_tag "inputs[#{input.name}]",

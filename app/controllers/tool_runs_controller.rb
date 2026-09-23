@@ -14,7 +14,7 @@ class ToolRunsController < ApplicationController
   end
 
   def create
-    @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params)
+    @tool_run = Current.user.tool_runs.new(tool_slug: @tool.slug, inputs: input_params_with_typed_people)
     if @tool_run.save
       ToolRunJob.perform_later(@tool_run)
       redirect_to @tool_run
@@ -118,9 +118,6 @@ class ToolRunsController < ApplicationController
 
     def load_input_choices
       @document_choices = Document.visible_to(Current.user).order(created_at: :desc) if @tool.inputs.any?(&:document?)
-      # Circle first (D30) — the people you're tending are almost always the
-      # ones a People tool is about.
-      @person_choices = Person.visible_to(Current.user).order(keep_in_touch: :desc, name: :asc) if @tool.inputs.any?(&:person?)
       # Pets who are still with us: a tool about a pet's care has nothing to
       # say about one who is gone, and offering her would be unkind.
       @pet_choices = Pet.visible_to(Current.user).active if @tool.inputs.any?(&:pet?)
@@ -143,6 +140,21 @@ class ToolRunsController < ApplicationController
           .includes(:subject).ordered.group_by(&:subject)
       end
       @study_subject_choices = Current.user.subjects.active.order(:title) if @tool.inputs.any?(&:study_subject?)
+    end
+
+    # A person input is a type-to-find field (D-person-picker): a pick
+    # arrives as the id, a typed name as `person_names[<input>]`, resolved
+    # the way every picker resolves — an exact name reuses that contact,
+    # anything else becomes a new one of the viewer's own.
+    def input_params_with_typed_people
+      @tool.inputs.select(&:person?).each_with_object(input_params) do |input, filled|
+        typed = params.dig(:person_names, input.name).to_s.squish
+        next if filled[input.name].present? || typed.empty?
+
+        person = People::Picker.for_anyone(Current.user).resolve(name: typed)
+        person.enqueue_auto_sort! if person.previously_new_record?
+        filled[input.name] = person.id.to_s
+      end
     end
 
     # `new` accepts the same params so "Run again" and next-step links can

@@ -41,6 +41,12 @@ module People
       new(viewer, pool: Person.visible_to(viewer), present: Person.where(id: photo.photo_people.select(:person_id)))
     end
 
+    # A form field that names someone — a tool's "Who's it for?", a pet's
+    # vet: anyone the viewer can see, nobody left out.
+    def self.for_anyone(viewer)
+      new(viewer, pool: Person.visible_to(viewer), present: Person.none)
+    end
+
     def initialize(viewer, pool:, present:)
       @viewer = viewer
       @pool = pool

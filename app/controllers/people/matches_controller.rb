@@ -3,7 +3,8 @@
 # through Ui::AvatarComponent here exactly as it does everywhere else — one
 # face, one place (D-user-avatars) — instead of being rebuilt in JavaScript.
 #
-# `for` names the place the person is going (circle, group, photo), which
+# `for` names the place the person is going (circle, group, photo, or any
+# form field that names a contact), which
 # decides the pool and who's already there. It saves nothing.
 class People::MatchesController < ApplicationController
   def index
@@ -28,6 +29,8 @@ class People::MatchesController < ApplicationController
         People::Picker.for_group(Current.user, group)
       when "photo"
         People::Picker.for_photo(Current.user, Current.user.photos.find(params[:photo_id]))
+      when "any"
+        People::Picker.for_anyone(Current.user)
       else
         People::Picker.for_circle(Current.user)
       end

@@ -7,7 +7,8 @@ import { Controller } from "@hotwired/stimulus"
 // (people you just added, who's in your photos, birthdays coming up).
 // Picking a person fills the hidden person_id and submits; picking the new
 // row, or pressing Enter without picking anything, submits the typed name
-// and the server makes (or finds) the contact.
+// and the server makes (or finds) the contact. Inside a longer form
+// (`submit: false` — a tool's "Who's it for?") a pick only fills the field.
 //
 // Nothing is highlighted until you arrow to it, unless the typed name is
 // exactly someone's: Enter on "Ann" must not quietly add "Anna Lee".
@@ -22,7 +23,7 @@ import { Controller } from "@hotwired/stimulus"
 // Without this controller the field is a plain name input that still works.
 export default class extends Controller {
   static targets = ["input", "id", "list"]
-  static values = { url: String }
+  static values = { url: String, submit: { type: Boolean, default: true } }
 
   activeIndex = -1
 
@@ -33,8 +34,9 @@ export default class extends Controller {
       // A keystroke's search still in flight would reopen the list over
       // the face that just landed.
       this.#cancelPending()
+      if (!this.submitValue) return // a field in a longer form: the form moves on
       this.inputTarget.value = ""
-      this.idTarget.value = ""
+      if (this.hasIdTarget) this.idTarget.value = ""
       this.close()
       // Back in the field for the next name, but without reopening the
       // suggestions over the face that just landed — typing brings them.
@@ -59,7 +61,7 @@ export default class extends Controller {
 
   search(event) {
     // A pick belongs to the text it was made from; editing the text undoes it.
-    if (event.type === "input") this.idTarget.value = ""
+    if (event.type === "input" && this.hasIdTarget) this.idTarget.value = ""
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.fetch(), 120)
   }
@@ -137,10 +139,13 @@ export default class extends Controller {
 
   choose(option) {
     this.#cancelPending()
-    this.idTarget.value = option.dataset.personId || ""
+    if (this.hasIdTarget) this.idTarget.value = option.dataset.personId || ""
     this.inputTarget.value = option.dataset.name
-    this.close()
-    this.form?.requestSubmit()
+    this.close({ keepSheet: true })
+    if (this.submitValue) this.form?.requestSubmit()
+    // Filled in. On a phone, out of the sheet and back to the form; on a
+    // desktop the cursor stays, so Tab goes on to the next field.
+    else if (this.sheetOpen) this.dismiss()
   }
 
   // The sheet's Cancel, and Escape: out of the field altogether.
