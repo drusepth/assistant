@@ -37,9 +37,17 @@ class Task < ApplicationRecord
   # What the assistant opens the conversation with (D30): the questions the
   # capture-time model call stored, shown with zero further LLM spend.
   def conversation_openers
-    stored = Array(guiding_questions).grep(String).map(&:strip).reject(&:empty?)
-    stored.presence || [ FALLBACK_OPENER ]
+    stored_questions.presence || [ FALLBACK_OPENER ]
   end
+
+  # Whether this task is thinking work — decide, draft, plan — rather than an
+  # errand like "Buy batteries" (D-task-answer-shape). The model has already
+  # answered that at capture: it writes opening questions only for mental work
+  # and leaves them empty for errands. Empty also means "never asked" (made by
+  # hand, imported, pre-D30, no model configured), and that is fine: the page
+  # treats both the same way, folding the answer card and the conversation
+  # down to one line each, so the ambiguity can't show the wrong thing.
+  def mental_work? = stored_questions.any?
 
   # The Today column is bucket ∪ due date: pulled in by hand (or scheduled by
   # a goal breakdown), or surfaced automatically once its due date arrives.
@@ -107,6 +115,10 @@ class Task < ApplicationRecord
   end
 
   private
+    def stored_questions
+      Array(guiding_questions).grep(String).map(&:strip).reject(&:empty?)
+    end
+
     def routine_is_valid
       return unless @routine_draft
 
