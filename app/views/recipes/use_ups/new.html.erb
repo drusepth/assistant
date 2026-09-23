@@ -1,0 +1,25 @@
+<% content_for :title, "Anything used up?" %>
+
+<%= render Ui::PageHeaderComponent.new(title: "Anything used up?", subtitle: "#{@recipe.title}, from #{@kitchen.name}") %>
+
+<div class="max-w-xl">
+  <%= render Ui::CardComponent.new(subtitle: "Tick what's finished and it comes off the kitchen list. Leave the rest.") do %>
+    <%= form_with url: recipe_use_up_path(@recipe), class: "space-y-3" do %>
+      <ul class="divide-y divide-edge">
+        <% @rows.each do |row| %>
+          <li>
+            <label class="flex min-h-11 items-center gap-3 py-2 text-sm">
+              <%= check_box_tag "pantry_item_ids[]", row.id, false, id: dom_id(row, :use_up) %>
+              <span class="min-w-0 flex-1 text-ink"><%= row.item %><% if row.quantity_note.present? %><span class="text-soft"> · <%= row.quantity_note %></span><% end %></span>
+              <span class="text-xs text-soft"><%= row.location_label %></span>
+            </label>
+          </li>
+        <% end %>
+      </ul>
+      <div class="flex gap-2">
+        <%= submit_tag "Take them out", class: "btn btn-primary" %>
+        <%= link_to "Nothing's finished", recipe_path(@recipe), class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

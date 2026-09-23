@@ -1,0 +1,8 @@
+<%# One line, or a paste of many. Enter adds; Shift+Enter is a new line. %>
+<%= form_with url: kitchen_shopping_list_items_path(kitchen, list), class: "flex items-start gap-2" do %>
+  <label for="<%= dom_id(list, :lines) %>" class="sr-only">Add to <%= list.name %></label>
+  <%= text_area_tag :lines, nil, id: dom_id(list, :lines), rows: 1, placeholder: "Add… “2 tins chickpeas”, “milk”",
+        class: "input min-h-11 flex-1 resize-y", autocomplete: "off",
+        data: { shopping_list_target: "input", action: "keydown->shopping-list#submitOnEnter" } %>
+  <%= submit_tag "Add", class: "btn btn-primary" %>
+<% end %>

@@ -1,0 +1,42 @@
+<% content_for :title, "Plan my week · #{@kitchen.name}" %>
+<% content_for :nav_section, "food" %>
+
+<%= render Ui::PageHeaderComponent.new(title: "Plan my week", subtitle: "Dinners for the free nights — nothing's planned until you say so") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Back to the plan", kitchen_meals_path(@kitchen, week: @week_start), class: "btn btn-ghost" %>
+  <% end %>
+<% end %>
+
+<div class="max-w-2xl">
+  <% if @open_nights.empty? %>
+    <%= render Ui::EmptyStateComponent.new(title: "Every night's planned", description: "Nothing left to fill this week.") %>
+  <% elsif @proposals.empty? %>
+    <%= render Ui::EmptyStateComponent.new(title: "Nothing to suggest yet", description: "Add a few recipes to the box and the week plans itself from what's in the kitchen.") %>
+  <% else %>
+    <%= form_with url: accept_kitchen_meals_path(@kitchen, week: @week_start) do %>
+      <%= render Ui::CardComponent.new(padded: false) do %>
+        <ul class="divide-y divide-edge">
+          <% @proposals.each_with_index do |proposal, index| %>
+            <li>
+              <label class="flex min-h-14 items-start gap-3 px-4 py-3">
+                <%= hidden_field_tag "nights[#{index}][date]", proposal.date.iso8601, id: nil %>
+                <%= hidden_field_tag "nights[#{index}][recipe_id]", proposal.recipe.id, id: nil %>
+                <%= hidden_field_tag "nights[#{index}][plan]", "0", id: nil %>
+                <%= check_box_tag "nights[#{index}][plan]", "1", true, class: "mt-1 size-4 accent-primary-600" %>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-xs font-semibold text-soft"><%= proposal.date == Date.current ? "Tonight" : proposal.date.strftime("%A") %></span>
+                  <span class="block text-base font-medium text-ink"><%= proposal.recipe.title %></span>
+                  <span class="block text-sm text-soft"><%= proposal.reason %></span>
+                </span>
+              </label>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <%= submit_tag "Plan the ticked ones", class: "btn btn-primary" %>
+        <%= link_to "Not these", kitchen_meals_path(@kitchen, week: @week_start), class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

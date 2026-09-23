@@ -32,6 +32,15 @@ module Users
       # the first thing a new vet or a new kennel asks for.
       "pet_vaccinations" => ->(user) { PetVaccination.where(pet_id: user.pets.select(:id)) },
       "recipe_books" => ->(user) { user.recipe_books },
+      # The kitchens you own and everything in them (D-kitchen): its rows
+      # have no owner but the kitchen, so they leave with its owner.
+      "kitchens" => ->(user) { user.kitchens },
+      "shopping_lists" => ->(user) { ShoppingList.where(kitchen: user.kitchens) },
+      "shopping_list_items" => ->(user) { ShoppingListItem.where(shopping_list: ShoppingList.where(kitchen: user.kitchens)) },
+      "pantry_items" => ->(user) { PantryItem.where(kitchen: user.kitchens) },
+      "foods" => ->(user) { Food.where(kitchen: user.kitchens) },
+      "meals" => ->(user) { Meal.where(kitchen: user.kitchens) },
+      "diners" => ->(user) { Diner.where(kitchen: user.kitchens) },
       "suggestions" => ->(user) { user.suggestions },
       "spending_accounts" => ->(user) { user.spending_accounts },
       "budget_categories" => ->(user) { user.budget_categories },

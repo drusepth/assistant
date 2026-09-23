@@ -1,0 +1,28 @@
+<%# Who eats here (D-food-suggestions): what someone can't eat leaves dishes
+    out of every suggestion; how they eat is a note the assistant honours. %>
+<%= render Ui::CardComponent.new(title: "Who eats here", subtitle: "Used only to leave dishes out — never to call one safe. Always check the packet.", anchor: "diners") do %>
+  <% if kitchen.diners.any? %>
+    <ul class="mb-4 divide-y divide-edge">
+      <% kitchen.diners.order(:name).each do |diner| %>
+        <li class="py-2">
+          <details>
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-2 text-sm">
+              <span class="min-w-0">
+                <span class="font-medium text-ink"><%= diner.name %></span>
+                <% if diner.allergens.any? %><span class="text-soft"> · no <%= diner.allergen_labels.to_sentence.downcase %></span><% end %>
+                <% if diner.diet_note.present? %><span class="text-soft"> · <%= diner.diet_note %></span><% end %>
+              </span>
+              <%= icon(:chevron_down, css_class: "size-4 shrink-0 text-soft") %>
+            </summary>
+            <%= render "kitchens/diner_form", kitchen: kitchen, diner: diner %>
+            <%= button_to "Remove #{diner.name}", kitchen_diner_path(kitchen, diner), method: :delete, class: "btn btn-ghost btn-sm mt-2" %>
+          </details>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+  <details>
+    <summary class="cursor-pointer text-sm font-medium text-primary-800">Add someone</summary>
+    <%= render "kitchens/diner_form", kitchen: kitchen, diner: kitchen.diners.new %>
+  </details>
+<% end %>

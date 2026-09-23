@@ -1,0 +1,42 @@
+<% content_for :title, "#{Food::LOCATIONS[@location]} · #{@kitchen.name}" %>
+<% content_for :nav_section, "food" %>
+<%= turbo_stream_from @kitchen %>
+
+<div class="mx-auto max-w-2xl">
+  <%= render Ui::PageHeaderComponent.new(title: "In the kitchen", subtitle: @kitchen.name) do |header| %>
+    <% header.with_actions do %>
+      <%= link_to "Food", food_path, class: "btn btn-ghost" %>
+    <% end %>
+  <% end %>
+
+  <nav class="mb-3 flex gap-1.5" aria-label="Where">
+    <% Food::LOCATIONS.each do |location, label| %>
+      <%= link_to kitchen_pantry_items_path(@kitchen, location: location),
+            class: "chip #{location == @location ? "bg-primary-600 text-white" : "bg-canvas text-ink"}",
+            aria: { current: (location == @location ? "page" : nil) } do %>
+        <%= label %><% if @counts[location].to_i.positive? %> <span class="tabular-nums opacity-80"><%= @counts[location] %></span><% end %>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <div class="card p-3 sm:p-4" data-controller="shopping-list">
+    <%= form_with url: kitchen_pantry_items_path(@kitchen), class: "flex items-start gap-2" do %>
+      <%= hidden_field_tag :location, @location %>
+      <label for="pantry_lines" class="sr-only">Add to the <%= Food::LOCATIONS[@location].downcase %></label>
+      <%= text_area_tag :lines, nil, id: "pantry_lines", rows: 1, class: "input min-h-11 flex-1 resize-y", autocomplete: "off",
+            placeholder: "Add to the #{Food::LOCATIONS[@location].downcase}… “rice, half a bag”",
+            data: { shopping_list_target: "input", action: "keydown->shopping-list#submitOnEnter" } %>
+      <%= submit_tag "Add", class: "btn btn-primary" %>
+    <% end %>
+
+    <% if @items.any? %>
+      <ul class="mt-3 divide-y divide-edge">
+        <% @items.each do |item| %>
+          <%= render "pantry_items/item", item: item %>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="mt-3 px-2 text-sm text-soft">Nothing in the <%= Food::LOCATIONS[@location].downcase %> yet. Things you check off the shopping list land here on their own<%= " — it's switched off for this kitchen" unless @kitchen.put_away_on_check? %>.</p>
+    <% end %>
+  </div>
+</div>

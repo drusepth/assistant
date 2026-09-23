@@ -1,0 +1,20 @@
+<%# Ideas (docs/FOOD_PLAN.md §4): the three suggestion queries, three each. %>
+<% ideas = panel.ideas %>
+<%= render Ui::CardComponent.new(title: "Ideas") do |card| %>
+  <% card.with_actions do %>
+    <%= link_to "What can I make?", kitchen_ideas_path(panel.kitchen), class: "btn btn-secondary btn-sm" %>
+  <% end %>
+  <% rows = [ [ "Use it up", ideas.use_it_up(limit: 3) ], [ "Ready to make", ideas.ready_to_make(limit: 3) ] ] %>
+  <% if rows.all? { |_, list| list.empty? } && panel.unlock.empty? %>
+    <p class="text-sm text-soft">Once there are recipes in the box and a few things in the kitchen, this suggests what to cook — and what one more purchase would let you make.</p>
+  <% end %>
+  <% rows.each do |label, list| %>
+    <% next if list.empty? %>
+    <h3 class="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-soft first:mt-0"><%= label %></h3>
+    <ul class="divide-y divide-edge"><%= render partial: "ideas/candidate", collection: list %></ul>
+  <% end %>
+  <% if panel.unlock.any? %>
+    <h3 class="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-soft">Buy to unlock</h3>
+    <ul class="divide-y divide-edge"><%= render partial: "ideas/unlock", collection: panel.unlock, locals: { kitchen: panel.kitchen } %></ul>
+  <% end %>
+<% end %>

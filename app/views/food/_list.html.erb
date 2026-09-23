@@ -1,0 +1,25 @@
+<%# The list, inline and live (docs/FOOD_PLAN.md §4): the kitchen's lists as
+    tabs, a quick-add, and check-off in place — the same rows and the same
+    controller as the in-store page, which is one tap away. %>
+<% list = panel.list %>
+<%= render Ui::CardComponent.new(title: "Shopping list", count: panel.open_items.size) do |card| %>
+  <% card.with_actions do %>
+    <%= link_to "Foods & aisles", kitchen_foods_path(panel.kitchen), class: "btn btn-ghost btn-sm" %>
+    <%= link_to "Open in-store view", kitchen_shopping_list_path(panel.kitchen, list), class: "btn btn-secondary btn-sm" %>
+  <% end %>
+  <div data-controller="shopping-list">
+    <% if panel.lists.many? %>
+      <nav class="mb-3 flex gap-1.5 overflow-x-auto" aria-label="Lists">
+        <% panel.lists.each do |other| %>
+          <%= link_to other.name, kitchen_shopping_list_path(panel.kitchen, other),
+                class: "chip shrink-0 #{other == list ? "bg-primary-600 text-white" : "bg-canvas text-ink"}" %>
+        <% end %>
+      </nav>
+    <% end %>
+    <%= render "shopping_lists/quick_add", kitchen: panel.kitchen, list: list %>
+    <div class="mt-3">
+      <%= render "shopping_lists/lines", kitchen: panel.kitchen, list: list,
+            open_items: panel.open_items, basket_items: panel.basket_items %>
+    </div>
+  </div>
+<% end %>

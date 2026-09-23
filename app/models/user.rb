@@ -42,6 +42,8 @@ class User < ApplicationRecord
   has_many :trip_photos, dependent: :destroy
   has_many :recipes, dependent: :destroy
   has_many :recipe_books, dependent: :destroy
+  has_many :kitchens, dependent: :destroy
+  belongs_to :current_kitchen, class_name: "Kitchen", optional: true
   has_many :subjects, dependent: :destroy
   has_many :study_logs, dependent: :destroy
   has_many :review_items, dependent: :destroy

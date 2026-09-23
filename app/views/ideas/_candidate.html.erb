@@ -1,0 +1,16 @@
+<%# One recipe the kitchen can (nearly) make: how much is in, what's missing,
+    and what it uses that's going off. %>
+<% recipe = candidate.recipe %>
+<li class="flex items-start justify-between gap-3 py-2.5">
+  <div class="min-w-0">
+    <%= link_to recipe.title, recipe_path(recipe), class: "text-sm font-medium text-ink hover:text-primary-700" %>
+    <p class="text-xs text-soft">
+      <% if candidate.ready? %>Everything's in<% else %>Needs <%= candidate.need.map(&:item).to_sentence %><% end %><%
+      %><% if candidate.expiring.any? %> · uses the <%= candidate.expiring.map(&:item).to_sentence %><% end %><%
+      %><% if recipe.total_minutes %> · <%= recipe.total_minutes %> min<% end %>
+    </p>
+  </div>
+  <% if candidate.need.any? %>
+    <%= button_to "Add missing", recipe_list_addition_path(recipe), class: "btn btn-ghost btn-sm shrink-0" %>
+  <% end %>
+</li>

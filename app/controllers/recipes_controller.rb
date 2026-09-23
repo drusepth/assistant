@@ -28,6 +28,11 @@ class RecipesController < ApplicationController
     @servings = params[:servings].presence&.to_i&.clamp(1, 100) || @recipe.servings
     @factor = @recipe.scale_factor(@servings)
     @books = @recipe.recipe_books.visible_to(Current.user).order(:title)
+    # What of it is already in the kitchen (docs/FOOD_PLAN.md §4).
+    @kitchen = Kitchens::Current.for(Current.user)
+    stock = Kitchens::Stock.new(@kitchen)
+    @kitchen_have, @kitchen_need = stock.split(@recipe)
+    @kitchen_stocked = stock.items.any?
     if @owned
       @available_books = Current.user.recipe_books.where.not(id: @recipe.recipe_book_ids).order(:title)
       @share_links = @recipe.share_links.order(created_at: :desc)
@@ -107,8 +112,13 @@ class RecipesController < ApplicationController
   # The whole cook log (D-recipe-primitive): one tap, no timers, no streaks.
   def cook
     @recipe.cooked!
-    redirect_back fallback_location: @recipe,
-      notice: "Logged — #{@recipe.title} #{@recipe.times_cooked == 1 ? "cooked once" : "cooked #{@recipe.times_cooked} times"}."
+    notice = "Logged — #{@recipe.title} #{@recipe.times_cooked == 1 ? "cooked once" : "cooked #{@recipe.times_cooked} times"}."
+    # With things from the kitchen in it, the next question is what's left.
+    if Recipes::UseUp.new(@recipe, Kitchens::Current.for(Current.user)).rows.any?
+      redirect_to new_recipe_use_up_path(@recipe), notice: notice
+    else
+      redirect_back fallback_location: @recipe, notice: notice
+    end
   end
 
   def retry_import

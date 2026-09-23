@@ -1,0 +1,54 @@
+<% content_for :title, "What can I make? · #{@kitchen.name}" %>
+<% content_for :nav_section, "food" %>
+<%= turbo_stream_from @kitchen %>
+
+<%= render Ui::PageHeaderComponent.new(title: "What can I make?", subtitle: "From what's in #{@kitchen.name}") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Food", food_path, class: "btn btn-ghost" %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-3xl grid-cols-1 gap-4">
+  <% if @pick_recipe %>
+    <div class="callout">
+      <p class="callout-title">Tonight: <%= link_to @pick_recipe.title, recipe_path(@pick_recipe), class: "underline" %></p>
+      <% if @pick["reason"].present? %><p class="mt-1 text-sm"><%= @pick["reason"] %></p><% end %>
+      <% if @pick["swaps"].present? %>
+        <ul class="mt-2 space-y-0.5 text-sm">
+          <% @pick["swaps"].each do |missing, use| %>
+            <li>No <%= missing %>? <span class="text-soft">Your assistant suggests</span> <%= use %>.</li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+  <% elsif @pick == :pending %>
+    <p class="text-sm text-soft">Your assistant is picking one for tonight<span class="animate-pulse">…</span></p>
+  <% end %>
+
+  <% if @diet_notes.any? %>
+    <p class="text-sm text-soft">Remember: <%= @diet_notes.join(" · ") %></p>
+  <% end %>
+  <% if @ideas.exclude.any? %>
+    <p class="text-xs text-soft">Leaving out anything with <%= @ideas.exclude.map { |allergen| Food::ALLERGENS[allergen].downcase }.to_sentence %> — as far as the catalog knows. Check the packet.</p>
+  <% end %>
+
+  <% if @use_it_up.any? %>
+    <%= render Ui::CardComponent.new(title: "Use it up", subtitle: "Recipes that use what's going off") do %>
+      <ul class="divide-y divide-edge"><%= render partial: "ideas/candidate", collection: @use_it_up %></ul>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Ready to make", subtitle: "Everything's in — or nearly") do %>
+    <% if @ready.any? %>
+      <ul class="divide-y divide-edge"><%= render partial: "ideas/candidate", collection: @ready %></ul>
+    <% else %>
+      <p class="text-sm text-soft">Nothing's close yet. As the kitchen fills — check things off the list, or add what's in — this fills with dishes you can make.</p>
+    <% end %>
+  <% end %>
+
+  <% if @unlock.any? %>
+    <%= render Ui::CardComponent.new(title: "Buy to unlock", subtitle: "The fewest things to buy for the most dishes from what you have") do %>
+      <ul class="divide-y divide-edge"><%= render partial: "ideas/unlock", collection: @unlock, locals: { kitchen: @kitchen } %></ul>
+    <% end %>
+  <% end %>
+</div>

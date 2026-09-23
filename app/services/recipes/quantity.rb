@@ -78,5 +78,13 @@ module Recipes
       rounded = value.round(2)
       (rounded % 1).zero? ? rounded.to_i.to_s : rounded.to_s
     end
+
+    # "2 cans", "200 g", "1 clove" — an amount with its unit, as a list or a
+    # fridge note shows it. Nil when there's no amount.
+    def with_unit(value, unit)
+      return nil if value.nil?
+
+      [ format(value), RecipeIngredient.unit_label(unit, value) ].compact_blank.join(" ")
+    end
   end
 end

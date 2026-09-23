@@ -139,6 +139,8 @@ Rails.application.routes.draw do
       member do
         patch :end_food
         post :reorder
+        # The next bag onto the kitchen's shopping list (docs/FOOD_PLAN.md §5).
+        post :add_to_list
       end
     end
     # Her vaccine record (D-pet-vaccinations): the history is the index, and
@@ -307,6 +309,56 @@ Rails.application.routes.draw do
       delete :remove_recipes
       patch :reorder
     end
+  end
+  # The Food section's kitchen (D-kitchen; docs/FOOD_PLAN.md). The hub is
+  # /sections/food; /food is its short name. Everything inside a kitchen
+  # nests under it, and every controller there goes through
+  # Kitchens::Scoped — whoever can see a kitchen can cook in it.
+  get "food" => redirect("/sections/food"), as: :food
+  resources :kitchens, only: %i[ create edit update destroy ] do
+    member do
+      patch :select
+      post :answer_share
+      patch :food_budget
+    end
+    # "What's in the kitchen" — /kitchens/:id/pantry?location=fridge.
+    resources :pantry_items, path: "pantry", only: %i[ index create update destroy ] do
+      member do
+        patch :move
+        post :add_to_list
+      end
+    end
+    # The plan — /kitchens/:id/plan?week=2026-09-21.
+    resources :meals, path: "plan", only: %i[ index create update destroy ] do
+      collection do
+        post :make_list
+        # Plan my week: a proposal to look at, then the click that lands it.
+        post :propose
+        post :accept
+      end
+    end
+    # What can I make, use it up, buy to unlock (D-food-suggestions).
+    resource :ideas, only: %i[ show ]
+    resources :diners, only: %i[ create update destroy ]
+    resources :foods, only: %i[ index edit update ] do
+      post :merge, on: :member
+      patch :move_aisle, on: :collection
+    end
+    resources :shopping_lists, path: "lists", only: %i[ show create update destroy ] do
+      resources :items, controller: :shopping_list_items, only: %i[ create update destroy ] do
+        member do
+          patch :check
+          patch :uncheck
+        end
+      end
+    end
+  end
+  # "Add missing to list" from a recipe page — onto the viewer's current
+  # kitchen's list, scaled to the servings on screen.
+  resources :recipes, only: [] do
+    resource :list_addition, only: %i[ create ], module: :recipes
+    # After "Cooked it": anything used up comes out of the kitchen.
+    resource :use_up, only: %i[ new create ], module: :recipes
   end
   resources :share_links, only: %i[ create destroy ]
   get "s/:token" => "public#show", as: :shared

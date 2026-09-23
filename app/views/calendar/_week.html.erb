@@ -22,6 +22,7 @@
         <% end %>
         <div class="min-w-0 flex-1 space-y-0.5">
           <%= render "calendar/stay_band", day: day %>
+          <%= render "calendar/meals", meals: @meals_by_day.fetch(day, []), day: day %>
           <% entries.each do |entry| %>
             <%= render "calendar/chip", entry: entry, day: day %>
           <% end %>

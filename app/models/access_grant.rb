@@ -2,7 +2,7 @@
 # subject = a primitive the grantor owns (share this one item), or
 # subject = a Section (share all my items tagged with this section).
 class AccessGrant < ApplicationRecord
-  ITEM_TYPES = %w[ Event Task Document Person Goal Note Photo Album Recipe RecipeBook Credential DiaryEntry Subject Pet ].freeze
+  ITEM_TYPES = %w[ Event Task Document Person Goal Note Photo Album Recipe RecipeBook Credential DiaryEntry Subject Pet Kitchen ].freeze
 
   belongs_to :grantor, class_name: "User"
   belongs_to :grantee, class_name: "User"

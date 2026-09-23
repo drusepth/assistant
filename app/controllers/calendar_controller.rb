@@ -35,6 +35,9 @@ class CalendarController < ApplicationController
       end
       @agenda = Calendar::Agenda.new(user: Current.user, days: @days, layers: @layers)
       @stays_by_day = stays_by_day(@days)
+      # What's for dinner (D-kitchen): the meal plans of every kitchen the
+      # viewer cooks in, as a line under the day — plans, not events.
+      @meals_by_day = Meal.where(kitchen: Kitchen.visible_to(Current.user)).between(@days).in_order.group_by(&:date)
 
       render :show
     end

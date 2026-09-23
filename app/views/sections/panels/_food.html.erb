@@ -1,0 +1,16 @@
+<%# The Food hub (D-food-section; docs/FOOD_PLAN.md §4). Each zone is its own
+    partial under food/ so the waves that fill them touch disjoint files. %>
+<% kitchen = panel.kitchen %>
+<%= turbo_stream_from kitchen %>
+
+<div class="space-y-4">
+  <%= render "food/kitchen_bar", panel: panel, kitchen: kitchen %>
+  <% if panel.share_prompt? %>
+    <%= render "food/share_prompt", panel: panel, kitchen: kitchen %>
+  <% end %>
+  <%= render "food/week", panel: panel %>
+  <%= render "food/list", panel: panel %>
+  <%= render "food/pantry", panel: panel %>
+  <%= render "food/ideas", panel: panel %>
+  <%= render "food/recipes", panel: panel %>
+</div>

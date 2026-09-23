@@ -1,0 +1,33 @@
+<%# One list line, the whole row a tap target (docs/FOOD_PLAN.md §4): big,
+    thumb-first, and moved by the shopping-list controller before the
+    write leaves. Who added it, and which recipe it's for, ride along small. %>
+<% kitchen = local_assigns[:kitchen] || item.shopping_list.kitchen %>
+<% list = item.shopping_list %>
+<li id="<%= dom_id(item) %>" data-item-row data-checked="<%= item.checked? %>" data-aisle="<%= item.food&.aisle %>"
+    class="group flex items-center gap-1 data-[checked=true]:opacity-60">
+  <button type="button" data-action="shopping-list#toggle"
+          data-check-url="<%= check_kitchen_shopping_list_item_path(kitchen, list, item) %>"
+          data-uncheck-url="<%= uncheck_kitchen_shopping_list_item_path(kitchen, list, item) %>"
+          class="flex min-h-12 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50">
+    <span class="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-stone-300 group-data-[checked=true]:border-sage-600 group-data-[checked=true]:bg-sage-600" aria-hidden="true">
+      <span class="hidden text-white group-data-[checked=true]:inline"><%= icon(:check, css_class: "size-4") %></span>
+    </span>
+    <span class="min-w-0 flex-1">
+      <span class="block text-base text-ink group-data-[checked=true]:line-through"><%= item.display %></span>
+      <% if item.note.present? || item.recipe %>
+        <span class="block truncate text-xs text-soft">
+          <%= item.note %><%= " · " if item.note.present? && item.recipe %><%= "for: #{item.recipe.title}" if item.recipe %>
+        </span>
+      <% end %>
+    </span>
+    <% who = item.checked? ? item.checked_by : item.added_by %>
+    <% if who && who.id != Current.user.id %>
+      <%= render Ui::AvatarComponent.new(user: who, size: :xs, title: "#{item.checked? ? "Checked" : "Added"} by #{who.name}") %>
+    <% end %>
+  </button>
+  <%= button_to kitchen_shopping_list_item_path(kitchen, list, item), method: :delete,
+        class: "flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-soft opacity-60 hover:bg-stone-100 hover:text-ink hover:opacity-100",
+        aria: { label: "Remove #{item.item}" } do %>
+    <%= icon(:x_mark, css_class: "size-4") %>
+  <% end %>
+</li>

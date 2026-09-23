@@ -3,7 +3,7 @@
 # made, not something a shared viewer edits.
 class PetFoodsController < ApplicationController
   before_action :set_pet
-  before_action :set_food, only: %i[ update end_food reorder ]
+  before_action :set_food, only: %i[ update end_food reorder add_to_list ]
 
   def create
     food = @pet.pet_foods.new(food_params)
@@ -52,6 +52,16 @@ class PetFoodsController < ApplicationController
     event.sections << [ @pet.section, money_section ].compact
 
     redirect_to @pet, notice: "Reorder on the calendar for #{date.strftime("%B %-d")}."
+  end
+
+  # The next bag onto the kitchen's list, saying who it's for.
+  def add_to_list
+    kitchen = Kitchens::Current.for(Current.user)
+    list = ShoppingList.default_for(kitchen)
+    ShoppingLists::Add.new(list, by: Current.user).rows([
+      { item: @food.display_name, item_key: Recipes::Parse.key_for(@food.display_name), note: "for #{@pet.name}" }
+    ])
+    redirect_to @pet, notice: "#{@food.display_name} is on #{list.name}."
   end
 
   private

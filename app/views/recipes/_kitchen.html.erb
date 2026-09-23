@@ -1,0 +1,21 @@
+<%# The recipe, joined to the kitchen (docs/FOOD_PLAN.md §4): how much of it
+    is already in, and its shopping at the servings on screen. %>
+<% have, need = kitchen_split %>
+<div class="mt-4 flex flex-wrap items-center gap-2 border-t border-edge pt-3 print:hidden">
+  <% if have.any? || kitchen_stocked %>
+    <p class="w-full text-sm text-soft">In <%= kitchen.name %>: <span class="font-semibold text-ink"><%= have.size %> of <%= have.size + need.size %></span></p>
+  <% end %>
+  <% if need.any? %>
+    <%= button_to (have.any? ? "Add the #{pluralize(need.size, "missing thing")} to the list" : "Add to shopping list"),
+          recipe_list_addition_path(recipe, servings: servings), class: "btn btn-secondary btn-sm" %>
+  <% end %>
+  <%= form_with url: kitchen_meals_path(kitchen), class: "flex flex-wrap items-center gap-2" do %>
+    <%= hidden_field_tag "meal[recipe_id]", recipe.id %>
+    <%= hidden_field_tag "meal[servings]", servings %>
+    <%= hidden_field_tag "meal[slot]", "dinner" %>
+    <%= select_tag "meal[date]", options_for_select((Date.current..(Date.current + 6)).map { |day|
+          [ day == Date.current ? "Tonight" : day.strftime("%A"), day.iso8601 ] }),
+          class: "input w-auto py-1 text-sm", aria: { label: "Which day" } %>
+    <%= submit_tag "Plan it", class: "btn btn-ghost btn-sm" %>
+  <% end %>
+</div>

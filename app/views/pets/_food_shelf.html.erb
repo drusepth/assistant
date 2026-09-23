@@ -28,6 +28,7 @@
                 <% if food.runs_out_on %>
                   <%= button_to "Put reorder on the calendar", reorder_pet_food_path(pet, food), method: :post, class: "btn btn-ghost btn-sm" %>
                 <% end %>
+                <%= button_to "Add to shopping list", add_to_list_pet_food_path(pet, food), method: :post, class: "btn btn-ghost btn-sm" %>
                 <%= button_to "No longer feeding", end_food_pet_food_path(pet, food), method: :patch, class: "btn btn-ghost btn-sm",
                       data: { turbo_confirm: "Move #{food.display_name} to the diet history? Nothing is deleted." } %>
               </div>

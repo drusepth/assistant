@@ -1,0 +1,36 @@
+<% content_for :title, "Plan · #{@kitchen.name}" %>
+<% content_for :nav_section, "food" %>
+<%= turbo_stream_from @kitchen %>
+
+<%= render Ui::PageHeaderComponent.new(title: "The week's meals", subtitle: "#{@kitchen.name} · #{@days.first.strftime("%b %-d")} – #{@days.last.strftime("%b %-d")}") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "←", kitchen_meals_path(@kitchen, week: @days.first - 7), class: "btn btn-secondary", aria: { label: "Previous week" } %>
+    <%= link_to "This week", kitchen_meals_path(@kitchen), class: "btn btn-secondary" %>
+    <%= link_to "→", kitchen_meals_path(@kitchen, week: @days.first + 7), class: "btn btn-secondary", aria: { label: "Next week" } %>
+  <% end %>
+<% end %>
+
+<div class="mb-4 flex flex-wrap items-center gap-2">
+  <%= form_with url: make_list_kitchen_meals_path(@kitchen, week: @days.first), class: "flex flex-wrap items-center gap-2" do %>
+    <% if @lists.many? %>
+      <%= select_tag :shopping_list_id, options_from_collection_for_select(@lists, :id, :name), class: "input w-auto", aria: { label: "Onto which list" } %>
+    <% end %>
+    <%= submit_tag "Make the list for this week", class: "btn btn-primary" %>
+  <% end %>
+  <%= button_to "Plan my week", propose_kitchen_meals_path(@kitchen, week: @days.first), class: "btn btn-secondary" %>
+  <p class="w-full text-xs text-soft">The list adds what the planned recipes need that isn't already in the kitchen, scaled to each meal.</p>
+</div>
+
+<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+  <% @days.each do |day| %>
+    <section class="card p-3 <%= "ring-2 ring-primary-400" if day == Date.current %>" id="<%= "day-#{day.iso8601}" %>" aria-label="<%= day.strftime("%A %B %-d") %>">
+      <h2 class="mb-2 text-sm font-semibold text-ink"><%= day.strftime("%A") %> <span class="font-normal text-soft"><%= day.strftime("%-d") %></span></h2>
+      <div class="space-y-2">
+        <% @meals.fetch(day, []).each do |meal| %>
+          <%= render "meals/meal", meal: meal, cooks: @cooks, events: @events_by_day.fetch(day, []) %>
+        <% end %>
+        <%= render "meals/new", kitchen: @kitchen, day: day, recipes: @recipes %>
+      </div>
+    </section>
+  <% end %>
+</div>

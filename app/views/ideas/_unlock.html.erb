@@ -1,0 +1,15 @@
+<%# One thing worth buying: what it completes, and the button. %>
+<li class="flex items-start justify-between gap-3 py-2.5">
+  <div class="min-w-0">
+    <p class="text-sm font-medium text-ink"><%= unlock.name %></p>
+    <p class="text-xs text-soft">
+      <% parts = [] %>
+      <% parts << "#{pluralize(unlock.ready, "more dish")} you can make" if unlock.ready.positive? %>
+      <% parts << "#{unlock.closer} one step closer" if unlock.closer.positive? %>
+      <% parts << "#{unlock.using_soon} using something that's going off" if unlock.using_soon.positive? %>
+      <%= parts.join(" · ").upcase_first %>
+    </p>
+  </div>
+  <%= button_to "Add to list", kitchen_shopping_list_items_path(kitchen, ShoppingList.default_for(kitchen), lines: unlock.name),
+        class: "btn btn-ghost btn-sm shrink-0" %>
+</li>

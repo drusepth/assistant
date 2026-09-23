@@ -30,6 +30,7 @@
             <%= day.day %>
           </span>
           <%= render "calendar/stay_band", day: day %>
+          <%= render "calendar/meals", meals: @meals_by_day.fetch(day, []), day: day %>
           <div class="hidden space-y-0.5 sm:block">
             <% entries.first(3).each do |entry| %>
               <%= render "calendar/chip", entry: entry, day: day %>
