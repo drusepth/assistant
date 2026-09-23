@@ -55,6 +55,11 @@ module Sections
         end
       end
 
+      # With a pet on the page, the pet card is the way in — its signal line
+      # says where to start — so "Nothing in Pets yet" under it would only
+      # read as if the pet didn't count. With no pets, the generic card stays.
+      def show_empty_browse? = active_pets.empty?
+
       private
         def active_pets
           @active_pets ||= Pet.visible_to(viewer).active.includes(:section).order(:name).to_a
