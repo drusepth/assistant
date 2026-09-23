@@ -134,6 +134,31 @@ class User < ApplicationRecord
 
   # Section toggles (D4): sections are enabled unless explicitly disabled,
   # so new sections appear for existing users without backfill.
+  # The Vault picker (D-vault-picker). Only what's switched off is stored,
+  # so a page added to VaultPage later arrives on.
+  def vault_page_enabled?(slug)
+    !hidden_vault_pages.include?(slug.to_s)
+  end
+
+  def set_vault_page_enabled!(slug, enabled)
+    hidden = hidden_vault_pages - [ slug.to_s ]
+    hidden << slug.to_s unless enabled
+    update!(hidden_vault_pages: hidden.sort)
+  end
+
+  def enabled_vault_slugs=(slugs)
+    self.hidden_vault_pages = VaultPage::SLUGS - Array(slugs).map(&:to_s)
+  end
+
+  # The pages that actually belong in this user's sidebar: switched on, and
+  # with whatever they need to show anything (Mail needs a linked inbox).
+  def sidebar_vault_pages
+    VaultPage::ALL.select do |page|
+      vault_page_enabled?(page.slug) &&
+        (page.requires != :email_account || linked_accounts.where(provider: "email").exists?)
+    end
+  end
+
   def section_enabled?(section)
     !user_sections.exists?(section: section, enabled: false)
   end

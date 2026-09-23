@@ -33,6 +33,30 @@ class OnboardingFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "step 1 also asks which vault pages to switch on" do
+    get onboarding_path(step: 1)
+    VaultPage::ALL.each { |page| assert_select "#onboarding_vault_#{page.slug}" }
+
+    patch onboarding_path(step: 1), params: {
+      enabled_section_ids: [ sections(:health).id ],
+      enabled_vault_slugs: [ "", "people", "documents" ]
+    }
+    @user.reload
+    assert @user.vault_page_enabled?("people")
+    assert @user.vault_page_enabled?("documents")
+    assert_not @user.vault_page_enabled?("passwords")
+    assert_not @user.vault_page_enabled?("diary")
+  end
+
+  test "unchecking every vault page hides them all, and a form without the question touches none" do
+    patch onboarding_path(step: 1), params: { enabled_section_ids: [], enabled_vault_slugs: [ "" ] }
+    assert_equal VaultPage::SLUGS.sort, @user.reload.hidden_vault_pages.sort
+
+    @user.update!(hidden_vault_pages: [])
+    patch onboarding_path(step: 1), params: { enabled_section_ids: [] }
+    assert_empty @user.reload.hidden_vault_pages
+  end
+
   test "non-admins skip the model step" do
     @user.update!(admin: false)
 

@@ -164,18 +164,20 @@
             </div>
 
             <div>
-              <p class="nav-label mb-1 px-3 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Vault</p>
+              <%# Same shape as Your life above: which Vault pages are here is
+                  the user's call too (D-vault-picker). %>
+              <div class="nav-label mb-1 flex items-center justify-between px-3">
+                <p class="text-xs font-bold uppercase tracking-[0.12em] text-stone-600">Vault</p>
+                <%= link_to "Customize", vault_pages_path, class: "text-xs font-semibold text-primary-800 hover:underline" %>
+              </div>
               <div class="space-y-0.5">
-                <%= nav_link_to "Address Book", people_path, :users %>
-                <%= nav_link_to "Photos", photos_path, :photo %>
-                <%= nav_link_to "Recipes", recipes_path, :book_open %>
-                <%= nav_link_to "Documents", documents_path, :document %>
-                <%= nav_link_to "Notes", notes_path, :note %>
-                <% if Current.user.linked_accounts.where(provider: "email").exists? %>
-                  <%= nav_link_to "Mail", mail_index_path, :envelope %>
+                <% vault_pages = Current.user.sidebar_vault_pages %>
+                <% vault_pages.each do |page| %>
+                  <%= nav_link_to page.name, public_send(page.route), page.icon %>
                 <% end %>
-                <%= nav_link_to "Passwords", credentials_path, :key %>
-                <%= nav_link_to "Diary", diary_entries_path, :pencil %>
+                <% if vault_pages.empty? %>
+                  <%= nav_link_to "Choose vault pages", vault_pages_path, :plus %>
+                <% end %>
               </div>
             </div>
           </nav>
