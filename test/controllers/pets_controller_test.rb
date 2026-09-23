@@ -25,6 +25,18 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @rex.reload.weight_lb
   end
 
+  test "the sharing card shows only when there is someone in the household to share with" do
+    get pet_path(@rex)
+    assert_select "h2", text: "Sharing", count: 1
+
+    sign_in_as users(:outsider)
+    solo = create_pet(user: users(:outsider), name: "Mittens", species: "cat")
+    get pet_path(solo)
+    assert_response :success
+    assert_select "h2", text: "Sharing", count: 0
+    assert_no_match "No other household members yet", response.body
+  end
+
   test "the pet tools are a quiet list in the sidebar, led by the missing-pet tool" do
     get pet_path(@rex)
     assert_select "nav[aria-label=?] li", "Tools for #{@rex.name}", minimum: 5 do |items|
