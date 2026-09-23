@@ -19,7 +19,7 @@
 
 <% drafts.each do |draft| %>
   <%= render Ui::CardComponent.new(title: draft.title, subtitle: "Draft — saved to your notes when you say so") do %>
-    <p class="whitespace-pre-wrap text-sm text-ink"><%= draft.detail %></p>
+    <div class="prose-body text-[0.9375rem]"><%= Markdown.render(draft.detail) %></div>
   <% end %>
 <% end %>
 

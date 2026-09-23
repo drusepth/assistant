@@ -38,9 +38,9 @@
         <span class="chip bg-stone-100 text-stone-700"><%= @opened.mood %></span>
       <% end %>
       <%# Safe by construction rather than by sanitizing after the fact:
-          Diary::Markdown escapes everything before a single rule runs, so the
+          Markdown escapes everything before a single rule runs, so the
           only tags here are ones it wrote itself. %>
-      <div class="diary-prose"><%= Diary::Markdown.render(@opened.body) %></div>
+      <div class="prose-body"><%= Markdown.render(@opened.body) %></div>
       <% if @entry.edited_at %>
         <p class="border-t border-edge pt-3 text-xs text-soft">
           Last written <%= l(@entry.edited_at, format: :short) %>

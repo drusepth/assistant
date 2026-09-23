@@ -350,46 +350,119 @@
     @apply bg-canvas font-semibold text-ink shadow-sm;
   }
 
-  /* Rendered prose from a writer's own Markdown (Diary::Markdown). Preflight
-     strips headings and lists back to plain text, so the tags that renderer
-     emits need dressing somewhere — here, once, rather than as a class on
-     every element it writes. Headings start at h2 because the page already
-     has a title; they are section markers inside an entry, not rivals to it. */
-  .diary-prose {
+  /* Rendered prose from Markdown (the `Markdown` renderer): a diary entry
+     someone typed, and every draft a tool writes. Preflight strips headings
+     and lists back to plain text, so the tags that renderer emits need
+     dressing somewhere — here, once, rather than as a class on every element
+     it writes. Size comes from the call site (`text-sm` in a card, the body
+     size on a diary page); everything below is relative to it.
+
+     Headings start at h2 because the page already has a title; they are
+     section markers inside a body, not rivals to it. A draft is a sheet
+     someone works down, so its sections need to be findable at a glance:
+     h3 — what a model's `##` becomes — gets a hairline above it and the
+     accent colour, and the first one sits flush with the card's top. */
+  .prose-body {
     @apply leading-relaxed text-ink;
   }
-  .diary-prose > * + * {
+  .prose-body > * + * {
     @apply mt-3;
   }
-  .diary-prose h2 {
-    @apply mt-5 text-lg font-semibold;
+  .prose-body h2 {
+    @apply mt-7 text-[1.3em] leading-snug font-semibold;
   }
-  .diary-prose h3 {
-    @apply mt-4 font-semibold;
+  .prose-body h3 {
+    @apply mt-7 border-t border-edge pt-5 text-[1.15em] leading-snug font-semibold text-primary-800;
   }
-  .diary-prose h4 {
-    @apply mt-4 text-sm font-semibold uppercase tracking-wide text-soft;
+  .prose-body h4 {
+    @apply mt-5 text-[0.8em] font-semibold tracking-wide text-soft uppercase;
   }
-  .diary-prose ul {
-    @apply list-disc space-y-1 pl-5;
+  .prose-body > :is(h2, h3, h4):first-child,
+  .prose-body hr + :is(h2, h3, h4) {
+    @apply mt-0 border-t-0 pt-0;
   }
-  .diary-prose ol {
-    @apply list-decimal space-y-1 pl-5;
+  .prose-body :is(h2, h3, h4) + * {
+    @apply mt-2;
   }
-  .diary-prose blockquote {
-    @apply border-l-2 border-edge pl-4 text-soft italic;
+  .prose-body strong {
+    @apply font-semibold text-ink;
   }
-  .diary-prose a {
+  .prose-body ul {
+    @apply list-disc space-y-1.5 pl-5 marker:text-primary-400;
+  }
+  .prose-body ol {
+    @apply list-decimal space-y-1.5 pl-5 marker:font-semibold marker:text-primary-700;
+  }
+  .prose-body li > ul {
+    @apply mt-1.5;
+  }
+  .prose-body li {
+    @apply pl-1;
+  }
+  .prose-body blockquote {
+    @apply border-l-2 border-primary-300 pl-4 text-soft italic;
+  }
+  .prose-body hr {
+    @apply my-6 border-edge;
+  }
+  .prose-body a {
     @apply underline decoration-primary-300 underline-offset-2 hover:decoration-primary-600;
   }
-  .diary-prose code {
+  .prose-body code {
     @apply rounded bg-stone-100 px-1 py-0.5 font-mono text-[0.85em];
   }
-  .diary-prose pre {
+  .prose-body pre {
     @apply overflow-x-auto rounded-lg bg-stone-100 p-3;
   }
-  .diary-prose pre code {
+  .prose-body pre code {
     @apply bg-transparent p-0;
+  }
+
+  /* A table from a draft ("who to call, what to give them, why") is a list
+     of records, and on a phone a three-column grid of paragraphs is
+     unreadable at any width — so below `sm` each row becomes its own small
+     card, every cell introduced by its column's name (the renderer puts
+     the header on each cell as `data-label`). From `sm` up it is a table:
+     rows on the canvas colour, a quiet uppercase header, cells top-aligned
+     so a long "why" doesn't float the short "who" to the middle. */
+  .prose-table {
+    @apply overflow-x-auto;
+  }
+  .prose-table table {
+    @apply w-full border-separate border-spacing-0 text-left text-[0.95em] leading-normal;
+  }
+  .prose-table th {
+    @apply border-b border-edge px-3 pb-2 text-[0.8em] font-semibold tracking-wide text-soft uppercase first:pl-0;
+  }
+  .prose-table td {
+    @apply border-b border-edge px-3 py-3 align-top first:pl-0 first:font-semibold;
+  }
+  .prose-table tr:last-child td {
+    @apply border-b-0;
+  }
+  .prose-table td ul {
+    @apply space-y-1;
+  }
+  @media (width < 40rem) {
+    .prose-table thead {
+      @apply sr-only;
+    }
+    .prose-table :is(table, tbody, tr, td) {
+      @apply block;
+    }
+    .prose-table tbody {
+      @apply space-y-3;
+    }
+    .prose-table tr {
+      @apply rounded-xl bg-canvas px-4 py-3;
+    }
+    .prose-table td {
+      @apply border-b-0 px-0 py-1 first:pt-0 first:text-[1.05em];
+    }
+    .prose-table td[data-label]:not(:first-child)::before {
+      content: attr(data-label);
+      @apply mb-0.5 block text-[0.75em] font-semibold tracking-wide text-soft uppercase;
+    }
   }
 
   /* A tinted aside inside a card: a recommendation, a caveat, a "here's why
