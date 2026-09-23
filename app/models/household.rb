@@ -26,6 +26,9 @@ class Household < ApplicationRecord
   # mortgage and property-tax footing.
   HOME_STATUSES = %w[ own rent other ].freeze
 
+  # One stored shape for every phone number (PhoneNumber).
+  normalizes :phone, with: ->(phone) { PhoneNumber.normalize(phone) }
+
   validates :name, presence: true
   validates :home_status, inclusion: { in: HOME_STATUSES }, allow_blank: true
   validate :time_zone_is_recognized

@@ -11,4 +11,28 @@ class ApplicationFormBuilderTest < ActionView::TestCase
     assert_match "Click to choose a file", html
     assert_match "Accepted formats: .pdf,.csv", html
   end
+
+  test "telephone_field shows the stored number masked and wires the mask" do
+    builder = ApplicationFormBuilder.new(:person, Person.new(phone: "+15036149061"), self, {})
+    html = builder.telephone_field(:phone)
+
+    assert_match 'value="(503) 614-9061"', html
+    assert_match 'data-controller="phone-input"', html
+    assert_match 'inputmode="tel"', html
+    assert_match "pattern=", html
+  end
+
+  test "telephone_field leaves a number it couldn't read submittable" do
+    builder = ApplicationFormBuilder.new(:person, Person.new(phone: "555-1234"), self, {})
+    html = builder.telephone_field(:phone)
+
+    assert_match 'value="555-1234"', html
+    assert_no_match "pattern=", html
+  end
+
+  test "a number saved before the mask arms the pattern only once it's retyped" do
+    builder = ApplicationFormBuilder.new(:person, Person.new(phone: "555-1234"), self, {})
+
+    assert_match "data-phone-input-pattern-value=", builder.telephone_field(:phone)
+  end
 end

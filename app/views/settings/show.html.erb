@@ -381,7 +381,7 @@
           <div class="flex flex-wrap items-end gap-2">
             <div class="min-w-56 flex-1 space-y-1">
               <label class="label" for="sms_to">Text this number</label>
-              <%= telephone_field_tag :to, nil, id: "sms_to", class: "input", placeholder: "+15555550123" %>
+              <%= telephone_field_tag :to, nil, id: "sms_to", class: "input" %>
             </div>
             <div class="space-y-1">
               <label class="label" for="sms_daily_limit">Max per day</label>
@@ -412,12 +412,12 @@
           <div class="flex flex-wrap gap-2">
             <div class="min-w-48 flex-1 space-y-1">
               <label class="label" for="signal_from">Send from</label>
-              <%= telephone_field_tag :from, nil, id: "signal_from", class: "input", placeholder: "+15555550123" %>
+              <%= telephone_field_tag :from, nil, id: "signal_from", class: "input" %>
               <p class="hint">The number the container is registered to.</p>
             </div>
             <div class="min-w-48 flex-1 space-y-1">
               <label class="label" for="signal_to">Message this number</label>
-              <%= telephone_field_tag :to, nil, id: "signal_to", class: "input", placeholder: "+15555550124" %>
+              <%= telephone_field_tag :to, nil, id: "signal_to", class: "input" %>
             </div>
           </div>
           <div class="flex flex-wrap items-end gap-2">

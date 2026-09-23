@@ -77,7 +77,7 @@
           <dd class="min-w-0 wrap-anywhere">
             <% if @pet.vet %>
               <%= link_to @pet.vet.name, @pet.vet, class: "text-primary-700 hover:underline" %>
-              <% if @pet.vet.phone.present? %> · <%= phone_to @pet.vet.phone, nil, class: "text-primary-700 hover:underline" %><% end %>
+              <% if @pet.vet.phone.present? %> · <%= phone_link @pet.vet.phone, class: "text-primary-700 hover:underline" %><% end %>
             <% else %>
               <span class="text-soft">No vet on file</span>
             <% end %>
