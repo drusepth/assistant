@@ -1,17 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The reminder form's Repeat picker (D-standing-reminders). A weekly repeat
-// unfolds the weekday chips and pre-checks the picked date's weekday; any
-// repeat unfolds the "Until" field and turns the date's label into
-// "Starting"; the monthly option names the picked day ("Every month on the
-// 19th"). All of it is presentation: the server composes the rule from
+// The Repeat picker (D-standing-reminders), on a task's form and on an
+// event's reminder. A weekly repeat unfolds the weekday chips and
+// pre-checks the picked date's weekday; any repeat unfolds the "until"
+// targets, folds the "once" ones, and relabels the date ("Due" becomes
+// "Starting" on a task); the monthly option names the picked day ("Every
+// month on the 19th"). All of it is presentation: the server composes the rule from
 // whatever the form sends, so with JavaScript off the same form still works
 // — the chips are simply always visible and the default day is the date's.
 const CODES = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
 const WEEKLY = ["weekly", "biweekly"]
 
 export default class extends Controller {
-  static targets = ["date", "repeat", "days", "day", "until"]
+  static targets = ["date", "repeat", "days", "day", "until", "once"]
+  static values = { onceLabel: { type: String, default: "On" }, repeatLabel: { type: String, default: "Starting" } }
 
   connect() {
     this.autoCode = null
@@ -45,9 +47,10 @@ export default class extends Controller {
 
   sync() {
     this.daysTarget.hidden = !this.weekly
-    // Every target that only matters on a repeat — the reminder form has one
-    // (Until); the task form's Repeat picker folds its start and time too.
+    // Every target that only matters on a repeat, and every one that only
+    // matters without one.
     this.untilTargets.forEach((target) => { target.hidden = !this.repeating })
+    this.onceTargets.forEach((target) => { target.hidden = this.repeating })
     if (this.weekly && this.checkedCodes().length === 0) this.checkDateWeekday()
   }
 
@@ -67,6 +70,7 @@ export default class extends Controller {
   // through Date.parse, which would take it as UTC midnight and hand back
   // yesterday's weekday for anyone west of Greenwich.
   dateParts() {
+    if (!this.hasDateTarget) return null
     const [year, month, day] = this.dateTarget.value.split("-").map(Number)
     return year && month && day ? { year, month, day } : null
   }
@@ -81,8 +85,9 @@ export default class extends Controller {
     const parts = this.dateParts()
     if (monthly) monthly.textContent = parts ? `Every month on the ${ordinal(parts.day)}` : "Every month"
 
+    if (!this.hasDateTarget) return
     const label = this.element.querySelector(`label[for="${this.dateTarget.id}"]`)
-    if (label) label.textContent = this.repeating ? "Starting" : "On"
+    if (label) label.textContent = this.repeating ? this.repeatLabelValue : this.onceLabelValue
   }
 }
 

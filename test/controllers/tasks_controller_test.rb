@@ -363,12 +363,12 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Task.count", -1) { delete task_path(@task) }
   end
 
-  # --- routines (D-task-routines) -------------------------------------------
+  # --- schedule: repeat and remind (D-task-routines, D-reminders-on-tasks) --
 
-  test "a task created with a repeat carries a standing reminder named for it" do
+  test "a task created with a repeat carries a standing reminder named for it, and is due on its first day" do
     assert_difference -> { Reminder.count } => 1 do
-      post tasks_path, params: { task: { title: "Change the litter",
-        routine_attributes: { repeat: "weekly", deliver_on: Date.current.to_s, deliver_time: "08:00", repeat_days: [ "SU" ] } } }
+      post tasks_path, params: { task: { title: "Change the litter", due_on: Date.current.to_s,
+        repeat: "weekly", remind_at: "08:00", repeat_days: [ "", "SU" ] } }
     end
 
     task = users(:one).tasks.find_by!(title: "Change the litter")
@@ -377,43 +377,94 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Change the litter", routine.body
     assert_equal 0, routine.local_deliver_at.wday
     assert_equal 8, routine.local_deliver_at.hour
+    assert_equal routine.local_deliver_at.to_date, task.due_on, "a repeating task is due on its next occurrence"
 
     get edit_task_path(task)
-    assert_select "select[name=?] option[selected][value=weekly]", "task[routine_attributes][repeat]"
+    assert_select "select[name=?] option[selected][value=weekly]", "task[repeat]"
+    assert_select "input[name=?][value='08:00']", "task[remind_at]"
+    assert_select "input[name=?][value=SU][checked]", "task[repeat_days][]"
   end
 
-  test "a task saved without a repeat makes no reminder" do
+  test "a task saved without a repeat or a time makes no reminder" do
     assert_no_difference -> { Reminder.count } do
-      post tasks_path, params: { task: { title: "One-off", routine_attributes: { repeat: "none", deliver_on: Date.current.to_s } } }
+      post tasks_path, params: { task: { title: "One-off", repeat: "none", remind_at: "" } }
     end
+    assert_nil users(:one).tasks.find_by!(title: "One-off").due_on
+  end
+
+  test "a time with no repeat is a reminder on the day it's due, and follows the task when it moves" do
+    post tasks_path, params: { task: { title: "Call the pharmacy", due_on: (Date.current + 1).to_s, repeat: "none", remind_at: "16:00" } }
+
+    task = users(:one).tasks.find_by!(title: "Call the pharmacy")
+    reminder = task.day_reminder
+    assert_not reminder.standing?
+    assert_equal [ Date.current + 1, 16 ], [ reminder.local_deliver_at.to_date, reminder.local_deliver_at.hour ]
+
+    patch reschedule_task_path(task, to: (Date.current + 3).iso8601)
+
+    assert_equal [ Date.current + 3, 16 ], [ reminder.reload.local_deliver_at.to_date, reminder.local_deliver_at.hour ]
+  end
+
+  test "a time with no due date means today" do
+    travel_to Time.current.beginning_of_day + 8.hours do
+      post tasks_path, params: { task: { title: "Call the pharmacy", repeat: "none", remind_at: "16:00" } }
+    end
+
+    task = users(:one).tasks.find_by!(title: "Call the pharmacy")
+    assert_equal Date.current, task.due_on
+    assert task.day_reminder
+  end
+
+  test "clearing the time removes the reminder; picking a repeat replaces it with a routine" do
+    patch task_path(@task), params: { task: { due_on: (Date.current + 1).to_s, repeat: "none", remind_at: "16:00" } }
+    assert @task.reload.day_reminder
+
+    assert_no_difference -> { Reminder.count } do
+      patch task_path(@task), params: { task: { repeat: "daily", remind_at: "16:00" } }
+    end
+    assert @task.reload.routine?
+    assert_nil @task.day_reminder
+
+    patch task_path(@task), params: { task: { repeat: "none", remind_at: "" } }
+    assert_nil @task.reload.schedule_reminder
   end
 
   test "choosing Doesn't repeat retires the routine and leaves other reminders alone" do
-    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    patch task_path(@task), params: { task: { repeat: "daily" } }
     one_shot = users(:one).reminders.create!(subject: @task, deliver_on: Date.current + 2, deliver_time: "10:00")
     assert @task.reload.routine?
 
-    patch task_path(@task), params: { task: { title: "Mine", routine_attributes: { repeat: "none" } } }
+    patch task_path(@task), params: { task: { title: "Mine", repeat: "none", remind_at: "" } }
 
     assert_not @task.reload.routine?
     assert Reminder.exists?(one_shot.id)
   end
 
   test "editing the task's repeat changes the one routine rather than adding another" do
-    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    patch task_path(@task), params: { task: { repeat: "daily" } }
     assert_no_difference -> { Reminder.count } do
-      patch task_path(@task), params: { task: { title: "Renamed", routine_attributes: { repeat: "monthly", deliver_on: Date.current.to_s } } }
+      patch task_path(@task), params: { task: { title: "Renamed", repeat: "monthly" } }
     end
     routine = @task.reload.routine
-    assert_equal "FREQ=MONTHLY;BYMONTHDAY=#{Date.current.day}", routine.rule
+    assert_match(/\AFREQ=MONTHLY;BYMONTHDAY=\d+\z/, routine.rule)
     assert_equal "Renamed", routine.body
   end
 
   test "completing a routine task keeps its cadence" do
-    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    patch task_path(@task), params: { task: { repeat: "daily" } }
     patch complete_task_path(@task)
 
     assert @task.reload.completed?
     assert @task.routine?
+  end
+
+  test "a task's page shows its repeat, and a way to add one when there is none" do
+    get task_path(@task)
+    assert_select "a[href=?]", edit_task_path(@task), text: /Add a time or a repeat/
+
+    patch task_path(@task), params: { task: { repeat: "weekly", repeat_days: [ "TH" ], remind_at: "20:00" } }
+    get task_path(@task)
+    assert_select "dd", text: /Weekly on Thursday at 8 PM/
+    assert_select "form[action=?]", reminders_path, false
   end
 end

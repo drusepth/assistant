@@ -5,6 +5,15 @@ take the trash out." The decision is logged as **D-standing-reminders**
 (`bin/decisions`); D-reminders is the foundation it amends, and everything
 D-reminders decided still holds.
 
+> **Amended by D-reminders-on-tasks.** A reminder is now always set on a
+> task or an event. The standalone reminder, the Today page's Reminders card
+> and its "+ Reminder" button are gone. A task's schedule is three fields on
+> the task form (*Due*, *Repeat*, *Remind me at*), and the plain-words box
+> fills the new-task form. The picker in §6 is still the grammar
+> underneath, but only an event's existing repeating reminder shows it as a
+> reminder form. The recurrence engine, the dispatcher and the missed-occurrence
+> handling below are unchanged.
+
 ---
 
 ## 1. The problem

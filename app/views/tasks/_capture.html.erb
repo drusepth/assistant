@@ -1,0 +1,28 @@
+<%# Plain words into the form below (D-standing-reminders,
+    D-reminders-on-tasks): one line, and the household's model fills in the
+    title, the day, the repeat and the time for the user to check. Only
+    ever a prefill — "Add task" is still the only write. Locals: text (what
+    to show in the box), error (optional), filled (optional: the form below
+    was just filled from this), return_to (optional). Off, and said so,
+    without a model. %>
+<div id="task_capture" class="mb-5 rounded-xl bg-canvas/60 p-3">
+  <% if model_configured? %>
+    <%= form_with url: parse_tasks_path, class: "flex flex-wrap items-end gap-2" do |form| %>
+      <%= form.hidden_field :return_to, value: local_assigns[:return_to] if local_assigns[:return_to].present? %>
+      <div class="min-w-56 flex-1">
+        <%= form.field :text, label_text: "Or just say it", value: text,
+              placeholder: "Take the trash out every Thursday night", maxlength: 200 %>
+      </div>
+      <%= form.submit "Fill it in", class: "btn btn-secondary", data: { turbo_submits_with: "Reading…" } %>
+    <% end %>
+    <% if local_assigns[:error] %>
+      <p class="field-error mt-2"><%= error %></p>
+    <% elsif local_assigns[:filled] %>
+      <p class="callout mt-2">Filled in below — check it, change anything, then Add task.</p>
+    <% else %>
+      <p class="hint mt-2">Say when, and whether it repeats — the form below gets filled in; nothing is saved until you add it.</p>
+    <% end %>
+  <% else %>
+    <p class="hint">Set up a model in Settings and you can say a task in plain words — "take the trash out every Thursday night" — and have the form filled in for you.</p>
+  <% end %>
+</div>

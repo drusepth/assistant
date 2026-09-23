@@ -32,6 +32,28 @@
             <dd class="min-w-0 wrap-anywhere"><%= @task.due_on.strftime("%B %-d, %Y") %></dd>
           </div>
         <% end %>
+        <%# The schedule the task form sets (D-reminders-on-tasks): read here,
+            changed with Edit, never managed as a reminder of its own. %>
+        <% schedule = @task.schedule_reminder %>
+        <% if schedule&.standing? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Repeats</dt>
+            <dd class="min-w-0 wrap-anywhere">
+              <%= schedule.cadence.upcase_first %><% if own %> at <%= reminder_clock(schedule) %> —
+                next <%= schedule.local_deliver_at.strftime("%a %b %-d") %><% end %>
+            </dd>
+          </div>
+        <% elsif schedule && own %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Reminder</dt>
+            <dd class="min-w-0 wrap-anywhere"><%= reminder_clock(schedule) %> on the day it's due</dd>
+          </div>
+        <% elsif own && !@task.completed? %>
+          <div class="flex gap-2">
+            <dt class="w-24 shrink-0 text-soft">Reminder</dt>
+            <dd class="min-w-0"><%= link_to "Add a time or a repeat", edit_task_path(@task), class: "text-primary-700 hover:underline" %></dd>
+          </div>
+        <% end %>
         <% if @task.goal %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Goal</dt>
@@ -125,7 +147,16 @@
   <% if own %>
     <div class="space-y-6">
       <%= render "shared/share_controls", subject: @task %>
-      <%= render "reminders/controls", subject: @task %>
+      <%# Reminders set before a task's schedule lived on its form ("the day
+          before") still go off, so they stay listed and removable here. %>
+      <% extras = @task.extra_reminders %>
+      <% if extras.any? %>
+        <%= render Ui::CardComponent.new(title: "More reminders", subtitle: "Sent to your phone at these times") do %>
+          <ul class="space-y-2">
+            <%= render partial: "reminders/reminder", collection: extras %>
+          </ul>
+        <% end %>
+      <% end %>
     </div>
   <% end %>
 </div>

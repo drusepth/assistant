@@ -22,7 +22,7 @@ class ReminderDispatchTest < ActiveJob::TestCase
   end
 
   test "a reminder that is not due yet stays quiet" do
-    @user.reminders.create!(body: "Later", deliver_on: Date.current + 1, deliver_time: "23:00")
+    @user.reminders.create!(subject: @user.tasks.create!(title: "Later"), body: "Later", deliver_on: Date.current + 1, deliver_time: "23:00")
 
     perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
 
@@ -140,22 +140,21 @@ class ReminderDispatchTest < ActiveJob::TestCase
 
   test "a routine firing brings its done task back into Today and pings" do
     task = @user.tasks.create!(title: "Change the litter", completed_at: 1.day.ago)
-    reminder = due_standing("Change the litter", "FREQ=WEEKLY;BYDAY=SU")
-    reminder.update_columns(subject_type: "Task", subject_id: task.id)
+    reminder = due_standing("Change the litter", "FREQ=WEEKLY;BYDAY=SU", subject: task)
 
     perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
 
     task.reload
     assert_not task.completed?, "the same row reopened, not a new one"
     assert task.today?
+    assert_equal reminder.local_deliver_at.to_date, task.due_on, "due on the day it came round for"
     assert_equal 1, @user.tasks.where(title: "Change the litter").count
     assert_requested @hook, times: 1
   end
 
   test "a routine that missed its day still brings the chore back, without the late ping" do
     task = @user.tasks.create!(title: "Buy cat food", completed_at: 5.days.ago)
-    reminder = due_standing("Buy cat food", "FREQ=DAILY", at: 3.days.ago)
-    reminder.update_columns(subject_type: "Task", subject_id: task.id)
+    reminder = due_standing("Buy cat food", "FREQ=DAILY", at: 3.days.ago, subject: task)
 
     perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
 
@@ -164,8 +163,8 @@ class ReminderDispatchTest < ActiveJob::TestCase
   end
 
   private
-    def due_standing(body, rule, at: 1.minute.ago)
-      reminder = @user.reminders.new(body: body, deliver_on: Date.current + 1, deliver_time: "09:00")
+    def due_standing(body, rule, at: 1.minute.ago, subject: @user.tasks.create!(title: body))
+      reminder = @user.reminders.new(subject: subject, body: body, deliver_on: Date.current + 1, deliver_time: "09:00")
       reminder.save!
       # A standing reminder aligns itself to its rule on save; the dispatcher's
       # job is what happens once one comes due, so plant the moment directly.
@@ -174,7 +173,7 @@ class ReminderDispatchTest < ActiveJob::TestCase
     end
 
     def due_reminder(body, at: 1.minute.ago)
-      reminder = @user.reminders.new(body: body, deliver_on: Date.current + 1, deliver_time: "09:00")
+      reminder = @user.reminders.new(subject: @user.tasks.create!(title: body), body: body, deliver_on: Date.current + 1, deliver_time: "09:00")
       # Past times are rejected on create for the user's sake; the
       # dispatcher's job is what happens once a real one comes due.
       reminder.save!

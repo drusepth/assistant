@@ -1,0 +1,57 @@
+<%# When a task happens and whether it pings you (D-reminders-on-tasks):
+    the due day, a Repeat, and a time. The same three fields in every task
+    form, so "remind me to call the pharmacy at 4pm" and "take the trash
+    out every Thursday night" are both just a task.
+    Locals: form (the task's).
+
+    Presentation only lives in reminder-form: it unfolds the weekday chips
+    for a weekly repeat and the "Until" field for any repeat, and relabels
+    the date. The server composes the rule from whatever is sent, so this
+    works with JavaScript off. %>
+<% task = form.object %>
+<% weekly = Reminder::WEEKLY_REPEATS.include?(task.repeat) %>
+<% repeating = task.repeat != "none" %>
+<div class="space-y-3" data-controller="reminder-form"
+     data-reminder-form-once-label-value="Due" data-reminder-form-repeat-label-value="Starting">
+  <div class="flex flex-wrap items-start gap-x-3 gap-y-2">
+    <div class="min-w-44 flex-1">
+      <%= form.field :due_on, label_text: repeating ? "Starting" : "Due" do %>
+        <%= render "shared/date_shortcuts_field", form: form, method: :due_on,
+              data: { reminder_form_target: "date", action: "change->reminder-form#dateChanged" } %>
+      <% end %>
+    </div>
+    <div class="min-w-40 flex-1">
+      <%= form.field :repeat, label_text: "Repeat" do %>
+        <%= form.select :repeat, Reminder::REPEAT_OPTIONS.map { |key, text| [ text, key ] }, { selected: task.repeat },
+              data: { reminder_form_target: "repeat", action: "reminder-form#repeatChanged" } %>
+      <% end %>
+    </div>
+    <div class="min-w-32">
+      <%= form.field :remind_at, as: :time_field, label_text: "Remind me at", value: task.remind_at %>
+    </div>
+  </div>
+
+  <%# Checkboxes wearing chips, so a Thursday is one tap and "Mon, Wed,
+      Fri" is three. Hidden unless the repeat is weekly. %>
+  <div class="flex flex-wrap items-center gap-1.5" data-reminder-form-target="days" <%= "hidden" unless weekly %>>
+    <span class="label">On</span>
+    <% Recurrence::Rule::WEEKDAYS.keys.rotate(1).each do |code| %>
+      <label class="cursor-pointer">
+        <%= check_box_tag "#{form.object_name}[repeat_days][]", code, task.repeat_days.include?(code),
+              id: nil, class: "peer sr-only", data: { reminder_form_target: "day" } %>
+        <span class="chip chip-toggle"><%= Recurrence::Rule::DAY_NAMES[code].first(3) %></span>
+      </label>
+    <% end %>
+  </div>
+
+  <div class="max-w-48" data-reminder-form-target="until" <%= "hidden" unless repeating %>>
+    <%= form.field :repeat_until, as: :date_field, label_text: "Until", hint: "Blank = keeps going", value: task.repeat_until %>
+  </div>
+
+  <p class="hint" data-reminder-form-target="until" <%= "hidden" unless repeating %>>
+    On each of those days this task comes back to Today, even if you checked it off last time, and you get a reminder (at 9am unless you pick a time).
+  </p>
+  <p class="hint" data-reminder-form-target="once" <%= "hidden" if repeating %>>
+    Pick a time to get a reminder on the day it's due. No time, no reminder.
+  </p>
+</div>

@@ -80,6 +80,10 @@ class Reminder < ApplicationRecord
 
   validates :body, presence: true, length: { maximum: MAX_BODY }
   validates :deliver_at, presence: true
+  # Always about something (D-reminders-on-tasks): "remind me to call the
+  # pharmacy at 4pm" is a task with a time on it, so there is one list of
+  # things to do rather than two that overlap.
+  validates :subject, presence: { message: "is missing — a reminder is set on a task or an event" }
   validates :subject_type, inclusion: { in: SUBJECT_TYPES }, allow_nil: true
   validate :subject_is_the_users_own
   validate :rule_is_standing_safe
@@ -170,11 +174,24 @@ class Reminder < ApplicationRecord
 
   def local_deliver_at = deliver_at.in_time_zone(zone)
 
+  # "20:00" — the wall-clock time it goes off, for a form to read back.
+  def time_of_day = local_deliver_at.strftime("%H:%M")
+
+  # "At 4pm on the day" as a lead time: relative reminders count back from
+  # the start of an item's day (Remindable::DAY_START_HOUR), so a time later
+  # than that is a negative lead. Stored this way it moves with the task's
+  # due date for free, the same as "an hour before" does.
+  def self.lead_for_time_of_day(text)
+    hour, minute = text.to_s.split(":").map(&:to_i)
+    Remindable::DAY_START_HOUR * 60 - (hour.to_i * 60 + minute.to_i)
+  end
+
   private
     def zone = user&.household&.zone || Time.zone
 
     # "today at 4:00 PM" — only for a reminder that counts back from
     # something, where the interesting time is the item's, not the ping's.
+    # A task's day has no time of its own, so it is "due today".
     def subject_time_phrase
       return nil unless relative?
 
@@ -182,6 +199,8 @@ class Reminder < ApplicationRecord
       return nil if anchor.nil?
 
       local = anchor.in_time_zone(zone)
+      return "due #{day_word(local.to_date)}" if subject.is_a?(Task)
+
       "#{day_word(local.to_date)} at #{local.strftime("%-l:%M %p")}"
     end
 

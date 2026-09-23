@@ -1,0 +1,17 @@
+<%# Whether a task repeats and when it pings (D-reminders-on-tasks), on the
+    row itself — the Repeat and "Remind me at" fields read back where the
+    task is, so no separate list of reminders is needed to find them. The
+    time is the owner's own ping, so only the owner sees it. Locals: task. %>
+<% reminder = task_schedule_reminder(task) %>
+<% if reminder %>
+  <% mine = reminder.user_id == Current.user.id %>
+  <% if reminder.standing? %>
+    <span class="inline-flex items-center gap-1 text-xs text-soft" title="Repeats <%= reminder.cadence %>">
+      <%= icon(:arrow_path, css_class: "size-3.5") %><%= repeat_label(reminder) %><%= " · #{reminder_clock(reminder)}" if mine %>
+    </span>
+  <% elsif mine %>
+    <span class="inline-flex items-center gap-1 text-xs text-soft" title="Reminder at <%= reminder_clock(reminder) %>">
+      <%= icon(:bell, css_class: "size-3.5") %><%= reminder_clock(reminder) %>
+    </span>
+  <% end %>
+<% end %>

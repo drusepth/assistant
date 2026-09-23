@@ -1,36 +1,28 @@
-<%# One reminder in a list (D-reminders, D-standing-reminders). The row is
-    the fact — what, when, how often — and opens in place to be changed, so
-    "make it 8pm instead" or "actually, every day" is one tap and one form,
-    never remove-and-redo. Locals:
-      reminder
-      show_body — Today shows what you wrote; an item's page already says %>
+<%# One reminder in a list (D-reminders): when it goes off, and how often
+    if it repeats. The row opens in place to be changed, so "make it 8pm
+    instead" is one tap and one form, never remove-and-redo. Listed on the
+    item it is set on, which already says what it is about. Locals: reminder. %>
 <% when_text = reminder.local_deliver_at.strftime("%a %b %-d at %-l:%M %p") %>
 <li class="flex items-start gap-2 rounded-lg border border-edge px-3 py-2 text-sm">
   <details class="min-w-0 flex-1">
     <summary class="flex cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-0.5 [&::-webkit-details-marker]:hidden">
-      <% if show_body %>
-        <span class="text-ink wrap-anywhere"><%= reminder.body %></span>
-      <% end %>
-      <span class="text-soft">
+      <span class="inline-flex items-center gap-1.5 text-ink">
+        <%= icon(reminder.standing? ? :arrow_path : :bell, css_class: "size-3.5 text-soft") %>
         <% if reminder.standing? %>
           <%= reminder.cadence.upcase_first %> · next <%= when_text %>
-        <% elsif reminder.relative? %>
-          <%= when_text %> — <%= Reminder::LEAD_OPTIONS[reminder.lead_minutes]&.downcase %>
+        <% elsif reminder.relative? && Reminder::LEAD_OPTIONS.key?(reminder.lead_minutes) %>
+          <%= Reminder::LEAD_OPTIONS[reminder.lead_minutes] %> · <%= when_text %>
         <% else %>
           <%= when_text %>
         <% end %>
       </span>
-      <% if show_body && reminder.subject %>
-        <%= link_to "on this #{reminder.subject_type.downcase}", reminder.subject,
-              class: "text-primary-700 hover:underline" %>
-      <% end %>
       <span class="text-xs font-medium text-primary-700">Change</span>
     </summary>
     <div class="mt-3 border-t border-edge pt-3">
-      <% if reminder.relative? %>
+      <% if reminder.relative? && Reminder::LEAD_OPTIONS.key?(reminder.lead_minutes) %>
         <%= render "reminders/lead_form", reminder: reminder, subject: reminder.subject %>
       <% else %>
-        <%= render "reminders/form", reminder: reminder, subject: reminder.subject, show_body: reminder.subject.nil? %>
+        <%= render "reminders/form", reminder: reminder, subject: reminder.subject %>
       <% end %>
     </div>
   </details>

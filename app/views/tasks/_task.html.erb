@@ -49,6 +49,7 @@
           <%= task_due_label(task) %>
         </span>
       <% end %>
+      <%= render "tasks/schedule_chips", task: task %>
       <%= render "tasks/goal_chip", task: task, hide_goal: local_assigns[:hide_goal] %>
       <%= render "shared/item_chips", item: task %>
     </div>
