@@ -110,6 +110,21 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
       "an unrecorded sex is not a reason to guess one"
   end
 
+  test "the species box suggests the list and takes anything typed" do
+    get new_pet_path
+    assert_response :success
+    assert_select "input[name='pet[species]'][list='pet_species_options']"
+    assert_select "datalist#pet_species_options option[value='Guinea pig']"
+
+    post pets_path, params: { pet: { name: "Nibbles", species: "Guinea pig" } }
+    nibbles = Pet.find_by!(name: "Nibbles")
+    assert_redirected_to nibbles
+    assert_equal "Guinea pig", nibbles.species_label
+
+    get edit_pet_path(nibbles)
+    assert_select "input[name='pet[species]'][value='Guinea pig']"
+  end
+
   test "the household box writes two visible grants; unticked writes none" do
     post pets_path, params: { pet: { name: "Luna", species: "cat" }, share_with_household: "1" }
     luna = Pet.find_by!(name: "Luna")

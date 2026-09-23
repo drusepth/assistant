@@ -141,6 +141,15 @@
             <% end %>
           <% elsif input.textarea? %>
             <%= text_area_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", rows: 6, id: "inputs_#{input.name}" %>
+          <% elsif input.options %>
+            <%# A text input with options suggests them and takes anything. %>
+            <%= text_field_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", id: "inputs_#{input.name}",
+                  list: "inputs_#{input.name}_options", autocomplete: "off" %>
+            <datalist id="inputs_<%= input.name %>_options">
+              <% input.options.each do |option| %>
+                <option value="<%= option %>"></option>
+              <% end %>
+            </datalist>
           <% else %>
             <%= text_field_tag "inputs[#{input.name}]", @tool_run.inputs[input.name], class: "input", id: "inputs_#{input.name}" %>
           <% end %>

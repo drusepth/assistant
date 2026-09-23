@@ -2,8 +2,17 @@
   <%= render "pets/photo_field", form: form, pet: pet %>
   <%= form.field :name %>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%= form.field :species do %>
-      <%= form.select :species, Pet::SPECIES.map { |slug| [ Pet::SPECIES_LABELS[slug], slug ] } %>
+    <%# A combobox, not a select: the list suggests, the owner decides. A
+        dog, cat, horse or rabbit picked from it gets the vaccine catalog and
+        care slate for that species; anything typed is kept as typed. %>
+    <%= form.field :species, hint: "Pick one or type your own." do %>
+      <%= form.text_field :species, value: (pet.species_label if pet.species.present?), list: "pet_species_options",
+            placeholder: "Dog, cat, guinea pig…", autocomplete: "off", maxlength: 60, required: true %>
+      <datalist id="pet_species_options">
+        <% Pet.species_options.each do |option| %>
+          <option value="<%= option %>"></option>
+        <% end %>
+      </datalist>
     <% end %>
     <div data-controller="breed-guess" data-breed-guess-url-value="<%= breed_guess_path %>">
       <%= form.field :breed do %>

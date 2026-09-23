@@ -64,10 +64,29 @@ class PetTest < ActiveSupport::TestCase
     assert Pet.exists?(rex.id), "nothing is deleted"
   end
 
-  test "species is a closed list, because a kind registry keys off it" do
-    pet = users(:one).pets.new(name: "Iggy", species: "dinosaur", section: @rex.section)
+  test "species takes whatever the owner types, and a known one becomes the slug the registries read" do
+    iggy = users(:one).pets.new(name: "Iggy", species: "  guinea   pig ", section: @rex.section)
+    assert iggy.valid?
+    assert_equal "guinea pig", iggy.species
+    assert_equal "Guinea pig", iggy.species_label
+
+    [ "Cat", "cats", "CAT", "cat" ].each do |typed|
+      pet = users(:one).pets.new(name: "Luna", species: typed, section: @rex.section)
+      pet.validate
+      assert_equal "cat", pet.species, "#{typed.inspect} is the cat the vaccine catalog knows"
+    end
+
+    assert_equal "Other", users(:one).pets.new(species: "other").species_label, "pets saved before stay readable"
+  end
+
+  test "species is still required, and a typed one gets the generic slate rather than an invented one" do
+    pet = users(:one).pets.new(name: "Iggy", species: " ", section: @rex.section)
     assert_not pet.valid?
     assert_includes pet.errors.full_messages.to_sentence, "Species"
+
+    pet.species = "Axolotl"
+    assert_equal [ "pet_wellness" ], Pets::CareKinds.for(pet).map(&:key)
+    assert_empty Pets::Vaccines.for(pet.species)
   end
 
   test "sex is a closed list, because the app's copy reads it for a pronoun" do
