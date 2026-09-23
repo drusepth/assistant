@@ -34,6 +34,10 @@ module Pets
 
     def ledger? = SpendingTransaction.where(user_id: user.id).exists?
 
+    # Whether the card has anything to say: only when the ledger has actually
+    # filed pet spending. An empty card is noise on a pet page.
+    def any? = monthly_average_cents.present?
+
     def transactions
       return SpendingTransaction.none if category.nil?
 

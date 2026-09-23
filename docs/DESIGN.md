@@ -71,6 +71,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.chip-toggle` — a chip that is a checkbox: follows a visually hidden
      `peer` input and wears its checked state (the weekday picker, see
      D-standing-reminders)
+     — or, as a link that switches something on and off, wears
+     `aria-pressed="true"` instead (the calendar's layers)
    - `.tab-bar`/`.tab` (+ `.tab-active`) — a page's surface switch, as links
      so each surface is a URL (see D-tasks-two-surfaces)
    - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a

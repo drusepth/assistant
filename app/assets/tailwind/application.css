@@ -336,6 +336,12 @@
   .chip-toggle {
     @apply cursor-pointer select-none border border-edge text-soft hover:border-primary-500 hover:text-primary-800 peer-checked:border-primary-600 peer-checked:bg-primary-600 peer-checked:text-primary-50 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500/30;
   }
+  /* The same chip as a link that switches something on and off (the
+     calendar's layers): it wears the state through aria-pressed, so the
+     look and what a screen reader hears can't disagree. */
+  .chip-toggle[aria-pressed="true"] {
+    @apply border-primary-600 bg-primary-600 text-primary-50 hover:text-primary-50;
+  }
 
   /* A page's surface switch (D-tasks-two-surfaces): links, not buttons —
      each tab is a URL, so back and bookmark work. The active tab sits on
