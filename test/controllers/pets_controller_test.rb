@@ -393,6 +393,12 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
 
     account = users(:one).spending_accounts.create!(name: "Checking", kind: "checking")
     SpendingTransaction.create!(user_id: users(:one).id, spending_account_id: account.id,
+      occurred_on: 1.month.ago.to_date, amount_cents: -1_000, descriptor: "SAFEWAY",
+      fingerprint: "t-#{SecureRandom.hex(4)}", source: "statement")
+    get pet_path(@rex)
+    assert_select "h2", { text: "Cost of care", count: 0 }, "a ledger with no pet spending has nothing to show"
+
+    SpendingTransaction.create!(user_id: users(:one).id, spending_account_id: account.id,
       occurred_on: 1.month.ago.to_date, amount_cents: -4_200, descriptor: "CHEWY",
       budget_category_id: category.id, fingerprint: "t-#{SecureRandom.hex(4)}", source: "statement")
     get pet_path(@rex)

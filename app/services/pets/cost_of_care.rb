@@ -34,11 +34,9 @@ module Pets
 
     def ledger? = SpendingTransaction.where(user_id: user.id).exists?
 
-    # Whether the card has anything to say. Without a ledger there is no
-    # spending to report and no shop to teach a rule for, so the card would
-    # be an empty box; with one, it carries either the number or the rule
-    # form that files the next Chewy order where this card can see it.
-    def any? = category.present? && ledger?
+    # Whether the card has anything to say: only when the ledger has actually
+    # filed pet spending. An empty card is noise on a pet page.
+    def any? = monthly_average_cents.present?
 
     def transactions
       return SpendingTransaction.none if category.nil?
