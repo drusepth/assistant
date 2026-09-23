@@ -45,7 +45,7 @@ All want their own design conversation first:
 
 Ready to build without one:
 
-0. The Food section (`docs/FOOD_PLAN.md`, designed 2026-09-23): F1 (section + shared kitchen) → F2 (live shared shopping lists) → F3 (food catalog) → F4 (fridge) → F5 (meal plan) → F6 (suggestions) → F7 (watchers and intake doors) — F1–F2 need no model and are worth shipping alone
+0. Food follow-ons (`docs/FOOD_PLAN.md` §9, F1–F7 built 2026-09-23): the grocery-delivery email door, the defrost reminder offer, the model's draft-recipe proposal, and the FoodKeeper shelf-life dataset once its licence is checked (Q-food-shelf-life)
 
 6. Email follow-ons (`docs/EMAIL_PLAN.md` §10 parked list): sending mail's consent design (Q19), receipt/renewal signals feeding Money watchers over the People/mirror linkage, `person_email_addresses` normalization if single-address matching disappoints, wiring the E0 `households.region` into the Rights/Money tool prompts (Q12's other half)
 7. OAuth per D27 when Google sync is next up (stateless link relay + "Sign in with Google" → first-class Google provider riding the existing importers)

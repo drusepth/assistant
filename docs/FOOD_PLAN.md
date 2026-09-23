@@ -191,7 +191,7 @@ So the thing matched on is a row: **`foods`**, per kitchen.
 ```
 foods           kitchen, name ("all-purpose flour"), aisle, default_location,
                 kind_of_id (→ foods, nullable: "chicken thighs" → "chicken"),
-                allergens (closed set), merged_into_id
+                allergens (closed set), staple
 food_aliases    food, key (the normalised item_key that resolved to it)
 ```
 
@@ -213,7 +213,7 @@ nullable `food_id`.
   foods; after the first month almost every new line is an alias hit, and the
   model sees only the genuinely new.
 - **The user's corrections are rules, and rules are deterministic.** "These
-  are the same" merges two foods (`merged_into_id`, aliases move); "this is
+  are the same" merges two foods (aliases and rows move, the merged row goes); "this is
   in the Bakery aisle" edits the column. D-no-keyword-logic excludes the
   user's own explicit rules from its reach, and these are exactly that.
 - **No model: exact matches only, and the page says so.** A key with no alias
@@ -307,7 +307,8 @@ create_table :foods do |t|                 # unique (kitchen, lower(name)) among
   t.string  :default_location              # fridge / freezer / pantry
   t.references :kind_of, foreign_key: { to_table: :foods, on_delete: :nullify }
   t.json    :allergens, null: false, default: []   # Food::ALLERGENS subset
-  t.references :merged_into, foreign_key: { to_table: :foods }
+  t.boolean :staple, null: false, default: false   # "we always have it" (§9)
+  t.datetime :filed_at                     # when the model filed it
   t.timestamps
 end
 
@@ -374,7 +375,8 @@ create_table :diners do |t|
   t.timestamps
 end
 
-add_reference :recipe_ingredients, :food, foreign_key: { on_delete: :nullify }
+# (No food_id on recipe_ingredients — see §9: a recipe resolves through the
+# viewer's kitchen's aliases at match time.)
 ```
 
 - **`Kitchen`**: `Visible`, joins `AccessGrant::ITEM_TYPES`; not `Sectionable`
@@ -531,15 +533,15 @@ diff) on the suggestion that lands on accept (D-agent-prepared-work).
 
 Each wave lands green (`bin/rails test`, `bin/rubocop`) and ships alone.
 
-| Wave | Contents |
-|---|---|
-| **F1 — the section and the kitchen** | Food seed row + `AddFoodSection` migration; `Sections::Panels::Food` with the recipes strip and tools row; `Kitchen` (`Visible`, `ITEM_TYPES`, the "cook here" permission and its share-card wording, `Kitchen.for`, the share-this-kitchen card); `CategorizeRecipeJob` sees Food |
-| **F2 — shopping lists** | `shopping_lists` + items, quick-add through the parser's line reader, merge-on-add by `item_key` (exact, pre-catalog), check-off, "In the basket", the in-store page, Turbo broadcasts, optimistic taps; recipe page "Add missing to list" (everything missing, until F4) |
-| **F3 — the food catalog (D-food-catalog)** | `foods` + `food_aliases` + the `food_id` columns, `ResolveFoodsJob` (batched, validated, alias-cached), backfill for existing recipes, the no-model fallback and its line, the catalog page with merge/edit, aisle grouping + per-kitchen aisle order |
-| **F4 — the fridge** | `pantry_items`, the three-tab page, quick-add, expiry/opened dates, used-up/move/add-to-list, check-off-puts-away, "Cooked it" use-up checklist, recipe page "In your kitchen: 7 of 9" |
-| **F5 — the plan** | `meals`, the week grid and hub strip, drag between days, the calendar meal band, "Make the list for this week" (scaled, subtracted, idempotent), meal ↔ Event link |
-| **F6 — suggestions (D-food-suggestions)** | Ready / Use it up / Buy to unlock queries and their hub rows and full page; diners + allergen exclusion; model picks, reasons, and labelled swaps; the draft-recipe proposal; the Plan my week tool |
-| **F7 — watchers and doors** | the four watchers; `Landing::PantryItem`; grocery-receipt suggestion from `email_receipt`; pet food → list; the defrost reminder offer; the Groceries budget line on the hub |
+| Wave | Contents | Status |
+|---|---|---|
+| **F1 — the section and the kitchen** | Food seed row + `AddFoodSection` migration; `Sections::Panels::Food` with the recipes strip and tools row; `Kitchen` (`Visible`, `ITEM_TYPES`, the "cook here" permission and its share-card wording, `Kitchen.for`, the share-this-kitchen card); `CategorizeRecipeJob` sees Food | ✅ built 2026-09-23 |
+| **F2 — shopping lists** | `shopping_lists` + items, quick-add through the parser's line reader, merge-on-add by `item_key` (exact, pre-catalog), check-off, "In the basket", the in-store page, Turbo broadcasts, optimistic taps; recipe page "Add missing to list" (everything missing, until F4) | ✅ built 2026-09-23 |
+| **F3 — the food catalog (D-food-catalog)** | `foods` + `food_aliases` + the `food_id` columns, `ResolveFoodsJob` (batched, validated, alias-cached), backfill for existing recipes, the no-model fallback and its line, the catalog page with merge/edit, aisle grouping + per-kitchen aisle order | ✅ built 2026-09-23 |
+| **F4 — the fridge** | `pantry_items`, the three-tab page, quick-add, expiry/opened dates, used-up/move/add-to-list, check-off-puts-away, "Cooked it" use-up checklist, recipe page "In your kitchen: 7 of 9" | ✅ built 2026-09-23 |
+| **F5 — the plan** | `meals`, the week grid and hub strip, drag between days, the calendar meal band, "Make the list for this week" (scaled, subtracted, idempotent), meal ↔ Event link | ✅ built 2026-09-23 (moving is a form, not a drag — §9) |
+| **F6 — suggestions (D-food-suggestions)** | Ready / Use it up / Buy to unlock queries and their hub rows and full page; diners + allergen exclusion; model picks, reasons, and labelled swaps; the draft-recipe proposal; the Plan my week tool | ✅ built 2026-09-23, less the draft-recipe proposal (§9) |
+| **F7 — watchers and doors** | the four watchers; `Landing::PantryItem`; grocery-receipt suggestion from `email_receipt`; pet food → list; the defrost reminder offer; the Groceries budget line on the hub | ✅ built 2026-09-23, less the email door and the defrost offer (§9) |
 
 F1–F2 are worth shipping alone — a shared, live grocery list is the single
 most-asked-for household feature there is and needs neither a model nor a
@@ -578,3 +580,48 @@ and one share covers the lists, the fridge and the plan together.
   closed tab loses them. A real offline list needs a service worker and a
   merge rule for two phones that both went through a dead zone. Build only if
   the queue proves insufficient in real stores.
+
+---
+
+## 9. As built (2026-09-23)
+
+All seven waves landed in one pass. Where the build differs from the design
+above, the build is the record:
+
+- **No `recipe_ingredients.food_id`, no `merged_into`.** A recipe is owned by
+  a user and a food by a kitchen, and a cook can cook in more than one
+  kitchen, so a recipe line resolves through the *viewer's* kitchen's
+  `food_aliases` at match time (`Kitchens::Stock`) rather than through a
+  cached column that would be right for one kitchen only. A merge moves the
+  aliases and rows onto the target and deletes the merged food; the alias
+  is what carries the merge forward, so no tombstone is needed.
+- **Staples.** Recipes list water, salt and oil, so without a way to say
+  "we always have it" almost nothing was ever *ready*. `foods.staple` counts
+  as in the kitchen for every recipe and never goes on a list. The model
+  proposes it when filing (only a literal `true`, and only for what nearly
+  every kitchen has); the household toggles it on the food's page.
+- **`list_before_shop` became `meal_needs`.** Finding "the shopping trip" on
+  the calendar would mean reading event titles for meaning
+  (D-no-keyword-logic). The watcher watches the meal instead: a dinner in
+  the next two days whose missing ingredients are neither in the kitchen nor
+  on a list.
+- **Plan my week is a kitchen page, not a `Tool`.** The tool framework lands
+  Notes and Tasks; this lands meals. It is a proposal page on the plan (a
+  `POST` that renders, saves nothing) and an accept that creates only the
+  ticked, still-free nights.
+- **The used-up checklist starts unticked.** Nothing records how much a
+  recipe used, so "pre-ticked for the ones it uses a lot of" had nothing to
+  stand on.
+- **Moving a meal is a form, not a drag.** Date and slot on the meal's own
+  card; it works with JavaScript off and on a phone.
+- **The food-shopping budget line is a user rule.** Which envelope is food
+  shopping is marked by each user on their own budget category from the
+  kitchen's settings (`budget_categories.food_shopping`), and the hub shows
+  it to that user only — never by reading category names.
+- **Pieces not built in this pass:** the grocery-delivery email door
+  (`email_receipt` → "put these in the kitchen?"), the defrost reminder
+  offer, the model's draft-recipe proposal ("nothing you've saved uses the
+  squash"), and the FoodKeeper shelf-life dataset (Q-food-shelf-life,
+  resolved to build it once its licence and coverage are checked). A receipt
+  *photo* already reaches the kitchen through document intake
+  (`Landing::PantryItem`).
