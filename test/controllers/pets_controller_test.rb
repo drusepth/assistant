@@ -339,11 +339,13 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
       "a pet is not a group — her card is her own"
   end
 
-  test "the pet tools live on the Pets hub, as buttons, and nowhere else in the rail" do
+  test "the Pets hub has no tools card: arrival rides the add tile, the crisis tool sits under the cards" do
     get section_path("pets")
-    assert_select "a.btn[href^=?]", new_tool_run_path("lost_pet"), text: "My pet is missing"
-    assert_select "a.btn[href^=?]", new_tool_run_path("new_pet"), text: "Bringing a pet home"
+    assert_select "h2", text: "What the app can do", count: 0
     assert_select "h2", text: "Tools", count: 0
+    assert_select "a[href^=?]", new_tool_run_path("vet_visit_prep"), count: 0
+    assert_select "a[href=?]", new_tool_run_path("new_pet"), text: /Bringing one home soon/
+    assert_select "a[href=?]", new_tool_run_path("lost_pet", inputs: { pet_id: @rex.id }), text: /Rex is missing/
 
     %w[ people health ].each do |slug|
       get section_path(slug)
@@ -352,13 +354,10 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "with one pet the hub's tools already know which" do
-    get section_path("pets")
-    assert_select "a[href=?]", new_tool_run_path("vet_visit_prep", inputs: { pet_id: @rex.id })
-
+  test "with several pets the hub's missing-pet link asks which" do
     create_pet(name: "Luna", species: "cat")
     get section_path("pets")
-    assert_select "a[href=?]", new_tool_run_path("vet_visit_prep")
+    assert_select "a[href=?]", new_tool_run_path("lost_pet"), text: /A pet is missing/
   end
 
   test "the pet page carries her radar, and a remembered pet's stops" do
