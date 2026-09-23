@@ -20,6 +20,13 @@ class TodayControllerTest < ActionDispatch::IntegrationTest
     assert_match "Tonight", response.body
   end
 
+  test "the header carries + Task and + Reminder, and the reminder form lives in its dropdown" do
+    get today_path
+    assert_select "[data-quick-add-name-param=task]", text: /Task/
+    assert_select "[data-quick-add-name-param=reminder]", text: /Reminder/
+    assert_select "[data-quick-add-target=panel][data-name=reminder] form[action=?]", reminders_path
+  end
+
   test "shows tomorrow's tasks and events in the get-ready section" do
     users(:one).tasks.create!(title: "Pack gym bag", due_on: Date.tomorrow)
     users(:one).events.create!(title: "Dentist checkup", starts_at: Date.tomorrow.noon)
