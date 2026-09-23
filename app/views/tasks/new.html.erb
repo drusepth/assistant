@@ -1,6 +1,6 @@
 <%= render Ui::PageHeaderComponent.new(title: "New task") %>
 <div class="max-w-xl">
   <div class="card p-6">
-    <%= render "quick_form", task: @task, cancel_url: tasks_path, return_to: params[:return_to] %>
+    <%= render "quick_form", task: @task, cancel_url: return_to_path(tasks_path), return_to: params[:return_to] %>
   </div>
 </div>

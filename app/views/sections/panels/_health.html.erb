@@ -44,7 +44,7 @@
                       class: "text-primary-700 hover:underline" %>
               <% end %>
               <%= link_to status.state == :unknown ? "Log a past #{status.kind.visit_noun}" : "Add appointment",
-                    new_event_path(title: status.kind.appointment_title, section_ids: [ section.id ]),
+                    new_event_path(title: status.kind.appointment_title, section_ids: [ section.id ], return_to: current_page_path),
                     class: "text-primary-700 hover:underline" %>
             <% end %>
           </div>

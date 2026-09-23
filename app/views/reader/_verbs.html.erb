@@ -37,5 +37,5 @@
 
 <%# The point of the whole section (docs/HOBBIES.md): a river that ends in
     doing something, not in a better-groomed reading list. %>
-<%= link_to "Task", new_task_path(title: item.title, section_ids: item.feed.section_ids),
+<%= link_to "Task", new_task_path(title: item.title, section_ids: item.feed.section_ids, return_to: current_page_path),
       class: klass %>

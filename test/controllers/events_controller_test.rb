@@ -31,6 +31,17 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Dental cleaning", response.body
   end
 
+  test "cancel goes back where the form was opened from, else the calendar" do
+    get new_event_path(return_to: "/pets/1")
+    assert_select "a.btn-ghost[href=?]", "/pets/1", text: "Cancel"
+
+    get new_event_path(return_to: "//evil.example")
+    assert_select "a.btn-ghost[href=?]", calendar_path, text: "Cancel"
+
+    get new_event_path
+    assert_select "a.btn-ghost[href=?]", calendar_path, text: "Cancel"
+  end
+
   test "a health event's page offers the counts-as override and saves it" do
     event = users(:one).events.create!(title: "Dr. Chen, 2pm", starts_at: 1.month.ago, all_day: true)
     event.sections << sections(:health)

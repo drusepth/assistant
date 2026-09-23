@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::Base
   include Authentication
   include VaultSession
-  helper_method :vault_unlocked?
+  helper_method :vault_unlocked?, :return_to_path
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
@@ -37,6 +37,8 @@ class ApplicationController < ActionController::Base
 
     # Capture forms can send the browser back where capture happened (e.g.
     # the dashboard's inline quick-add panels) via a hidden return_to field.
+    # The capture pages' Cancel goes there too, so backing out of a form
+    # opened from a pet card lands on the pet, not the calendar.
     # Only local paths are honored.
     def return_to_path(fallback)
       path = params[:return_to].to_s

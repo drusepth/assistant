@@ -8,6 +8,19 @@ module ApplicationHelper
 
   alias_method :auto_sort_enabled?, :model_configured?
 
+  # The page the user is looking at, for a link's return_to — so the form it
+  # opens sends Cancel and Save back here. A row re-rendered by a verb's
+  # turbo stream is drawn during a PATCH, whose own path is no page at all,
+  # so there the page is the one the verb was pressed on (the referer).
+  def current_page_path
+    return request.fullpath if request.get?
+
+    uri = URI.parse(request.referer.to_s)
+    uri.request_uri if uri.host == request.host && uri.path.present?
+  rescue URI::InvalidURIError
+    nil
+  end
+
   # What shared/_section_picker offers: the sections this user actually
   # switched on (D4) plus their subsections, and anything already applied so
   # a tag the picker wouldn't otherwise list can't be dropped by saving the
