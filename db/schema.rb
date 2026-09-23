@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_074731) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_075154) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -92,6 +92,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_074731) do
   create_table "budget_categories", force: :cascade do |t|
     t.datetime "archived_at"
     t.datetime "created_at", null: false
+    t.boolean "food_shopping", default: false, null: false
     t.string "group", default: "needs", null: false
     t.integer "monthly_target_cents"
     t.string "name", null: false

@@ -77,4 +77,14 @@ class PetFoodsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_empty @rex.pet_foods
   end
+
+  test "the next bag goes on the kitchen's shopping list, saying who it's for" do
+    add
+
+    post add_to_list_pet_food_path(@rex, @rex.pet_foods.sole)
+
+    kitchen = Kitchens::Current.for(users(:one))
+    line = ShoppingList.default_for(kitchen).items.sole
+    assert_equal [ "Acme Adult chicken", "for #{@rex.name}" ], [ line.item, line.note ]
+  end
 end

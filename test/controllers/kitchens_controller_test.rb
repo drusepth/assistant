@@ -65,4 +65,19 @@ class KitchensControllerTest < ActionDispatch::IntegrationTest
     get edit_kitchen_path(theirs)
     assert_response :not_found
   end
+
+  test "the food-shopping envelope is my own rule, and the hub shows it to me" do
+    kitchen = users(:one).kitchens.create!(name: "Home")
+    groceries = users(:one).budget_categories.create!(name: "Food shop", group: "needs", monthly_target_cents: 50_000)
+
+    patch food_budget_kitchen_path(kitchen), params: { budget_category_id: groceries.id }
+    assert groceries.reload.food_shopping?
+
+    get section_path("food")
+    assert_match "Food shop", response.body
+    assert_match "of 500", response.body
+
+    patch food_budget_kitchen_path(kitchen), params: { budget_category_id: "" }
+    assert_not groceries.reload.food_shopping?
+  end
 end

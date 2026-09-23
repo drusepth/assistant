@@ -42,6 +42,17 @@
 
   <%= render "kitchens/diners", kitchen: @kitchen %>
 
+  <% envelopes = Current.user.budget_categories.active.ordered.reject(&:income?) %>
+  <% if envelopes.any? %>
+    <%= render Ui::CardComponent.new(title: "Food money", subtitle: "Which of your budget envelopes is food shopping? The Food page shows how it's going — to you only.") do %>
+      <%= form_with url: food_budget_kitchen_path(@kitchen), method: :patch, class: "flex flex-wrap items-center gap-2" do %>
+        <%= select_tag :budget_category_id, options_from_collection_for_select(envelopes, :id, :name, envelopes.find(&:food_shopping?)&.id),
+              include_blank: "None", class: "input min-w-40 flex-1", aria: { label: "Food shopping envelope" } %>
+        <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <% if @kitchens.many? %>
     <%= render Ui::CardComponent.new(title: "Your kitchens", subtitle: "The Food page opens on the one you pick") do %>
       <ul class="divide-y divide-edge">

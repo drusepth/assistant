@@ -24,6 +24,7 @@ module Watcher
     budget_pace new_recurring_charge price_hike month_close email_receipt
     pet_care_cadence pet_food_reorder pet_vaccine_due
     event_radar
+    pantry_expiry meal_plan_gap meal_needs recipe_rut
   ].freeze
 
   module_function

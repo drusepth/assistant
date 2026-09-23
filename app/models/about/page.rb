@@ -63,7 +63,7 @@ module About
         "Read every line, change what you like, and keep it if we disappear.")
     ].freeze
 
-    # The eleven hubs. Nine are the app's sections; `your-day` and
+    # The twelve hubs. Ten are the app's sections; `your-day` and
     # `your-stuff` exist because much of what is built lives across all of
     # them and would otherwise have no page to live on.
     HUBS = [
@@ -109,7 +109,10 @@ module About
         "The dependents who can't tell you what hurts, or when the food runs out.",
         sections: %w[ pets ],
         featured: %w[ pet_care vet_visit_prep decode_vet_estimate
-                      compare_pet_insurance new_pet lost_pet ])
+                      compare_pet_insurance new_pet lost_pet ]),
+      entry("food", "Food",
+        "One shopping list the whole house adds to, the fridge, the week's dinners, and what to make from what's in.",
+        sections: %w[ food ])
     ].freeze
 
     # One page per substantial feature, each declaring the hub it hangs

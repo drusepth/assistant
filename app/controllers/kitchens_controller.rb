@@ -3,7 +3,7 @@
 # lists, the fridge, the plan — lives in its own controllers, all of which
 # go through `Kitchens::Scoped`.
 class KitchensController < ApplicationController
-  before_action :set_visible_kitchen, only: %i[ edit select ]
+  before_action :set_visible_kitchen, only: %i[ edit select food_budget ]
   before_action :set_own_kitchen, only: %i[ update destroy answer_share ]
 
   def edit
@@ -34,6 +34,15 @@ class KitchensController < ApplicationController
   def destroy
     @kitchen.destroy!
     redirect_to food_path, notice: "#{@kitchen.name} deleted, with its lists, fridge and plan. Your recipes are untouched."
+  end
+
+  # Which of *my* budget envelopes is food shopping — a per-user rule, so
+  # each cook's own Money shows on the hub, and only to them.
+  def food_budget
+    categories = Current.user.budget_categories
+    categories.update_all(food_shopping: false)
+    categories.where(id: params[:budget_category_id]).update_all(food_shopping: true) if params[:budget_category_id].present?
+    redirect_to edit_kitchen_path(@kitchen), notice: "Saved."
   end
 
   # The hub's switcher, for someone who can see more than one kitchen.

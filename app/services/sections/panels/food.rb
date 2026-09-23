@@ -81,6 +81,15 @@ module Sections
       def ideas = @ideas ||= Kitchens::Ideas.new(kitchen, viewer)
       def unlock = @unlock ||= ideas.buy_to_unlock
 
+      # The viewer's own food-shopping envelope, this month — Money's line,
+      # read, never recomputed. Nil without one.
+      def food_budget
+        return @food_budget if defined?(@food_budget)
+
+        category = viewer.budget_categories.find_by(food_shopping: true)
+        @food_budget = category && ::Money::MonthSummary.new(user: viewer).lines.find { |line| line.category == category }
+      end
+
       def recipes_count = @recipes_count ||= Recipe.visible_to(viewer).count
     end
   end

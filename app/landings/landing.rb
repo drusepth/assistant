@@ -10,7 +10,7 @@
 # Registered here, on the Tool::SLUGS pattern, so the registry is code —
 # first-party only (D11) — and the drift guard in test/landings can read it.
 module Landing
-  KINDS = %w[ event task note person medication allergy pet_facts pet_food pet_vaccination spending ].freeze
+  KINDS = %w[ event task note person medication allergy pet_facts pet_food pet_vaccination spending pantry_item ].freeze
 
   # Primitives paper does not produce, each with the reason (INTAKE_PLAN
   # §2). The registry test holds every key of Users::Export::MODELS to one
@@ -28,7 +28,13 @@ module Landing
     "recipe_books" => "curation, as albums",
     "spending_accounts" => "an account is set up, not extracted",
     "budget_categories" => "envelopes are the user's own budget decisions",
-    "spending_rules" => "the user's explicit rules (D-no-keyword-logic), never inferred"
+    "spending_rules" => "the user's explicit rules (D-no-keyword-logic), never inferred",
+    "kitchens" => "a container the household makes, not a fact on paper",
+    "shopping_lists" => "a list is made by the household; what goes on it is typed or comes from a recipe",
+    "shopping_list_items" => "a list line is something to buy, not something a document records as bought — a receipt lands in the kitchen instead",
+    "foods" => "the catalog is filed by its own resolver (D-food-catalog), never proposed from a document",
+    "meals" => "a plan is the household's choice, made on the plan page",
+    "diners" => "what someone can't eat is written down by the household, never read off a document by a model"
   }.freeze
 
   # The most a single document may propose. A discharge sheet is six or

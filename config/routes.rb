@@ -137,6 +137,8 @@ Rails.application.routes.draw do
       member do
         patch :end_food
         post :reorder
+        # The next bag onto the kitchen's shopping list (docs/FOOD_PLAN.md §5).
+        post :add_to_list
       end
     end
     # Her vaccine record (D-pet-vaccinations): the history is the index, and
@@ -315,6 +317,7 @@ Rails.application.routes.draw do
     member do
       patch :select
       post :answer_share
+      patch :food_budget
     end
     # "What's in the kitchen" — /kitchens/:id/pantry?location=fridge.
     resources :pantry_items, path: "pantry", only: %i[ index create update destroy ] do

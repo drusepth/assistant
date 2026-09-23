@@ -22,6 +22,15 @@ module Kitchens
       finish(touched)
     end
 
+    # One thing, already structured — a landing from a receipt photo.
+    def put_one(item:, quantity_note:, location:, expires_on: nil)
+      key = Recipes::Parse.key_for(item)
+      food = Foods::Catalog.new(@kitchen).foods_by_key([ key ])[key]
+      row = put(item: item, item_key: key, food: food, quantity_note: quantity_note, location: location)
+      row.update!(expires_on: expires_on) if expires_on
+      finish([ row ]).first
+    end
+
     # A checked-off list line, into wherever its food lives.
     def put_away(line)
       location = line.food&.default_location || "pantry"
