@@ -316,6 +316,19 @@ Rails.application.routes.draw do
       patch :select
       post :answer_share
     end
+    resources :shopping_lists, path: "lists", only: %i[ show create update destroy ] do
+      resources :items, controller: :shopping_list_items, only: %i[ create update destroy ] do
+        member do
+          patch :check
+          patch :uncheck
+        end
+      end
+    end
+  end
+  # "Add missing to list" from a recipe page — onto the viewer's current
+  # kitchen's list, scaled to the servings on screen.
+  resources :recipes, only: [] do
+    resource :list_addition, only: %i[ create ], module: :recipes
   end
   resources :share_links, only: %i[ create destroy ]
   get "s/:token" => "public#show", as: :shared

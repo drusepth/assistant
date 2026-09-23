@@ -58,3 +58,8 @@ production:
   prune_chat_transcripts:
     command: "PruneChatTranscriptsJob.perform_later"
     schedule: every sunday at 4am
+  # Checked shopping-list lines are kept a month for "what did we buy last
+  # time", then go (docs/FOOD_PLAN.md §3).
+  sweep_shopping_history:
+    command: "ShoppingList.sweep_history"
+    schedule: every day at 3:45am

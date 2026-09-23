@@ -9,6 +9,8 @@ class Kitchen < ApplicationRecord
 
   DEFAULT_NAME = "Home".freeze
 
+  has_many :shopping_lists, dependent: :destroy
+
   validates :name, presence: true, length: { maximum: 60 }
 
   # Anyone who can see a kitchen can cook in it. Kept as its own predicate so

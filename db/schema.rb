@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_071724) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -818,6 +818,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_071724) do
     t.index ["user_id"], name: "index_share_links_on_user_id"
   end
 
+  create_table "shopping_list_items", force: :cascade do |t|
+    t.integer "added_by_id"
+    t.datetime "checked_at"
+    t.integer "checked_by_id"
+    t.datetime "created_at", null: false
+    t.string "item", null: false
+    t.string "item_key", null: false
+    t.string "note"
+    t.decimal "quantity", precision: 10, scale: 3
+    t.integer "recipe_id"
+    t.integer "shopping_list_id", null: false
+    t.string "unit"
+    t.datetime "updated_at", null: false
+    t.index ["added_by_id"], name: "index_shopping_list_items_on_added_by_id"
+    t.index ["checked_by_id"], name: "index_shopping_list_items_on_checked_by_id"
+    t.index ["recipe_id"], name: "index_shopping_list_items_on_recipe_id"
+    t.index ["shopping_list_id", "checked_at"], name: "index_shopping_list_items_on_shopping_list_id_and_checked_at"
+    t.index ["shopping_list_id"], name: "index_shopping_list_items_on_shopping_list_id"
+  end
+
+  create_table "shopping_lists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "kitchen_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["kitchen_id"], name: "index_shopping_lists_on_kitchen_id"
+  end
+
   create_table "spending_accounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.json "csv_mapping"
@@ -1213,6 +1242,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_071724) do
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "share_links", "users"
+  add_foreign_key "shopping_list_items", "recipes", on_delete: :nullify
+  add_foreign_key "shopping_list_items", "shopping_lists"
+  add_foreign_key "shopping_list_items", "users", column: "added_by_id", on_delete: :nullify
+  add_foreign_key "shopping_list_items", "users", column: "checked_by_id", on_delete: :nullify
+  add_foreign_key "shopping_lists", "kitchens"
   add_foreign_key "spending_accounts", "users"
   add_foreign_key "spending_rules", "budget_categories"
   add_foreign_key "spending_rules", "users"

@@ -49,6 +49,13 @@ module Sections
           .limit(RECIPES_SHOWN).to_a
       end
 
+      # The kitchen's first list, made on first use — the hub's list zone
+      # always has somewhere to put the first thing typed.
+      def list = @list ||= ShoppingList.default_for(kitchen)
+      def lists = @lists ||= kitchen.shopping_lists.ordered.to_a
+      def open_items = @open_items ||= list.open_items.includes(:added_by, :recipe).to_a
+      def basket_items = @basket_items ||= list.basket_items.includes(:checked_by, :recipe).to_a
+
       def recipes_count = @recipes_count ||= Recipe.visible_to(viewer).count
     end
   end

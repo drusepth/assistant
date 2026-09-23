@@ -1,0 +1,19 @@
+<%# The open lines and the basket, as the shopping-list controller's two
+    targets. Shared by the hub's list zone and the in-store page. %>
+<% if open_items.empty? && basket_items.empty? %>
+  <p class="px-2 py-3 text-sm text-soft">Nothing on <%= list.name %>. Add what you need above — anyone who cooks here sees it straight away.</p>
+<% end %>
+<ul class="divide-y divide-edge" data-shopping-list-target="open">
+  <% open_items.each do |item| %>
+    <%= render "shopping_list_items/item", item: item, kitchen: kitchen %>
+  <% end %>
+</ul>
+<div data-basket class="<%= "hidden" if basket_items.empty? %> mt-4">
+  <h3 class="mb-1 px-2 text-xs font-bold uppercase tracking-[0.12em] text-soft">In the basket</h3>
+  <ul class="divide-y divide-edge" data-shopping-list-target="basket">
+    <% basket_items.each do |item| %>
+      <%= render "shopping_list_items/item", item: item, kitchen: kitchen %>
+    <% end %>
+  </ul>
+</div>
+<p class="mt-2 px-2 text-xs text-soft" data-shopping-list-target="pending" hidden></p>

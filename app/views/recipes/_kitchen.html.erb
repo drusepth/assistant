@@ -1,0 +1,6 @@
+<%# The recipe, joined to the kitchen (docs/FOOD_PLAN.md §4): its shopping,
+    at the servings on screen. %>
+<div class="mt-4 flex flex-wrap gap-2 border-t border-edge pt-3 print:hidden">
+  <%= button_to "Add to shopping list", recipe_list_addition_path(recipe, servings: servings),
+        class: "btn btn-secondary btn-sm" %>
+</div>
