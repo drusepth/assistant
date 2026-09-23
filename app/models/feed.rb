@@ -118,6 +118,24 @@ class Feed < ApplicationRecord
     update_column(:last_read_at, at) if last_read_at.nil? || last_read_at < at
   end
 
+  # Stamped the moment a check starts, then overwritten by however it ends.
+  # A check that never ends — the worker killed mid-fetch, as an oversized
+  # feed once did to it every fifteen minutes — would otherwise leave the
+  # feed exactly as due as before, so the next sweep hands the same feed
+  # to the next worker. Counted as a failure up front, a crash earns the
+  # backoff any other failure does, and the reader has something to show.
+  INTERRUPTED = "the last check didn't finish".freeze
+
+  def record_attempt!
+    record_failure!(INTERRUPTED)
+  end
+
+  # How a check that already stamped its attempt says why it failed: the
+  # attempt counted the failure, so only the words change.
+  def explain_failure!(message)
+    update!(last_error: message.to_s.truncate(200))
+  end
+
   def record_failure!(message)
     update!(
       last_fetched_at: Time.current, failure_count: failure_count + 1,

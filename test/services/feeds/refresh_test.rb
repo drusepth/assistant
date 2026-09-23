@@ -90,6 +90,28 @@ class Feeds::RefreshTest < ActiveJob::TestCase
     assert_equal 1, @feed.feed_items.count
   end
 
+  # A worker killed mid-fetch never reaches the success or failure write, so
+  # the attempt itself has to have moved the feed out of the next sweep.
+  test "a check that never finishes still counts, so the sweep backs off" do
+    stub_request(:get, @feed.url).to_raise(NoMemoryError)
+
+    assert_raises(NoMemoryError) { Feeds::Refresh.call(@feed) }
+
+    @feed.reload
+    assert_equal Feed::INTERRUPTED, @feed.last_error
+    assert_equal 1, @feed.failure_count
+    assert_not @feed.due_for_refresh?
+  end
+
+  test "a failed check is counted once, with its own reason" do
+    stub_request(:get, @feed.url).to_return(status: 500)
+
+    Feeds::Refresh.call(@feed)
+
+    assert_equal 1, @feed.reload.failure_count
+    assert_equal "the site answered HTTP 500", @feed.last_error
+  end
+
   test "a recovered feed clears its error and its backoff" do
     @feed.record_failure!("the site answered HTTP 500")
     stub_feed(item(title: "Back online"))

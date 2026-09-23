@@ -77,6 +77,25 @@ class WebFetchTest < ActiveSupport::TestCase
     assert_equal body, Web::Fetch.text("https://jobs.example.com/big", max_bytes: 8.megabytes).text
   end
 
+  # The cap has to bind while the body streams in: checked after the read,
+  # a huge feed was held in memory whole and the OOM killer ended the worker.
+  test "a body is refused as it passes the cap, not after it has all been read" do
+    stub_request(:get, "https://jobs.example.com/huge").to_return(
+      status: 200, headers: { "Content-Type" => "text/plain" }, body: "x" * 1_000
+    )
+
+    error = assert_raises(Web::Fetch::Error) { Web::Fetch.text("https://jobs.example.com/huge", max_bytes: 100) }
+    assert_match(/too large/, error.message)
+  end
+
+  test "a declared length past the cap is refused before any body is read" do
+    stub_request(:get, "https://jobs.example.com/declared").to_return(
+      status: 200, headers: { "Content-Type" => "text/plain", "Content-Length" => "5000000000" }, body: "small"
+    )
+
+    assert_raises(Web::Fetch::Error) { Web::Fetch.text("https://jobs.example.com/declared") }
+  end
+
   test "a server that declares no content type gets sniffed rather than refused" do
     stub_request(:get, "https://jobs.example.com/quiet").to_return(
       status: 200, headers: {}, body: "<?xml version=\"1.0\"?><rss><channel><title>Q</title></channel></rss>"

@@ -23,6 +23,7 @@ module Feeds
     end
 
     def call
+      @feed.record_attempt!
       page = Web::Fetch.raw(@feed.url, headers: request_headers, max_bytes: Discover::MAX_BYTES)
       # The whole point of the conditional GET: the publisher said nothing
       # changed, so there is no body to parse and nothing to write beyond
@@ -127,7 +128,7 @@ module Feeds
       end
 
       def failure(message)
-        @feed.record_failure!(message)
+        @feed.explain_failure!(message)
         Result.new(added: 0, updated: 0, error: message)
       end
   end
