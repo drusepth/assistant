@@ -22,14 +22,29 @@ class Pet < ApplicationRecord
   # variant as a household member's (D-user-avatars).
   include Avatarable
 
-  # The kind registries key off these (D-pet-care-radar). "Other" is a real
-  # answer, not a fallback: we know a dog's cadence and we don't know an
-  # iguana's, and saying so beats inventing one.
+  # The kind registries key off these (D-pet-care-radar): a species here is
+  # stored as its slug, and the vaccine catalog, the care radar and the
+  # toxics list read the slug. Anything else is kept as the owner typed it —
+  # "Guinea pig", "Axolotl" — because the household knows what their animal
+  # is and a closed list made them file a ferret under "Other". A typed
+  # species gets the generic wellness slate, which is the honest answer: we
+  # know a dog's cadence and we don't know an iguana's, and saying so beats
+  # inventing one. "other" stays valid for the pets saved before this.
   SPECIES = %w[ dog cat rabbit bird reptile fish horse other ].freeze
   SPECIES_LABELS = {
     "dog" => "Dog", "cat" => "Cat", "rabbit" => "Rabbit", "bird" => "Bird",
     "reptile" => "Reptile", "fish" => "Fish", "horse" => "Horse", "other" => "Other"
   }.freeze
+
+  # What the species box suggests as you type, after the slugged kinds. Only
+  # suggestions: nothing reads these, and the box takes anything.
+  SPECIES_SUGGESTIONS = [
+    "Guinea pig", "Hamster", "Gerbil", "Rat", "Mouse", "Chinchilla", "Ferret", "Hedgehog", "Sugar glider",
+    "Parrot", "Budgie", "Cockatiel", "Canary", "Chicken", "Duck", "Goose",
+    "Turtle", "Tortoise", "Snake", "Lizard", "Gecko", "Bearded dragon", "Iguana", "Frog", "Axolotl",
+    "Goldfish", "Betta", "Hermit crab", "Tarantula", "Snail",
+    "Goat", "Sheep", "Pig", "Cow", "Donkey", "Alpaca", "Llama", "Pony"
+  ].freeze
 
   # A closed set, because the app's own copy reads it to pick a pronoun
   # (D-pronouns) and free text can't be read that way. Blank is the
@@ -70,8 +85,18 @@ class Pet < ApplicationRecord
   # other tags — the section_taggings go with the section, as for any lens.
   after_destroy { section&.destroy }
 
+  # "Cat", "cats" and "CAT" typed into the box are the slug the registries
+  # read; anything else is kept as typed, squished. This matches the user's
+  # own words against our own labels — it never guesses that an iguana is a
+  # reptile (D-no-keyword-logic).
+  before_validation do
+    typed = species.to_s.squish
+    key = typed.downcase
+    self.species = SPECIES.find { |slug| slug == key || slug.pluralize == key } || typed.presence
+  end
+
   validates :name, presence: true
-  validates :species, inclusion: { in: SPECIES }
+  validates :species, presence: true, length: { maximum: 60 }
   validates :sex, inclusion: { in: SEXES }, allow_blank: true
   validates :weight_lb, numericality: { greater_than: 0, less_than: 4_400 }, allow_nil: true
 
@@ -87,7 +112,10 @@ class Pet < ApplicationRecord
 
   def active? = died_on.nil? && left_on.nil?
   def died? = died_on.present?
-  def species_label = SPECIES_LABELS.fetch(species, "Other")
+  def species_label = SPECIES_LABELS[species] || species.to_s.upcase_first.presence || "Other"
+
+  # Every suggestion the species box offers, in the order it offers them.
+  def self.species_options = SPECIES_LABELS.except("other").values + SPECIES_SUGGESTIONS
 
   # "Female" / "Neutered male" / nil — the one line the details list, the
   # poster and the vet-prep sheet all print.

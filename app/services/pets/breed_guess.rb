@@ -20,7 +20,7 @@ module Pets
     Guess = Data.define(:name, :likelihood)
     Result = Data.define(:guesses, :note)
 
-    # species: a Pet::SPECIES slug. image: WEBP bytes (see .image_bytes).
+    # species: a Pet::SPECIES slug, or whatever the owner typed. image: WEBP bytes (see .image_bytes).
     def initialize(species:, image:, profile:)
       @species = species
       @image = image
@@ -56,7 +56,7 @@ module Pets
         ]
       end
 
-      def species_label = Pet::SPECIES_LABELS.fetch(@species, "pet").downcase
+      def species_label = (Pet::SPECIES_LABELS[@species.to_s.downcase] || @species.to_s.squish.first(60).presence || "pet").downcase
 
       def system_prompt
         <<~PROMPT

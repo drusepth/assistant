@@ -26,7 +26,7 @@ class PetsController < ApplicationController
   end
 
   def new
-    @pet = Current.user.pets.new(species: params[:species].presence || "dog")
+    @pet = Current.user.pets.new(species: params[:species].presence)
   end
 
   def create

@@ -15,8 +15,8 @@ module Tool
     self.kind = :plan
 
     input :name, required: true, label: "What's their name?"
-    input :species, kind: :select, required: true, label: "What are they?",
-      options: Pet::SPECIES.map { |slug| [ Pet::SPECIES_LABELS[slug], slug ] }
+    input :species, required: true, label: "What are they?", hint: "Pick one or type your own.",
+      options: Pet.species_options
     input :arriving,
       label: "When are they arriving?",
       hint: "Optional — a date, or “next month”."
