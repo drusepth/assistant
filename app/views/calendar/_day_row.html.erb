@@ -1,12 +1,16 @@
-<%# An event or a reminder in the day view: the time in its own column, so
-    the schedule reads down one edge. Tasks use their own row (tasks/_task),
-    which carries the complete button. Locals: entry. %>
+<%# An event in the day view, with the time in its own column so the
+    schedule reads down one edge — or a repeating task on a day ahead it
+    will come round. A task due today uses its own row (tasks/_task), which
+    carries the complete button; a repeat has nothing to check off yet.
+    Locals: entry. %>
 <% record = entry.record %>
 <% shared = !entry.own?(Current.user) %>
 <div class="item-row flex items-start gap-3 px-4 py-3">
   <p class="w-16 shrink-0 pt-0.5 text-xs tabular-nums text-soft">
     <% if entry.at %>
       <%= entry.at.strftime("%-l:%M %p") %>
+    <% elsif entry.kind == :repeat %>
+      Repeats
     <% elsif entry.kind == :event && record.starts_at.to_date < @date %>
       Continues
     <% else %>
@@ -26,16 +30,12 @@
         <%= render "shared/item_chips", item: record %>
       </div>
     <% else %>
-      <p class="flex items-center gap-1.5 text-sm text-ink">
-        <%= icon(:bell, css_class: "size-4 shrink-0 text-soft") %>
-        <span class="min-w-0"><%= record.body %></span>
+      <p class="flex items-center gap-1.5 text-sm">
+        <%= icon(:arrow_path, css_class: "size-4 shrink-0 text-soft") %>
+        <%= link_to record.title, record, class: "min-w-0 font-medium text-ink hover:text-primary-700" %>
       </p>
       <p class="mt-0.5 text-xs text-soft">
-        Reminder<%= " · #{record.cadence}" if record.standing? %>
-        <% if record.subject %>
-          · <%= link_to "on this #{record.subject_type.downcase}", record.subject, class: "text-primary-700 hover:underline" %>
-        <% end %>
-        · <%= link_to "Change", today_path, class: "text-primary-700 hover:underline" %>
+        Comes round again — repeats <%= record.recurrence.describe %><%= " · #{record.user.name}" if shared %>
       </p>
     <% end %>
   </div>

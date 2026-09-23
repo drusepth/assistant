@@ -1,28 +1,30 @@
 # What the calendar shows over a run of days (the month grid, a week, one
-# day): events, tasks on their due date, and the moments reminders fire,
-# as one list per day in the order a person reads a day — the things with
-# no time first (all-day events, what's due), then everything with a clock
-# time, events and reminders interleaved.
+# day): events, and tasks on their due date, as one list per day in the
+# order a person reads a day — the things with no time first (all-day
+# events, what's due), then everything with a clock time.
 #
-# Each kind is a layer the viewer can switch off. Events and tasks come
-# through `visible_to`, like every other read of a primitive; reminders are
-# delivery rather than content, so only the viewer's own.
+# A reminder is not a thing of its own here (D-reminders-on-tasks): a task
+# with "Remind me at 4pm" sits at 4pm on its day, and a repeating task shows
+# on each day ahead that it will come round, faded, as `:repeat`. An
+# event's own reminders ride the event. Each kind is a layer the viewer can
+# switch off, and both come through `visible_to`, like every other read of
+# a primitive.
 module Calendar
   class Agenda
-    LAYERS = %w[ events tasks reminders ].freeze
+    LAYERS = %w[ events tasks ].freeze
 
     # One thing on one day. `at` is the clock time it shows at on that day,
     # or nil for the untimed: an all-day event, the continuing days of a
-    # multi-day one, a task.
+    # multi-day one, a task with no reminder time. `kind` is :event, :task,
+    # or :repeat — a repeating task on a day ahead it will come round.
     Entry = Data.define(:kind, :record, :at) do
-      def title = kind == :reminder ? record.body : record.title
+      def title = record.title
 
       def own?(user) = record.user_id == user.id
 
-      # Only what the viewer could edit anyway, and only the kinds whose
-      # date is theirs to change by dragging: a reminder is a time you armed,
-      # and moving it belongs in its own form.
-      def movable_by?(user) = kind != :reminder && own?(user)
+      # Only what the viewer could edit anyway. A repeat is where the rule
+      # puts the task next, not a row of its own to drag.
+      def movable_by?(user) = kind != :repeat && own?(user)
 
       def overdue?
         kind == :task && !record.completed? && record.due_on < Date.current
@@ -58,7 +60,6 @@ module Calendar
           entries = Hash.new { |hash, day| hash[day] = [] }
           event_entries(entries) if layers.include?("events")
           task_entries(entries) if layers.include?("tasks")
-          reminder_entries(entries) if layers.include?("reminders")
           entries.transform_values { |list| list.sort_by(&:sort_key) }
         end
       end
@@ -78,33 +79,38 @@ module Calendar
       end
 
       # Done tasks stay on their day, so a past month still says what got
-      # done when.
+      # done when. A task with a reminder time sits at that time, and only
+      # its owner sees it: the time is their ping, not the task's content.
       def task_entries(entries)
         Task.visible_to(@user).where(due_on: days).includes(:sections, :user).find_each do |task|
-          entries[task.due_on] << Entry.new(kind: :task, record: task, at: nil)
+          entries[task.due_on] << Entry.new(kind: :task, record: task, at: remind_moment(task, task.due_on))
+        end
+        repeat_entries(entries)
+      end
+
+      # A repeating task is one row, due on its current occurrence; the days
+      # after that it will come round again are drawn from its rule, so the
+      # month ahead shows trash night every Thursday. Past days show only
+      # what the row itself says.
+      def repeat_entries(entries)
+        Task.visible_to(@user).where.not(repeat_rule: nil).where(due_on: ...days.last)
+          .includes(:sections, user: :household).find_each do |task|
+          rule = task.recurrence
+          next unless rule&.standing?
+
+          from = [ task.due_on + 1, days.first, Date.current ].max
+          zone = task.user.household.zone
+          rule.occurrences(zone.local(task.due_on.year, task.due_on.month, task.due_on.day)).lazy
+            .map(&:to_date).take_while { |day| day <= days.last }.select { |day| day >= from }
+            .each { |day| entries[day] << Entry.new(kind: :repeat, record: task, at: remind_moment(task, day)) }
         end
       end
 
-      # A standing reminder stores only its next delivery, so its rule is
-      # expanded forward from there; the fires already past aren't stored,
-      # and a past month shows only one-shots.
-      def reminder_entries(entries)
-        reminders = @user.reminders.where(deliver_at: ...window.end)
-          .where("reminders.rule IS NOT NULL OR reminders.deliver_at >= ?", window.begin)
-          .includes(:subject)
+      def remind_moment(task, day)
+        return nil unless task.remind_time && task.user_id == @user.id
 
-        reminders.each do |reminder|
-          moments = if reminder.standing? && reminder.delivered_at.nil? && reminder.recurrence&.standing?
-            reminder.recurrence.occurrences(reminder.local_deliver_at).lazy
-              .take_while { |at| at <= window.end }.select { |at| window.cover?(at) }.to_a
-          else
-            window.cover?(reminder.deliver_at) ? [ reminder.local_deliver_at ] : []
-          end
-
-          moments.each do |at|
-            entries[at.in_time_zone.to_date] << Entry.new(kind: :reminder, record: reminder, at: at.in_time_zone)
-          end
-        end
+        hour, minute = task.remind_time.split(":").map(&:to_i)
+        task.user.household.zone.local(day.year, day.month, day.day, hour, minute).in_time_zone
       end
   end
 end
