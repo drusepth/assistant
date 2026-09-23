@@ -17,7 +17,7 @@ class AccommodationRequestToolTest < ActiveJob::TestCase
       deadlines: [ { title: "Requested response date", date: 14.days.from_now.to_date.iso8601 } ]
     )
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?

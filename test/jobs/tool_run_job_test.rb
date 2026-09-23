@@ -15,7 +15,7 @@ class ToolRunJobTest < ActiveJob::TestCase
     )
   end
 
-  test "drafts the letter as a filed note, adds follow-ups, and finishes the run" do
+  test "stages the letter and follow-ups as offers and lands none of them" do
     stub_llm(
       draft: { title: "Dispute of account 12345", body: "To whom it may concern,\n\nI dispute..." },
       follow_ups: [
@@ -24,22 +24,52 @@ class ToolRunJobTest < ActiveJob::TestCase
       ]
     )
 
-    ToolRunJob.perform_now(@run)
+    assert_no_difference -> { Note.count + Task.count + Event.count } do
+      ToolRunJob.perform_now(@run)
+    end
 
     @run.reload
     assert @run.done?
     assert_nil @run.error
+    assert_empty @run.items, "nothing is in the user's notes or tasks until they add it"
 
-    letter = @run.items.grep(Note).first
+    offers = @run.offers
+    assert_equal %w[ note task task ], offers.map(&:kind)
+    assert_equal [ "Dispute of account 12345", "Mail the letter", "Chase a reply if silent for 30 days" ], offers.map(&:title)
+    assert_match(/I dispute/, offers.first.detail)
+    assert offers.none?(&:added?)
+  end
+
+  test "adding one offer files just that one, where the tool would have" do
+    stub_llm(
+      draft: { title: "Dispute of account 12345", body: "To whom it may concern,\n\nI dispute..." },
+      follow_ups: [ { title: "Mail the letter", due_on: Date.current.iso8601 }, { title: "Chase a reply", due_on: nil } ]
+    )
+    ToolRunJob.perform_now(@run)
+    @run.reload
+
+    letter = @run.add_offer!(0)
+    assert_kind_of Note, letter
     assert_equal "Dispute of account 12345", letter.title
-    assert_match(/I dispute/, letter.body)
     assert_equal [ sections(:disputes), sections(:health) ].sort_by(&:id), letter.sections.sort_by(&:id),
       "the letter is filed where the tool lives plus the document's own sections"
 
-    tasks = @run.items.grep(Task).sort_by(&:id)
-    assert_equal [ "Mail the letter", "Chase a reply if silent for 30 days" ], tasks.map(&:title)
-    assert tasks.first.today?, "a follow-up due today lands in the Today column"
-    assert tasks.second.later?
+    task = @run.add_offer!(1)
+    assert task.today?, "a follow-up due today lands in the Today column"
+
+    assert_nil @run.add_offer!(1), "an offer lands once however many times it's clicked"
+    assert_nil @run.add_offer!(-1)
+    assert_nil @run.add_offer!(99)
+
+    assert_equal [ true, true, false ], @run.reload.offers.map(&:added?)
+    assert_equal [ letter, task ].to_set, @run.items.to_set
+    assert_empty @run.direct_items, "added offers show as offers, not twice"
+
+    assert_difference -> { Task.count }, 1 do
+      created = @run.land!
+      assert_equal [ "Chase a reply" ], created.map(&:title), "Add everything skips what's already added"
+    end
+    assert @run.reload.done?
   end
 
   test "a letter without a title falls back to the document's" do
@@ -47,7 +77,16 @@ class ToolRunJobTest < ActiveJob::TestCase
 
     ToolRunJob.perform_now(@run)
 
-    assert_equal "Dispute letter — Hospital bill", @run.items.grep(Note).first.title
+    assert_equal "Dispute letter — Hospital bill", @run.reload.offers.first.title
+  end
+
+  test "a long letter is added whole" do
+    body = "Dear billing office,\n\n#{"This charge is wrong. " * 600}"
+    stub_llm(draft: { title: "Long letter", body: body }, follow_ups: [])
+
+    ToolRunJob.perform_now(@run)
+
+    assert_equal body.strip, @run.reload.add_offer!(0).body
   end
 
   test "permanent provider errors fail the run with a friendly message" do

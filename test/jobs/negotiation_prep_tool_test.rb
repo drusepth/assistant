@@ -14,7 +14,7 @@ class NegotiationPrepToolTest < ActiveJob::TestCase
       follow_ups: [ { title: "Look up the market rate for the role", due_on: nil } ]
     )
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?
@@ -38,7 +38,7 @@ class NegotiationPrepToolTest < ActiveJob::TestCase
     )
     stub_llm(prep: { title: "t", body: "b" }, counter_message: nil, follow_ups: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     assert_equal 1, run.items.grep(Note).count, "no counter-message returned, no empty note forced"
@@ -49,7 +49,7 @@ class NegotiationPrepToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "negotiation_prep", inputs: { "scenario" => "rent" })
     stub_llm(prep: { title: nil, body: nil }, counter_message: nil, follow_ups: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.failed?
     assert_match(/didn't return a prep sheet/, run.error)

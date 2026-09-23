@@ -1,0 +1,9 @@
+<!-- decided -->
+**D-tool-run-offers. A draft run lands nothing on its own: its note, follow-ups and dates are offers on the run page, each with its own Add**
+
+(2026-09-23). A tool run used to file its draft note, its follow-up tasks and its deadline events the moment the model answered, so a run that produced one useful gift idea and two tasks nobody wanted left all three in Notes and Tasks for the user to go and delete. Now a draft-kind run stages what it would create — the same `preparing` switch the agent's prepared work already uses (D-agent-prepared-work), so the tool classes, prompts and filing are unchanged — and the run page shows each piece as an offer: the note with **Save to notes**, each task or date with **+ Add**, and **Add everything** when more than one is waiting. An added offer turns into the row it became, filed exactly where the tool would have filed it; what is never added exists nowhere but on the run.
+
+- Scope is the three landing helpers (`create_note`, `create_task`, `create_event`) on `kind: :draft` runs. Plan tools still file their Goal directly — the goal on the board *is* what the user asked for — and chat recaps are already an explicit click. A draft tool that writes a row directly (e.g. `what_should_i_make_next`) still does; the page shows those beside the offers as before.
+- The offer's address is its index in `output["landings"]`; an added one carries a `landed` marker (type + id), so a double-click, a second tab, or "Add everything" after a single Add never files it twice. Adding runs under the run's row lock.
+- `Landing::Note`'s body limit rose to 100,000 characters: a letter lands through that kind now, and the 5,000 a fact needs would have truncated one silently (the agent's prepared path had the same latent bug).
+- The agent's prepared page keeps its all-or-nothing Save/Discard; its Save now shares the skip-what's-added logic.

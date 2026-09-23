@@ -25,7 +25,7 @@ class InsuranceAppealToolTest < ActiveJob::TestCase
       deadlines: [ { title: "Appeal filing deadline", date: deadline.iso8601 } ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?
@@ -52,7 +52,7 @@ class InsuranceAppealToolTest < ActiveJob::TestCase
       deadlines: [ { title: "No date given" }, { title: "Bad date", date: "someday" }, "not a hash" ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert @run.reload.done?
     assert_empty @run.items.grep(Event)
@@ -62,7 +62,7 @@ class InsuranceAppealToolTest < ActiveJob::TestCase
   test "the model call carries the user's intent and the denial text" do
     stub_llm(letter: { title: "x", body: "y" }, follow_ups: [], deadlines: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert_requested(:post, ENDPOINT) do |request|
       request.body.include?("my doctor ordered the MRI") && request.body.include?("998-A")

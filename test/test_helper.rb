@@ -8,6 +8,7 @@ require_relative "test_helpers/pet_test_helper"
 require_relative "test_helpers/document_test_helper"
 require_relative "test_helpers/fake_imap_client"
 require_relative "test_helpers/instance_mail_test_helper"
+require_relative "test_helpers/tool_run_test_helper"
 
 # The vault's real KDF/keygen params exist to be slow; the suite shouldn't
 # be. Every keyring records its own params, so this weakens nothing outside

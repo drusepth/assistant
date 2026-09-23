@@ -28,7 +28,7 @@ class DecodeLetterToolTest < ActiveJob::TestCase
                       inputs: { intent: "the treatment was medically necessary" } } ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?
@@ -64,7 +64,7 @@ class DecodeLetterToolTest < ActiveJob::TestCase
       ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     steps = @run.reload.next_steps
     assert_equal [ Tool::DebtCollectorResponse, Tool::DisputeLetter ], steps.map(&:tool),
@@ -79,7 +79,7 @@ class DecodeLetterToolTest < ActiveJob::TestCase
     stub_llm(decoded: { title: "Just a receipt", body: "Nothing to do." },
       sections: [], deadlines: [], follow_ups: [], next_tools: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert_empty @run.next_steps
@@ -89,7 +89,7 @@ class DecodeLetterToolTest < ActiveJob::TestCase
   test "the prompt carries the taxonomy, the tool catalog, and the letter" do
     stub_llm(decoded: { title: "t", body: "b" }, sections: [], deadlines: [], follow_ups: [], next_tools: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert_requested(:post, ENDPOINT) do |request|
       request.body.include?("insurance_appeal") &&

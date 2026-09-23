@@ -48,13 +48,27 @@ class ToolRunsController < ApplicationController
   # having run the tool themselves. Accepting the suggestion here (rather
   # than when they opened the page) is what keeps looking from counting as
   # accepting.
+  #
+  # On a finished draft run the same click is "Add all" (D-tool-run-offers):
+  # every offer not yet added lands, the ones already added are skipped.
   def land
     run = Current.user.tool_runs.find(params[:id])
-    return redirect_to run unless run.prepared?
+    return redirect_to run unless run.prepared? || run.done?
 
     created = run.land!
     run.suggestion&.accept!
     redirect_to run, notice: "Saved — #{created.size} #{"item".pluralize(created.size)} added to your things."
+  end
+
+  # One Add click on one offer of a finished draft run (D-tool-run-offers).
+  # The page refreshes in place (morph, scroll kept), so the row just turns
+  # into its added state without jumping the reader back to the top.
+  def add
+    run = Current.user.tool_runs.find(params[:id])
+    index = Integer(params[:index].to_s, exception: false)
+    item = run.add_offer!(index) if run.done? && index
+
+    redirect_to run, notice: item && "Added to your #{item.is_a?(Event) ? "calendar" : item.model_name.human.downcase.pluralize}."
   end
 
   # The other button. The draft goes, and so does the nudge that occasioned

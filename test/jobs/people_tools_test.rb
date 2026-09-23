@@ -17,7 +17,7 @@ class PeopleToolsTest < ActiveJob::TestCase
       tool_slug: "gift_ideas",
       inputs: { "person_id" => person.id.to_s, "occasion" => "birthday", "budget" => "under $30" }
     )
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     note = run.items.grep(Note).sole
@@ -33,7 +33,7 @@ class PeopleToolsTest < ActiveJob::TestCase
 
   test "a vanished person fails the gift run gracefully" do
     run = users(:one).tool_runs.create!(tool_slug: "gift_ideas", inputs: { "person_id" => "999999" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.failed?
     assert_match(/gone or no longer shared/, run.error)
@@ -50,7 +50,7 @@ class PeopleToolsTest < ActiveJob::TestCase
       tool_slug: "get_together",
       inputs: { "occasion" => "Taco night with the Nguyens", "who" => "the Nguyens", "on" => date.iso8601 }
     )
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
 
@@ -74,7 +74,7 @@ class PeopleToolsTest < ActiveJob::TestCase
     stub_plan(steps: [ { title: "Propose two dates to the book club" } ])
 
     run = users(:one).tool_runs.create!(tool_slug: "get_together", inputs: { "occasion" => "Book club" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     assert_empty run.items.grep(Event), "no date, no event — the plan proposes dates instead"
@@ -89,7 +89,7 @@ class PeopleToolsTest < ActiveJob::TestCase
       tool_slug: "get_together",
       inputs: { "occasion" => "Game night", "on" => date.iso8601 }
     )
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.failed?
     assert_equal date, run.items.grep(Event).sole.starts_at.to_date,
@@ -104,7 +104,7 @@ class PeopleToolsTest < ActiveJob::TestCase
       tool_slug: "make_new_friends",
       inputs: { "interests" => "board games", "constraints" => "evenings only" }
     )
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     goal = run.items.grep(Goal).sole

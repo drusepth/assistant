@@ -9,7 +9,12 @@
         "Sends from your own address once your email is linked."
     ) do %>
   <% if account&.allows?("send") %>
-    <% cover = tool_run.items.grep(Note).find { |note| note.title.to_s.start_with?("Cover letter") } %>
+    <%# The cover letter is an offer until it's saved (D-tool-run-offers); the
+        email prefills from either, preferring the saved note the user may
+        have edited since. %>
+    <% cover = tool_run.items.grep(Note).find { |note| note.title.to_s.start_with?("Cover letter") } ||
+         tool_run.offers.find { |offer| offer.note? && offer.title.to_s.start_with?("Cover letter") } %>
+    <% cover_body = cover.respond_to?(:body) ? cover.body : cover&.detail %>
     <%= form_with url: tool_run_application_email_path(tool_run), class: "space-y-3" do %>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div class="space-y-1">
@@ -23,7 +28,7 @@
       </div>
       <div class="space-y-1">
         <%= label_tag :body, "Message", class: "label" %>
-        <%= text_area_tag :body, cover&.body.to_s.split("\n\nCheck every line").first, rows: 10, class: "input" %>
+        <%= text_area_tag :body, cover_body.to_s.split("\n\nCheck every line").first, rows: 10, class: "input" %>
         <p class="hint">Prefilled from the cover-letter draft — replace every [BRACKETED PLACEHOLDER] before sending.</p>
       </div>
       <div class="space-y-1">

@@ -22,7 +22,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
       ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?
@@ -51,7 +51,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
     note.sections = [ @lens ]
     stub_llm(draft: { title: "t", body: "b" }, follow_ups: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert_requested(:post, ENDPOINT) do |request|
       request.body.include?("Climbing") && request.body.include?("Tulsa") &&
@@ -65,7 +65,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
       follow_ups: (1..5).map { |n| { title: "Task #{n}", due_on: nil } }
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     # Three from the model, plus the one deterministic Places follow-up.
     assert_equal 4, @run.reload.items.grep(Task).count
@@ -74,7 +74,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
   test "a missing guide fails the run with a friendly error" do
     stub_llm(draft: { title: "t", body: "" }, follow_ups: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.failed?
@@ -89,7 +89,7 @@ class FindYourPeopleToolTest < ActiveJob::TestCase
     stub_llm(draft: { title: "t", body: "b" }, follow_ups: [])
 
     assert_no_difference "Section.count" do
-      ToolRunJob.perform_now(run)
+      run_and_add_all(run)
     end
 
     note = run.reload.items.grep(Note).sole

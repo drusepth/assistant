@@ -11,7 +11,7 @@ class HealthToolsTest < ActiveJob::TestCase
 
     stub_draft(body: "Start with the Acme member portal...")
     run = users(:one).tool_runs.create!(tool_slug: "find_care", inputs: { "specialty" => "dentist" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     note = run.items.grep(Note).sole
@@ -27,7 +27,7 @@ class HealthToolsTest < ActiveJob::TestCase
 
     stub_draft(body: "In Texas...")
     run = users(:one).tool_runs.create!(tool_slug: "find_care", inputs: { "specialty" => "dentist" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     assert_requested(:post, ENDPOINT) { |request| request.body.include?("Texas, USA") }
@@ -38,7 +38,7 @@ class HealthToolsTest < ActiveJob::TestCase
 
     stub_draft(body: "Your plan...")
     run = users(:one).tool_runs.create!(tool_slug: "find_care", inputs: { "specialty" => "eye doctor" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     assert_requested(:post, ENDPOINT) { |request| !request.body.include?("MegaCorp") }
@@ -60,7 +60,7 @@ class HealthToolsTest < ActiveJob::TestCase
     }.to_json } } ] }.to_json)
 
     run = users(:one).tool_runs.create!(tool_slug: "insurance_explainer", inputs: { "document_id" => document.id.to_s })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     note = run.items.grep(Note).sole
@@ -83,7 +83,7 @@ class HealthToolsTest < ActiveJob::TestCase
       tool_slug: "compare_plans",
       inputs: { "plan_a_id" => plan_a.id.to_s, "plan_b_id" => plan_b.id.to_s, "household" => "family of four" }
     )
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     note = run.items.grep(Note).sole
@@ -98,7 +98,7 @@ class HealthToolsTest < ActiveJob::TestCase
       tool_slug: "compare_plans",
       inputs: { "plan_a_id" => plan_a.id.to_s, "plan_b_id" => plan_a.id.to_s }
     )
-    ToolRunJob.perform_now(same)
+    run_and_add_all(same)
     assert same.reload.failed?
     assert_match(/same document/, same.error)
   end
@@ -116,7 +116,7 @@ class HealthToolsTest < ActiveJob::TestCase
       tool_slug: "start_a_practice",
       inputs: { "practice" => "meditation", "shape" => "10 minutes before work" }
     )
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     goal = run.items.grep(Goal).sole

@@ -28,7 +28,7 @@ class BenefitsScreenerToolTest < ActiveJob::TestCase
       ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?
@@ -49,7 +49,7 @@ class BenefitsScreenerToolTest < ActiveJob::TestCase
   test "the prompt carries the structured answers including checked circumstances" do
     stub_llm(report: { title: "t", body: "b" }, programs: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert_requested(:post, ENDPOINT) do |request|
       request.body.include?("Ohio") &&
@@ -61,7 +61,7 @@ class BenefitsScreenerToolTest < ActiveJob::TestCase
   test "no programs still lands an honest report with the footer" do
     stub_llm(report: { title: nil, body: "This screener knows US programs best." }, programs: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?

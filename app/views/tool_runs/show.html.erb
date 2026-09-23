@@ -51,7 +51,7 @@
         <%= button_to "Delete", @tool_run, method: :delete, class: "btn btn-danger",
               data: { turbo_confirm: @tool_run.chat? ?
                 "Delete this conversation? The transcript is gone for good — saved recaps stay in your notes." :
-                "Delete this run? Anything it created (notes, tasks, events) stays." } %>
+                "Delete this run? Anything you added from it (notes, tasks, events) stays." } %>
       <% end %>
     <% end %>
   <% end %>
@@ -101,7 +101,13 @@
       <% end %>
     <% end %>
 
-    <% items = @tool_run.items %>
+    <%# Offers first (D-tool-run-offers): what a draft run staged waits for
+        the user's Add. Below them, anything the run filed directly — a plan's
+        goal, a tool that writes its own rows, a saved answer. %>
+    <% offers = @tool_run.offers %>
+    <%= render "tool_runs/offers", run: @tool_run, offers: offers if offers.any? %>
+
+    <% items = @tool_run.direct_items %>
     <% drafts = items.grep(Note) %>
     <% goals = items.grep(Goal) %>
     <% deadlines = items.grep(Event) %>
@@ -137,7 +143,7 @@
       <% end %>
     <% end %>
 
-    <% if @tool_run.items.empty? && @tool_run.output["answer"].blank? %>
+    <% if items.empty? && offers.empty? && @tool_run.output["answer"].blank? %>
       <%= render Ui::CardComponent.new do %>
         <p class="text-sm text-soft">The run finished but produced nothing — try again with more detail.</p>
       <% end %>

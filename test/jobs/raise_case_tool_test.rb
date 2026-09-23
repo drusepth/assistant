@@ -17,7 +17,7 @@ class RaiseCaseToolTest < ActiveJob::TestCase
         follow_ups: [ { title: "Fetch the BLS number", due_on: nil } ]
       )
 
-      ToolRunJob.perform_now(run)
+      run_and_add_all(run)
 
       run.reload
       assert run.done?
@@ -41,7 +41,7 @@ class RaiseCaseToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "raise_case", inputs: {})
     stub_llm(memo: { title: "t", body: "b" }, research: [], follow_ups: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     assert_requested(:post, ENDPOINT) do |request|
@@ -54,7 +54,7 @@ class RaiseCaseToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "raise_case", inputs: {})
     stub_llm(memo: { title: "t", body: "b" }, research: [], follow_ups: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     assert_requested(:post, ENDPOINT) { |request| request.body.include?("No pay change is recorded") }

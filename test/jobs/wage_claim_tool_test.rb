@@ -17,7 +17,7 @@ class WageClaimToolTest < ActiveJob::TestCase
       deadlines: [ { title: "Response deadline", date: 14.days.from_now.to_date.iso8601 } ]
     )
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?
@@ -43,7 +43,7 @@ class WageClaimToolTest < ActiveJob::TestCase
     )
     stub_llm(letter: { title: "Demand", body: "..." }, follow_ups: [], deadlines: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     letter = run.reload.items.grep(Note).sole
     assert_includes letter.sections, sections(:money)

@@ -468,6 +468,9 @@ Rails.application.routes.draw do
       # The two ends of a prepared draft (D-agent-prepared-work).
       post :land
       post :discard
+      # One offer on a finished draft run (D-tool-run-offers); `land` above
+      # is its "Add all".
+      post :add
     end
   end
 

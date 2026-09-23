@@ -1,0 +1,66 @@
+<%# What a finished draft run offers (D-tool-run-offers): the draft note and
+    its follow-ups, none of them filed yet. Each carries its own Add button,
+    and an added one turns into the ordinary row it became — so the user
+    keeps the letter and one of three tasks, not whatever the model wrote.
+    Locals: run, offers. %>
+<% notes = offers.select(&:note?) %>
+<% dates = offers.select(&:event?) %>
+<% steps = offers - notes - dates %>
+
+<% notes.each do |offer| %>
+  <%= render Ui::CardComponent.new(title: offer.title,
+        subtitle: offer.added? ? "Saved to your notes" : "Draft — not saved yet") do |card| %>
+    <% card.with_actions do %>
+      <% if offer.item %>
+        <%= link_to "Open note", offer.item, class: "btn btn-secondary btn-sm" %>
+      <% elsif !offer.added? %>
+        <%= button_to add_tool_run_path(run, index: offer.index), method: :post, class: "btn btn-primary btn-sm" do %>
+          <%= icon(:plus, css_class: "size-4") %> Save to notes
+        <% end %>
+      <% end %>
+    <% end %>
+    <div class="prose-body text-[0.9375rem]"><%= Markdown.render(offer.item&.body || offer.detail) %></div>
+  <% end %>
+<% end %>
+
+<% [ [ steps, run.tool.kind == :plan ? "The steps" : "Follow-ups", "tasks" ],
+     [ dates, "Deadlines", "calendar" ] ].each do |group, title, home| %>
+  <% next if group.empty? %>
+  <% waiting = group.count { |offer| !offer.added? } %>
+  <%= render Ui::CardComponent.new(title: title, padded: false,
+        subtitle: waiting.zero? ? "Added to your #{home}" : "Add the ones you want — nothing is on your #{home} until you do") do %>
+    <div class="divide-y divide-edge">
+      <% group.each do |offer| %>
+        <% if offer.item %>
+          <%= render offer.item %>
+        <% else %>
+          <div id="<%= "tool_run_offer_#{offer.index}" %>" class="flex items-center justify-between gap-4 px-4 py-3">
+            <div class="min-w-0">
+              <p class="text-sm text-ink"><%= offer.title %></p>
+              <% if (date = offer.date.presence && (Date.iso8601(offer.date.to_s) rescue nil)) %>
+                <p class="mt-0.5 text-xs text-soft"><%= offer.event? ? "On" : "Due" %> <%= date.strftime("%b %-d, %Y") %></p>
+              <% end %>
+            </div>
+            <% if offer.added? %>
+              <span class="inline-flex shrink-0 items-center gap-1 text-xs text-soft"><%= icon(:check, css_class: "size-4") %> Added</span>
+            <% else %>
+              <%= button_to add_tool_run_path(run, index: offer.index), method: :post, class: "btn btn-secondary btn-sm shrink-0",
+                    aria: { label: "Add “#{offer.title}” to your #{home}" } do %>
+                <%= icon(:plus, css_class: "size-4") %> Add
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<% if offers.count { |offer| !offer.added? } > 1 %>
+  <div class="flex flex-wrap items-center gap-3">
+    <%= button_to land_tool_run_path(run), method: :post, class: "btn btn-secondary" do %>
+      <%= icon(:plus, css_class: "size-4") %> Add everything
+    <% end %>
+    <p class="text-xs text-soft">Or add just the pieces you want — what you don't add isn't saved anywhere.</p>
+  </div>
+<% end %>
