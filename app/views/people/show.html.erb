@@ -36,7 +36,7 @@
         <% if @person.phone.present? %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 text-soft">Phone</dt>
-            <dd class="min-w-0 wrap-anywhere"><%= phone_to @person.phone, nil, class: "text-primary-700 hover:underline" %></dd>
+            <dd class="min-w-0 wrap-anywhere"><%= phone_link @person.phone, class: "text-primary-700 hover:underline" %></dd>
           </div>
         <% end %>
         <% if @person.address.present? %>

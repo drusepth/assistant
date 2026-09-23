@@ -17,6 +17,8 @@ class Task < ApplicationRecord
   enum :bucket, { later: 0, today: 1 }, default: :later
 
   validates :title, presence: true
+  validate :routine_is_valid
+  after_save :save_routine
 
   scope :open, -> { where(completed_at: nil) }
   scope :completed, -> { where.not(completed_at: nil) }
@@ -64,4 +66,60 @@ class Task < ApplicationRecord
     update!(completed_at: nil)
     goal&.reactivate!
   end
+
+  # A routine (D-task-routines): the chore's standing reminder, and the one
+  # the task form's Repeat picker reads and writes. Other reminders on the
+  # task — set from its Reminders card — are left alone.
+  def routine
+    return @routine_draft if defined?(@routine_draft)
+
+    reminders.standing.pending.order(:id).first
+  end
+
+  def routine? = routine.present?
+
+  # The form's Repeat fields. "Doesn't repeat" retires the routine; anything
+  # else composes one through the Reminder's own picker attributes, so the
+  # rule, the start day and the time mean exactly what they do on a
+  # reminder. Its words are always the task's title.
+  def routine_attributes=(attributes)
+    attributes = attributes.to_h.symbolize_keys.slice(:repeat, :deliver_on, :deliver_time, :repeat_days, :repeat_until)
+    current = reminders.standing.pending.order(:id).first
+
+    if attributes[:repeat].blank? || attributes[:repeat] == "none"
+      @routine_retired = current
+      @routine_draft = nil
+    else
+      attributes[:repeat_until] = attributes[:repeat_until].presence
+      attributes[:deliver_on] = attributes[:deliver_on].presence || Date.current
+      @routine_draft = current || Reminder.new
+      @routine_draft.assign_attributes(attributes)
+    end
+  end
+
+  # What a routine firing does to the board (Q-routines, D-task-routines):
+  # the same row comes back — reopened if it was done, pulled into Today
+  # either way. One durable task, never a row per occurrence.
+  def come_round!
+    was_done = completed?
+    update!(completed_at: nil, bucket: :today)
+    goal&.reactivate! if was_done
+  end
+
+  private
+    def routine_is_valid
+      return unless @routine_draft
+
+      @routine_draft.assign_attributes(user: user, subject: self, body: title.to_s.truncate(Reminder::MAX_BODY))
+      return if @routine_draft.valid?
+
+      @routine_draft.errors.full_messages.each { |message| errors.add(:base, message) }
+    end
+
+    def save_routine
+      @routine_retired&.destroy!
+      @routine_draft&.save!
+      remove_instance_variable(:@routine_draft) if defined?(@routine_draft)
+      @routine_retired = nil
+    end
 end

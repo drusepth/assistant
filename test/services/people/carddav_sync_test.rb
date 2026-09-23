@@ -17,7 +17,7 @@ class People::CarddavSyncTest < ActiveSupport::TestCase
     assert_nil result.error
 
     maria = users(:one).people.find_by!(name: "Maria Rivera")
-    assert_equal "+1 (555) 010-2000", maria.phone
+    assert_equal "+15550102000", maria.phone
     assert_equal "maria@example.com", maria.email
     assert_equal [ "people" ], maria.sections.map(&:slug)
   end

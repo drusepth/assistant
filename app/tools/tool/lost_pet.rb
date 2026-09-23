@@ -77,7 +77,7 @@ module Tool
         parts << "Microchip number: #{pet.microchip}" if pet.microchip.present?
         parts << "MICROCHIP: not recorded in the app — tell the user to find the paperwork or ask their vet, " \
                  "who can look it up, and to check the registry's contact details are current." if pet.microchip.blank?
-        parts << "Vet: #{pet.vet.name}#{" — #{pet.vet.phone}" if pet.vet.phone.present?}" if pet.vet
+        parts << "Vet: #{pet.vet.name}#{" — #{PhoneNumber.format(pet.vet.phone)}" if pet.vet.phone.present?}" if pet.vet
         parts << "Notes from the owner: #{pet.notes.truncate(500)}" if pet.notes.present?
         parts.join("\n")
       end

@@ -23,11 +23,12 @@ module PeopleHelper
   # Everything the Address Book's instant filter matches a keystroke
   # against (D-address-book-directory). It rides on the row as a data
   # attribute so filtering is a string test against the DOM rather than a
-  # round trip — the same fields the server searches, plus the phone with
-  # its formatting stripped, because nobody types the parentheses.
+  # round trip — the same fields the server searches, plus the phone as
+  # printed and with its formatting stripped, because people type it both
+  # ways.
   def directory_haystack(person)
     digits = person.phone.to_s.gsub(/\D/, "")
-    [ person.name, person.relationship, person.email, person.phone, digits,
+    [ person.name, person.relationship, person.email, PhoneNumber.format(person.phone), digits,
       person.address, person.notes.to_s.truncate(120),
       person.sections.reject { |section| section.slug == "people" }.map(&:name).join(" ") ]
       .compact_blank.join(" ").downcase
