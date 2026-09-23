@@ -124,7 +124,7 @@ class BuildMyBudgetToolTest < ActiveJob::TestCase
   private
     def perform(inputs: {})
       run = @user.tool_runs.create!(tool_slug: "build_my_budget", inputs: inputs)
-      ToolRunJob.perform_now(run)
+      run_and_add_all(run)
       run.reload
     end
 

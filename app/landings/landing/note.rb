@@ -6,7 +6,10 @@ module Landing
     self.produces = "notes"
 
     field :title, "a short label", required: true
-    field :body, "the fact, in the document's own words", type: :text
+    # A tool's draft lands through this kind too (D-tool-run-offers), and a
+    # letter runs well past the 5,000 characters a fact needs — the Add
+    # click must never file a truncated one.
+    field :body, "the fact, in the document's own words", type: :text, limit: 100_000
 
     def land!(attributes, sections:)
       note = user.notes.create!(title: attributes["title"], body: attributes["body"].presence || attributes["title"])

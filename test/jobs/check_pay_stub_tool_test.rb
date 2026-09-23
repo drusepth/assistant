@@ -11,7 +11,7 @@ class CheckPayStubToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "check_pay_stub", inputs: { "document_id" => stub.id.to_s })
     stub_llm(explanation: { title: "Your April stub, explained", body: "Gross is what you earned before anything came out..." })
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?
@@ -34,7 +34,7 @@ class CheckPayStubToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "check_pay_stub", inputs: { "document_id" => stub.id.to_s })
     stub_llm(explanation: { title: "t", body: "b" })
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?
@@ -52,7 +52,7 @@ class CheckPayStubToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "check_pay_stub", inputs: { "document_id" => stub.id.to_s })
     stub_llm(explanation: { title: "t", body: "b" })
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert_requested(:post, ENDPOINT) do |request|
       request.body.include?("previous stub (2026-03-15)") && request.body.include?("net: 1201.33")
@@ -64,7 +64,7 @@ class CheckPayStubToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "check_pay_stub", inputs: { "document_id" => stub.id.to_s })
     stub_llm(explanation: { title: "t", body: "the walkthrough" })
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?

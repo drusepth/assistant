@@ -14,7 +14,7 @@ class CoverageToolsTest < ActiveJob::TestCase
 
     stub_draft(body: "Questions to ask...")
     run = users(:one).tool_runs.create!(tool_slug: "doctor_visit_prep", inputs: { "reason" => "annual physical" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     note = run.items.grep(Note).sole
@@ -29,7 +29,7 @@ class CoverageToolsTest < ActiveJob::TestCase
   test "cancel-subscription drafts with the service in the title fallback" do
     stub_draft(body: "Dear Streamly, I am cancelling...")
     run = users(:one).tool_runs.create!(tool_slug: "cancel_subscription", inputs: { "service" => "Streamly" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     note = run.reload.items.grep(Note).sole
     assert_equal "Cancel Streamly", note.title
@@ -42,7 +42,7 @@ class CoverageToolsTest < ActiveJob::TestCase
 
     stub_draft(body: "Hi Mom — been thinking about you...")
     run = users(:one).tool_runs.create!(tool_slug: "reconnect", inputs: { "person_id" => person.id.to_s })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     note = run.reload.items.grep(Note).sole
     assert_equal "Message to Mom", note.title
@@ -53,7 +53,7 @@ class CoverageToolsTest < ActiveJob::TestCase
 
   test "a vanished person fails the reconnect run gracefully" do
     run = users(:one).tool_runs.create!(tool_slug: "reconnect", inputs: { "person_id" => "999999" })
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.failed?
     assert_match(/gone or no longer shared/, run.error)
@@ -72,7 +72,7 @@ class CoverageToolsTest < ActiveJob::TestCase
       tool_slug: "moving",
       inputs: { "destination" => "Austin", "timing" => "lease is up June 30" }
     )
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.done?
     goal = run.items.grep(Goal).sole

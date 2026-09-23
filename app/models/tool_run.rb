@@ -75,11 +75,72 @@ class ToolRun < ApplicationRecord
   # filed exactly where the tool filed them, recorded on the run like any
   # other run's output. Dates are resolved *now*, not at preparation time —
   # a draft prepared on Monday and saved on Thursday means Thursday, the
-  # same rule the schedule_task payload already follows.
+  # same rule the schedule_task payload already follows. Offers the user
+  # already added one at a time are skipped, so "Add all" never doubles one.
   def land!
-    created = Array(output["landings"]).filter_map { |landing| land_one(landing) }
+    created = Array(output["landings"]).each_index.filter_map { |index| add_offer!(index) }
     update!(status: :done)
     created
+  end
+
+  # ── Offers (D-tool-run-offers) ───────────────────────────────────────
+
+  # One staged intent as the run page shows it: what it would be, and — once
+  # the user clicked Add — the row it became. `item` can be nil on an added
+  # offer whose row has since been deleted; it still reads as added, so the
+  # page never offers to file the same thing twice.
+  Offer = Data.define(:index, :kind, :title, :detail, :date, :added, :item) do
+    def added? = added
+    def note? = kind == "note"
+    def event? = kind == "event"
+  end
+
+  # Everything a finished draft run staged, in the order the tool staged it.
+  # The index is the offer's address for the Add click, so entries the page
+  # can't show are skipped rather than compacted away.
+  def offers
+    landed = tool_run_items.includes(:item).index_by { |link| [ link.item_type, link.item_id ] }
+
+    Array(output["landings"]).each_with_index.filter_map do |landing, index|
+      next unless landing.is_a?(Hash) && landing["title"].present?
+
+      kind = ::Landing.find(landing["kind"]) or next
+      preview = kind.new(landing_context).preview(landing.except("kind", "sections", "landed"))
+      marker = landing["landed"]
+      item = landed[[ marker["type"], marker["id"] ]]&.item if marker.is_a?(Hash)
+      Offer.new(index:, kind: preview.kind, title: preview.title, detail: preview.detail,
+        date: preview.date, added: marker.present?, item:)
+    end
+  end
+
+  def pending_offers? = offers.any? { |offer| !offer.added? }
+
+  # The primitives this run created some other way — a tool that writes its
+  # rows directly, a saved answer, an application email's follow-ups — so the
+  # page can show them beside the offers without showing an added one twice.
+  def direct_items
+    added = Array(output["landings"]).filter_map { |landing| landing["landed"] if landing.is_a?(Hash) }
+      .map { |marker| [ marker["type"], marker["id"] ] }
+    tool_run_items.includes(:item).reject { |link| added.include?([ link.item_type, link.item_id ]) }
+      .map(&:item).compact
+  end
+
+  # The Add click on one offer: that intent, and only it, becomes a row. The
+  # lock makes a double-click land it once; an offer already added, gone
+  # from the payload, or no longer valid returns nil.
+  def add_offer!(index)
+    return if index.negative?
+
+    with_lock do
+      landings = Array(output["landings"])
+      landing = landings[index]
+      next unless landing.is_a?(Hash) && landing["landed"].blank?
+
+      item = land_one(landing) or next
+      landings[index] = landing.merge("landed" => { "type" => item.class.base_class.name, "id" => item.id })
+      update!(output: output.merge("landings" => landings))
+      item
+    end
   end
 
   def discard! = update!(status: :discarded)

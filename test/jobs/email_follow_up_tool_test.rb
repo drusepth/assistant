@@ -33,7 +33,7 @@ class EmailFollowUpToolTest < ActiveJob::TestCase
       }.to_json } } ]
     }.to_json)
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?
@@ -56,7 +56,7 @@ class EmailFollowUpToolTest < ActiveJob::TestCase
     run = @user.tool_runs.create!(tool_slug: "email_follow_up", inputs: { "email_id" => foreign.id.to_s })
     stub_request(:post, ENDPOINT).to_return(status: 200, body: { choices: [ { message: { content: "{}" } } ] }.to_json)
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.failed?
     assert_match(/no longer in the mirror/, run.error)

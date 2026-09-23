@@ -21,7 +21,7 @@ class DebtCollectorResponseToolTest < ActiveJob::TestCase
       deadlines: [ { title: "Validation request deadline — send the letter before this", date: "2026-08-31" } ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?
@@ -39,7 +39,7 @@ class DebtCollectorResponseToolTest < ActiveJob::TestCase
   test "the footer survives even a minimal model response" do
     stub_llm(letter: { title: nil, body: "To whom it may concern," }, follow_ups: [], deadlines: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     letter = @run.reload.items.grep(Note).sole
     assert letter.body.end_with?(Tool::DebtCollectorResponse::SUMMONS_FOOTER)
@@ -49,7 +49,7 @@ class DebtCollectorResponseToolTest < ActiveJob::TestCase
   test "the model call carries the user's stance" do
     stub_llm(letter: { title: "x", body: "y" }, follow_ups: [], deadlines: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert_requested(:post, ENDPOINT) do |request|
       request.body.include?("I don't recognize this debt")

@@ -16,7 +16,7 @@ class DecodeOfferToolTest < ActiveJob::TestCase
       follow_ups: [ { title: "Decide before the deadline", due_on: "2026-08-19" } ]
     )
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?
@@ -39,7 +39,7 @@ class DecodeOfferToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "decode_offer", inputs: { "document_id" => offer.id.to_s })
     stub_llm(decoded: { title: nil, body: nil }, red_flags: [], questions: [], deadlines: [], follow_ups: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.failed?
     assert_match(/couldn't decode/, run.error)

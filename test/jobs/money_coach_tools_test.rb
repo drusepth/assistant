@@ -167,14 +167,14 @@ class MoneyCoachToolsTest < ActiveJob::TestCase
   private
     def start_chat(inputs: {})
       run = @user.tool_runs.create!(tool_slug: "money_coach", inputs: inputs)
-      ToolRunJob.perform_now(run)
+      run_and_add_all(run)
       run.reload
     end
 
     def perform_review(month: Date.current.prev_month.strftime("%Y-%m"), focus: nil)
       run = @user.tool_runs.create!(tool_slug: "spending_review",
         inputs: { "month" => month, "focus" => focus }.compact)
-      ToolRunJob.perform_now(run)
+      run_and_add_all(run)
       run.reload
     end
 

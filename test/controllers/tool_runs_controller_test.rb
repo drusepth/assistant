@@ -204,6 +204,57 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_equal @document.id.to_s, run.inputs["document_id"]
   end
 
+  test "a finished draft run offers its note and follow-ups with Add buttons (D-tool-run-offers)" do
+    run = offered_run
+
+    get tool_run_path(run)
+
+    assert_response :success
+    assert_match "Draft — not saved yet", response.body
+    assert_select "form[action=?] button", add_tool_run_path(run, index: 0), text: /Save to notes/
+    assert_select "form[action=?] button", add_tool_run_path(run, index: 1), text: /Add/
+    assert_select "form[action=?] button", land_tool_run_path(run), text: /Add everything/
+    assert_no_match "Open note", response.body
+  end
+
+  test "Add lands the one offer and the page shows it added" do
+    run = offered_run
+
+    assert_difference -> { users(:one).tasks.count }, 1 do
+      assert_no_difference -> { users(:one).notes.count } do
+        post add_tool_run_path(run, index: 1)
+      end
+    end
+    assert_redirected_to tool_run_path(run)
+    assert_equal "Added to your tasks.", flash[:notice]
+    assert_equal "Call the billing office", run.items.sole.title
+
+    follow_redirect!
+    assert_select "form[action=?]", add_tool_run_path(run, index: 1), count: 0
+    assert_select "form[action=?]", land_tool_run_path(run), count: 0, message: "one offer left isn't \"everything\""
+  end
+
+  test "Add everything lands what's left on a finished run" do
+    run = offered_run
+    post add_tool_run_path(run, index: 0)
+
+    assert_difference -> { users(:one).tasks.count }, 1 do
+      post land_tool_run_path(run)
+    end
+    assert_equal 2, run.reload.items.size
+    assert run.done?
+  end
+
+  test "another member can't add from someone else's run" do
+    run = offered_run
+    sign_in_as users(:two)
+
+    assert_no_difference -> { Task.count + Note.count } do
+      post add_tool_run_path(run, index: 1)
+    end
+    assert_response :not_found
+  end
+
   test "create without the required document re-renders the form" do
     assert_no_enqueued_jobs do
       post run_tool_path("dispute_letter"), params: { inputs: { intent: "fix it" } }
@@ -463,4 +514,16 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Mail the letter", response.body
     assert_match "nothing ever goes out without your explicit click", response.body
   end
+
+  private
+    def offered_run
+      users(:one).tool_runs.create!(
+        tool_slug: "dispute_letter", status: :done,
+        inputs: { "document_id" => @document.id.to_s, "intent" => "wrong charge" },
+        output: { "landings" => [
+          { "kind" => "note", "title" => "Dispute of account 12345", "body" => "I dispute this.", "sections" => [ sections(:disputes).id ] },
+          { "kind" => "task", "title" => "Call the billing office", "sections" => [ sections(:disputes).id ] }
+        ] }
+      )
+    end
 end

@@ -20,7 +20,7 @@ class TailorApplicationToolTest < ActiveJob::TestCase
       follow_ups: [ { title: "Proofread and send", due_on: nil } ]
     )
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?
@@ -44,7 +44,7 @@ class TailorApplicationToolTest < ActiveJob::TestCase
   test "no listing at all fails friendly before any model call" do
     run = users(:one).tool_runs.create!(tool_slug: "tailor_application", inputs: { "role" => "Shift lead" })
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert run.reload.failed?
     assert_match(/Paste the listing/, run.error)

@@ -16,7 +16,7 @@ class DepositDemandToolTest < ActiveJob::TestCase
       deadlines: [ { title: "Response deadline set in the letter", date: 14.days.from_now.to_date.iso8601 } ]
     )
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     run.reload
     assert run.done?
@@ -36,7 +36,7 @@ class DepositDemandToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "deposit_demand", inputs: { "details" => "Moved out June 30" })
     stub_llm(letter: { title: nil, body: "..." }, follow_ups: [], deadlines: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert_requested(:post, ENDPOINT) do |request|
       request.body.include?("123 Maple Street") && request.body.include?("(512) 555-0142")
@@ -47,7 +47,7 @@ class DepositDemandToolTest < ActiveJob::TestCase
     run = users(:one).tool_runs.create!(tool_slug: "deposit_demand", inputs: { "details" => "Moved out June 30" })
     stub_llm(letter: { title: nil, body: "..." }, follow_ups: [], deadlines: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     assert_requested(:post, ENDPOINT) { |request| !request.body.include?("letterhead") }
   end
@@ -61,7 +61,7 @@ class DepositDemandToolTest < ActiveJob::TestCase
     )
     stub_llm(letter: { title: "Demand", body: "..." }, follow_ups: [], deadlines: [])
 
-    ToolRunJob.perform_now(run)
+    run_and_add_all(run)
 
     letter = run.reload.items.grep(Note).sole
     assert_includes letter.sections, sections(:money), "the lease's own filing is inherited"

@@ -25,7 +25,7 @@ class ResultsExplainerToolTest < ActiveJob::TestCase
       follow_ups: [ { title: "Book the repeat panel the report suggests", due_on: nil } ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     @run.reload
     assert @run.done?
@@ -44,7 +44,7 @@ class ResultsExplainerToolTest < ActiveJob::TestCase
   test "no questions means no checklist block, and the disclaimer still lands" do
     stub_llm(explanation: { title: nil, body: "Plain reading." }, questions_for_doctor: [], follow_ups: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     note = @run.reload.items.grep(Note).sole
     assert_equal "Explained — Lipid panel", note.title
@@ -59,7 +59,7 @@ class ResultsExplainerToolTest < ActiveJob::TestCase
       follow_ups: [ { title: "One" }, { title: "Two" }, { title: "Three" } ]
     )
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert_equal %w[ One Two ], @run.reload.items.grep(Task).map(&:title)
   end
@@ -67,7 +67,7 @@ class ResultsExplainerToolTest < ActiveJob::TestCase
   test "a missing explanation fails the run" do
     stub_llm(explanation: { title: "x", body: "" }, questions_for_doctor: [], follow_ups: [])
 
-    ToolRunJob.perform_now(@run)
+    run_and_add_all(@run)
 
     assert @run.reload.failed?
     assert_match(/didn't return an explanation/, @run.error)
