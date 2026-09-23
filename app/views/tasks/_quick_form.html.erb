@@ -10,7 +10,17 @@
     <p class="hint"><%= task_auto_sort_hint %></p>
   </div>
   <%= form.hidden_field :goal_id %>
-  <%= form.hidden_field :due_on %>
+  <%# Folded, because most tasks are just words — but one tap away, because
+      "remind me to call the pharmacy at 4pm" and "take the trash out every
+      Thursday" are tasks too (D-reminders-on-tasks). A due date a page
+      prefilled rides inside, still sent while folded. %>
+  <details class="rounded-lg border border-edge px-3 py-2" <%= "open" if task.repeat != "none" || task.remind_time.present? || task.errors[:base].any? %>>
+    <summary class="cursor-pointer text-sm font-medium text-primary-700">
+      Due date, repeat, reminder<%= " · due #{task.due_on == Date.current ? "today" : task.due_on.strftime("%b %-d")}" if task.due_on %>
+    </summary>
+    <div class="mt-3"><%= render "tasks/when_fields", form: form %></div>
+  </details>
+  <%= form.errors_for :base %>
   <% if task.goal %>
     <p class="hint">Will be added to the goal “<%= task.goal.title %>”.</p>
   <% end %>

@@ -363,57 +363,165 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Task.count", -1) { delete task_path(@task) }
   end
 
-  # --- routines (D-task-routines) -------------------------------------------
+  # --- schedule: repeat and remind (D-task-routines, D-reminders-on-tasks) --
 
-  test "a task created with a repeat carries a standing reminder named for it" do
+  test "a task created with a repeat keeps it on the task, with one schedule reminder named for it" do
     assert_difference -> { Reminder.count } => 1 do
-      post tasks_path, params: { task: { title: "Change the litter",
-        routine_attributes: { repeat: "weekly", deliver_on: Date.current.to_s, deliver_time: "08:00", repeat_days: [ "SU" ] } } }
+      post tasks_path, params: { task: { title: "Change the litter", due_on: Date.current.to_s,
+        repeat: "weekly", remind_time: "08:00", repeat_days: [ "", "SU" ] } }
     end
 
     task = users(:one).tasks.find_by!(title: "Change the litter")
-    routine = task.routine
-    assert_equal "FREQ=WEEKLY;BYDAY=SU", routine.rule
-    assert_equal "Change the litter", routine.body
-    assert_equal 0, routine.local_deliver_at.wday
-    assert_equal 8, routine.local_deliver_at.hour
+    assert_equal "FREQ=WEEKLY;BYDAY=SU", task.repeat_rule
+    assert_equal "08:00", task.remind_time
+    reminder = task.schedule_reminder
+    assert_equal [ "FREQ=WEEKLY;BYDAY=SU", "Change the litter", false ], [ reminder.rule, reminder.body, reminder.silent? ]
+    assert_equal [ 0, 8 ], [ reminder.local_deliver_at.wday, reminder.local_deliver_at.hour ]
+    assert_equal 0, task.due_on.wday, "due on its first occurrence"
 
     get edit_task_path(task)
-    assert_select "select[name=?] option[selected][value=weekly]", "task[routine_attributes][repeat]"
+    assert_select "select[name=?] option[selected][value=weekly]", "task[repeat]"
+    assert_select "input[name=?][value='08:00']", "task[remind_time]"
+    assert_select "input[name=?][value=SU][checked]", "task[repeat_days][]"
   end
 
-  test "a task saved without a repeat makes no reminder" do
-    assert_no_difference -> { Reminder.count } do
-      post tasks_path, params: { task: { title: "One-off", routine_attributes: { repeat: "none", deliver_on: Date.current.to_s } } }
+  test "a repeat started today puts the chore on today's list even when today's hour has gone" do
+    travel_to Time.current.beginning_of_day + 22.hours do
+      post tasks_path, params: { task: { title: "Dishes", due_on: Date.current.to_s, repeat: "daily", remind_time: "09:00" } }
+
+      task = users(:one).tasks.find_by!(title: "Dishes")
+      assert_equal Date.current, task.due_on
+      assert_equal Date.current + 1, task.schedule_reminder.local_deliver_at.to_date, "the ping waits for the next one"
     end
   end
 
-  test "choosing Doesn't repeat retires the routine and leaves other reminders alone" do
-    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
-    one_shot = users(:one).reminders.create!(subject: @task, deliver_on: Date.current + 2, deliver_time: "10:00")
+  test "a repeat with no time comes round silently" do
+    post tasks_path, params: { task: { title: "Water the plants", repeat: "daily", remind_time: "" } }
+
+    task = users(:one).tasks.find_by!(title: "Water the plants")
+    assert task.schedule_reminder.silent?
+    assert_nil task.remind_time
+    assert_equal Date.current, task.due_on
+  end
+
+  test "a task saved without a repeat or a time makes no reminder" do
+    assert_no_difference -> { Reminder.count } do
+      post tasks_path, params: { task: { title: "One-off", repeat: "none", remind_time: "" } }
+    end
+    assert_nil users(:one).tasks.find_by!(title: "One-off").due_on
+  end
+
+  test "a time with no repeat is a reminder on the day it's due, and follows the task when it moves" do
+    post tasks_path, params: { task: { title: "Call the pharmacy", due_on: (Date.current + 1).to_s, repeat: "none", remind_time: "16:00" } }
+
+    task = users(:one).tasks.find_by!(title: "Call the pharmacy")
+    reminder = task.schedule_reminder
+    assert_not reminder.standing?
+    assert_equal [ Date.current + 1, 16 ], [ reminder.local_deliver_at.to_date, reminder.local_deliver_at.hour ]
+
+    patch reschedule_task_path(task, to: (Date.current + 3).iso8601)
+
+    assert_equal [ Date.current + 3, 16 ], [ reminder.reload.local_deliver_at.to_date, reminder.local_deliver_at.hour ]
+  end
+
+  test "a time with no due date means today" do
+    travel_to Time.current.beginning_of_day + 8.hours do
+      post tasks_path, params: { task: { title: "Call the pharmacy", repeat: "none", remind_time: "16:00" } }
+    end
+
+    task = users(:one).tasks.find_by!(title: "Call the pharmacy")
+    assert_equal Date.current, task.due_on
+    assert task.schedule_reminder
+  end
+
+  test "a time already past today is said out loud, not dropped" do
+    travel_to Time.current.beginning_of_day + 10.hours do
+      assert_no_difference -> { Task.count } do
+        post tasks_path, params: { task: { title: "Call the pharmacy", due_on: Date.current.to_s, repeat: "none", remind_time: "08:00" } }
+      end
+      assert_response :unprocessable_entity
+      assert_select ".field-error", /already past/
+    end
+  end
+
+  test "moving a task whose reminder already went off is not an error" do
+    task = travel_to(Time.current.beginning_of_day + 7.hours) do
+      users(:one).tasks.create!(title: "Call the pharmacy", due_on: Date.current, remind_time: "08:00")
+    end
+
+    travel_to Time.current.beginning_of_day + 10.hours do
+      patch reschedule_task_path(task, to: "today")
+      assert_redirected_to today_path
+    end
+  end
+
+  test "clearing the time removes the reminder; picking a repeat turns it into the routine" do
+    patch task_path(@task), params: { task: { due_on: (Date.current + 1).to_s, repeat: "none", remind_time: "16:00" } }
+    assert_not @task.reload.schedule_reminder.standing?
+
+    assert_no_difference -> { Reminder.count } do
+      patch task_path(@task), params: { task: { repeat: "daily", remind_time: "16:00" } }
+    end
+    assert @task.reload.schedule_reminder.standing?
+
+    patch task_path(@task), params: { task: { repeat: "none", remind_time: "" } }
+    assert_nil @task.reload.schedule_reminder
+    assert_nil @task.repeat_rule
+  end
+
+  test "choosing Doesn't repeat ends the routine and leaves reminders set by hand alone" do
+    patch task_path(@task), params: { task: { repeat: "daily" } }
+    by_hand = users(:one).reminders.create!(subject: @task, deliver_on: Date.current + 2, deliver_time: "10:00")
     assert @task.reload.routine?
 
-    patch task_path(@task), params: { task: { title: "Mine", routine_attributes: { repeat: "none" } } }
+    patch task_path(@task), params: { task: { title: "Mine", repeat: "none", remind_time: "" } }
 
     assert_not @task.reload.routine?
-    assert Reminder.exists?(one_shot.id)
+    assert Reminder.exists?(by_hand.id)
+    assert_equal [ by_hand ], @task.extra_reminders.to_a
   end
 
   test "editing the task's repeat changes the one routine rather than adding another" do
-    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    patch task_path(@task), params: { task: { repeat: "daily" } }
     assert_no_difference -> { Reminder.count } do
-      patch task_path(@task), params: { task: { title: "Renamed", routine_attributes: { repeat: "monthly", deliver_on: Date.current.to_s } } }
+      patch task_path(@task), params: { task: { title: "Renamed", repeat: "monthly" } }
     end
-    routine = @task.reload.routine
-    assert_equal "FREQ=MONTHLY;BYMONTHDAY=#{Date.current.day}", routine.rule
-    assert_equal "Renamed", routine.body
+    reminder = @task.reload.schedule_reminder
+    assert_match(/\AFREQ=MONTHLY;BYMONTHDAY=\d+\z/, reminder.rule)
+    assert_equal "Renamed", reminder.body
+  end
+
+  test "moving a repeating task's due day moves this time round, not the series" do
+    travel_to Date.current.beginning_of_week(:monday).to_time + 8.hours do # a Monday
+      post tasks_path, params: { task: { title: "Dishes", due_on: Date.current.to_s, repeat: "weekly",
+        repeat_days: %w[ MO WE FR ], remind_time: "21:00" } }
+      task = users(:one).tasks.find_by!(title: "Dishes")
+      armed = task.schedule_reminder.deliver_at
+
+      patch reschedule_task_path(task, to: "tomorrow")
+
+      assert_equal Date.current + 1, task.reload.due_on, "tomorrow means tomorrow"
+      assert_equal armed, task.schedule_reminder.deliver_at
+    end
   end
 
   test "completing a routine task keeps its cadence" do
-    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    patch task_path(@task), params: { task: { repeat: "daily" } }
     patch complete_task_path(@task)
 
     assert @task.reload.completed?
     assert @task.routine?
+    assert @task.schedule_reminder
+  end
+
+  test "a task's page shows its repeat and its reminder, and a way to add them when there are none" do
+    get task_path(@task)
+    assert_select "a[href=?]", edit_task_path(@task), text: /Add a time or a repeat/
+
+    patch task_path(@task), params: { task: { repeat: "weekly", repeat_days: [ "TH" ], remind_time: "20:00" } }
+    get task_path(@task)
+    assert_select "dd", text: /Weekly on Thursday/
+    assert_select "dd", text: /8 PM each time/
+    assert_select "form[action=?]", reminders_path, false
   end
 end

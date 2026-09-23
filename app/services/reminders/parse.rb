@@ -1,8 +1,8 @@
 module Reminders
-  # Plain words into the reminder form (D-standing-reminders): "take the
-  # trash out every Thursday night" becomes a body, a first day, a time, and
-  # a Repeat — the same fields the form has, prefilled for the user to check
-  # and send. The model reads the sentence; nothing lands without the click
+  # Plain words into the new-task form (D-standing-reminders,
+  # D-reminders-on-tasks): "take the trash out every Thursday night" becomes
+  # a title (`body`), a first day, a time, and a Repeat — the task form's
+  # own fields, prefilled for the user to check and send. The model reads the sentence; nothing lands without the click
   # (D20), and the closed sets (`Reminder::REPEAT_OPTIONS`, the weekday
   # codes) are what its answer is validated into. Same shape as
   # Tasks::Categorize: one call, one JSON object, deterministic parsing of
@@ -43,13 +43,13 @@ module Reminders
 
       def system_prompt
         <<~PROMPT
-          You are the reminder feature of a private, self-hosted life assistant.
-          The user says in plain words what they want to be reminded of and when; you
-          fill in the reminder form for them. Respond with a JSON object:
+          You fill in the new-task form of a private, self-hosted life assistant.
+          The user says in plain words what they need to do, when, and whether it
+          repeats; you fill in the form for them. Respond with a JSON object:
           {"body": "...", "date": "YYYY-MM-DD" or null, "time": "HH:MM" or null,
            "repeat": one of #{Reminder::REPEAT_OPTIONS.keys.map(&:inspect).join(", ")},
            "days": ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] or [], "until": "YYYY-MM-DD" or null}.
-          body is what to be reminded of, as a short imperative phrase in the user's own
+          body is the task, as a short imperative phrase in the user's own
           words with the timing removed ("take the trash out", "call the pharmacy").
           date is the first day it should fire, resolved against today's date: a named
           day ("Thursday") means the coming one, "tonight" means today, "tomorrow

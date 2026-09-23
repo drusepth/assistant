@@ -1,15 +1,14 @@
-<%# Reminders on one item (D-reminders). Locals: subject (an Event or Task).
+<%# Reminders on an event (D-reminders). Locals: subject (an Event).
     Two ways to set one, because "an hour before" and "at 7am on the day"
-    are genuinely different asks — the first follows the item if it moves,
-    the second stays put, and only the second can repeat
-    (D-standing-reminders): a task called "Take the trash out" with a
-    reminder every Thursday at 8pm is the chore, with no respawn engine. %>
+    are genuinely different asks — the first follows the event if it moves,
+    the second stays put. A task's reminder isn't set here: it is the
+    "Remind me at" and Repeat fields on the task's own form
+    (D-reminders-on-tasks). %>
 <% pending = subject.reminders.pending.order(:deliver_at) %>
-<%= render Ui::CardComponent.new(title: "Reminders",
-      subtitle: "Sent to your notification channels at the time you pick") do %>
+<%= render Ui::CardComponent.new(title: "Reminders", subtitle: "Sent to your phone at the time you pick") do %>
   <% if pending.any? %>
     <ul class="mb-4 space-y-2">
-      <%= render partial: "reminders/reminder", collection: pending, locals: { show_body: false } %>
+      <%= render partial: "reminders/reminder", collection: pending %>
     </ul>
   <% end %>
 
@@ -19,10 +18,10 @@
 
   <details class="<%= "mt-3" if subject.remind_from %>">
     <summary class="cursor-pointer text-sm font-medium text-primary-700">
-      <%= subject.remind_from ? "Or pick a time — once, or on repeat" : "Pick a time — once, or on repeat" %>
+      <%= subject.remind_from ? "Or pick an exact time" : "Pick a time" %>
     </summary>
     <div class="mt-3">
-      <%= render "reminders/form", reminder: Reminder.new(deliver_on: Date.current), subject: subject, show_body: false %>
+      <%= render "reminders/form", reminder: Reminder.new(deliver_on: Date.current), subject: subject %>
     </div>
   </details>
 <% end %>

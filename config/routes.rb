@@ -73,9 +73,7 @@ Rails.application.routes.draw do
 
   resource :export, only: %i[ create ]
   resources :notification_channels, only: %i[ create destroy ]
-  resources :reminders, only: %i[ create update destroy ] do
-    post :parse, on: :collection
-  end
+  resources :reminders, only: %i[ create update destroy ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]
   resources :linked_accounts, only: %i[ create update destroy ] do
@@ -95,6 +93,7 @@ Rails.application.routes.draw do
     # The task page's embedded chat (D30) — find-or-create the bound run,
     # append the turn.
     resource :conversation, only: %i[ show create ], module: :tasks
+    post :parse, on: :collection
     member do
       patch :complete
       patch :reopen

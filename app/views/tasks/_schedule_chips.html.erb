@@ -1,0 +1,14 @@
+<%# Whether a task repeats and when it pings (D-reminders-on-tasks), on the
+    row itself — read straight off the task's own fields, so a list of rows
+    costs nothing extra. The time is the owner's own ping, so only the owner
+    sees it. Locals: task. %>
+<% mine = task.user_id == Current.user.id %>
+<% if (rule = task.recurrence) %>
+  <span class="inline-flex items-center gap-1 text-xs text-soft" title="Repeats <%= rule.describe %>">
+    <%= icon(:arrow_path, css_class: "size-3.5") %><%= repeat_label(rule) %><% if mine && task.remind_time %> · <%= icon(:bell, css_class: "size-3.5") %><%= clock_label(task.remind_time) %><% end %>
+  </span>
+<% elsif mine && task.remind_time && !task.completed? %>
+  <span class="inline-flex items-center gap-1 text-xs text-soft" title="Reminder at <%= clock_label(task.remind_time) %>">
+    <%= icon(:bell, css_class: "size-3.5") %><%= clock_label(task.remind_time) %>
+  </span>
+<% end %>

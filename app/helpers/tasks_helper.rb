@@ -32,7 +32,30 @@ module TasksHelper
     if auto_sort_enabled?
       "Just write it down — your assistant files it into sections and picks up any due date you mention."
     else
-      "Details like sections and due dates can be added after saving, from the task's edit page."
+      "Sections can be added after saving, from the task's edit page."
     end
+  end
+
+  # "Mon, Wed, Fri", "Every day", "Every 2 weeks · Thu" — the short form of
+  # a repeat, for a chip on a row.
+  def repeat_label(rule)
+    days = rule.weekdays.sort_by { |code| Recurrence::Rule::WEEKDAYS[code] }
+      .map { |code| Recurrence::Rule::DAY_NAMES[code].first(3) }.join(", ")
+
+    case Reminder.repeat_key_for(rule)
+    when "daily" then "Every day"
+    when "weekdays" then "Weekdays"
+    when "weekly" then days.presence || "Weekly"
+    when "biweekly" then [ "Every 2 weeks", days.presence ].compact.join(" · ")
+    when "monthly" then "Monthly"
+    when "yearly" then "Yearly"
+    else rule.describe.to_s.upcase_first
+    end
+  end
+
+  # "16:00" → "4 PM", "08:30" → "8:30 AM".
+  def clock_label(time_of_day)
+    hour, minute = time_of_day.to_s.split(":").map(&:to_i)
+    Time.utc(2000, 1, 1, hour.to_i, minute.to_i).strftime("%-l:%M %p").sub(":00", "")
   end
 end
