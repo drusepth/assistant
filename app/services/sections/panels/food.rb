@@ -34,9 +34,14 @@ module Sections
 
       # D-kitchen: asked once, visibly, and only of the owner with somebody
       # to share with. Nothing is shared until the click.
+      # A kitchen already shared from its settings has had its answer.
       def share_prompt?
-        owned_kitchen? && kitchen.share_prompt_pending? && household_others.any?
+        owned_kitchen? && kitchen.share_prompt_pending? && household_others.any? && kitchen.access_grants.none?
       end
+
+      # The hub leads with the kitchen itself, so "Nothing in Food yet"
+      # under a shopping list would read as if the list didn't count.
+      def show_empty_browse? = false
 
       # Someone else in the house already keeps a kitchen you can't see —
       # the likely story is that you opened Food before they shared theirs.
@@ -60,6 +65,10 @@ module Sections
       def lists = @lists ||= kitchen.shopping_lists.ordered.to_a
       def open_items = @open_items ||= list.open_items.includes(:added_by, :recipe, :food).to_a
       def basket_items = @basket_items ||= list.basket_items.includes(:checked_by, :recipe).to_a
+
+      # What needs using, then how much is where.
+      def expiring = @expiring ||= kitchen.pantry_items.expiring.by_expiry.limit(6).to_a
+      def pantry_counts = @pantry_counts ||= kitchen.pantry_items.group(:location).count
 
       def recipes_count = @recipes_count ||= Recipe.visible_to(viewer).count
     end

@@ -316,6 +316,13 @@ Rails.application.routes.draw do
       patch :select
       post :answer_share
     end
+    # "What's in the kitchen" — /kitchens/:id/pantry?location=fridge.
+    resources :pantry_items, path: "pantry", only: %i[ index create update destroy ] do
+      member do
+        patch :move
+        post :add_to_list
+      end
+    end
     resources :foods, only: %i[ index edit update ] do
       post :merge, on: :member
       patch :move_aisle, on: :collection
@@ -333,6 +340,8 @@ Rails.application.routes.draw do
   # kitchen's list, scaled to the servings on screen.
   resources :recipes, only: [] do
     resource :list_addition, only: %i[ create ], module: :recipes
+    # After "Cooked it": anything used up comes out of the kitchen.
+    resource :use_up, only: %i[ new create ], module: :recipes
   end
   resources :share_links, only: %i[ create destroy ]
   get "s/:token" => "public#show", as: :shared

@@ -9,7 +9,7 @@ module Recipes
       list = kitchen.shopping_lists.find_by(id: params[:shopping_list_id]) || ShoppingList.default_for(kitchen)
       servings = params[:servings].presence&.to_i&.clamp(1, 100)
 
-      rows = Kitchens::RecipeNeeds.new(recipe, factor: recipe.scale_factor(servings)).rows
+      rows = Kitchens::RecipeNeeds.new(recipe, factor: recipe.scale_factor(servings), kitchen: kitchen).rows
       added = ShoppingLists::Add.new(list, by: Current.user).rows(rows, recipe: recipe)
 
       redirect_back fallback_location: recipe_path(recipe),

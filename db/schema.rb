@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_072614) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_073144) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -474,6 +474,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072614) do
     t.json "aisle_order", default: [], null: false
     t.datetime "created_at", null: false
     t.string "name", default: "Home", null: false
+    t.boolean "put_away_on_check", default: true, null: false
     t.datetime "share_prompt_answered_at"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -554,6 +555,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072614) do
     t.integer "user_id", null: false
     t.index ["user_id", "kind"], name: "index_notification_channels_on_user_id_and_kind"
     t.index ["user_id"], name: "index_notification_channels_on_user_id"
+  end
+
+  create_table "pantry_items", force: :cascade do |t|
+    t.integer "added_by_id"
+    t.datetime "created_at", null: false
+    t.date "expires_on"
+    t.integer "food_id"
+    t.string "item", null: false
+    t.string "item_key", null: false
+    t.integer "kitchen_id", null: false
+    t.string "location", default: "pantry", null: false
+    t.date "opened_on"
+    t.string "quantity_note"
+    t.integer "shopping_list_item_id"
+    t.datetime "updated_at", null: false
+    t.index ["added_by_id"], name: "index_pantry_items_on_added_by_id"
+    t.index ["food_id"], name: "index_pantry_items_on_food_id"
+    t.index ["kitchen_id", "expires_on"], name: "index_pantry_items_on_kitchen_id_and_expires_on"
+    t.index ["kitchen_id", "location"], name: "index_pantry_items_on_kitchen_id_and_location"
+    t.index ["kitchen_id"], name: "index_pantry_items_on_kitchen_id"
+    t.index ["shopping_list_item_id"], name: "index_pantry_items_on_shopping_list_item_id"
   end
 
   create_table "people", force: :cascade do |t|
@@ -1246,6 +1268,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072614) do
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"
   add_foreign_key "notification_channels", "users"
+  add_foreign_key "pantry_items", "foods", on_delete: :nullify
+  add_foreign_key "pantry_items", "kitchens"
+  add_foreign_key "pantry_items", "shopping_list_items", on_delete: :nullify
+  add_foreign_key "pantry_items", "users", column: "added_by_id", on_delete: :nullify
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
   add_foreign_key "pet_foods", "pets"

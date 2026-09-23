@@ -15,20 +15,32 @@ class ShoppingListItem < ApplicationRecord
 
   def checked? = checked_at.present?
 
-  def check!(by:) = update!(checked_at: Time.current, checked_by: by)
+  has_many :put_away_items, class_name: "PantryItem", dependent: :nullify
 
-  def uncheck! = update!(checked_at: nil, checked_by: nil)
+  # Checking a line off puts it in the kitchen (docs/FOOD_PLAN.md §3) —
+  # unless the household keeps no fridge list.
+  def check!(by:)
+    transaction do
+      update!(checked_at: Time.current, checked_by: by)
+      kitchen = shopping_list.kitchen
+      Kitchens::Pantry.new(kitchen, by: by).put_away(self) if kitchen.put_away_on_check?
+    end
+  end
+
+  # The undo: un-checking takes back out what checking put away — only the
+  # row it made, never one that was already in the fridge.
+  def uncheck!
+    transaction do
+      update!(checked_at: nil, checked_by: nil)
+      put_away_items.destroy_all
+    end
+  end
 
   # "2 tins chickpeas" — the recipe ingredient's own formatting, so a list
   # line reads exactly like the recipe it came from.
   def display
-    [ Recipes::Quantity.format(quantity), unit_for_display, item ].compact_blank.join(" ")
+    [ Recipes::Quantity.with_unit(quantity, unit), item ].compact_blank.join(" ")
   end
 
-  private
-    def unit_for_display
-      return unit if unit.blank? || quantity.nil? || quantity <= 1 || !RecipeIngredient::COUNTABLE_UNITS.include?(unit)
-
-      unit.pluralize
-    end
+  def amount = Recipes::Quantity.with_unit(quantity, unit)
 end

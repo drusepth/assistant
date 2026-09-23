@@ -23,6 +23,17 @@
       <% end %>
     <% end %>
 
+    <%= render Ui::CardComponent.new(title: "Putting things away") do %>
+      <%= form_with model: @kitchen, class: "space-y-3" do |form| %>
+        <label class="flex items-start gap-2 text-sm">
+          <%= form.check_box :put_away_on_check %>
+          <span>Checking something off the shopping list puts it in the kitchen<br>
+            <span class="text-soft">Keeps the fridge list true without anyone typing it in. Un-checking takes it back out.</span></span>
+        </label>
+        <%= form.submit "Save", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    <% end %>
+
     <%= render "shared/share_controls", subject: @kitchen,
           subtitle: "Private to you unless shared",
           note: "Anyone you share this kitchen with can add to its lists, check things off, " \

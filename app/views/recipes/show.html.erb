@@ -95,8 +95,9 @@
       <div class="sm:col-span-2">
         <%= render Ui::CardComponent.new(title: "Ingredients") do %>
           <%= render "recipes/ingredients", recipe: @recipe, servings: @servings, factor: @factor,
-                scale_path: scale_path %>
-          <%= render "recipes/kitchen", recipe: @recipe, servings: @servings %>
+                scale_path: scale_path, have: @kitchen_have %>
+          <%= render "recipes/kitchen", recipe: @recipe, servings: @servings, kitchen: @kitchen,
+                kitchen_split: [ @kitchen_have, @kitchen_need ], kitchen_stocked: @kitchen_stocked %>
         <% end %>
       </div>
       <div class="sm:col-span-3">

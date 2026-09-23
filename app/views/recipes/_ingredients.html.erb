@@ -4,6 +4,8 @@
 <% scale_path = local_assigns[:scale_path] %>
 <% servings = local_assigns[:servings] || recipe.servings %>
 <% factor = local_assigns[:factor] || 1.0 %>
+<%# `have:` (the app page only) marks the lines already in the kitchen. %>
+<% have_ids = local_assigns[:have]&.map(&:id)&.to_set %>
 
 <% if recipe.servings.present? && scale_path %>
   <div class="mb-4 flex flex-wrap items-center gap-2 text-sm print:hidden">
@@ -28,6 +30,13 @@
         <li class="pt-3 text-xs font-bold uppercase tracking-[0.12em] text-soft first:pt-0"><%= ingredient.item %></li>
       <% else %>
         <li class="flex gap-2 border-b border-edge/60 pb-2 last:border-0">
+          <% if have_ids && !ingredient.optional? %>
+            <span class="mt-0.5 shrink-0 <%= have_ids.include?(ingredient.id) ? "text-sage-700" : "text-stone-400" %>"
+                  title="<%= have_ids.include?(ingredient.id) ? "In the kitchen" : "Not in the kitchen" %>">
+              <%= icon(have_ids.include?(ingredient.id) ? :check_circle : :plus, css_class: "size-4") %>
+              <span class="sr-only"><%= have_ids.include?(ingredient.id) ? "In the kitchen:" : "Need:" %></span>
+            </span>
+          <% end %>
           <span class="min-w-0 flex-1 text-ink">
             <%= ingredient.display(factor) %><%
               %><% if ingredient.note.present? %><span class="text-soft">, <%= ingredient.note %></span><% end %><%

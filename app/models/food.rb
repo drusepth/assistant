@@ -42,6 +42,7 @@ class Food < ApplicationRecord
   has_many :aliases, class_name: "FoodAlias", dependent: :delete_all
   has_many :kinds, class_name: "Food", foreign_key: :kind_of_id, inverse_of: :kind_of, dependent: :nullify
   has_many :shopping_list_items, dependent: :nullify
+  has_many :pantry_items, dependent: :nullify
 
   validates :name, presence: true, length: { maximum: 100 }
   validates :aisle, inclusion: { in: AISLES.keys }, allow_nil: true
@@ -66,6 +67,7 @@ class Food < ApplicationRecord
     transaction do
       aliases.update_all(food_id: target.id)
       shopping_list_items.update_all(food_id: target.id)
+      pantry_items.update_all(food_id: target.id)
       Food.where(kind_of_id: id).where.not(id: target.id).update_all(kind_of_id: target.id)
       target.update!(kind_of: nil) if target.kind_of_id == id
       yield target if block_given?

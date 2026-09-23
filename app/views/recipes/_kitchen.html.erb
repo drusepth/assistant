@@ -1,6 +1,12 @@
-<%# The recipe, joined to the kitchen (docs/FOOD_PLAN.md §4): its shopping,
-    at the servings on screen. %>
-<div class="mt-4 flex flex-wrap gap-2 border-t border-edge pt-3 print:hidden">
-  <%= button_to "Add to shopping list", recipe_list_addition_path(recipe, servings: servings),
-        class: "btn btn-secondary btn-sm" %>
+<%# The recipe, joined to the kitchen (docs/FOOD_PLAN.md §4): how much of it
+    is already in, and its shopping at the servings on screen. %>
+<% have, need = kitchen_split %>
+<div class="mt-4 flex flex-wrap items-center gap-2 border-t border-edge pt-3 print:hidden">
+  <% if have.any? || kitchen_stocked %>
+    <p class="w-full text-sm text-soft">In <%= kitchen.name %>: <span class="font-semibold text-ink"><%= have.size %> of <%= have.size + need.size %></span></p>
+  <% end %>
+  <% if need.any? %>
+    <%= button_to (have.any? ? "Add the #{pluralize(need.size, "missing thing")} to the list" : "Add to shopping list"),
+          recipe_list_addition_path(recipe, servings: servings), class: "btn btn-secondary btn-sm" %>
+  <% end %>
 </div>

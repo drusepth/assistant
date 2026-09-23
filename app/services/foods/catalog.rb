@@ -64,6 +64,12 @@ module Foods
     # Rows written before their wording was filed (or re-filed by a merge)
     # pick up their food.
     def backfill!
+      @kitchen.pantry_items
+        .joins("INNER JOIN food_aliases ON food_aliases.kitchen_id = #{@kitchen.id} AND food_aliases.key = pantry_items.item_key")
+        .where("pantry_items.food_id IS NULL OR pantry_items.food_id != food_aliases.food_id")
+        .pluck("pantry_items.id", "food_aliases.food_id")
+        .each { |id, food_id| PantryItem.where(id: id).update_all(food_id: food_id) }
+
       ShoppingListItem.joins(:shopping_list)
         .where(shopping_lists: { kitchen_id: @kitchen.id })
         .joins("INNER JOIN food_aliases ON food_aliases.kitchen_id = #{@kitchen.id} AND food_aliases.key = shopping_list_items.item_key")
@@ -91,9 +97,9 @@ module Foods
     end
 
     private
-      # The kitchen's own rows, by wording — the fridge joins in F4.
+      # The kitchen's own rows, by wording.
       def kitchen_row_scopes
-        [ ShoppingListItem.joins(:shopping_list).where(shopping_lists: { kitchen_id: @kitchen.id }) ]
+        [ ShoppingListItem.joins(:shopping_list).where(shopping_lists: { kitchen_id: @kitchen.id }), @kitchen.pantry_items ]
       end
 
       def sources
@@ -103,8 +109,7 @@ module Foods
         ] + extra_sources
       end
 
-      # The fridge joins these in F4.
-      def extra_sources = []
+      def extra_sources = [ @kitchen.pantry_items ]
 
       def file_exactly(batch)
         batch.map do |key, _wording|

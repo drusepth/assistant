@@ -23,9 +23,9 @@ class KitchensController < ApplicationController
   end
 
   def update
-    if @kitchen.update(params.expect(kitchen: [ :name ]))
+    if @kitchen.update(params.expect(kitchen: [ :name, :put_away_on_check ]))
       @kitchen.broadcast_change
-      redirect_to edit_kitchen_path(@kitchen), notice: "Kitchen renamed."
+      redirect_to edit_kitchen_path(@kitchen), notice: "Saved."
     else
       redirect_to edit_kitchen_path(@kitchen), alert: @kitchen.errors.full_messages.to_sentence
     end

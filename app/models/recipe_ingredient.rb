@@ -24,7 +24,9 @@ class RecipeIngredient < ApplicationRecord
     [ Recipes::Quantity.format(scaled), unit_for(scaled), item ].compact_blank.join(" ")
   end
 
-  def unit_for(amount)
+  def unit_for(amount) = self.class.unit_label(unit, amount)
+
+  def self.unit_label(unit, amount)
     return unit if unit.blank? || amount.nil? || amount <= 1 || !COUNTABLE_UNITS.include?(unit)
 
     unit.pluralize
