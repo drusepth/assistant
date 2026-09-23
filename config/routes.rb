@@ -24,6 +24,10 @@ Rails.application.routes.draw do
   get "calendar(/:year/:month)" => "calendar#show", as: :calendar,
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
   get "sections/:slug" => "sections#show", as: :section
+  # Which "Your life" sections this user has switched on — a page of its
+  # own, ahead of the eventual browsable catalog (D-section-picker).
+  get "your-life" => "life_sections#index", as: :life_sections
+  patch "your-life/:slug" => "life_sections#update", as: :life_section
   resources :hobbies, only: %i[ create destroy ]
   resources :groups, only: %i[ create destroy ]
 

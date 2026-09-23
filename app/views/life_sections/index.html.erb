@@ -1,0 +1,47 @@
+<%= render Ui::PageHeaderComponent.new(title: "Your life",
+      subtitle: "Pick the parts of life you want the app to help with. Only the ones you switch on appear in your sidebar.") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Reorder & assistant dials", settings_path, class: "btn btn-secondary btn-sm" %>
+  <% end %>
+<% end %>
+
+<p class="hint mb-6 max-w-2xl">
+  Turning a section off hides it — from the sidebar, from the section picker on
+  your items, and from the assistant — but deletes nothing. Things you filed
+  there stay put and come back when you switch it on again.
+</p>
+
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  <% @sections.each do |section| %>
+    <% enabled = !@disabled_ids.include?(section.id) %>
+    <div id="<%= dom_id(section, :picker) %>"
+         class="card flex flex-col gap-3 p-5 <%= enabled ? "ring-2 ring-primary-300" : "opacity-80" %>">
+      <div class="flex items-center gap-2.5">
+        <span class="size-3 shrink-0 rounded-full <%= section_dot_classes(section) %>"></span>
+        <h2 class="text-base font-semibold text-ink"><%= section.name %></h2>
+        <span class="chip ml-auto <%= enabled ? "bg-primary-100 text-primary-800" : "bg-stone-200 text-stone-700" %>">
+          <%= enabled ? "On" : "Off" %>
+        </span>
+      </div>
+
+      <% if (blurb = life_section_blurb(section)) %>
+        <p class="text-sm text-soft"><%= blurb %></p>
+      <% end %>
+      <% if section.children.any? %>
+        <p class="text-xs text-soft"><%= section.children.map(&:name).join(" · ") %></p>
+      <% end %>
+
+      <div class="mt-auto flex flex-wrap items-center gap-2 pt-1">
+        <%= button_to enabled ? "Turn off" : "Turn on", life_section_path(section.slug),
+              method: :patch, params: { enabled: enabled ? "0" : "1" },
+              class: "btn btn-sm #{enabled ? "btn-secondary" : "btn-primary"}",
+              aria: { label: "#{enabled ? "Turn off" : "Turn on"} #{section.name}" } %>
+        <% if enabled %>
+          <%= link_to "Open", section_path(section.slug), class: "btn btn-ghost btn-sm" %>
+        <% elsif life_section_hub?(section) %>
+          <%= link_to "What's in it?", about_hub_path(section.slug), class: "btn btn-ghost btn-sm" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
