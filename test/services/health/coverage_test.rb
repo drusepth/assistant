@@ -28,6 +28,17 @@ class Health::CoverageTest < ActiveSupport::TestCase
     assert_not_includes Health::Coverage.documents(@user), banished
   end
 
+  test "the reader's verdict beats the keywords, and the owner's beats the reader's" do
+    missed = @user.documents.create!(title: "Acme card", extracted_facts: { "health_plan" => true })
+    bill = @user.documents.create!(title: "Dental insurance statement", extracted_facts: { "health_plan" => false })
+    overruled = @user.documents.create!(title: "Pet policy", extracted_facts: { "health_plan" => false }, health_plan: true)
+
+    assert_equal [ true, :reader ], Health::Coverage.verdict(missed)
+    assert_equal [ false, :reader ], Health::Coverage.verdict(bill)
+    assert_equal [ true, :owner ], Health::Coverage.verdict(overruled)
+    assert_equal [ false, :reader ], Health::Coverage.automatic_verdict(overruled)
+  end
+
   test "respects the limit, newest first" do
     older = @user.documents.create!(title: "Old insurance card", created_at: 2.years.ago)
     newer = @user.documents.create!(title: "New insurance card")

@@ -13,7 +13,7 @@ module ApplicationHelper
   # turbo stream is drawn during a PATCH, whose own path is no page at all,
   # so there the page is the one the verb was pressed on (the referer).
   def current_page_path
-    return request.fullpath if request.get?
+    return request.fullpath if request.get? || request.head?
 
     uri = URI.parse(request.referer.to_s)
     uri.request_uri if uri.host == request.host && uri.path.present?

@@ -260,6 +260,46 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_match "It has lab values.", response.body
   end
 
+  test "a document that isn't insurance asks nothing about it" do
+    document = users(:one).documents.create!(title: "Vet discharge sheet", analysis_status: "analyzed",
+      extracted_facts: { "health_plan" => false })
+
+    get document_path(document)
+    assert_no_match "Insurance", response.body
+    assert_no_match "Health plan", response.body
+  end
+
+  test "an insurance document says where it's listed, whose answer that is, and offers the correction" do
+    pet = create_pet(name: "Dimitri", species: "cat")
+    document = users(:one).documents.create!(title: "Pet policy", analysis_status: "analyzed",
+      extracted_facts: { "health_plan" => true }, sections: [ pet.section ])
+
+    get document_path(document)
+    assert_select "a[href=?]", section_path("health"), text: "your coverage on the Health page"
+    assert_select "a[href=?]", pet_path(pet), text: "Dimitri’s papers"
+    assert_match "Your assistant decided from what the document says.", response.body
+
+    patch document_path(document), params: { document: { health_plan: false } }
+    assert_equal false, document.reload.health_plan
+    get document_path(document)
+    assert_match "You said this isn’t insurance.", response.body
+
+    patch document_path(document), params: { document: { health_plan: "" } }
+    assert_nil document.reload.health_plan, "undo hands the answer back to the assistant"
+  end
+
+  test "the edit form is where a missed plan is marked, and it shows what the assistant would decide" do
+    document = users(:one).documents.create!(title: "Acme card", analysis_status: "analyzed",
+      extracted_facts: { "health_plan" => false })
+
+    get edit_document_path(document)
+    assert_select "input[type=radio][name=?][value=''][checked]", "document[health_plan]"
+    assert_match "Right now it doesn’t count as insurance.", response.body
+
+    patch document_path(document), params: { document: { health_plan: "true" } }
+    assert Health::Coverage.match?(document.reload)
+  end
+
   test "applying a suggestion tags the document and consumes the suggestion" do
     document = users(:one).documents.create!(title: "Lease",
       suggested_sections: [ "renting", "money" ], analysis_status: "analyzed", summary: "A lease.")

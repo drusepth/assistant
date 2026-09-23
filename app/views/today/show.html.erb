@@ -1,7 +1,14 @@
 <%= render Ui::PageHeaderComponent.new(title: "Today", subtitle: Date.current.strftime("%A, %B %-d")) do |header| %>
   <% header.with_actions do %>
-    <%= quick_add :task, label: "Task for today", title: "New task for today",
+    <%= quick_add :task, label: "Task", title: "New task for today",
           prefill: { due_on: Date.current }, primary: true %>
+    <%# The standalone reminder is the case the feature exists for — "remind
+        me to call the pharmacy at 4pm" hangs on nothing (D-reminders) — so
+        it opens beside the task, not at the bottom of a card. %>
+    <%= render Ui::QuickAddComponent.new(name: "reminder", label: "Reminder", title: "New reminder") do %>
+      <%= render "reminders/capture", text: "" %>
+      <%= render "reminders/form", reminder: Reminder.new(deliver_on: Date.current), subject: nil, show_body: true %>
+    <% end %>
   <% end %>
 <% end %>
 

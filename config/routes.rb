@@ -28,6 +28,9 @@ Rails.application.routes.draw do
   # own, ahead of the eventual browsable catalog (D-section-picker).
   get "your-life" => "life_sections#index", as: :life_sections
   patch "your-life/:slug" => "life_sections#update", as: :life_section
+  # And which Vault pages sit in the sidebar (D-vault-picker).
+  get "your-vault" => "vault_pages#index", as: :vault_pages
+  patch "your-vault/:slug" => "vault_pages#update", as: :vault_page
   resources :hobbies, only: %i[ create destroy ]
   resources :groups, only: %i[ create destroy ]
 

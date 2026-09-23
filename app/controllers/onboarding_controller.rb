@@ -1,4 +1,4 @@
-# The FTUE (Q5, M4.1): four skippable steps — sections, agent voice,
+# The FTUE (Q5, M4.1): four skippable steps — sections (and vault pages), agent voice,
 # model (admins), bring-your-life-in. Reaching the last step marks the
 # user onboarded, so its import links work like any other page; the whole
 # flow stays revisitable via Settings.
@@ -39,6 +39,12 @@ class OnboardingController < ApplicationController
         preference = Current.user.user_sections.find_or_initialize_by(section: section)
         preference.enabled = enabled_ids.include?(section.id)
         preference.save!
+      end
+
+      # Only when the form sent the vault question at all — a stale step-1
+      # form without it must not switch every vault page off.
+      if params.key?(:enabled_vault_slugs)
+        Current.user.update!(enabled_vault_slugs: Array(params[:enabled_vault_slugs]).compact_blank)
       end
     end
 

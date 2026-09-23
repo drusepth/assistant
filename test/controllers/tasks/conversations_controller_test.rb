@@ -9,11 +9,20 @@ class Tasks::ConversationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the task page keeps the panel from sm up and offers a door below it" do
+    @task.update!(guiding_questions: [ "What would make staying worth it?" ])
     get task_path(@task)
 
     assert_response :success
     assert_select "a[href=?].sm\\:hidden", task_conversation_path(@task)
     assert_select ".hidden.sm\\:block .chat-panel"
+  end
+
+  test "an errand gets only the door, at every width (D-task-answer-shape)" do
+    get task_path(@task)
+
+    assert_select "a[href=?]", task_conversation_path(@task)
+    assert_select "a[href=?].sm\\:hidden", task_conversation_path(@task), count: 0
+    assert_select ".chat-panel", count: 0
   end
 
   test "the conversation opens as a screen before a run exists" do

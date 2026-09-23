@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_061108) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_070248) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -1093,6 +1093,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_061108) do
     t.datetime "digest_generated_at"
     t.string "email_address", null: false
     t.string "employer"
+    t.json "hidden_vault_pages", default: [], null: false
     t.integer "household_id", null: false
     t.string "job_title"
     t.json "mail_digest"
