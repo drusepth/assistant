@@ -1,0 +1,12 @@
+<% shared = event.user_id != Current.user.id %>
+<%= link_to event, class: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium
+      #{event.sections.first ? section_chip_classes(event.sections.first) : "bg-stone-100 text-stone-700"} hover:opacity-80",
+      title: shared ? "#{event.title} — #{event.user.name}" : event.title do %>
+  <%# Whose day this belongs to is the question a household calendar exists
+      to answer, so shared events lead with the face. Own events stay bare —
+      the default needs no mark. %>
+  <% if shared %>
+    <%= render Ui::AvatarComponent.new(user: event.user, size: :xxs, tone: :stone) %>
+  <% end %>
+  <span class="min-w-0 truncate"><%= event.title %></span>
+<% end %>

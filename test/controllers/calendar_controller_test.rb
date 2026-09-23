@@ -73,4 +73,47 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
     get calendar_path(year: 2026, month: 3)
     assert_select "a[title='Boise · Idaho']", count: 0
   end
+
+  test "tasks show on their due date, done ones struck through, private ones hidden" do
+    users(:one).tasks.create!(title: "Renew passport", due_on: "2026-03-12")
+    users(:one).tasks.create!(title: "File taxes", due_on: "2026-03-05", completed_at: Time.current)
+    users(:two).tasks.create!(title: "Bob private task", due_on: "2026-03-12")
+
+    get calendar_path(year: 2026, month: 3)
+    assert_select "a[title='Renew passport']", text: "Renew passport"
+    assert_select "a[title='File taxes — done'] span.line-through", text: "File taxes"
+    assert_select "a[aria-label='Task: Renew passport']"
+    assert_no_match "Bob private task", response.body
+  end
+
+  test "reminders show on their day, standing ones on every occurrence ahead, only your own" do
+    travel_to Time.zone.local(2026, 3, 2, 8) do
+      users(:one).reminders.create!(body: "Call the pharmacy", deliver_on: "2026-03-04", deliver_time: "16:00")
+      users(:one).reminders.create!(body: "Water plants", deliver_on: "2026-03-05", deliver_time: "09:00", repeat: "weekly")
+      users(:two).reminders.create!(body: "Bob private ping", deliver_on: "2026-03-04", deliver_time: "10:00")
+
+      get calendar_path(year: 2026, month: 3)
+    end
+    assert_select "a[title='Reminder: Call the pharmacy — 4:00 PM']", count: 1
+    # Thursdays Mar 5 through Apr 2 — the grid's last row runs into April.
+    assert_select "a[title='Reminder: Water plants — 9:00 AM']", count: 5
+    assert_no_match "Bob private ping", response.body
+  end
+
+  test "layers toggle what shows and are remembered" do
+    users(:one).events.create!(title: "Dentist", starts_at: Date.new(2026, 3, 10).noon)
+    users(:one).tasks.create!(title: "Renew passport", due_on: "2026-03-12")
+
+    get calendar_path(year: 2026, month: 3, layers: "tasks")
+    assert_no_match "Dentist", response.body
+    assert_match "Renew passport", response.body
+    assert_select "a.tab-active[aria-pressed='true']", text: /Tasks/
+    assert_select "a[aria-pressed='false'][href*='layers=events%2Ctasks']", text: /Events/
+
+    get calendar_path(year: 2026, month: 3)
+    assert_no_match "Dentist", response.body
+
+    get calendar_path(year: 2026, month: 3, layers: "")
+    assert_no_match "Renew passport", response.body
+  end
 end

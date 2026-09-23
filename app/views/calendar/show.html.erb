@@ -11,6 +11,20 @@
   <% end %>
 <% end %>
 
+<%# What the month shows (layers): each toggle is a link, so the choice is a
+    URL — and it's remembered, so the next visit opens the same way. %>
+<nav class="tab-bar" aria-label="Show on the calendar">
+  <% { "events" => [ "Events", :calendar ], "tasks" => [ "Tasks", :check_circle ], "reminders" => [ "Reminders", :bell ] }.each do |layer, (label, glyph)| %>
+    <% on = @layers.include?(layer) %>
+    <% toggled = on ? @layers - [ layer ] : CalendarController::LAYERS & (@layers + [ layer ]) %>
+    <%= link_to calendar_path(year: @month.year, month: @month.month, layers: toggled.join(",")),
+          class: class_names("tab", "tab-active" => on),
+          "aria-pressed": on, title: on ? "Hide #{label.downcase}" : "Show #{label.downcase}" do %>
+      <%= icon(glyph, css_class: "size-4") %> <%= label %>
+    <% end %>
+  <% end %>
+</nav>
+
 <div class="card card-flush overflow-hidden">
   <div class="grid grid-cols-7 border-b border-edge bg-stone-50">
     <% @weeks.first.each do |day| %>
@@ -55,35 +69,24 @@
               <% end %>
             <% end %>
           <% end %>
-          <% events = @events_by_day.fetch(day, []) %>
+          <% entries = @events_by_day.fetch(day, []).map { |event| [ :event, event ] } +
+                @tasks_by_day.fetch(day, []).map { |task| [ :task, task ] } +
+                @reminders_by_day.fetch(day, []).map { |occurrence| [ :reminder, occurrence ] } %>
           <div class="hidden space-y-0.5 sm:block">
-            <% events.first(3).each do |event| %>
-              <% shared = event.user_id != Current.user.id %>
-              <%= link_to event, class: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium
-                    #{event.sections.first ? section_chip_classes(event.sections.first) : "bg-stone-100 text-stone-700"} hover:opacity-80",
-                    title: shared ? "#{event.title} — #{event.user.name}" : event.title do %>
-                <%# Whose day this belongs to is the question a household
-                    calendar exists to answer, so shared events lead with the
-                    face. Own events stay bare — the default needs no mark. %>
-                <% if shared %>
-                  <%= render Ui::AvatarComponent.new(user: event.user, size: :xxs, tone: :stone) %>
-                <% end %>
-                <span class="min-w-0 truncate"><%= event.title %></span>
-              <% end %>
+            <% entries.first(3).each do |kind, item| %>
+              <%= render "calendar/#{kind}", kind => item %>
             <% end %>
-            <% if events.size > 3 %>
-              <p class="px-1.5 text-xs text-soft">+<%= events.size - 3 %> more</p>
+            <% if entries.size > 3 %>
+              <p class="px-1.5 text-xs text-soft">+<%= entries.size - 3 %> more</p>
             <% end %>
           </div>
-          <% if events.any? %>
+          <% if entries.any? %>
             <div class="flex flex-wrap items-center gap-0.5 px-1 sm:hidden">
-              <% events.first(4).each do |event| %>
-                <%= link_to event, title: event.title, "aria-label": event.title,
-                      class: "block size-1.5 rounded-full
-                              #{event.sections.first ? section_dot_classes(event.sections.first) : "bg-stone-400"}" do %><% end %>
+              <% entries.first(4).each do |kind, item| %>
+                <%= render "calendar/dot", kind: kind, item: item %>
               <% end %>
-              <% if events.size > 4 %>
-                <span class="text-[10px] leading-none text-soft">+<%= events.size - 4 %></span>
+              <% if entries.size > 4 %>
+                <span class="text-[10px] leading-none text-soft">+<%= entries.size - 4 %></span>
               <% end %>
             </div>
           <% end %>

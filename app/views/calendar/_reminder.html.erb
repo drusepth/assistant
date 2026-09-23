@@ -1,0 +1,11 @@
+<%# One armed moment of a reminder: the quietest entry in the cell, since it
+    is a ping about something rather than a thing. It opens what it's about,
+    or Today, where the reminder list lives. %>
+<% record, at = reminder.reminder, reminder.at %>
+<%= link_to record.subject || today_path,
+      class: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-soft hover:bg-stone-100",
+      title: "Reminder: #{record.body} — #{at.strftime("%-l:%M %p")}" do %>
+  <%= icon(:bell, css_class: "size-3 shrink-0") %>
+  <span class="shrink-0 tabular-nums"><%= at.strftime(at.min.zero? ? "%-l%P" : "%-l:%M%P").delete_suffix("m") %></span>
+  <span class="min-w-0 truncate"><%= record.body %></span>
+<% end %>

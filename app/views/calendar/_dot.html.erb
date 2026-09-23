@@ -1,0 +1,13 @@
+<%# The phone's month: one dot per entry. Events fill, tasks are squares,
+    reminders are rings — shape, not just color, tells them apart. %>
+<% case kind %>
+<% when :event %>
+  <%= link_to item, title: item.title, "aria-label": item.title,
+        class: "block size-1.5 rounded-full #{item.sections.first ? section_dot_classes(item.sections.first) : "bg-stone-400"}" do %><% end %>
+<% when :task %>
+  <%= link_to item, title: item.title, "aria-label": "Task: #{item.title}",
+        class: "block size-1.5 rounded-[1px] #{item.sections.first ? section_dot_classes(item.sections.first) : "bg-stone-400"} #{"opacity-40" if item.completed?}" do %><% end %>
+<% when :reminder %>
+  <%= link_to item.reminder.subject || today_path, title: "Reminder: #{item.reminder.body}", "aria-label": "Reminder: #{item.reminder.body}",
+        class: "block size-1.5 rounded-full border border-stone-400" do %><% end %>
+<% end %>
