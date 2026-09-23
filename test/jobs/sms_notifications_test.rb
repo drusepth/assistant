@@ -222,6 +222,21 @@ class SmsNotificationsTest < ActiveJob::TestCase
     assert_equal "+15555550123", channel.config["to"]
   end
 
+  test "ten digits typed through the mask get their +1, not another country" do
+    channel = @user.notification_channels.create!(kind: :sms, config: {
+      "provider" => "gammu", "outbox_path" => "/tmp", "to" => "(503) 614-9061"
+    })
+
+    assert_equal "+15036149061", channel.config["to"],
+      "bare digits once became +5036149061 — a number in Brazil that passed validation"
+  end
+
+  test "a number too short to read is refused rather than texted" do
+    assert_not @user.notification_channels.new(kind: :sms, config: {
+      "provider" => "gammu", "outbox_path" => "/tmp", "to" => "555-0123"
+    }).valid?
+  end
+
   test "a Twilio channel is added from settings with the token kept out of config" do
     session = ActionDispatch::Integration::Session.new(Rails.application)
     session.post "/session", params: { email_address: @user.email_address, password: "password" }

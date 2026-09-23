@@ -7,12 +7,17 @@ import { Controller } from "@hotwired/stimulus"
 // North American mask after it. The server (PhoneNumber) is what actually
 // decides the stored shape; this only makes typing it pleasant.
 export default class extends Controller {
+  // Set only on a box holding a number saved before the mask, which the
+  // builder leaves submittable as-is; retyping it earns the check.
+  static values = { pattern: String }
+
   connect() {
     this.previous = this.element.value
   }
 
   format(event) {
     const input = this.element
+    if (this.hasPatternValue && !input.pattern) input.pattern = this.patternValue
     let value = input.value
     let caretDigits = digitsOf(value.slice(0, input.selectionStart ?? value.length)).length
 

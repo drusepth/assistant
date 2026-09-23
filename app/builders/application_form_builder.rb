@@ -17,24 +17,10 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
   # shape rather than the stored E.164 (PhoneNumber), the Stimulus mask
   # formats it as it's typed, and the pattern stops a half-typed number at
   # the browser. The server normalizes whatever arrives, so a form that
-  # never ran the JavaScript still saves the same thing.
+  # never ran the JavaScript still saves the same thing. PhoneHelper's
+  # telephone_field_tag takes the same options, for forms without a model.
   def telephone_field(method, options = {})
-    saved = object.try(method)
-    options = {
-      value: PhoneNumber.format(saved),
-      placeholder: "(555) 555-0142",
-      autocomplete: "tel",
-      inputmode: "tel",
-      title: "A 10-digit number like (555) 555-0142. Outside the US or Canada? Start with + and the country code."
-    }.merge(options)
-    # A number saved before the mask, or imported in a shape PhoneNumber
-    # wouldn't guess at ("555-1234"), is left submittable: editing a
-    # contact's birthday shouldn't be blocked on a phone number nobody
-    # touched. Retyping it runs the mask like any other.
-    options[:pattern] ||= PHONE_PATTERN if saved.blank? || saved.to_s.start_with?("+")
-    options[:data] = { controller: "phone-input", action: "input->phone-input#format" }.merge(options[:data] || {})
-
-    super(method, merge_classes(options, "input tabular-nums"))
+    super(method, merge_classes(self.class.phone_input_options(object.try(method), options), "input"))
   end
   alias_method :phone_field, :telephone_field
 
@@ -42,6 +28,29 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
   # up to fifteen digits. Escaped for the `v` flag browsers compile
   # `pattern` with, where a bare "(" inside a class is a syntax error.
   PHONE_PATTERN = '\(\d{3}\) \d{3}-\d{4}|\+[\d \(\)\-]{8,24}'.freeze
+
+  def self.phone_input_options(saved, options = {})
+    options = {
+      value: PhoneNumber.format(saved),
+      placeholder: "(555) 555-0142",
+      autocomplete: "tel",
+      inputmode: "tel",
+      title: "A 10-digit number like (555) 555-0142. Outside the US or Canada? Start with + and the country code."
+    }.merge(options)
+    data = { controller: "phone-input", action: "input->phone-input#format" }
+    # A number saved before the mask, or imported in a shape PhoneNumber
+    # wouldn't guess at ("555-1234"), is left submittable: editing a
+    # contact's birthday shouldn't be blocked on a phone number nobody
+    # touched. The mask arms the pattern the moment it's retyped.
+    if saved.blank? || saved.to_s.start_with?("+")
+      options[:pattern] ||= PHONE_PATTERN
+    else
+      data[:phone_input_pattern_value] = options[:pattern] || PHONE_PATTERN
+    end
+    options[:data] = data.merge(options[:data] || {})
+    options[:class] = [ "tabular-nums", options[:class] ].compact.join(" ")
+    options
+  end
 
   def text_area(method, options = {})
     super(method, merge_classes({ rows: 4 }.merge(options), "input"))

@@ -110,7 +110,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    builder app-wide. `f.field :title` renders label + input + errors with the
    system's classes; all input helpers pick up `.input` automatically.
    The section-tag picker is `app/views/shared/_section_picker.html.erb`.
-   A phone number is always `f.field :phone, as: :telephone_field`: the
+   A phone number is always `f.field :phone, as: :telephone_field` (or
+   `telephone_field_tag` without a model — PhoneHelper masks it too): the
    builder adds the typing mask (`phone-input` controller), the printed
    value, and the completeness pattern, and the model stores it through
    `normalizes :phone` with `PhoneNumber` (D-phone-numbers). Print a

@@ -29,4 +29,10 @@ class ApplicationFormBuilderTest < ActionView::TestCase
     assert_match 'value="555-1234"', html
     assert_no_match "pattern=", html
   end
+
+  test "a number saved before the mask arms the pattern only once it's retyped" do
+    builder = ApplicationFormBuilder.new(:person, Person.new(phone: "555-1234"), self, {})
+
+    assert_match "data-phone-input-pattern-value=", builder.telephone_field(:phone)
+  end
 end
