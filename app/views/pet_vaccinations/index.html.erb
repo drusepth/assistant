@@ -1,0 +1,78 @@
+<%# The full record (D-pet-vaccinations): every vaccine, and under each one
+    every dose — product, lot, site, who gave it, the certificate, and any
+    reaction. This is the page to open at a new vet. %>
+<%= render Ui::PageHeaderComponent.new(title: "#{@pet.name}'s vaccinations", subtitle: @pet.descriptor.presence) do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Back to #{@pet.name}", pet_path(@pet), class: "btn btn-ghost" %>
+    <%= link_to "Shareable record", record_pet_vaccinations_path(@pet), class: "btn btn-secondary" %>
+    <% if @pet.active? %>
+      <%= link_to "Log vaccines", new_pet_vaccination_path(@pet), class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="max-w-3xl space-y-6">
+  <% @status.reactions.each do |dose| %>
+    <p class="rounded-xl bg-red-100 px-4 py-3 text-sm text-red-800" role="note">
+      <span class="font-medium">Reacted to <%= dose.vaccine_label %></span> on <%= dose.given_on.strftime("%B %-d, %Y") %>: <%= dose.reaction %>
+    </p>
+  <% end %>
+
+  <% if @status.entries.empty? %>
+    <%= render Ui::CardComponent.new do %>
+      <p class="text-sm text-soft">Nothing logged yet.</p>
+    <% end %>
+  <% end %>
+
+  <% @status.entries.each do |entry| %>
+    <%= render Ui::CardComponent.new(title: entry.label, subtitle: vaccine_entry_line(entry), padded: false) do |card| %>
+      <% card.with_actions do %>
+        <span class="chip <%= vaccine_state_chip_classes(entry.state) %>"><%= vaccine_state_label(entry.state) %></span>
+      <% end %>
+      <ol class="divide-y divide-edge">
+        <% entry.doses.each do |dose| %>
+          <li class="space-y-1 px-5 py-3 text-sm">
+            <div class="flex flex-wrap items-baseline justify-between gap-2">
+              <p class="font-medium text-ink">
+                <%= dose.given_on.strftime("%B %-d, %Y") %>
+                <span class="font-normal text-soft">
+                  · <%= dose.kind_label %><% if dose.series_dose %>, dose <%= dose.series_dose %><% end %>
+                  <% if dose.name != entry.label %> · <%= dose.name %><% end %>
+                </span>
+              </p>
+              <% if dose.user_id == Current.user.id || @pet.user_id == Current.user.id %>
+                <div class="row-actions">
+                  <%= link_to "Edit", edit_pet_vaccination_path(@pet, dose), class: "btn btn-ghost btn-sm" %>
+                  <%= button_to "Remove", pet_vaccination_path(@pet, dose), method: :delete, class: "btn btn-ghost btn-sm",
+                        data: { turbo_confirm: "Remove this #{dose.vaccine_label} dose from #{dose.given_on.strftime("%B %-d, %Y")}?" } %>
+                </div>
+              <% end %>
+            </div>
+            <% facts = [
+                 dose.due_on && "good until #{dose.due_on.strftime("%b %-d, %Y")}#{" (#{dose.duration_phrase})" if dose.duration_phrase}",
+                 dose.given_by && "given by #{dose.given_by}",
+                 dose.product.presence,
+                 dose.lot_number.present? && "lot #{dose.lot_number}",
+                 dose.tag_number.present? && "tag #{dose.tag_number}",
+                 dose.site.presence
+               ].select(&:present?) %>
+            <% if facts.any? %><p class="text-xs text-soft"><%= facts.join(" · ") %></p><% end %>
+            <% if dose.reaction.present? %><p class="text-xs text-red-800">Reaction: <%= dose.reaction %></p><% end %>
+            <% if dose.notes.present? %><p class="whitespace-pre-wrap text-xs text-ink"><%= dose.notes %></p><% end %>
+            <p class="flex flex-wrap gap-3 text-xs">
+              <% if (certificate = dose.certificate_for(Current.user)) %>
+                <%= link_to "Certificate", certificate, class: "text-primary-700 hover:underline" %>
+              <% end %>
+              <% if dose.event && Event.visible_to(Current.user).exists?(dose.event_id) %>
+                <%= link_to "The visit", dose.event, class: "text-primary-700 hover:underline" %>
+              <% end %>
+              <% if dose.user && dose.user_id != @pet.user_id %>
+                <span class="text-soft">Logged by <%= dose.user.name %></span>
+              <% end %>
+            </p>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  <% end %>
+</div>

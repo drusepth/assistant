@@ -78,6 +78,11 @@ module Tool
         parts << "MICROCHIP: not recorded in the app — tell the user to find the paperwork or ask their vet, " \
                  "who can look it up, and to check the registry's contact details are current." if pet.microchip.blank?
         parts << "Vet: #{pet.vet.name}#{" — #{pet.vet.phone}" if pet.vet.phone.present?}" if pet.vet
+        # A rabies tag traces back through the clinic that issued it — the
+        # second way a finder or animal control can reach the owner.
+        if (rabies = pet.pet_vaccinations.where(vaccine_key: "rabies").where.not(tag_number: [ nil, "" ]).chronological.first)
+          parts << "Rabies tag number: #{rabies.tag_number}#{" (issued by #{rabies.given_by})" if rabies.given_by}"
+        end
         parts << "Notes from the owner: #{pet.notes.truncate(500)}" if pet.notes.present?
         parts.join("\n")
       end

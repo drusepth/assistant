@@ -105,6 +105,10 @@
       <%= render "pets/care_radar", pet: @pet, statuses: @care_statuses, health_section_id: @health_section_id %>
     <% end %>
 
+    <% if @vaccines.any? || @pet.active? %>
+      <%= render "pets/vaccinations", pet: @pet, status: @vaccines %>
+    <% end %>
+
     <% if @shelf.any? || @own %>
       <%= render "pets/food_shelf", pet: @pet, shelf: @shelf, own: @own %>
     <% end %>

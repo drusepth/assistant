@@ -8,7 +8,8 @@ before it does.
 Decision: **D-pet-vaccinations**. Builds on D-pet-primitive,
 D-pet-care-radar, D-landing-registry, D-share-link, D-suggestion-lifecycle.
 
-**Status: planned.**
+**Status: built, W1–W4** (2026-09). §12 records what the build changed about
+the plan.
 
 ---
 
@@ -50,7 +51,7 @@ is, exported with its owner.
 | column | type | notes |
 |---|---|---|
 | `pet_id` | ref, not null | visibility, export and deletion all follow the pet |
-| `user_id` | ref, not null | who logged it (a spouse can log for a shared pet — §7) |
+| `user_id` | ref, null | who logged it (a spouse can log for a shared pet — §7); nulled if they leave the household, so the pet keeps her history |
 | `kind` | string, not null | `dose` · `titer` · `exemption` (§2.2) |
 | `vaccine_key` | string, null | a catalog key (§3) — `nil` for a vaccine the catalog doesn't know |
 | `name` | string, not null | as printed ("Nobivac 3-Rabies"), or the catalog label when picked from the list |
@@ -124,7 +125,6 @@ labelled for, offered as buttons, never assumed.
   *risk-based* — influenza, rhinopneumonitis/EHV (6 or 12 mo), strangles,
   Potomac horse fever, botulism.
 - **Rabbit**: RHDV2 (1 yr), myxomatosis (region-dependent; 1 yr).
-- **Ferret** (a common "other"): rabies, distemper (1 yr).
 - **Bird, reptile, fish, other**: **no catalog.** The form is free text only,
   and nothing on the page claims a vaccine is missing.
 
@@ -151,7 +151,7 @@ normalized `name`), the **latest** row by `given_on` decides:
 | **Current** | latest `due_on` is more than 30 days out |
 | **Due soon** | latest `due_on` is within 30 days |
 | **Overdue** | latest `due_on` has passed |
-| **Booked** | overdue or due soon, *and* a future Event is linked to the vaccine (§5.4) |
+| **Booked** | overdue or due soon, *and* a future vaccination visit is on the calendar (§5.4) |
 | **No expiry recorded** | latest row has no `due_on` — shown honestly, never guessed |
 
 Plus, for species with a catalog: **core vaccines with no record at all**
@@ -236,10 +236,10 @@ over `Pet.visible_to(user).active`:
   for 3 years. Nothing is booked." Several vaccines due within the same 30
   days collapse into one proposal ("Rex has rabies and DHPP due in June") —
   one vet visit, one nudge.
-- Action: an appointment Event prefilled "Rex — vaccinations (rabies, DHPP)",
-  tagged Health + her lens, with the vaccine groups stored on the event
-  (`events.vaccine_keys`, a JSON column) so the state flips to **Booked**. No
-  vet on file → the action is `find_care` instead.
+- Action: the new-event form prefilled "Rex — vaccinations (Rabies, DHPP)",
+  tagged Health + her lens, and carrying `care_kind: "pet_vaccinations"` —
+  the explicit field the radar already had — so the card flips to **Booked**.
+  No vet on file → the action is `find_care` instead.
 - **Retires itself** (D-suggestion-lifecycle) when a newer dose of that
   vaccine is logged, when a linked appointment is booked, or when the pet
   stops being active.
@@ -258,8 +258,8 @@ cost, or anything else on the pet page unless the owner ticks it.
 
 - **Print view** (`/pets/:id/vaccinations/record`) with a print stylesheet —
   the zero-infrastructure answer.
-- **Share link** — `PetVaccinationRecord` (a subject standing for "this pet's
-  vaccine record") joins `ShareLink::SHAREABLE_TYPES`. This widens an
+- **Share link** — `Pet` joins `ShareLink::SHAREABLE_TYPES`, and a Pet link's
+  public page renders the vaccine sheet and nothing else of hers. This widens an
   unauthenticated read path, so it is its own decision line in
   D-pet-vaccinations: the link shows exactly the print view's fields, the
   owner picks an expiry (the kennel needs it for a week), it is revocable,
@@ -353,9 +353,40 @@ complaint.
 
 ## 11. Open questions
 
-- **Q-pet-vaccine-lead** — is 30 days the right "due soon" window for every
-  vaccine? Boarding season argues for more; a monthly-ish series dose argues
-  for less (probably: lead = min(30 days, a third of the interval)).
 - **Q-pet-vaccine-humans** — does the same record serve human immunizations
   (tetanus boosters, travel shots) under Health? Likely yes, as a separate
   subject on the same shape; not decided here.
+
+## 12. What the build changed
+
+- **No `events.vaccine_keys` column.** A booked visit is an event carrying
+  `care_kind: "pet_vaccinations"` — an explicit field the event already had
+  and the owner can already set from the event page. One visit covers
+  whatever is due, which is what a visit does; per-vaccine booking would
+  have been a second column to keep right for no reader.
+- **The old events were marked once, in a migration.** Pet events the
+  retired tile counted as vaccinations got `care_kind: "pet_vaccinations"`
+  written down (`MarkPetVaccinationVisits`) — the last time the old title
+  patterns run. That is what lets the card list them as "add what was given"
+  and what keeps them from falling through to the wellness kind on "vet".
+- **The share subject is the Pet**, not a pseudo-model standing for "her
+  vaccine record". The allowlist comment says a Pet link shows only the
+  sheet, and the public controller renders only the sheet; a pseudo-model
+  would have been a second name for the same row. Certificates behind the
+  link are streamed through the token (`/s/:token/certificates/:id`) rather
+  than linked by blob URL, so revoking the link cuts off the files too.
+- **Lead window decided** (was Q-pet-vaccine-lead): 30 days, or a third of
+  the dose's own interval when that is shorter, so a puppy's three-week
+  booster isn't "due soon" the day it was given.
+- **No ferret list.** A ferret is "other" in `Pet::SPECIES`, and the catalog
+  keys off species; guessing that an "other" is a ferret is the claim the
+  catalog exists not to make.
+- **Who may write.** Anyone the pet is visible to can log a dose (the person
+  at the vet holds the paper); a dose is edited or removed by whoever logged
+  it or by the pet's owner. The food shelf stays owner-only — a diet is a
+  decision, a dose is a fact about a visit.
+- **Pet foods got a route resolver too.** The document page's "Saved from
+  this document" list calls `link_to item`, which had no route for a
+  `PetFood`; the resolver that sends a dose to her record sends a food to her
+  page.
+

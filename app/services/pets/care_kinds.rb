@@ -10,6 +10,13 @@ module Pets
   # invented-cardiologist failure in a smaller costume. The radar's "not
   # tracked" state is an honest answer, and per-pet custom kinds are the rung
   # for the owner who does know (deferred with the rest of the tuning).
+  #
+  # Vaccinations are not a kind (D-pet-vaccinations). Each vaccine runs its
+  # own clock — rabies may be three years, kennel cough six months — so one
+  # tile on one interval was wrong for most pets, and it found visits by
+  # their titles. They are PetVaccination rows with their own good-until
+  # dates now, read by Pets::VaccineStatus; a visit marked
+  # `care_kind: "pet_vaccinations"` is that card's, and the radar skips it.
   module CareKinds
     Kind = Health::CareRadar::Kind
 
@@ -24,11 +31,11 @@ module Pets
     end
 
     def dog(pet)
-      [ wellness(pet), vaccinations(pet), dental(pet), parasite(pet), grooming(pet), nails(pet) ]
+      [ wellness(pet), dental(pet), parasite(pet), grooming(pet), nails(pet) ]
     end
 
     def cat(pet)
-      [ wellness(pet), vaccinations(pet), dental(pet), parasite(pet) ]
+      [ wellness(pet), dental(pet), parasite(pet) ]
     end
 
     # Titles carry the pet's name because the event capture they seed lands on
@@ -40,15 +47,6 @@ module Pets
         appointment_title: "#{pet.name} — wellness exam", book_title: "Book #{pet.name} a wellness exam",
         interval: 12.months, generic: true,
         patterns: [ /wellness/, /annual (exam|visit|check)/, /check[ -]?up/, /\bvet\b/, /veterinar/, /physical/ ]
-      )
-    end
-
-    def vaccinations(pet)
-      Kind.new(
-        key: "pet_vaccinations", label: "Vaccinations", provider: "veterinarian",
-        appointment_title: "#{pet.name} — vaccinations", book_title: "Book #{pet.name}'s vaccinations",
-        interval: 12.months,
-        patterns: [ /vaccin/, /\bshots?\b/, /booster/, /rabies/, /\bjab\b/ ]
       )
     end
 

@@ -43,12 +43,12 @@
         </div>
         <%# The care radar's correction path (docs/HEALTH.md §3): when the
             keywords miss ("Dr. Chen, 2pm"), the user's word wins. %>
-        <% if own && @event.sections.any? { |section| (section.parent || section).slug == "health" } %>
+        <% if own && (event_pet(@event) || @event.sections.any? { |section| (section.parent || section).slug == "health" }) %>
           <div class="flex gap-2">
             <dt class="w-24 shrink-0 pt-1.5 text-soft">Counts as</dt>
             <dd class="min-w-0">
               <%= form_with model: @event, class: "flex flex-wrap items-center gap-2" do %>
-                <%= select_tag "event[care_kind]", care_kind_options(@event), class: "input w-auto py-1 text-sm" %>
+                <%= select_tag "event[care_kind]", event_care_kind_options(@event), class: "input w-auto py-1 text-sm" %>
                 <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
               <% end %>
               <p class="hint mt-1">Routine care, for the Health page's radar.</p>
@@ -62,6 +62,14 @@
           </div>
         <% end %>
       </dl>
+      <%# A pet's visit that has happened is where the shots were given
+          (D-pet-vaccinations): the one click that turns "Rex — vet" on the
+          calendar into what was actually given, linked to this visit. %>
+      <% if (pet = event_pet(@event)) && pet.active? && @event.starts_at.past? %>
+        <p class="mt-4 text-sm">
+          <%= link_to "Log vaccines given at this visit", new_pet_vaccination_path(pet, event_id: @event.id), class: "text-primary-700 hover:underline" %>
+        </p>
+      <% end %>
     <% end %>
   </div>
   <% if own %>

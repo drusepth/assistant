@@ -1,0 +1,93 @@
+<%# One vaccine on the visit form. Ticking the box opens its details — done in
+    CSS alone (`:has`), so the form works the same with scripts off. A listed
+    vaccine carries its catalog key in the row's name; a typed one gets a
+    name box instead. Durations are offered, never preselected
+    (D-pet-vaccinations): the certificate or the owner knows, the app doesn't. %>
+<% row = log.row(key) %>
+<% prefix = "log[rows][#{key}]" %>
+<% field_id = ->(name) { "log_rows_#{key}_#{name}" } %>
+<div class="group/row rounded-xl border border-edge bg-canvas p-3 has-[[data-include]:checked]:border-primary-300">
+  <label class="flex cursor-pointer items-start gap-3">
+    <%= check_box_tag "#{prefix}[include]", "1", log.ticked?(key), id: field_id.call(:include), class: "mt-1", data: { include: true } %>
+    <span class="min-w-0 flex-1">
+      <% if vaccine %>
+        <span class="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">
+          <%= vaccine.label %>
+          <% if vaccine.core? %><span class="chip bg-sage-100 text-sage-700">Core</span><% end %>
+        </span>
+        <% details = [ vaccine.also_called.join(" · ").presence, vaccine.about ].compact %>
+        <% if details.any? %><span class="block text-xs text-soft"><%= details.join(" — ") %></span><% end %>
+      <% else %>
+        <span class="text-sm font-medium text-ink">Another vaccine</span>
+        <span class="block text-xs text-soft">Anything not listed, by the name on the certificate.</span>
+      <% end %>
+    </span>
+  </label>
+
+  <div class="mt-3 hidden space-y-3 group-has-[[data-include]:checked]/row:block">
+    <% unless vaccine %>
+      <div>
+        <%= label_tag field_id.call(:name), "Vaccine name", class: "label" %>
+        <%= text_field_tag "#{prefix}[name]", row["name"], id: field_id.call(:name), class: "input w-full", placeholder: "As printed on the certificate" %>
+      </div>
+    <% end %>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div>
+        <%= label_tag field_id.call(:kind), "What it was", class: "label" %>
+        <%= select_tag "#{prefix}[kind]", options_for_select(vaccine_kind_options, row["kind"].presence || "dose"), id: field_id.call(:kind), class: "input w-full" %>
+      </div>
+      <div>
+        <%= label_tag field_id.call(:due_on), "Good until / next dose due", class: "label" %>
+        <%= date_field_tag "#{prefix}[due_on]", row["due_on"], id: field_id.call(:due_on), class: "input w-full" %>
+      </div>
+    </div>
+    <fieldset>
+      <legend class="label">No date on the certificate? It lasts…</legend>
+      <div class="flex flex-wrap gap-2">
+        <% [ [ "Not sure", "" ], *vaccine_duration_options(durations) ].each do |label, months| %>
+          <label class="chip cursor-pointer border border-edge text-soft has-checked:border-primary-600 has-checked:bg-primary-600 has-checked:text-primary-50">
+            <%= radio_button_tag "#{prefix}[duration_months]", months, row["duration_months"].to_s == months.to_s, id: field_id.call("duration_#{months.presence || "unsure"}"), class: "sr-only" %>
+            <%= label %>
+          </label>
+        <% end %>
+      </div>
+      <p class="hint mt-1">Check the certificate or ask the vet — the same vaccine can be labelled for one year or three. Leave both blank if you don't know.</p>
+    </fieldset>
+    <details class="text-sm" <%= "open" if row.values_at("product", "lot_number", "tag_number", "site", "series_dose", "reaction", "notes").any?(&:present?) %>>
+      <summary class="cursor-pointer text-primary-700 hover:underline">Brand, lot, tag number, reaction…</summary>
+      <div class="mt-3 space-y-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <%= label_tag field_id.call(:product), "Brand or product", class: "label" %>
+            <%= text_field_tag "#{prefix}[product]", row["product"], id: field_id.call(:product), class: "input w-full", placeholder: "Nobivac, Purevax…" %>
+          </div>
+          <div>
+            <%= label_tag field_id.call(:lot_number), "Lot number", class: "label" %>
+            <%= text_field_tag "#{prefix}[lot_number]", row["lot_number"], id: field_id.call(:lot_number), class: "input w-full" %>
+          </div>
+          <div>
+            <%= label_tag field_id.call(:tag_number), "Tag or certificate number", class: "label" %>
+            <%= text_field_tag "#{prefix}[tag_number]", row["tag_number"], id: field_id.call(:tag_number), class: "input w-full" %>
+          </div>
+          <div>
+            <%= label_tag field_id.call(:site), "Where it was given", class: "label" %>
+            <%= text_field_tag "#{prefix}[site]", row["site"], id: field_id.call(:site), class: "input w-full", placeholder: "Right hind leg" %>
+          </div>
+          <div>
+            <%= label_tag field_id.call(:series_dose), "Dose in a series", class: "label" %>
+            <%= select_tag "#{prefix}[series_dose]", options_for_select([ [ "Booster / not a series", "" ], *(1..5).map { |n| [ "Dose #{n}", n ] } ], row["series_dose"]), id: field_id.call(:series_dose), class: "input w-full" %>
+          </div>
+        </div>
+        <div>
+          <%= label_tag field_id.call(:reaction), "Any reaction?", class: "label" %>
+          <%= text_area_tag "#{prefix}[reaction]", row["reaction"], id: field_id.call(:reaction), rows: 2, class: "input w-full", placeholder: "Swelling at the site, lethargy for a day…" %>
+          <p class="hint mt-1">Shown as a warning on <%= log.pet.name %>'s page and in visit prep, so the next vet hears about it.</p>
+        </div>
+        <div>
+          <%= label_tag field_id.call(:notes), "Notes", class: "label" %>
+          <%= text_area_tag "#{prefix}[notes]", row["notes"], id: field_id.call(:notes), rows: 2, class: "input w-full", placeholder: "A titer's result, an exemption's reason…" %>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_053900) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_061108) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -557,6 +557,37 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_053900) do
     t.string "unit", default: "g", null: false
     t.datetime "updated_at", null: false
     t.index ["pet_id"], name: "index_pet_foods_on_pet_id"
+  end
+
+  create_table "pet_vaccinations", force: :cascade do |t|
+    t.string "administered_by"
+    t.datetime "created_at", null: false
+    t.integer "document_id"
+    t.date "due_on"
+    t.integer "duration_months"
+    t.integer "event_id"
+    t.date "given_on", null: false
+    t.string "kind", default: "dose", null: false
+    t.string "lot_number"
+    t.string "name", null: false
+    t.text "notes"
+    t.integer "pet_id", null: false
+    t.string "product"
+    t.text "reaction"
+    t.integer "series_dose"
+    t.string "site"
+    t.string "tag_number"
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.string "vaccine_key"
+    t.integer "vet_id"
+    t.index ["document_id"], name: "index_pet_vaccinations_on_document_id"
+    t.index ["event_id"], name: "index_pet_vaccinations_on_event_id"
+    t.index ["pet_id", "due_on"], name: "index_pet_vaccinations_on_pet_id_and_due_on"
+    t.index ["pet_id", "vaccine_key", "given_on"], name: "index_pet_vaccinations_on_pet_id_and_vaccine_key_and_given_on"
+    t.index ["pet_id"], name: "index_pet_vaccinations_on_pet_id"
+    t.index ["user_id"], name: "index_pet_vaccinations_on_user_id"
+    t.index ["vet_id"], name: "index_pet_vaccinations_on_vet_id"
   end
 
   create_table "pets", force: :cascade do |t|
@@ -1144,6 +1175,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_053900) do
   add_foreign_key "people", "users"
   add_foreign_key "people", "users", column: "linked_user_id"
   add_foreign_key "pet_foods", "pets"
+  add_foreign_key "pet_vaccinations", "documents", on_delete: :nullify
+  add_foreign_key "pet_vaccinations", "events", on_delete: :nullify
+  add_foreign_key "pet_vaccinations", "people", column: "vet_id", on_delete: :nullify
+  add_foreign_key "pet_vaccinations", "pets"
+  add_foreign_key "pet_vaccinations", "users", on_delete: :nullify
   add_foreign_key "pets", "people", column: "vet_id"
   add_foreign_key "pets", "sections"
   add_foreign_key "pets", "users"

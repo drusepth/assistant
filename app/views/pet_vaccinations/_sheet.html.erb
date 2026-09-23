@@ -1,0 +1,85 @@
+<%# The one-sheet vaccine record (D-pet-vaccinations): what a boarding
+    kennel, groomer, daycare or licensing office asks for, and nothing else.
+    The same partial renders for the owner and behind a share link, so the
+    two can never show different things. Deliberately absent: reactions,
+    notes, weight, cost, and everything else on her page.
+
+    locals: pet, status, certificate_url (dose → url or nil) %>
+<article class="space-y-6">
+  <header class="flex items-center gap-4">
+    <%= render Ui::AvatarComponent.new(person: pet, size: :lg, tone: :sage) %>
+    <div class="min-w-0">
+      <h1 class="display text-3xl"><%= pet.name %></h1>
+      <p class="text-sm text-soft"><%= [ pet.species_label, pet.breed.presence, pet.sex_label ].compact.join(" · ") %></p>
+    </div>
+  </header>
+
+  <dl class="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+    <% if pet.born_on %>
+      <div class="flex gap-2"><dt class="w-28 shrink-0 text-soft">Born</dt><dd><%= pet.born_on.strftime("%B %-d, %Y") %><%= " (estimated)" if pet.born_on_estimated %></dd></div>
+    <% end %>
+    <% if pet.color.present? %>
+      <div class="flex gap-2"><dt class="w-28 shrink-0 text-soft">Markings</dt><dd class="min-w-0 wrap-anywhere"><%= pet.color %></dd></div>
+    <% end %>
+    <% if pet.microchip.present? %>
+      <div class="flex gap-2"><dt class="w-28 shrink-0 text-soft">Microchip</dt><dd class="font-mono text-xs"><%= pet.microchip %></dd></div>
+    <% end %>
+    <% if pet.vet %>
+      <div class="flex gap-2">
+        <dt class="w-28 shrink-0 text-soft">Vet</dt>
+        <dd class="min-w-0 wrap-anywhere"><%= pet.vet.name %><% if pet.vet.phone.present? %> · <%= phone_to pet.vet.phone, nil, class: "text-primary-700 hover:underline" %><% end %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <section>
+    <h2 class="mb-2 text-sm font-semibold text-ink">Vaccinations</h2>
+    <% if status.entries.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="text-xs text-soft">
+            <tr class="border-b border-edge">
+              <th class="py-2 pr-3 font-medium">Vaccine</th>
+              <th class="py-2 pr-3 font-medium">Given</th>
+              <th class="py-2 pr-3 font-medium">Good until</th>
+              <th class="py-2 pr-3 font-medium">Details</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-edge">
+            <% status.entries.each do |entry| %>
+              <% dose = entry.latest %>
+              <tr class="align-top">
+                <td class="py-2 pr-3">
+                  <span class="font-medium text-ink"><%= entry.label %></span>
+                  <% unless dose.dose? %><span class="block text-xs text-soft"><%= dose.kind_label %></span><% end %>
+                </td>
+                <td class="whitespace-nowrap py-2 pr-3"><%= dose.given_on.strftime("%b %-d, %Y") %></td>
+                <td class="whitespace-nowrap py-2 pr-3">
+                  <% if dose.due_on %>
+                    <%= dose.due_on.strftime("%b %-d, %Y") %>
+                    <% if dose.due_on < Date.current %><span class="block text-xs text-red-800">Expired</span><% end %>
+                  <% else %>
+                    <span class="text-soft">Not recorded</span>
+                  <% end %>
+                </td>
+                <td class="py-2 pr-3 text-xs text-soft">
+                  <%= [ dose.product.presence, dose.lot_number.present? && "lot #{dose.lot_number}",
+                        dose.tag_number.present? && "tag #{dose.tag_number}", dose.given_by ].select(&:present?).join(" · ") %>
+                  <% if (url = certificate_url.call(dose)) %>
+                    <%= link_to "Certificate", url, class: "block text-primary-700 hover:underline print:hidden" %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="text-sm text-soft">No vaccinations on record.</p>
+    <% end %>
+  </section>
+
+  <p class="text-xs text-soft">
+    As recorded by <%= pet.name %>'s household on <%= Date.current.strftime("%B %-d, %Y") %>. The vet's certificates are the official proof.
+  </p>
+</article>

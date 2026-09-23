@@ -60,6 +60,8 @@ class Pet < ApplicationRecord
 
   # What she eats, and what she ate (D-pet-food-shelf).
   has_many :pet_foods, dependent: :destroy
+  # What she has been vaccinated against, and until when (D-pet-vaccinations).
+  has_many :pet_vaccinations, dependent: :destroy
 
   # Her lens goes with her, by whatever path she goes: the controller, a
   # removed household member cascading through `users.pets`, or the console.

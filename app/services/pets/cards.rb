@@ -46,6 +46,8 @@ module Pets
       def next_thing(pet)
         if (event = next_events[pet.section_id])
           "#{event.title} · #{event.starts_at.strftime("%b %-d")}"
+        elsif (vaccine = due_vaccines[pet])
+          "#{vaccine.label} #{vaccine.state == :overdue ? "overdue" : "due #{vaccine.due_on.strftime("%b %-d")}"}"
         elsif (due = due_care[pet]).present?
           "#{due.first.kind.label.downcase} due"
         elsif (celebration = celebration_within(pet))
@@ -71,6 +73,15 @@ module Pets
       def due_care
         @due_care ||= pets.select(&:active?).index_with do |pet|
           Health::CareRadar.new(pet, viewer: viewer).statuses.select { |status| status.state == :due }
+        end
+      end
+
+      # The first vaccine running out, from the same record her page reads
+      # (D-pet-vaccinations) — ahead of the radar's tiles, because a lapsed
+      # rabies is the one that stops a kennel booking.
+      def due_vaccines
+        @due_vaccines ||= pets.select(&:active?).index_with do |pet|
+          Pets::VaccineStatus.new(pet, viewer: viewer).needing_attention.first
         end
       end
 

@@ -24,9 +24,18 @@
     <% end %>
     <%= render Ui::CardComponent.new(title: "The care that's due") do %>
       <p class="text-sm text-soft">
-        Boosters, worming, the annual check, the medication that needs
+        Worming, dental, the annual check, the medication that needs
         renewing. The same radar that watches the humans, pointed at the
         animal who can't book their own appointments.
+      </p>
+    <% end %>
+    <%= render Ui::CardComponent.new(title: "A vaccine card that's never lost") do %>
+      <p class="text-sm text-soft">
+        Every shot, with its own good-until date — rabies for three years,
+        kennel cough for one — plus the tag number, the lot, and any reaction
+        the next vet needs to hear about. A month before one runs out, you
+        hear about it; when the kennel asks for proof, you send a link that
+        shows the vaccines and nothing else, and expires after the stay.
       </p>
     <% end %>
     <%= render Ui::CardComponent.new(title: "When the food runs out") do %>

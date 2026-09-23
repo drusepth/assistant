@@ -1,0 +1,6 @@
+<% content_for :title, "#{@pet.name}'s vaccination record" %>
+
+<%= render "pet_vaccinations/sheet", pet: @pet, status: @status,
+      certificate_url: ->(dose) { dose.document&.file&.attached? && dose.document.user_id == @link.user_id ? shared_certificate_path(@link.token, dose) : nil } %>
+
+<%= render "public/footer" %>

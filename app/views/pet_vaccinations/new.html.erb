@@ -1,0 +1,64 @@
+<%# The log form (D-pet-vaccinations): shaped like the visit, not like a row.
+    The date, the vet and the certificate are asked once; each vaccine given
+    is a box to tick. %>
+<%= render Ui::PageHeaderComponent.new(title: "Log vaccines for #{@pet.name}",
+      subtitle: "One visit — tick everything that was given.") %>
+
+<%= form_with model: @log, scope: :log, url: pet_vaccinations_path(@pet), multipart: true, class: "max-w-3xl space-y-6" do |form| %>
+  <% if @log.errors.any? %>
+    <div class="card border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+      <ul class="list-disc space-y-0.5 pl-5">
+        <% @log.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "The visit") do %>
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <%= form.field :given_on, as: :date_field, label_text: "Date given", hint: "As printed on the certificate." %>
+        <% vets = ([ @pet.vet ] + Person.visible_to(Current.user).where(relationship: "Vet").order(:name).to_a).compact.uniq %>
+        <%= form.field :vet_id, label_text: "Vet" do %>
+          <%= form.select :vet_id, vets.map { |vet| [ vet.name, vet.id ] }, { include_blank: vets.any? ? "Someone else" : "Not in your contacts" }, class: "input w-full" %>
+        <% end %>
+      </div>
+      <%= form.field :administered_by, label_text: "Clinic or vet, if not listed", placeholder: "Riverside Animal Hospital" %>
+
+      <% visits = @pet.items(Event, Current.user).where(starts_at: 1.year.ago..Time.current).order(starts_at: :desc).limit(10) %>
+      <% if visits.any? %>
+        <%= form.field :event_id, label_text: "Which visit on the calendar", hint: "Optional — links the doses to the appointment." do %>
+          <%= form.select :event_id, visits.map { |event| [ "#{event.starts_at.strftime("%b %-d, %Y")} — #{event.title}", event.id ] }, { include_blank: "None" }, class: "input w-full" %>
+        <% end %>
+      <% end %>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <%= form.field :certificate, label_text: "Certificate (photo or PDF)", hint: "Saved to Documents under Health and #{@pet.name}." do %>
+          <%= form.file_field :certificate, accept: "image/*,application/pdf" %>
+        <% end %>
+        <% papers = Pets::Papers.for(@pet, Current.user, limit: 20) %>
+        <% if papers.any? %>
+          <%= form.field :document_id, label_text: "Or one already in Documents" do %>
+            <%= form.select :document_id, papers.map { |document| [ document.title, document.id ] }, { include_blank: "None" }, class: "input w-full" %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "What was given",
+        subtitle: @log.catalog.any? ? "Core means #{Pets::Vaccines.guidance(@pet.species)} guidance recommends it for every #{@pet.species_label.downcase}; the rest depend on lifestyle. Your vet decides." : "Add each vaccine by the name on the certificate.") do %>
+    <div class="space-y-3">
+      <% @log.catalog.each do |vaccine| %>
+        <%= render "pet_vaccinations/row", log: @log, key: vaccine.key, vaccine: vaccine, durations: vaccine.durations %>
+      <% end %>
+      <% @log.other_keys.each do |key| %>
+        <%= render "pet_vaccinations/row", log: @log, key: key, vaccine: nil, durations: Pets::Vaccines::GENERIC_DURATIONS %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center gap-2">
+    <%= form.submit "Save vaccines", class: "btn btn-primary" %>
+    <%= link_to "Cancel", pet_path(@pet), class: "btn btn-ghost" %>
+  </div>
+<% end %>

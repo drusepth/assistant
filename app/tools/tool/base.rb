@@ -216,11 +216,34 @@ module Tool
         meds = pet.items(Note, viewer).medications.limit(10).map { |note| [ note.title, note.body ].compact.join(" — ") }
         parts << "Medications on file:\n#{meds.map { |med| "- #{med}" }.join("\n")}" if meds.any?
 
+        parts.concat(vaccine_context(pet, viewer))
+
         care = pet.items(Event, viewer).where(starts_at: 24.months.ago..).order(:starts_at).limit(15)
           .map { |event| "- #{event.starts_at.to_date.iso8601} — #{event.title}" }
         parts << "Care on the calendar (past two years and upcoming):\n#{care.join("\n")}" if care.any?
 
         parts.join("\n")
+      end
+
+      # Her vaccine record, for the pet context (D-pet-vaccinations): each
+      # vaccine's latest dose and whether it is current, and — as its own
+      # block, because it is the fact a vet must not miss — any reaction.
+      def vaccine_context(pet, viewer)
+        status = Pets::VaccineStatus.new(pet, viewer: viewer)
+        return [] unless status.any?
+
+        lines = status.entries.map do |entry|
+          dose = entry.latest
+          facts = [ "#{dose.dose? ? "last given" : dose.kind_label.downcase} #{dose.given_on.iso8601}",
+                    dose.due_on ? "good until #{dose.due_on.iso8601}" : "no expiry recorded",
+                    entry.state.to_s.tr("_", " "),
+                    dose.tag_number.present? && "tag #{dose.tag_number}" ].select(&:present?)
+          "- #{entry.label}: #{facts.join(", ")}"
+        end
+        parts = [ "Vaccinations on record:\n#{lines.join("\n")}" ]
+        reactions = status.reactions.map { |dose| "- #{dose.vaccine_label} (#{dose.given_on.iso8601}): #{dose.reaction}" }
+        parts << "VACCINE REACTIONS on record — the vet should hear about these:\n#{reactions.join("\n")}" if reactions.any?
+        parts
       end
 
       # What's known about a person, assembled once for every People tool

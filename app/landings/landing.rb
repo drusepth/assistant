@@ -10,7 +10,7 @@
 # Registered here, on the Tool::SLUGS pattern, so the registry is code —
 # first-party only (D11) — and the drift guard in test/landings can read it.
 module Landing
-  KINDS = %w[ event task note person medication allergy pet_facts pet_food spending ].freeze
+  KINDS = %w[ event task note person medication allergy pet_facts pet_food pet_vaccination spending ].freeze
 
   # Primitives paper does not produce, each with the reason (INTAKE_PLAN
   # §2). The registry test holds every key of Users::Export::MODELS to one

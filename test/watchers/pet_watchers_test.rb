@@ -15,12 +15,12 @@ class PetWatchersTest < ActiveSupport::TestCase
   # ── Care cadence ──────────────────────────────────────────────────────
 
   test "a due kind with history nudges, and accepting opens find-care for a vet" do
-    care_event("Rex — vaccinations", 14.months.ago)
+    care_event("Rex — dental", 14.months.ago)
 
     suggestions = Watcher::PetCareCadence.new(@user).scan
-    nudge = suggestions.find { |suggestion| suggestion.title.include?("vaccinations") }
+    nudge = suggestions.find { |suggestion| suggestion.title.include?("dental") }
 
-    assert nudge, "a year and a bit since the last shots, nothing booked"
+    assert nudge, "a year and a bit since the last dental, nothing booked"
     assert_match "Rex's last", nudge.body
     assert_equal "find_care", nudge.action.dig("tool", "slug")
     assert_match "veterinarian for a dog", nudge.action.dig("tool", "inputs", "specialty")
@@ -33,8 +33,8 @@ class PetWatchersTest < ActiveSupport::TestCase
   end
 
   test "a booked visit silences the nudge" do
-    care_event("Rex — vaccinations", 14.months.ago)
-    care_event("Rex — vaccinations", 1.week.from_now)
+    care_event("Rex — dental", 14.months.ago)
+    care_event("Rex — dental", 1.week.from_now)
 
     assert_empty Watcher::PetCareCadence.new(@user).scan
   end
@@ -50,7 +50,7 @@ class PetWatchersTest < ActiveSupport::TestCase
 
   test "a monthly rhythm can nudge again next month; a yearly one can't" do
     care_event("Rex — flea and worm treatment", 3.months.ago)
-    care_event("Rex — vaccinations", 14.months.ago)
+    care_event("Rex — dental", 14.months.ago)
 
     first = Watcher::PetCareCadence.new(@user).scan
     assert_equal 2, first.size
@@ -60,12 +60,12 @@ class PetWatchersTest < ActiveSupport::TestCase
 
     travel 40.days do
       again = Watcher::PetCareCadence.new(@user).scan.map { |suggestion| suggestion.watcher_slug }
-      assert_equal 1, again.size, "the monthly treatment comes back; the vaccination stays quiet"
+      assert_equal 1, again.size, "the monthly treatment comes back; the dental stays quiet"
     end
   end
 
   test "a pet who is gone is never scanned" do
-    care_event("Rex — vaccinations", 14.months.ago)
+    care_event("Rex — dental", 14.months.ago)
     @rex.update!(died_on: Date.current)
 
     assert_empty Watcher::PetCareCadence.new(@user).scan

@@ -1,0 +1,36 @@
+<%= render Ui::PageHeaderComponent.new(title: "Edit #{@dose.vaccine_label}", subtitle: "#{@pet.name} · #{@dose.given_on.strftime("%B %-d, %Y")}") %>
+
+<%= form_with model: @dose, url: pet_vaccination_path(@pet, @dose), class: "max-w-2xl space-y-4" do |form| %>
+  <% catalog = Pets::Vaccines.for(@pet.species) %>
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <% if catalog.any? %>
+      <%= form.field :vaccine_key, label_text: "Vaccine" do %>
+        <%= form.select :vaccine_key, catalog.map { |vaccine| [ vaccine.label, vaccine.key ] }, { include_blank: "Not listed — use the name below" } %>
+      <% end %>
+    <% end %>
+    <%= form.field :name, label_text: "Name as printed" %>
+    <%= form.field :kind, label_text: "What it was" do %>
+      <%= form.select :kind, vaccine_kind_options %>
+    <% end %>
+    <%= form.field :given_on, as: :date_field, label_text: "Date given" %>
+    <%= form.field :due_on, as: :date_field, label_text: "Good until / next dose due",
+          hint: @dose.duration_months ? "Worked out from #{@dose.duration_phrase}. Type the certificate's date to replace it." : nil %>
+    <%= form.field :duration_months, label_text: "Or it lasts" do %>
+      <%= form.select :duration_months, vaccine_duration_options(Pets::Vaccines.durations_for(@pet.species, @dose.vaccine_key)), { include_blank: "Not sure / use the date" } %>
+    <% end %>
+    <%= form.field :administered_by, label_text: "Clinic or vet", placeholder: @dose.vet&.name %>
+    <%= form.field :product, label_text: "Brand or product" %>
+    <%= form.field :lot_number %>
+    <%= form.field :tag_number, label_text: "Tag or certificate number" %>
+    <%= form.field :site, label_text: "Where it was given" %>
+    <%= form.field :series_dose, label_text: "Dose in a series" do %>
+      <%= form.select :series_dose, (1..5).map { |n| [ "Dose #{n}", n ] }, { include_blank: "Booster / not a series" } %>
+    <% end %>
+  </div>
+  <%= form.field :reaction, as: :text_area, label_text: "Any reaction?", rows: 2 %>
+  <%= form.field :notes, as: :text_area, rows: 3 %>
+  <div class="flex items-center gap-2 pt-2">
+    <%= form.submit "Save", class: "btn btn-primary" %>
+    <%= link_to "Cancel", pet_vaccinations_path(@pet), class: "btn btn-ghost" %>
+  </div>
+<% end %>

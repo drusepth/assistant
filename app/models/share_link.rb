@@ -13,7 +13,13 @@ class ShareLink < ApplicationRecord
   # public read path and it must never become a generic one. Albums joined
   # on the same terms as recipes: a container of your own images, shared
   # whole, with the same owner guard on what travels with it.
-  SHAREABLE_TYPES = %w[ Recipe RecipeBook Album ].freeze
+  #
+  # A Pet joined for one thing only (D-pet-vaccinations): her vaccine
+  # one-sheet, for the kennel or groomer. The public page for a Pet link
+  # renders that sheet and nothing else of hers — no notes, no reactions, no
+  # photos beyond her avatar — and serves only the certificates attached to
+  # her doses, through the token, so revoking the link cuts off the files too.
+  SHAREABLE_TYPES = %w[ Recipe RecipeBook Album Pet ].freeze
 
   # What the create form offers, in days.
   EXPIRY_CHOICES = { "Never expires" => "", "In 7 days" => "7", "In 30 days" => "30", "In 90 days" => "90" }.freeze

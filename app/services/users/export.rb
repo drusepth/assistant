@@ -28,6 +28,9 @@ module Users
       # the half a vet asks for, so it is not an ornament of the pet row.
       "pets" => ->(user) { user.pets },
       "pet_foods" => ->(user) { PetFood.where(pet_id: user.pets.select(:id)) },
+      # Her vaccine record leaves with her too (D-pet-vaccinations): it is
+      # the first thing a new vet or a new kennel asks for.
+      "pet_vaccinations" => ->(user) { PetVaccination.where(pet_id: user.pets.select(:id)) },
       "recipe_books" => ->(user) { user.recipe_books },
       "suggestions" => ->(user) { user.suggestions },
       "spending_accounts" => ->(user) { user.spending_accounts },

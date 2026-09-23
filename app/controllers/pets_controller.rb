@@ -11,6 +11,9 @@ class PetsController < ApplicationController
     # stops is everything that would nag about her (D-pet-primitive).
     @care_statuses = @pet.active? ? Health::CareRadar.new(@pet, viewer: Current.user).statuses : []
     @health_section_id = Section.find_by(slug: "health")&.id
+    # Her vaccine record reads the same whether she is still with us or not —
+    # it is history — but only a pet still here can be logged against.
+    @vaccines = Pets::VaccineStatus.new(@pet, viewer: Current.user)
     @events = @pet.items(Event, Current.user).upcoming.includes(:sections, :user).limit(6)
     @tasks = @pet.items(Task, Current.user).open.includes(:sections, :user).limit(6)
     @shelf = Pets::FoodShelf.new(@pet)
