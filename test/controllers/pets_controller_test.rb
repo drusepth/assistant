@@ -118,6 +118,24 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Rex", @rex.reload.name
   end
 
+  test "the details card offers its owner an edit and names what is still blank" do
+    get pet_path(@rex)
+    assert_select "a[href=?]", edit_pet_path(@rex), text: "Edit", count: 2
+    assert_select "a[href=?]", edit_pet_path(@rex), text: "Add sex, markings, weight, and microchip number"
+
+    @rex.update!(sex: "male", color: "Gold", weight_kg: 30, microchip: "985112")
+    get pet_path(@rex)
+    assert_no_match(/Add sex/, response.body)
+  end
+
+  test "a household member the pet is shared with gets no edit on the details card" do
+    users(:one).granted_access_grants.create!(grantee: users(:two), subject: @rex)
+    sign_in_as users(:two)
+
+    get pet_path(@rex)
+    assert_select "a[href=?]", edit_pet_path(@rex), count: 0
+  end
+
   test "an unshared pet is invisible to the household" do
     sign_in_as users(:two)
     get pet_path(@rex)
