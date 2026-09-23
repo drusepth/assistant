@@ -5,7 +5,7 @@
 # "Prep for a vet visit" on the Health page of a petless house is noise, and
 # "My pet is missing" on the book club's page is worse. Panels curate their
 # own Act zone (`hidden_tool_slugs`, D37), so the gate lives here — one list,
-# read by the four panels that need it, and no shared file changes.
+# read by the panels that need it, and no shared file changes.
 module Pets
   # Every tool that takes a pet: without one, its form has nothing to offer.
   CARE_TOOL_SLUGS = %w[ pet_care vet_visit_prep decode_vet_estimate compare_pet_insurance lost_pet ].freeze

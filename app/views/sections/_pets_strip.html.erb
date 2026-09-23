@@ -3,8 +3,8 @@
     Health + her name, and both pages are right.
 
     A household with no pets sees one dashed tile and nothing else. %>
+<%# No "Your pets" label: the page is titled Pets. %>
 <div>
-  <h2 class="mb-3 text-sm font-medium text-soft">Your pets</h2>
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
     <% pets.each do |card| %>
       <%= link_to card.path, class: "card group flex items-center gap-3 border-edge p-4 transition hover:border-primary-300 hover:shadow-sm" do %>
