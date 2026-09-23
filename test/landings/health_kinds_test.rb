@@ -80,9 +80,9 @@ class Landing::HealthKindsTest < ActiveSupport::TestCase
     attrs = landing.validate("pet" => @rex.section.slug, "weight_kg" => "32.6 kg", "microchip" => "985112003456789", "vet" => vet.id.to_s)
 
     assert_equal "32.6", attrs["weight_kg"]
-    assert_equal [ [ "Weight", "31.2 kg", "32.6 kg" ], [ "Microchip", nil, "985112003456789" ], [ "Vet", nil, "Dr. Alvarez" ] ],
+    assert_equal [ [ "Weight", "68.8 lb", "71.9 lb" ], [ "Microchip", nil, "985112003456789" ], [ "Vet", nil, "Dr. Alvarez" ] ],
       landing.amendments(attrs)
-    assert_includes landing.preview(attrs).detail, "Weight: 31.2 kg → 32.6 kg"
+    assert_includes landing.preview(attrs).detail, "Weight: 68.8 lb → 71.9 lb"
 
     assert_no_difference "Pet.count" do
       assert_equal @rex, landing.land!(attrs, sections: [])

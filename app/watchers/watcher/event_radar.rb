@@ -113,8 +113,7 @@ module Watcher
       def distance_for(row)
         return nil if row.distance_km.blank?
 
-        km = row.distance_km.to_f
-        km < 1 ? "under 1 km" : "#{km.round} km"
+        user.units.distance_phrase(row.distance_km)
       end
 
       def expiry_for(row)

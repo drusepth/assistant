@@ -38,7 +38,9 @@ module Landing
       pet = context.resolve(:pet, attributes["pet"]) or return []
       lines = []
       if attributes["weight_kg"].present?
-        lines << [ "Weight", pet.weight_kg ? "#{pet.weight_kg} kg" : nil, "#{attributes["weight_kg"]} kg" ]
+        # Stored and read in kg; shown in the unit the user reads.
+        units = user.units
+        lines << [ "Weight", units.weight_phrase(pet.weight_kg), units.weight_phrase(attributes["weight_kg"].to_d) ]
       end
       lines << [ "Microchip", pet.microchip.presence, attributes["microchip"] ] if attributes["microchip"].present?
       lines << [ "Born", pet.born_on&.iso8601, attributes["born_on"] ] if attributes["born_on"].present?

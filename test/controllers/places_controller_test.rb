@@ -78,6 +78,21 @@ class PlacesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href*='duckduckgo.com'][rel~='noreferrer']", minimum: 3
   end
 
+  test "the radius is typed in the user's units and stored in whole kilometres" do
+    place = users(:one).places.create!(name: "Tulsa")
+
+    get places_path
+    assert_select "label[for=place_radius_km]", text: "Counts as here within (mi)"
+    assert_match "Within 25 mi", response.body
+
+    patch place_path(place), params: { place: { radius: "50" } }
+    assert_equal 80, place.reload.radius_km
+
+    users(:one).update!(measurement_system: "metric")
+    patch place_path(place), params: { place: { radius: "50" } }
+    assert_equal 50, place.reload.radius_km
+  end
+
   test "settings, and removing a place" do
     place = users(:one).places.create!(name: "Tulsa")
 

@@ -99,6 +99,22 @@
     <% end %>
   <% end %>
 
+  <%# One setting for every weight and distance the app shows or asks for —
+      a pet's weight, a place's radius, how far away an event is. Only the
+      display moves; what is stored is metric either way, so switching back
+      and forth never changes a number. %>
+  <%= render Ui::CardComponent.new(title: "Units",
+        subtitle: "How weights and distances are shown and typed — a pet's weight, how far away an event is") do %>
+    <%= form_with url: settings_path, method: :patch, class: "flex flex-wrap items-end gap-3" do |form| %>
+      <div class="space-y-1">
+        <%= label_tag :measurement_system, "Measure in", class: "label" %>
+        <%= select_tag :measurement_system,
+              options_for_select(Units::LABELS.invert, Current.user.measurement_system), class: "input" %>
+      </div>
+      <%= form.submit "Save units", class: "btn btn-secondary" %>
+    <% end %>
+  <% end %>
+
   <%# D-task-celebration: on by default, and one click from gone. The point
       of the party is the hit of dopamine, and something you can't switch off
       stops being a treat. %>

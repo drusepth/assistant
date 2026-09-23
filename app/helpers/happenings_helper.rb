@@ -35,8 +35,7 @@ module HappeningsHelper
   def happening_distance(happening)
     return nil if happening.distance_km.blank?
 
-    km = happening.distance_km.to_f
-    km < 1 ? "under 1 km" : "#{km.round} km"
+    Current.user.units.distance_phrase(happening.distance_km)
   end
 
   # Venue and distance on one line, only what is known.

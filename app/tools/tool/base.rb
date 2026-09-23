@@ -203,7 +203,13 @@ module Tool
         # sex nobody recorded, instead of defaulting to one of them.
         parts << "Refer to this pet as: #{pet.pronouns.slashed}"
         parts << "Age: #{pet.age_phrase}" if pet.age_phrase
-        parts << "Weight: #{pet.weight_kg} kg" if pet.weight_kg
+        # In the reader's unit, so the answer comes back in it too — with the
+        # stored kg alongside, since that is what a vet sheet will print.
+        if pet.weight_kg
+          weight = viewer.units.weight_phrase(pet.weight_kg)
+          weight += " (#{Units.for("metric").weight_phrase(pet.weight_kg)})" unless viewer.units.metric?
+          parts << "Weight: #{weight}"
+        end
         parts << "What the owner has noted:\n#{pet.notes.truncate(1_500)}" if pet.notes.present?
 
         shelf = Pets::FoodShelf.new(pet)

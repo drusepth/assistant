@@ -44,8 +44,12 @@ class PlacesController < ApplicationController
       @place = Current.user.places.find(params[:id])
     end
 
+    # The settings form posts `radius` in the user's own unit (Units); the
+    # column is whole kilometres, which `radius_km` still sets directly.
     def place_params
-      params.expect(place: %i[ name radius_km lead_days alerts ])
+      params.expect(place: %i[ name radius radius_km lead_days alerts ]).tap do |attributes|
+        attributes[:radius_km] = Current.user.units.km_from(attributes.delete(:radius)) if attributes.key?(:radius)
+      end
     end
 
     # Home is offered, never assumed: the last line of the household address

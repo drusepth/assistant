@@ -231,7 +231,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
 
     get review_document_path(document)
     assert_response :success
-    assert_match "Weight: 31.2 kg → 32.6 kg", response.body
+    assert_match "Weight: 68.8 lb → 71.9 lb", response.body
     assert_select "select[name='landings[0][attributes][pet]'] option[selected][value=?]", rex.section.slug
 
     assert_no_difference "Pet.count" do

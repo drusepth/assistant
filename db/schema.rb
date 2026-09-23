@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_064342) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_053236) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -1068,6 +1068,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_064342) do
     t.date "mail_digest_generated_on"
     t.integer "mail_digest_hour", default: 8, null: false
     t.boolean "mail_digest_notify", default: false, null: false
+    t.string "measurement_system", default: "imperial", null: false
     t.string "name", null: false
     t.datetime "onboarded_at"
     t.string "password_digest", null: false

@@ -19,7 +19,7 @@ class EventRadarWatcherTest < ActiveSupport::TestCase
     suggestion = scan.sole
 
     assert_equal "event_radar/happening:#{walk.id}", suggestion.fingerprint
-    assert_equal "#{walk.starts_at.strftime("%a %-d %b")} · Fall bird walk (Birding, 9 km)", suggestion.title
+    assert_equal "#{walk.starts_at.strftime("%a %-d %b")} · Fall bird walk (Birding, 6 mi)", suggestion.title
     assert_match "A guided walk for birders.", suggestion.body
     assert_match "Lakeside Park", suggestion.body
     assert_match "From Library.", suggestion.body
