@@ -61,16 +61,28 @@ module Hobbies
     # a human filed by hand stays — plus the one mechanical drop, because
     # Other Interests means "no hobby" and the two are mutually exclusive by
     # definition (D-hobby-feeds §4). Returns the feeds that actually moved.
+    #
+    # Compared against the feed's taggings as they stand *now*, not as the
+    # caller preloaded them: an OPML import enqueues more than one mapping
+    # job, and a feed another job filed in the meantime would otherwise be
+    # tagged twice. The lenses are de-duplicated for the same reason — a
+    # model that names one slug twice is noise, not a second tag. What
+    # remains is two writers racing on the same row, which the unique index
+    # settles; the loser has nothing left to add.
     def claim!(feeds, lenses)
-      lenses = Array(lenses).reject { |lens| catch_all?(lens) }
+      lenses = Array(lenses).reject { |lens| catch_all?(lens) }.uniq
       return [] if lenses.empty?
 
       Array(feeds).select do |feed|
-        gained = lenses - feed.sections.to_a
+        current = feed.sections.reload.to_a
+        gained = lenses - current
         next false if gained.empty?
 
-        feed.sections = (feed.sections.to_a + gained).reject { |lens| catch_all?(lens) }
+        feed.sections = (current + gained).reject { |lens| catch_all?(lens) }
         true
+      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
+        feed.sections.reset
+        false
       end
     end
 
