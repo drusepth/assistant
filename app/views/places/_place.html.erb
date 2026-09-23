@@ -3,7 +3,7 @@
     Locals: place, next_up. %>
 <% units = Current.user.units %>
 <%= render Ui::CardComponent.new(title: place.qualified_name,
-      subtitle: "Within #{units.distance_phrase(place.radius_km)} · nudges up to #{pluralize(place.lead_days, "day")} ahead#{" · alerts off" unless place.alerts?}",
+      subtitle: "Within #{units.distance_phrase(place.radius_mi)} · nudges up to #{pluralize(place.lead_days, "day")} ahead#{" · alerts off" unless place.alerts?}",
       anchor: dom_id(place)) do |card| %>
   <% card.with_actions do %>
     <%= link_to "What's on here", happenings_path(place: place.id), class: "reader-filter" %>
@@ -11,9 +11,9 @@
       <summary class="reader-filter cursor-pointer">Settings</summary>
       <%= form_with model: place, url: place_path(place), method: :patch,
             class: "absolute right-0 z-10 mt-2 w-64 space-y-3 rounded-xl border border-edge bg-surface p-4 shadow-md" do |form| %>
-        <%= form.field :radius_km, label_text: "Counts as here within (#{units.distance_unit})", hint: "When an event says where it is." do %>
+        <%= form.field :radius_mi, label_text: "Counts as here within (#{units.distance_unit})", hint: "When an event says where it is." do %>
           <% range = units.distance_range(Place::RADIUS_RANGE) %>
-          <%= form.number_field :radius, id: "place_radius_km", value: units.distance(place.radius_km)&.round, min: range.min, max: range.max, class: "input" %>
+          <%= form.number_field :radius, id: "place_radius_mi", value: units.distance(place.radius_mi)&.round, min: range.min, max: range.max, class: "input" %>
         <% end %>
         <%= form.field :lead_days, label_text: "Nudge me up to (days) ahead" do %>
           <%= form.number_field :lead_days, min: Place::LEAD_RANGE.min, max: Place::LEAD_RANGE.max, class: "input" %>

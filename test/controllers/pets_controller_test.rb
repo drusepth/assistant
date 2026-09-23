@@ -6,23 +6,23 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     @rex = create_pet(breed: "Golden retriever", born_on: 4.years.ago.to_date)
   end
 
-  test "weight is typed and shown in the owner's units, and stored in kg" do
+  test "weight is in pounds, and in kilograms only for an owner who chose them" do
     get edit_pet_path(@rex)
-    assert_select "label[for=pet_weight_kg]", text: "Weight (lb)"
+    assert_select "label[for=pet_weight_lb]", text: "Weight (lb)"
 
     patch pet_path(@rex), params: { pet: { weight: "50" } }
-    assert_equal BigDecimal("22.68"), @rex.reload.weight_kg
+    assert_equal BigDecimal("50"), @rex.reload.weight_lb
     follow_redirect!
     assert_match "50 lb", response.body
 
     users(:one).update!(measurement_system: "metric")
-    patch pet_path(@rex), params: { pet: { weight: "30.5" } }
-    assert_equal BigDecimal("30.5"), @rex.reload.weight_kg
     get pet_path(@rex)
-    assert_match "30.5 kg", response.body
+    assert_match "22.68 kg", response.body
+    patch pet_path(@rex), params: { pet: { weight: "30.5" } }
+    assert_equal BigDecimal("67.24"), @rex.reload.weight_lb
 
     patch pet_path(@rex), params: { pet: { weight: "" } }
-    assert_nil @rex.reload.weight_kg
+    assert_nil @rex.reload.weight_lb
   end
 
   test "adding a pet creates her lens with her, so she is taggable immediately" do

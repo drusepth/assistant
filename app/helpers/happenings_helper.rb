@@ -33,9 +33,9 @@ module HappeningsHelper
   end
 
   def happening_distance(happening)
-    return nil if happening.distance_km.blank?
+    return nil if happening.distance_mi.blank?
 
-    Current.user.units.distance_phrase(happening.distance_km)
+    Current.user.units.distance_phrase(happening.distance_mi)
   end
 
   # Venue and distance on one line, only what is known.

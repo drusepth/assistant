@@ -45,10 +45,10 @@ class PlacesController < ApplicationController
     end
 
     # The settings form posts `radius` in the user's own unit (Units); the
-    # column is whole kilometres, which `radius_km` still sets directly.
+    # column is whole miles, which `radius_mi` still sets directly.
     def place_params
-      params.expect(place: %i[ name radius radius_km lead_days alerts ]).tap do |attributes|
-        attributes[:radius_km] = Current.user.units.km_from(attributes.delete(:radius)) if attributes.key?(:radius)
+      params.expect(place: %i[ name radius radius_mi lead_days alerts ]).tap do |attributes|
+        attributes[:radius_mi] = Current.user.units.mi_from(attributes.delete(:radius)) if attributes.key?(:radius)
       end
     end
 

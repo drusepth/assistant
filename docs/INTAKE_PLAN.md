@@ -285,7 +285,7 @@ short class; the table is the whole spec.
 | `person` | `Person` | name, relationship, phone, email, address | The vet, the landlord, the specialist. Matched against visible people by the model's *ref* first — an existing person is an amendment, not a duplicate. |
 | `medication` | `Note` (`kind: medication`) + optional refill `Event` (`care_kind: none`) | name, dose_and_schedule, refill_on, *pet* | Exactly what the Medications card's form writes (HEALTH.md §7). |
 | `allergy` | `Note` (`kind: allergy`) | allergen, reaction, *severity*, *pet* | Severity from `Note::SEVERITIES` or omitted — never guessed (HEALTH.md §8). |
-| `pet_facts` | amends `Pet` | *pet*, weight_kg, microchip, born_on (+ estimated), *vet* | The amendment kind. Preview shows old → new. |
+| `pet_facts` | amends `Pet` | *pet*, weight_lb, microchip, born_on (+ estimated), *vet* | The amendment kind. Preview shows old → new. |
 | `pet_food` | `PetFood` | *pet*, name, brand, *form*, amount_per_day + *unit*, package_amount + *unit*, package_cost, started_on | The prescription diet on the discharge sheet. Numbers copied as printed; the shelf's own validation applies. |
 | `spending` | `SpendingTransaction` on the Cash account | amount, occurred_on, merchant, descriptor | The vet bill, the receipt. Same path `Suggestion#materialize`'s `spending` key takes, moved here. Never lands twice: fingerprint on amount + date + merchant. |
 | `health_plan` | sets `documents.health_plan` | — | The document *is* a policy. This replaces the `Health::Coverage` keyword heuristic for analyzed documents — the D-no-keyword-logic cleanup that falls out for free. |

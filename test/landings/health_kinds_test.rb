@@ -5,7 +5,7 @@ require "test_helper"
 class Landing::HealthKindsTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
-    @rex = create_pet(user: @user, weight_kg: 31.2)
+    @rex = create_pet(user: @user, weight_lb: 68.8)
     @context = Landing::Context.new(user: @user)
     @health = sections(:health)
   end
@@ -77,9 +77,9 @@ class Landing::HealthKindsTest < ActiveSupport::TestCase
   test "pet_facts amends the pet's record and previews old → new" do
     vet = @user.people.create!(name: "Dr. Alvarez", relationship: "Vet")
     landing = Landing::PetFacts.new(@context)
-    attrs = landing.validate("pet" => @rex.section.slug, "weight_kg" => "32.6 kg", "microchip" => "985112003456789", "vet" => vet.id.to_s)
+    attrs = landing.validate("pet" => @rex.section.slug, "weight_lb" => "71.9 lb", "microchip" => "985112003456789", "vet" => vet.id.to_s)
 
-    assert_equal "32.6", attrs["weight_kg"]
+    assert_equal "71.9", attrs["weight_lb"]
     assert_equal [ [ "Weight", "68.8 lb", "71.9 lb" ], [ "Microchip", nil, "985112003456789" ], [ "Vet", nil, "Dr. Alvarez" ] ],
       landing.amendments(attrs)
     assert_includes landing.preview(attrs).detail, "Weight: 68.8 lb → 71.9 lb"
@@ -88,7 +88,7 @@ class Landing::HealthKindsTest < ActiveSupport::TestCase
       assert_equal @rex, landing.land!(attrs, sections: [])
     end
     @rex.reload
-    assert_equal 32.6, @rex.weight_kg.to_f
+    assert_equal 71.9, @rex.weight_lb.to_f
     assert_equal "985112003456789", @rex.microchip
     assert_equal vet, @rex.vet
     assert_empty landing.amendments(attrs), "once applied, nothing differs"
@@ -97,7 +97,7 @@ class Landing::HealthKindsTest < ActiveSupport::TestCase
   test "pet_facts never touches another member's pet" do
     luna = create_pet(user: users(:two), name: "Luna")
     landing = Landing::PetFacts.new(@context)
-    assert_nil landing.validate("pet" => luna.section.slug, "weight_kg" => "4"), "not in the closed set, so the entry sinks"
+    assert_nil landing.validate("pet" => luna.section.slug, "weight_lb" => "9"), "not in the closed set, so the entry sinks"
   end
 
   test "pet_food lands on the shelf with the bag's numbers, and a current food of the same name is a duplicate" do

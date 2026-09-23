@@ -48,7 +48,7 @@ module Listings
         def url(page)
           params = {
             "apikey" => @key, "latlong" => "#{@place.latitude},#{@place.longitude}",
-            "radius" => @place.radius_km, "unit" => "km", "size" => PAGE_SIZE, "page" => page,
+            "radius" => @place.radius_mi, "unit" => "miles", "size" => PAGE_SIZE, "page" => page,
             "sort" => "date,asc", "startDateTime" => Time.current.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "endDateTime" => Happening::HORIZON.from_now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
           }

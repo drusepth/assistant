@@ -32,7 +32,7 @@ module Radar
           location: item.location, url: item.url, latitude: item.latitude, longitude: item.longitude,
           starts_at: item.starts_at, ends_at: item.ends_at, all_day: item.all_day,
           series_uid: item.series_uid, withdrawn_at: nil, last_seen_at: now, matched_at: now,
-          distance_km: item.located? ? place.distance_to(item.latitude, item.longitude).round(1) : nil
+          distance_mi: item.located? ? place.distance_to(item.latitude, item.longitude).round(1) : nil
         )
         row.save ? row : nil
       end

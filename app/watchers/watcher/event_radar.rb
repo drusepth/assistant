@@ -111,9 +111,9 @@ module Watcher
       end
 
       def distance_for(row)
-        return nil if row.distance_km.blank?
+        return nil if row.distance_mi.blank?
 
-        user.units.distance_phrase(row.distance_km)
+        user.units.distance_phrase(row.distance_mi)
       end
 
       def expiry_for(row)

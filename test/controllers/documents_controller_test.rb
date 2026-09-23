@@ -222,11 +222,11 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "an amendment card shows old → new, and saving it updates the record rather than adding one" do
-    rex = create_pet(user: users(:one), weight_kg: 31.2)
+    rex = create_pet(user: users(:one), weight_lb: 68.8)
     document = users(:one).documents.create!(title: "Vet discharge sheet", analysis_status: "analyzed")
     document.update!(landings: [
       { "kind" => "pet_facts", "fingerprint" => "pet_facts:rex:32-6", "status" => "proposed",
-        "attributes" => { "pet" => rex.section.slug, "weight_kg" => "32.6" } }
+        "attributes" => { "pet" => rex.section.slug, "weight_lb" => "71.9" } }
     ])
 
     get review_document_path(document)
@@ -235,9 +235,9 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='landings[0][attributes][pet]'] option[selected][value=?]", rex.section.slug
 
     assert_no_difference "Pet.count" do
-      post land_document_path(document), params: { landings: { "0" => { keep: "1", attributes: { pet: rex.section.slug, weight_kg: "32.8" } } } }
+      post land_document_path(document), params: { landings: { "0" => { keep: "1", attributes: { pet: rex.section.slug, weight_lb: "72.3" } } } }
     end
-    assert_equal 32.8, rex.reload.weight_kg.to_f, "the edit on the card won"
+    assert_equal 72.3, rex.reload.weight_lb.to_f, "the edit on the card won"
     assert_equal [ rex ], document.reload.produced_items
   end
 

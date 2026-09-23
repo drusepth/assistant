@@ -78,29 +78,31 @@ class PlacesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href*='duckduckgo.com'][rel~='noreferrer']", minimum: 3
   end
 
-  test "the radius is typed in the user's units and stored in whole kilometres" do
+  test "the radius is in miles, and in kilometres only for a user who chose them" do
     place = users(:one).places.create!(name: "Tulsa")
 
     get places_path
-    assert_select "label[for=place_radius_km]", text: "Counts as here within (mi)"
+    assert_select "label[for=place_radius_mi]", text: "Counts as here within (mi)"
     assert_match "Within 25 mi", response.body
 
     patch place_path(place), params: { place: { radius: "50" } }
-    assert_equal 80, place.reload.radius_km
+    assert_equal 50, place.reload.radius_mi
 
     users(:one).update!(measurement_system: "metric")
-    patch place_path(place), params: { place: { radius: "50" } }
-    assert_equal 50, place.reload.radius_km
+    get places_path
+    assert_match "Within 80 km", response.body
+    patch place_path(place), params: { place: { radius: "40" } }
+    assert_equal 25, place.reload.radius_mi, "40 km snaps to the nearest whole mile"
   end
 
   test "settings, and removing a place" do
     place = users(:one).places.create!(name: "Tulsa")
 
-    patch place_path(place), params: { place: { radius_km: 80, lead_days: 30, alerts: "0" } }
+    patch place_path(place), params: { place: { radius_mi: 50, lead_days: 30, alerts: "0" } }
 
     assert_redirected_to places_path
     place.reload
-    assert_equal 80, place.radius_km
+    assert_equal 50, place.radius_mi
     assert_equal 30, place.lead_days
     assert_not place.alerts?
 
@@ -114,7 +116,7 @@ class PlacesControllerTest < ActionDispatch::IntegrationTest
     theirs = users(:two).places.create!(name: "Austin")
     source = theirs.listing_sources.create!(url: "https://x.example/cal.ics")
 
-    patch place_path(theirs), params: { place: { radius_km: 80 } }
+    patch place_path(theirs), params: { place: { radius_mi: 50 } }
     assert_response :not_found
     delete listing_source_path(source)
     assert_response :not_found

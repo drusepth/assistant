@@ -11,7 +11,7 @@ module Landing
     self.amends = true
 
     field :pet, "which pet", type: :ref, ref: :pet, required: true
-    field :weight_kg, "current weight in kilograms, as printed (convert lb to kg only if the document gives no kg figure)", type: :decimal
+    field :weight_lb, "current weight in pounds, as printed (convert kg to lb only if the document gives no lb figure)", type: :decimal
     field :microchip, "the microchip number, digits as printed"
     field :born_on, "date of birth, only if the document states one", type: :date
     field :vet, "the vet or practice, if they are one of the people listed", type: :ref, ref: :person
@@ -23,7 +23,7 @@ module Landing
       raise ActiveRecord::RecordNotFound, "that pet is gone or no longer shared" unless pet && pet.user_id == user.id
 
       changes = {}
-      changes[:weight_kg] = attributes["weight_kg"] if attributes["weight_kg"].present?
+      changes[:weight_lb] = attributes["weight_lb"] if attributes["weight_lb"].present?
       changes[:microchip] = attributes["microchip"] if attributes["microchip"].present?
       changes[:born_on] = attributes["born_on"] if attributes["born_on"].present?
       if attributes["vet"].present? && (vet = context.resolve(:person, attributes["vet"]))
@@ -37,10 +37,10 @@ module Landing
     def amendments(attributes)
       pet = context.resolve(:pet, attributes["pet"]) or return []
       lines = []
-      if attributes["weight_kg"].present?
-        # Stored and read in kg; shown in the unit the user reads.
+      if attributes["weight_lb"].present?
+        # Stored and read in pounds; shown in the unit the user reads.
         units = user.units
-        lines << [ "Weight", units.weight_phrase(pet.weight_kg), units.weight_phrase(attributes["weight_kg"].to_d) ]
+        lines << [ "Weight", units.weight_phrase(pet.weight_lb), units.weight_phrase(attributes["weight_lb"].to_d) ]
       end
       lines << [ "Microchip", pet.microchip.presence, attributes["microchip"] ] if attributes["microchip"].present?
       lines << [ "Born", pet.born_on&.iso8601, attributes["born_on"] ] if attributes["born_on"].present?
@@ -57,7 +57,7 @@ module Landing
     end
 
     def fingerprint(attributes)
-      "pet_facts:#{attributes["pet"]}:#{attributes.slice("weight_kg", "microchip", "born_on", "vet").values.map { |v| v.to_s.parameterize }.join(":")}"
+      "pet_facts:#{attributes["pet"]}:#{attributes.slice("weight_lb", "microchip", "born_on", "vet").values.map { |v| v.to_s.parameterize }.join(":")}"
     end
   end
 end

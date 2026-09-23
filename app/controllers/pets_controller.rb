@@ -77,11 +77,11 @@ class PetsController < ApplicationController
     end
 
     # The form posts `weight` in the owner's own unit (Units); the column is
-    # kg. `weight_kg` is still accepted as-is for anything posting kilograms.
+    # pounds, which `weight_lb` still sets directly.
     def pet_params
       params.expect(pet: [ :name, :species, :breed, :sex, :pronoun, :neutered, :color, :microchip, :born_on, :born_on_estimated,
-        :adopted_on, :weight, :weight_kg, :died_on, :left_on, :notes, :vet_id, :avatar ]).tap do |attributes|
-        attributes[:weight_kg] = Current.user.units.kg_from(attributes.delete(:weight)) if attributes.key?(:weight)
+        :adopted_on, :weight, :weight_lb, :died_on, :left_on, :notes, :vet_id, :avatar ]).tap do |attributes|
+        attributes[:weight_lb] = Current.user.units.lb_from(attributes.delete(:weight)) if attributes.key?(:weight)
       end
     end
 end
