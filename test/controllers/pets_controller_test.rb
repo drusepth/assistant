@@ -25,6 +25,16 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @rex.reload.weight_lb
   end
 
+  test "the header offers a task already tagged with her lens" do
+    get pet_path(@rex)
+    assert_select "button[data-quick-add-name-param=task]", text: /Add a task/
+    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
+      tasks_path, "task[section_ids][]", @rex.section_id.to_s
+
+    get new_task_path(section_ids: [ @rex.section_id ])
+    assert_response :success
+  end
+
   test "adding a pet creates her lens with her, so she is taggable immediately" do
     assert_difference -> { Pet.count } => 1, -> { Section.custom.count } => 1 do
       post pets_path, params: { pet: { name: "Luna", species: "cat" } }

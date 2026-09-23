@@ -24,7 +24,7 @@ module Pets
         # The phone box shows this contact's number, so changing it there
         # changes it on the contact — but only on the user's own; a contact
         # someone shared is theirs to edit.
-        person.update!(phone: phone) if phone && person.user_id == user.id && person.phone != phone
+        person.update!(phone: phone) if phone && person.user_id == user.id && person.phone != PhoneNumber.normalize(phone)
         person
       end
     end

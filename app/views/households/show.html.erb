@@ -77,7 +77,7 @@
           <% {
                "Address" => @household.address_lines.join(", ").presence,
                "Region" => @household.region.presence,
-               "Phone" => @household.phone.presence,
+               "Phone" => PhoneNumber.format(@household.phone),
                "Home" => @household.home_status_label,
                "Living here since" => @household.moved_in_on&.strftime("%B %Y"),
                "Time zone" => @household.time_zone.presence

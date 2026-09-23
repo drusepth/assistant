@@ -159,6 +159,7 @@ class TasksController < ApplicationController
     end
 
     def task_params
-      params.expect(task: [ :title, :notes, :due_on, :goal_id, :resolution, section_ids: [] ])
+      params.expect(task: [ :title, :notes, :due_on, :goal_id, :resolution, section_ids: [],
+                            routine_attributes: [ :repeat, :deliver_on, :deliver_time, :repeat_until, repeat_days: [] ] ])
     end
 end

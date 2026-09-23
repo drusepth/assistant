@@ -136,6 +136,33 @@ class ReminderDispatchTest < ActiveJob::TestCase
     assert_not_nil reminder.reload.delivered_at
   end
 
+  # --- routines (D-task-routines) -------------------------------------------
+
+  test "a routine firing brings its done task back into Today and pings" do
+    task = @user.tasks.create!(title: "Change the litter", completed_at: 1.day.ago)
+    reminder = due_standing("Change the litter", "FREQ=WEEKLY;BYDAY=SU")
+    reminder.update_columns(subject_type: "Task", subject_id: task.id)
+
+    perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
+
+    task.reload
+    assert_not task.completed?, "the same row reopened, not a new one"
+    assert task.today?
+    assert_equal 1, @user.tasks.where(title: "Change the litter").count
+    assert_requested @hook, times: 1
+  end
+
+  test "a routine that missed its day still brings the chore back, without the late ping" do
+    task = @user.tasks.create!(title: "Buy cat food", completed_at: 5.days.ago)
+    reminder = due_standing("Buy cat food", "FREQ=DAILY", at: 3.days.ago)
+    reminder.update_columns(subject_type: "Task", subject_id: task.id)
+
+    perform_enqueued_jobs { Reminders::DispatchJob.dispatch_due }
+
+    assert_not task.reload.completed?
+    assert_not_requested @hook
+  end
+
   private
     def due_standing(body, rule, at: 1.minute.ago)
       reminder = @user.reminders.new(body: body, deliver_on: Date.current + 1, deliver_time: "09:00")
