@@ -3,7 +3,7 @@
 # to `/tasks/new` and a second one to come back.
 #
 #   <%= quick_add :task %>
-#   <%= quick_add :task, label: "Task for today", prefill: { due_on: Date.current }, primary: true %>
+#   <%= quick_add :task, label: "Task", prefill: { due_on: Date.current }, primary: true %>
 #   <%= quick_add :event, label: "Add an appointment", prefill: { section_ids: [ pet.section_id ] } %>
 #
 # `prefill` takes the same keys the matching `new` action reads from its
