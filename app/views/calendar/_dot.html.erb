@@ -1,0 +1,13 @@
+<%# The phone's month: one dot per entry, and the whole cell is the tap
+    target that opens the day — a 6px dot is not something a thumb can hit.
+    Shape tells the kinds apart: events round, tasks square, reminders rings. %>
+<% record = entry.record %>
+<% case entry.kind %>
+<% when :event, :task %>
+  <% section = record.sections.first %>
+  <span aria-hidden="true" class="<%= class_names("block size-1.5", section ? section_dot_classes(section) : "bg-stone-400",
+        entry.kind == :event ? "rounded-full" : "rounded-[1px]", "opacity-40" => entry.kind == :task && record.completed?,
+        "ring-1 ring-primary-700" => entry.overdue?) %>"></span>
+<% else %>
+  <span aria-hidden="true" class="block size-1.5 rounded-full border border-stone-400"></span>
+<% end %>

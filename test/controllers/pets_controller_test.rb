@@ -25,6 +25,18 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @rex.reload.weight_lb
   end
 
+  test "the sharing card shows only when there is someone in the household to share with" do
+    get pet_path(@rex)
+    assert_select "h2", text: "Sharing", count: 1
+
+    sign_in_as users(:outsider)
+    solo = create_pet(user: users(:outsider), name: "Mittens", species: "cat")
+    get pet_path(solo)
+    assert_response :success
+    assert_select "h2", text: "Sharing", count: 0
+    assert_no_match "No other household members yet", response.body
+  end
+
   test "the pet tools are a quiet list in the sidebar, led by the missing-pet tool" do
     get pet_path(@rex)
     assert_select "nav[aria-label=?] li", "Tools for #{@rex.name}", minimum: 5 do |items|
@@ -339,11 +351,13 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
       "a pet is not a group — her card is her own"
   end
 
-  test "the pet tools live on the Pets hub, as buttons, and nowhere else in the rail" do
+  test "the Pets hub has no tools card: arrival rides the add tile, the crisis tool sits under the cards" do
     get section_path("pets")
-    assert_select "a.btn[href^=?]", new_tool_run_path("lost_pet"), text: "My pet is missing"
-    assert_select "a.btn[href^=?]", new_tool_run_path("new_pet"), text: "Bringing a pet home"
+    assert_select "h2", text: "What the app can do", count: 0
     assert_select "h2", text: "Tools", count: 0
+    assert_select "a[href^=?]", new_tool_run_path("vet_visit_prep"), count: 0
+    assert_select "a[href=?]", new_tool_run_path("new_pet"), text: /Bringing one home soon/
+    assert_select "a[href=?]", new_tool_run_path("lost_pet", inputs: { pet_id: @rex.id }), text: /Rex is missing/
 
     %w[ people health ].each do |slug|
       get section_path(slug)
@@ -352,13 +366,10 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "with one pet the hub's tools already know which" do
-    get section_path("pets")
-    assert_select "a[href=?]", new_tool_run_path("vet_visit_prep", inputs: { pet_id: @rex.id })
-
+  test "with several pets the hub's missing-pet link asks which" do
     create_pet(name: "Luna", species: "cat")
     get section_path("pets")
-    assert_select "a[href=?]", new_tool_run_path("vet_visit_prep")
+    assert_select "a[href=?]", new_tool_run_path("lost_pet"), text: /A pet is missing/
   end
 
   test "the pet page carries her radar, and a remembered pet's stops" do
@@ -387,7 +398,20 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     get pet_path(@rex)
     assert_select "h2", { text: "Cost of care", count: 0 }
 
-    users(:one).budget_categories.create!(name: "Pets", group: "needs")
+    category = users(:one).budget_categories.create!(name: "Pets", group: "needs")
+    get pet_path(@rex)
+    assert_select "h2", { text: "Cost of care", count: 0 }, "an envelope with no ledger has nothing to show"
+
+    account = users(:one).spending_accounts.create!(name: "Checking", kind: "checking")
+    SpendingTransaction.create!(user_id: users(:one).id, spending_account_id: account.id,
+      occurred_on: 1.month.ago.to_date, amount_cents: -1_000, descriptor: "SAFEWAY",
+      fingerprint: "t-#{SecureRandom.hex(4)}", source: "statement")
+    get pet_path(@rex)
+    assert_select "h2", { text: "Cost of care", count: 0 }, "a ledger with no pet spending has nothing to show"
+
+    SpendingTransaction.create!(user_id: users(:one).id, spending_account_id: account.id,
+      occurred_on: 1.month.ago.to_date, amount_cents: -4_200, descriptor: "CHEWY",
+      budget_category_id: category.id, fingerprint: "t-#{SecureRandom.hex(4)}", source: "statement")
     get pet_path(@rex)
     assert_select "h2", text: "Cost of care"
   end

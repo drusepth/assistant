@@ -1,15 +1,11 @@
 <%# What she costs (D-pet-food-shelf). Two numbers from two places: the food
     shelf's arithmetic, and what the ledger actually filed. The ledger half
     says what it can't see rather than presenting a confident total, and says
-    nothing at all when there is no ledger. %>
+    nothing at all until the ledger has filed pet spending. %>
 <%= render Ui::CardComponent.new(title: "Cost of care") do %>
   <div class="space-y-3 text-sm">
-    <% if (line = pet_cost_line(cost)) %>
-      <p class="text-soft"><%= line %></p>
-      <%= link_to "See the transactions", spending_path(category: cost.category&.id), class: "text-primary-700 hover:underline" %>
-    <% else %>
-      <p class="text-soft">Nothing filed under <%= Pets::CostOfCare::CATEGORY_NAME %> in the last year yet.</p>
-    <% end %>
+    <p class="text-soft"><%= pet_cost_line(cost) %></p>
+    <%= link_to "See the transactions", spending_path(category: cost.category&.id), class: "text-primary-700 hover:underline" %>
 
     <% if cost.ledger? %>
       <%# The taught-rule loop (D-budget-envelopes), from the page where you

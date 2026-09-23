@@ -1,6 +1,9 @@
-<%# Item-level sharing (D9). Only rendered for the item's owner. %>
+<%# Item-level sharing (D9). Only rendered for the item's owner, and not at
+    all in a one-person household: with nobody to share with and nothing to
+    revoke, the card has no verb. Settings says how sharing starts. %>
 <% members = Current.user.household.users.where.not(id: Current.user.id).order(:name) %>
 <% grants = subject.access_grants.where(grantor: Current.user).includes(:grantee) %>
+<% return if members.none? && grants.none? %>
 
 <%# `note:` says what a share *means* when it means more than "can see" —
     a kitchen share lets the grantee cook (D-kitchen), and D9 is about the
@@ -33,7 +36,5 @@
             access_grants_path(subject_type: subject.class.name, subject_id: subject.id, everyone: 1),
             method: :post, class: "btn btn-secondary btn-sm mt-3 w-full" %>
     <% end %>
-  <% elsif members.empty? %>
-    <p class="text-sm text-soft">No other household members yet.</p>
   <% end %>
 <% end %>

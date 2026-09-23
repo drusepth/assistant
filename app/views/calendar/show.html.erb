@@ -1,95 +1,56 @@
-<% prev_month = @month.prev_month %>
-<% next_month = @month.next_month %>
-
-<%= render Ui::PageHeaderComponent.new(title: @month.strftime("%B %Y")) do |header| %>
+<%= render Ui::PageHeaderComponent.new(title: calendar_title(@view, @days, @date)) do |header| %>
   <% header.with_actions do %>
-    <%= link_to "←", calendar_path(year: prev_month.year, month: prev_month.month), class: "btn btn-secondary", "aria-label": "Previous month" %>
-    <%= link_to "Today", calendar_path, class: "btn btn-secondary" %>
-    <%= link_to "→", calendar_path(year: next_month.year, month: next_month.month), class: "btn btn-secondary", "aria-label": "Next month" %>
+    <%= link_to "←", calendar_step_path(@view, @date, :previous), class: "btn btn-secondary", "aria-label": "Previous #{@view}" %>
+    <%= link_to "Today", calendar_view_path(@view, Date.current), class: "btn btn-secondary" %>
+    <%= link_to "→", calendar_step_path(@view, @date, :next), class: "btn btn-secondary", "aria-label": "Next #{@view}" %>
     <%= link_to "Import", new_events_import_path, class: "btn btn-secondary" %>
-    <%= quick_add :event, primary: true %>
+    <% if @view == "day" %>
+      <%= quick_add :task, prefill: { due_on: @date } %>
+      <%= quick_add :event, prefill: { date: @date }, primary: true %>
+    <% else %>
+      <%= quick_add :event, primary: true %>
+    <% end %>
   <% end %>
 <% end %>
 
-<div class="card card-flush overflow-hidden">
-  <div class="grid grid-cols-7 border-b border-edge bg-stone-50">
-    <% @weeks.first.each do |day| %>
-      <div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-soft">
-        <span class="sm:hidden"><%= day.strftime("%a").first %></span>
-        <span class="hidden sm:inline"><%= day.strftime("%a") %></span>
-      </div>
+<%# Two controls, two shapes: the zoom is a single choice (tabs), the layers
+    are any number of independent switches (chips). Both are links — the
+    choice is a URL, and it's remembered. %>
+<div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+  <nav class="tab-bar mb-0" aria-label="Calendar view">
+    <% CalendarController::VIEWS.each do |view| %>
+      <%= link_to view.capitalize, calendar_view_path(view, @date),
+            class: class_names("tab", "tab-active" => view == @view), "aria-current": (view == @view ? "page" : nil) %>
     <% end %>
-  </div>
-
-  <% @weeks.each do |week| %>
-    <div class="grid grid-cols-7 divide-x divide-edge border-b border-edge last:border-b-0">
-      <% week.each do |day| %>
-        <div class="min-h-16 p-1 sm:min-h-24 sm:p-1.5 <%= "bg-stone-50/60" unless day.month == @month.month %>">
-          <%= link_to new_event_path(date: day, return_to: current_page_path), title: "New event on #{day.strftime("%B %-d")}",
-                class: "mb-1 flex size-8 items-center justify-center rounded-full text-xs font-medium
-                        #{day == Date.current ? "bg-primary-600 text-white" : day.month == @month.month ? "text-ink hover:bg-stone-100" : "text-stone-400 hover:bg-stone-100"}" do %>
-            <%= day.day %>
-          <% end %>
-          <%# The travel band (D-trip-spine): which stay covers this day.
-              The place name prints where a reading eye lands — check-in
-              day, Mondays, the 1st — and the tint alone carries the rest
-              of the run. Double-booking is judged by *nights* (half-open,
-              like Stay#covers?): the band shows the check-out morning too,
-              but two stays sharing only a handoff day is the ordinary
-              nomad move, and amber is reserved for two claims on the same
-              night. On a move day the night's stay wins the band, so the
-              day you drive prints where you'll sleep. %>
-          <% stays = @stays_by_day.fetch(day, []) %>
-          <% night_claims = stays.select { |stay| stay.covers?(day) } %>
-          <% if night_claims.size > 1 %>
-            <%= link_to trip_path(night_claims.first.trip),
-                  title: "Double-booked: #{night_claims.map { |stay| "#{stay.location} (#{stay.trip.name})" }.join(" and ")}",
-                  class: "mb-0.5 block h-4 truncate rounded bg-amber-200/80 px-1 text-[10px] font-semibold leading-4 text-amber-900" do %>
-              <%= night_claims.size %> places
-            <% end %>
-          <% elsif (stay = night_claims.first || stays.first) %>
-            <%= link_to trip_path(stay.trip), title: "#{stay.location} · #{stay.trip.name}",
-                  class: "mb-0.5 block h-4 truncate rounded bg-sage-200/70 px-1 text-[10px] font-medium leading-4 text-sage-900" do %>
-              <% if day == stay.check_in || day.day == 1 || day.wday == 1 %>
-                <%= stay.location %>
-              <% end %>
-            <% end %>
-          <% end %>
-          <%= render "calendar/meals", meals: @meals_by_day.fetch(day, []), day: day %>
-          <% events = @events_by_day.fetch(day, []) %>
-          <div class="hidden space-y-0.5 sm:block">
-            <% events.first(3).each do |event| %>
-              <% shared = event.user_id != Current.user.id %>
-              <%= link_to event, class: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium
-                    #{event.sections.first ? section_chip_classes(event.sections.first) : "bg-stone-100 text-stone-700"} hover:opacity-80",
-                    title: shared ? "#{event.title} — #{event.user.name}" : event.title do %>
-                <%# Whose day this belongs to is the question a household
-                    calendar exists to answer, so shared events lead with the
-                    face. Own events stay bare — the default needs no mark. %>
-                <% if shared %>
-                  <%= render Ui::AvatarComponent.new(user: event.user, size: :xxs, tone: :stone) %>
-                <% end %>
-                <span class="min-w-0 truncate"><%= event.title %></span>
-              <% end %>
-            <% end %>
-            <% if events.size > 3 %>
-              <p class="px-1.5 text-xs text-soft">+<%= events.size - 3 %> more</p>
-            <% end %>
-          </div>
-          <% if events.any? %>
-            <div class="flex flex-wrap items-center gap-0.5 px-1 sm:hidden">
-              <% events.first(4).each do |event| %>
-                <%= link_to event, title: event.title, "aria-label": event.title,
-                      class: "block size-1.5 rounded-full
-                              #{event.sections.first ? section_dot_classes(event.sections.first) : "bg-stone-400"}" do %><% end %>
-              <% end %>
-              <% if events.size > 4 %>
-                <span class="text-[10px] leading-none text-soft">+<%= events.size - 4 %></span>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
+  </nav>
+  <nav class="flex flex-wrap items-center gap-1.5" aria-label="Show on the calendar">
+    <% CalendarHelper::CALENDAR_LAYER_LABELS.each do |layer, (label, glyph)| %>
+      <% on = @layers.include?(layer) %>
+      <% toggled = on ? @layers - [ layer ] : Calendar::Agenda::LAYERS & (@layers + [ layer ]) %>
+      <%= link_to calendar_view_path(@view, @date, layers: toggled.join(",")),
+            class: "chip chip-toggle", "aria-pressed": on, title: on ? "Hide #{label.downcase}" : "Show #{label.downcase}" do %>
+        <%= icon(glyph, css_class: "size-3.5") %> <%= label %>
       <% end %>
-    </div>
+    <% end %>
+  </nav>
+</div>
+
+<% if @layers.empty? %>
+  <p class="callout mb-4">Everything is switched off — pick Events, Tasks or Reminders above to fill the calendar back in.</p>
+<% end %>
+
+<%# What slipped: a past day scrolls out of sight, which is exactly when an
+    open task needs saying. Today's day view lists them itself. %>
+<% overdue = @agenda.overdue_tasks %>
+<% if overdue.any? && !(@view == "day" && @date == Date.current) %>
+  <%= link_to calendar_day_path(date: Date.current.iso8601),
+        class: "callout callout-warn mb-4 flex items-center gap-2 hover:bg-primary-100" do %>
+    <%= icon(:warning, css_class: "size-4 shrink-0") %>
+    <span class="flex-1"><%= pluralize(overdue.size, "task") %> past due — <%= overdue.first(2).map { |task| task.title.truncate(32) }.to_sentence(two_words_connector: ", ", last_word_connector: ", ") %><%= "…" if overdue.size > 2 %></span>
+    <span class="shrink-0 font-medium">See today →</span>
   <% end %>
+<% end %>
+
+<div data-controller="calendar-drag" data-calendar-drag-url-value="<%= calendar_moves_path %>">
+  <%= render "calendar/#{@view}" %>
 </div>

@@ -1,17 +1,9 @@
-<%# The Pets hub lead panel (D-pets-section): the pets, what the app can do
-    for them, and — once there are enough of them — their care at a glance. %>
-<%= render "sections/pets_strip", pets: panel.pets, remembered: panel.remembered_pets %>
-
-<%= render Ui::CardComponent.new(title: "What the app can do") do %>
-  <div class="flex flex-wrap gap-2">
-    <% panel.tools.each do |tool| %>
-      <%= link_to tool.title, new_tool_run_path(tool.slug, inputs: panel.tool_inputs(tool).presence), class: "btn btn-secondary btn-sm" %>
-    <% end %>
-    <% if (tool = panel.lost_pet_tool) %>
-      <%= link_to tool.title, new_tool_run_path(tool.slug, inputs: panel.tool_inputs(tool).presence), class: "btn btn-ghost btn-sm" %>
-    <% end %>
-  </div>
-<% end %>
+<%# The Pets hub lead panel (D-pets-section): the pets and — once there are
+    enough of them — their care at a glance. The pet tools live on each pet's
+    page; the two only the hub can offer ride the strip. %>
+<%= render "sections/pets_strip", pets: panel.pets, remembered: panel.remembered_pets,
+      arrival: panel.arrival_tool, lost_pet: panel.lost_pet_tool,
+      lost_pet_inputs: panel.lost_pet_tool && panel.tool_inputs(panel.lost_pet_tool) %>
 
 <% if panel.show_care? %>
   <%= render Ui::CardComponent.new(

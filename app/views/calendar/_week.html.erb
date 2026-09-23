@@ -1,0 +1,36 @@
+<%# The week: seven columns on a desktop, everything each day holds with no
+    "+N more", in the order the day runs. On a phone the columns stack into
+    a list of days — seven slivers side by side would hold nothing legible.
+    Each day's heading opens it; each column takes a drop. %>
+<div class="card card-flush overflow-hidden">
+  <div class="grid grid-cols-1 divide-y divide-edge sm:grid-cols-7 sm:divide-x sm:divide-y-0">
+    <% @days.each do |day| %>
+      <% past = day < Date.current %>
+      <% entries = @agenda.on(day) %>
+      <div class="<%= class_names("flex gap-3 p-2 sm:block sm:min-h-72 sm:p-1.5",
+               "data-drop-active:bg-primary-50 data-drop-active:ring-2 data-drop-active:ring-inset data-drop-active:ring-primary-400",
+               "bg-stone-100/50" => past) %>"
+           <%= tag.attributes(data: calendar_drop_data(day)) %>>
+        <%= link_to calendar_day_path(date: day.iso8601),
+              class: "flex w-12 shrink-0 flex-col items-center rounded-lg py-1 hover:bg-stone-100 sm:mb-1 sm:w-full",
+              "aria-label": day.strftime("%A, %B %-d") do %>
+          <span class="text-[11px] font-semibold uppercase tracking-wide text-soft"><%= day.strftime("%a") %></span>
+          <span class="<%= class_names("flex size-8 items-center justify-center rounded-full text-sm font-medium",
+                  day == Date.current ? "bg-primary-600 text-white" : (past ? "text-stone-400" : "text-ink")) %>">
+            <%= day.day %>
+          </span>
+        <% end %>
+        <div class="min-w-0 flex-1 space-y-0.5">
+          <%= render "calendar/stay_band", day: day %>
+          <%= render "calendar/meals", meals: @meals_by_day.fetch(day, []), day: day %>
+          <% entries.each do |entry| %>
+            <%= render "calendar/chip", entry: entry, day: day %>
+          <% end %>
+          <% if entries.empty? %>
+            <p class="px-1.5 py-2 text-xs text-stone-400 sm:hidden">Nothing</p>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -23,6 +23,9 @@ Rails.application.routes.draw do
   get "today" => "today#show", as: :today
   get "calendar(/:year/:month)" => "calendar#show", as: :calendar,
     constraints: { year: /\d{4}/, month: /\d{1,2}/ }
+  get "calendar/week/:date" => "calendar#week", as: :calendar_week, constraints: { date: /\d{4}-\d{2}-\d{2}/ }
+  get "calendar/day/:date" => "calendar#day", as: :calendar_day, constraints: { date: /\d{4}-\d{2}-\d{2}/ }
+  post "calendar/moves" => "calendar_moves#create", as: :calendar_moves
   get "sections/:slug" => "sections#show", as: :section
   # Which "Your life" sections this user has switched on — a page of its
   # own, ahead of the eventual browsable catalog (D-section-picker).
