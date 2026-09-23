@@ -41,6 +41,29 @@ class Hobbies::MapFeedsTest < ActiveJob::TestCase
     assert_equal [ @guitar ], feed.reload.sections.to_a
   end
 
+  # MapFeedsJob raised "Section has already been taken" in production.
+  test "a slug the model names twice is one tag, not a duplicate" do
+    feed = feed("https://example.com/luthier.xml", sections: [ @other ])
+    wood = Hobbies::Lens.find_or_create!("Woodworking")
+    stub_picks(feed => [ "woodworking", "woodworking" ])
+
+    assert_equal [ feed ], Hobbies::MapFeeds.call(@user, [ wood ])
+    assert_equal [ wood ], feed.reload.sections.to_a
+  end
+
+  # An OPML import enqueues overlapping jobs; one can file a feed after the
+  # other has already loaded it.
+  test "a feed another job filed in the meantime is left alone" do
+    feed = feed("https://example.com/luthier.xml", sections: [ @other ])
+    wood = Hobbies::Lens.find_or_create!("Woodworking")
+    stale = @user.feeds.includes(:sections).find(feed.id)
+    stale.sections.load
+    Hobbies::OtherInterests.claim!(Feed.find(feed.id), wood)
+
+    assert_empty Hobbies::OtherInterests.claim!(stale, wood)
+    assert_equal [ wood ], feed.reload.sections.to_a
+  end
+
   test "one question covers several new hobbies and several feeds" do
     wood_feed = feed("https://example.com/wood.xml", sections: [ @other ])
     bake_feed = feed("https://example.com/bake.xml", sections: [ @other ])
