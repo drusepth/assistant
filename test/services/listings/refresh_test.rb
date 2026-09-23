@@ -9,7 +9,7 @@ class Listings::RefreshTest < ActiveJob::TestCase
   setup do
     Web::Fetch.resolver = PUBLIC_DNS
     @user = users(:one)
-    @place = @user.places.create!(name: "Tulsa", radius_km: 40)
+    @place = @user.places.create!(name: "Tulsa", radius_mi: 25)
     @source = @place.listing_sources.create!(url: "https://library.example/cal.ics", kind: "ics")
   end
 
@@ -70,10 +70,10 @@ class Listings::RefreshTest < ActiveJob::TestCase
 
     near, far, unplaced = %w[ near far unplaced ].map { |uid| @source.happenings.find_by!(uid: uid) }
     assert_not near.out_of_range?
-    assert_in_delta 6, near.distance_km.to_f, 2
-    assert far.out_of_range?, "Oklahoma City is not within 40 km of Tulsa"
+    assert_in_delta 4, near.distance_mi.to_f, 1.5
+    assert far.out_of_range?, "Oklahoma City is not within 25 miles of Tulsa"
     assert_not unplaced.out_of_range?, "a row that doesn't say where it is is at its source's place"
-    assert_nil unplaced.distance_km
+    assert_nil unplaced.distance_mi
   end
 
   test "an upcoming row the source stopped listing is withdrawn, and comes back if re-listed" do

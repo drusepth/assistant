@@ -6,6 +6,25 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     @rex = create_pet(breed: "Golden retriever", born_on: 4.years.ago.to_date)
   end
 
+  test "weight is in pounds, and in kilograms only for an owner who chose them" do
+    get edit_pet_path(@rex)
+    assert_select "label[for=pet_weight_lb]", text: "Weight (lb)"
+
+    patch pet_path(@rex), params: { pet: { weight: "50" } }
+    assert_equal BigDecimal("50"), @rex.reload.weight_lb
+    follow_redirect!
+    assert_match "50 lb", response.body
+
+    users(:one).update!(measurement_system: "metric")
+    get pet_path(@rex)
+    assert_match "22.68 kg", response.body
+    patch pet_path(@rex), params: { pet: { weight: "30.5" } }
+    assert_equal BigDecimal("67.24"), @rex.reload.weight_lb
+
+    patch pet_path(@rex), params: { pet: { weight: "" } }
+    assert_nil @rex.reload.weight_lb
+  end
+
   test "adding a pet creates her lens with her, so she is taggable immediately" do
     assert_difference -> { Pet.count } => 1, -> { Section.custom.count } => 1 do
       post pets_path, params: { pet: { name: "Luna", species: "cat" } }
@@ -123,7 +142,7 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_pet_path(@rex), text: "Edit", count: 2
     assert_select "a[href=?]", edit_pet_path(@rex), text: "Add sex, markings, weight, and microchip number"
 
-    @rex.update!(sex: "male", color: "Gold", weight_kg: 30, microchip: "985112")
+    @rex.update!(sex: "male", color: "Gold", weight_lb: 66, microchip: "985112")
     get pet_path(@rex)
     assert_no_match(/Add sex/, response.body)
   end

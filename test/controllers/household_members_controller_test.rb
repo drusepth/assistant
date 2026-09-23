@@ -52,4 +52,44 @@ class HouseholdMembersControllerTest < ActionDispatch::IntegrationTest
     patch household_member_path(users(:outsider), admin: true)
     assert_response :not_found
   end
+
+  # D-instance-mail: most instances send no mail, so an admin hands over the
+  # reset link the way they hand over invitations.
+  test "an admin makes a reset link for a member, and the link resets their password" do
+    sign_in_as users(:one)
+
+    post reset_link_household_member_path(users(:two))
+    assert_response :success
+    url = css_select("input[readonly]").first["value"]
+    assert_match %r{/passwords/.+/edit\z}, url
+
+    sign_out
+    put URI(url).path.delete_suffix("/edit"), params: { password: "fresh-start", password_confirmation: "fresh-start" }
+    assert users(:two).reload.authenticate("fresh-start")
+  end
+
+  test "the household page offers a reset link for other members only" do
+    sign_in_as users(:one)
+    get household_path
+
+    assert_select "form[action='#{reset_link_household_member_path(users(:two))}']"
+    assert_select "form[action='#{reset_link_household_member_path(users(:one))}']", count: 0
+  end
+
+  test "non-admins cannot make reset links" do
+    sign_in_as users(:two)
+
+    post reset_link_household_member_path(users(:one))
+    assert_redirected_to settings_path
+  end
+
+  test "admins cannot make a reset link for themselves or for another household" do
+    sign_in_as users(:one)
+
+    post reset_link_household_member_path(users(:one))
+    assert_redirected_to settings_path
+
+    post reset_link_household_member_path(users(:outsider))
+    assert_response :not_found
+  end
 end

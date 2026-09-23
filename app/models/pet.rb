@@ -71,7 +71,7 @@ class Pet < ApplicationRecord
   validates :name, presence: true
   validates :species, inclusion: { in: SPECIES }
   validates :sex, inclusion: { in: SEXES }, allow_blank: true
-  validates :weight_kg, numericality: { greater_than: 0, less_than: 2_000 }, allow_nil: true
+  validates :weight_lb, numericality: { greater_than: 0, less_than: 4_400 }, allow_nil: true
 
   # Present tense first, then the ones who are remembered — the People page
   # renders them as two strips and every radar and watcher reads `active`.

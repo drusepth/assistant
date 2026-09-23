@@ -9,7 +9,7 @@ class Listings::ProvidersTest < ActionDispatch::IntegrationTest
   setup do
     Web::Fetch.resolver = PUBLIC_DNS
     sign_in_as users(:one)
-    @place = users(:one).places.create!(name: "Tulsa", radius_km: 40)
+    @place = users(:one).places.create!(name: "Tulsa", radius_mi: 25)
   end
 
   teardown { Web::Fetch.resolver = Resolv }
@@ -42,7 +42,7 @@ class Listings::ProvidersTest < ActionDispatch::IntegrationTest
     assert source.due_for_refresh?
 
     show = 8.days.from_now.change(hour: 20)
-    stub_request(:get, %r{app\.ticketmaster\.com/discovery/v2/events\.json\?.*latlong=36\.12,-95\.93.*radius=40})
+    stub_request(:get, %r{app\.ticketmaster\.com/discovery/v2/events\.json\?.*latlong=36\.12,-95\.93.*radius=25.*unit=miles})
       .to_return(body: discovery([ tm_event(id: "a", name: "Jazz night", at: show),
                                    tm_event(id: "b", name: "Cancelled", at: show, status: "cancelled"),
                                    tm_event(id: "c", name: "Far away", at: show, lat: 35.47, lng: -97.52) ]),

@@ -1,0 +1,29 @@
+<%# One reset link, shown once to the admin who asked for it (D-instance-mail). %>
+<div class="mx-auto max-w-2xl space-y-6">
+  <%= render Ui::CardComponent.new(title: "Reset link for #{@member.name}",
+        subtitle: "Send it however you usually reach them — a text, a chat, in person.") do %>
+    <div data-controller="clipboard">
+      <div class="flex flex-wrap items-center gap-2">
+        <input type="text" readonly value="<%= @reset_url %>"
+               data-clipboard-target="source" data-action="click->clipboard#selectAll"
+               class="input min-w-64 flex-1 text-xs text-soft">
+        <button type="button" class="btn btn-secondary btn-sm"
+                data-clipboard-target="button" data-action="clipboard#copy">Copy link</button>
+      </div>
+    </div>
+
+    <ul class="mt-4 list-disc space-y-1.5 pl-5 text-sm text-soft">
+      <li>It works once and expires in <%= distance_of_time_in_words(0, User::HANDED_RESET_EXPIRES_IN) %>.</li>
+      <li>Setting a new password signs <%= @member.name.split.first %> out everywhere.</li>
+      <li>
+        Their saved passwords and diary stay locked unless they enter their recovery code on that page.
+        Without it, those are lost.
+      </li>
+      <li>Anyone holding the link can take over the account until it's used, so send it only to them.</li>
+    </ul>
+
+    <div class="mt-5">
+      <%= link_to "Back to household", household_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>

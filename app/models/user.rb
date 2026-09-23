@@ -4,6 +4,25 @@ class User < ApplicationRecord
   belongs_to :household
 
   has_secure_password
+
+  # A reset link a person hands over (D-instance-mail): made by a household
+  # admin or by the operator's `bin/rails password:reset_link`, for
+  # instances that send no mail. It lives a day rather than Rails' fifteen
+  # minutes because it travels by text message or in person, not by an
+  # inbox that is open right now. Like the emailed kind, it dies the moment
+  # the password changes (the salt is in the payload), so it works once.
+  HANDED_RESET_EXPIRES_IN = 24.hours
+
+  generates_token_for :handed_password_reset, expires_in: HANDED_RESET_EXPIRES_IN do
+    password_salt&.last(10)
+  end
+
+  def handed_password_reset_token = generate_token_for(:handed_password_reset)
+
+  # Either kind of reset link opens the same form.
+  def self.find_by_any_password_reset_token(token)
+    find_by_password_reset_token(token) || find_by_token_for(:handed_password_reset, token)
+  end
   has_many :sessions, dependent: :destroy
 
   has_many :user_sections, dependent: :destroy
@@ -99,6 +118,7 @@ class User < ApplicationRecord
 
   validates :name, presence: true
   validates :email_address, presence: true, uniqueness: true
+  validates :measurement_system, inclusion: { in: Units::SYSTEMS }
 
   # The work profile (D-work-profile): two plain fields the user states once
   # in Settings instead of retyping into every Career tool. Never inferred —
@@ -107,6 +127,10 @@ class User < ApplicationRecord
   def work_summary
     [ job_title, employer&.then { |name| "at #{name}" } ].compact.join(" ").presence
   end
+
+  # Pounds and miles, or kilograms and kilometres — how every weight and
+  # distance is shown to and typed by this user. Storage is metric either way.
+  def units = Units.for(measurement_system)
 
   # Section toggles (D4): sections are enabled unless explicitly disabled,
   # so new sections appear for existing users without backfill.

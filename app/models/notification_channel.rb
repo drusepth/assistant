@@ -1,8 +1,9 @@
 # Where the agent may reach you off-app (D22). Five kinds, none assumed:
 # webhook (ntfy/Home Assistant/Matrix — the self-hoster ecosystem), Web
-# Push (per-instance VAPID, no third party), email (only useful when the
-# instance has SMTP), sms (D-sms-channels: your own modem via gammu-smsd,
-# or a commodity carrier API), and signal (a signal-cli-rest-api container
+# Push (per-instance VAPID, no third party), email (through your own
+# linked mailbox, or the instance's SMTP if it has one — D-instance-mail),
+# sms (D-sms-channels: your own modem via gammu-smsd, or a commodity
+# carrier API), and signal (a signal-cli-rest-api container
 # you run). Only Active-dial sections ever notify, batched per scan,
 # counts and titles only — a lock screen is not private by default, and a
 # carrier keeps a copy of everything besides.
@@ -78,10 +79,39 @@ class NotificationChannel < ApplicationRecord
     case kind
     when "webhook" then "Webhook — #{config["url"].to_s.truncate(60)}"
     when "web_push" then "Browser push — added #{created_at.strftime("%b %-d, %Y")}"
-    when "email" then "Email — #{config["address"]}"
+    when "email" then email_label
     when "sms" then "Text message — #{config["to"]} via #{sms_provider_settings[:label]}"
     when "signal" then "Signal — #{config["to"]}"
     end
+  end
+
+  # Email goes out one of two ways (D-instance-mail): through a mailbox the
+  # user linked, from them to them, which no spam filter doubts; or through
+  # the instance's own SMTP. A channel with no linked_account_id is the
+  # second kind, which is also what every channel made before the choice
+  # existed means.
+  def sends_through_mailbox? = email? && config["linked_account_id"].present?
+
+  def sending_account
+    return nil unless sends_through_mailbox?
+
+    user.linked_accounts.find_by(id: config["linked_account_id"], provider: "email")
+  end
+
+  # Why this channel can't send right now, in words for Settings and the
+  # log — or nil when it can. Checked at send time as well as at creation,
+  # because the mailbox link or the server's SMTP can go away later.
+  def email_sender_problem
+    return nil unless email?
+
+    if sends_through_mailbox?
+      account = sending_account
+      return "its mailbox link was removed" if account.nil?
+      return "sending is switched off on #{account.display_name}" unless account.sends_mail?
+    elsif !InstanceMail.configured?
+      return "this server doesn't send email"
+    end
+    nil
   end
 
   def sms_provider = config["provider"].to_s
@@ -120,6 +150,12 @@ class NotificationChannel < ApplicationRecord
   end
 
   private
+    def email_label
+      via = sends_through_mailbox? && sending_account ? ", from your #{sending_account.label} mailbox" : ""
+      problem = email_sender_problem
+      "Email — #{config["address"]}#{via}#{" (can't send: #{problem})" if problem}"
+    end
+
     # Numbers get pasted with spaces, dashes and parens. Carriers want
     # E.164, so strip the decoration once here rather than in three
     # provider classes.
@@ -150,6 +186,11 @@ class NotificationChannel < ApplicationRecord
         end
       when "email"
         errors.add(:base, "Email needs an address.") unless config["address"].to_s.include?("@")
+        # Only a new channel is refused: one that loses its sender later
+        # stays listed with the reason, rather than failing every save.
+        if new_record? && (problem = email_sender_problem)
+          errors.add(:base, "Email can't be sent: #{problem}.")
+        end
       when "sms" then validate_sms
       when "signal" then validate_signal
       end

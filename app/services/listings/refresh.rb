@@ -117,10 +117,10 @@ module Listings
       # By construction, then by arithmetic: a row from a source attached to
       # Tulsa is in Tulsa unless it says otherwise.
       def range_for(item)
-        return { distance_km: nil, out_of_range: false } unless item.located?
+        return { distance_mi: nil, out_of_range: false } unless item.located?
 
         distance = @place.distance_to(item.latitude, item.longitude).round(1)
-        { distance_km: distance, out_of_range: distance > @place.radius_km }
+        { distance_mi: distance, out_of_range: distance > @place.radius_mi }
       end
 
       # An upcoming row the source stopped listing is gone from the world:

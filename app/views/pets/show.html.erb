@@ -59,10 +59,10 @@
             <dd class="min-w-0 wrap-anywhere"><%= @pet.adopted_on.strftime("%B %-d, %Y") %></dd>
           </div>
         <% end %>
-        <% if @pet.weight_kg %>
+        <% if @pet.weight_lb %>
           <div class="flex gap-2">
             <dt class="w-28 shrink-0 text-soft">Weight</dt>
-            <dd class="min-w-0 wrap-anywhere"><%= number_with_precision(@pet.weight_kg, precision: 2, strip_insignificant_zeros: true) %> kg</dd>
+            <dd class="min-w-0 wrap-anywhere"><%= Current.user.units.weight_phrase(@pet.weight_lb) %></dd>
           </div>
         <% end %>
         <% if @pet.microchip.present? %>
@@ -91,7 +91,7 @@
       </dl>
       <% if @own %>
         <% missing = { "sex" => @pet.sex_label, "markings" => @pet.color.presence, "date of birth" => @pet.born_on,
-                       "weight" => @pet.weight_kg, "microchip number" => @pet.microchip.presence }.select { |_label, value| value.nil? }.keys %>
+                       "weight" => @pet.weight_lb, "microchip number" => @pet.microchip.presence }.select { |_label, value| value.nil? }.keys %>
         <% if missing.any? %>
           <p class="mt-4 text-sm">
             <%= link_to "Add #{missing.to_sentence}", edit_pet_path(@pet), class: "text-primary-700 hover:underline" %>

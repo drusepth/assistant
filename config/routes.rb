@@ -9,7 +9,9 @@ Rails.application.routes.draw do
   get "join/:token" => "invitations#show", as: :join
   post "join/:token" => "invitations#accept"
 
-  resources :household_members, only: %i[ update destroy ]
+  resources :household_members, only: %i[ update destroy ] do
+    post :reset_link, on: :member
+  end
   resource :household, only: %i[ show update ] do
     delete :banner, to: "households#destroy_banner", as: :banner
   end

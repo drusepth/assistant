@@ -15,13 +15,13 @@ class Place < ApplicationRecord
   has_many :listing_sources, -> { order(:created_at) }, dependent: :destroy, inverse_of: :place
   has_many :happenings, through: :listing_sources
 
-  DEFAULT_RADIUS_KM = 40
+  DEFAULT_RADIUS_MI = 25
   DEFAULT_LEAD_DAYS = 14
-  RADIUS_RANGE = 5..300
+  RADIUS_RANGE = 3..190
   LEAD_RANGE = 1..60
 
   validates :name, presence: true, length: { maximum: 120 }
-  validates :radius_km, numericality: { only_integer: true, in: RADIUS_RANGE }
+  validates :radius_mi, numericality: { only_integer: true, in: RADIUS_RANGE }
   validates :lead_days, numericality: { only_integer: true, in: LEAD_RANGE }
   validate :names_a_known_town
 
@@ -35,13 +35,14 @@ class Place < ApplicationRecord
 
   def qualified_name = country.present? ? "#{name}, #{country}" : name
 
-  # How far a coordinate is from this place, in km — the haversine the
-  # gazetteer already has, so "near" is one arithmetic everywhere.
+  # How far a coordinate is from this place, in miles (D-measurement-units)
+  # — the haversine the gazetteer already has, so "near" is one arithmetic
+  # everywhere.
   def distance_to(lat, lng)
-    Datasets::Places.distance_km(latitude.to_f, longitude.to_f, lat.to_f, lng.to_f)
+    Datasets::Places.distance_km(latitude.to_f, longitude.to_f, lat.to_f, lng.to_f) / Units::KM_PER_MI.to_f
   end
 
-  def within?(lat, lng) = distance_to(lat, lng) <= radius_km
+  def within?(lat, lng) = distance_to(lat, lng) <= radius_mi
 
   # The window the watcher may nudge inside: today through the lead time.
   def lead_window(today = Date.current) = today..(today + lead_days)

@@ -53,6 +53,21 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_nil users(:one).employer
   end
 
+  test "units switch between imperial and metric without touching sections" do
+    enabled = users(:one).enabled_sections.to_a
+
+    patch settings_path, params: { measurement_system: "metric" }
+    assert_redirected_to settings_path
+    assert_equal "metric", users(:one).reload.measurement_system
+
+    patch settings_path, params: { measurement_system: "cubits" }
+    assert_equal "imperial", users(:one).reload.measurement_system, "an unknown system is the default, never an error"
+    assert_equal enabled, users(:one).enabled_sections.to_a
+
+    get settings_path
+    assert_select "select[name=measurement_system] option[selected][value=imperial]"
+  end
+
   test "celebrations toggle off and back on without touching sections" do
     enabled_before = Section.top_level.select { |s| users(:one).section_enabled?(s) }
     assert enabled_before.any?, "fixture user should start with sections enabled"
