@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_070248) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_071724) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -443,6 +443,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_070248) do
     t.binary "wrapped_key", null: false
     t.binary "wrapped_private_key", null: false
     t.index ["user_id"], name: "index_keyrings_on_user_id", unique: true
+  end
+
+  create_table "kitchens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", default: "Home", null: false
+    t.datetime "share_prompt_answered_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_kitchens_on_user_id"
   end
 
   create_table "linked_accounts", force: :cascade do |t|
@@ -1089,6 +1098,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_070248) do
     t.text "causes_brief"
     t.boolean "celebrations", default: true, null: false
     t.datetime "created_at", null: false
+    t.integer "current_kitchen_id"
     t.text "digest"
     t.datetime "digest_generated_at"
     t.string "email_address", null: false
@@ -1107,6 +1117,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_070248) do
     t.boolean "prepare_work", default: true, null: false
     t.text "radar_brief"
     t.datetime "updated_at", null: false
+    t.index ["current_kitchen_id"], name: "index_users_on_current_kitchen_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["household_id"], name: "index_users_on_household_id"
   end
@@ -1168,6 +1179,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_070248) do
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "job_feeds", "users"
   add_foreign_key "keyrings", "users"
+  add_foreign_key "kitchens", "users"
   add_foreign_key "linked_accounts", "users"
   add_foreign_key "listing_sources", "places"
   add_foreign_key "model_profiles", "households"
@@ -1234,6 +1246,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_070248) do
   add_foreign_key "user_sections", "sections"
   add_foreign_key "user_sections", "users"
   add_foreign_key "users", "households"
+  add_foreign_key "users", "kitchens", column: "current_kitchen_id", on_delete: :nullify
   add_foreign_key "vault_events", "users"
   add_foreign_key "vault_events", "users", column: "actor_id"
   add_foreign_key "vault_events", "users", column: "subject_user_id"

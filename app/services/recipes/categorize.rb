@@ -44,7 +44,8 @@ module Recipes
           File on what the recipe is actually about — a dietary angle is Health, a
           craft like bread or brewing is the matching hobby, a recipe attributed to
           someone belongs with People. Do not file every recipe under the same
-          section just because it is food.
+          section just because it is food — every recipe already appears on the
+          food section's page, so choose "food" only when nothing else fits.
         PROMPT
       end
 

@@ -2,7 +2,13 @@
 <% members = Current.user.household.users.where.not(id: Current.user.id).order(:name) %>
 <% grants = subject.access_grants.where(grantor: Current.user).includes(:grantee) %>
 
-<%= render Ui::CardComponent.new(title: "Sharing", subtitle: "Private to you unless shared") do %>
+<%# `note:` says what a share *means* when it means more than "can see" —
+    a kitchen share lets the grantee cook (D-kitchen), and D9 is about the
+    user seeing that before they click. %>
+<%= render Ui::CardComponent.new(title: "Sharing", subtitle: local_assigns[:subtitle] || "Private to you unless shared") do %>
+  <% if local_assigns[:note] %>
+    <p class="mb-3 text-sm text-soft"><%= note %></p>
+  <% end %>
   <% if grants.any? %>
     <ul class="mb-4 space-y-2">
       <% grants.each do |grant| %>

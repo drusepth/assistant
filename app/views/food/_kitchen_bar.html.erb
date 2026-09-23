@@ -1,0 +1,22 @@
+<%# Which kitchen this is, who else cooks here, and the way to its settings. %>
+<div class="flex flex-wrap items-center justify-between gap-2">
+  <div class="flex min-w-0 items-center gap-2 text-sm">
+    <span class="font-semibold text-ink"><%= kitchen.name %></span>
+    <% unless panel.owned_kitchen? %>
+      <span class="text-soft">· <%= kitchen.user.name %>'s kitchen</span>
+    <% end %>
+    <% if panel.cooks.any? %>
+      <span class="flex -space-x-1.5">
+        <% panel.cooks.first(5).each do |cook| %>
+          <%= render Ui::AvatarComponent.new(user: cook, size: :xs, css_class: "ring-2 ring-surface", title: cook.name) %>
+        <% end %>
+      </span>
+      <span class="text-soft">cook<%= "s" unless panel.cooks.one? %> here too</span>
+    <% end %>
+  </div>
+  <%= link_to (panel.other_kitchens? ? "Switch kitchen · settings" : "Kitchen settings"), edit_kitchen_path(kitchen), class: "btn btn-ghost btn-sm" %>
+</div>
+
+<% if (owner = panel.unshared_household_kitchen_owner) %>
+  <p class="text-sm text-soft"><%= owner.name %> keeps a kitchen too. If it's the same fridge, ask them to share it with you — then there's one list, not two.</p>
+<% end %>

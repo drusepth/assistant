@@ -25,7 +25,10 @@
   [ "travel", "Travel" ],
   # The ninth (D-pets-section): each pet's lens is a child of it. Existing
   # installs get it from 20260923060034_add_pets_section.rb.
-  [ "pets", "Pets" ]
+  [ "pets", "Pets" ],
+  # The tenth (D-food-section): the hub over the recipe box and the shared
+  # kitchen. Existing installs get it from 20260923071722_add_food_section.rb.
+  [ "food", "Food" ]
 ].each_with_index do |(slug, name, children), index|
   section = Section.find_or_initialize_by(slug: slug)
   section.update!(name: name, position: index + 1, parent: nil)

@@ -1,0 +1,31 @@
+# The household's kitchen (D-kitchen; docs/FOOD_PLAN.md). One container whose
+# shopping lists, fridge and meal plan are its rows — none of them owned by
+# anyone but the kitchen — so one grant shares the lot. And it is the first
+# grant in the app that writes: whoever can see a kitchen can cook in it
+# (add to and check off the lists, change the fridge, fill in the plan).
+# Renaming, deleting and re-sharing stay with the owner.
+class Kitchen < ApplicationRecord
+  include Visible
+
+  DEFAULT_NAME = "Home".freeze
+
+  validates :name, presence: true, length: { maximum: 60 }
+
+  # Anyone who can see a kitchen can cook in it. Kept as its own predicate so
+  # the controllers say what they mean, and so a read-only share has one
+  # place to arrive if it is ever wanted.
+  def cookable_by?(user) = visible_to?(user)
+
+  def owned_by?(user) = user_id == user.id
+
+  # The share-this-kitchen card: shown to the owner until they answer, and
+  # only when there is somebody to share with.
+  def share_prompt_pending? = share_prompt_answered_at.nil?
+
+  # Every kitchen page subscribes to this, so the item a partner adds at home
+  # appears on the phone in the store (Turbo morphs the page in place).
+  def broadcast_change
+    touch
+    Turbo::StreamsChannel.broadcast_refresh_later_to(self)
+  end
+end

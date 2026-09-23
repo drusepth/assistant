@@ -1,0 +1,65 @@
+<% content_for :title, "#{@kitchen.name} · Kitchen" %>
+<% content_for :nav_section, "food" %>
+
+<%= render Ui::PageHeaderComponent.new(title: @kitchen.name, subtitle: "Kitchen settings") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Back to Food", food_path, class: "btn btn-ghost" %>
+  <% end %>
+  <% unless @owned %>
+    <% header.with_meta do %>
+      <%= render Ui::UserLabelComponent.new(user: @kitchen.user, css_class: "text-sm text-soft") do %>
+        <%= @kitchen.user.name %>'s kitchen — you can cook here
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-3xl grid-cols-1 gap-4">
+  <% if @owned %>
+    <%= render Ui::CardComponent.new(title: "Name") do %>
+      <%= form_with model: @kitchen, class: "flex flex-wrap items-end gap-2" do |form| %>
+        <div class="min-w-48 flex-1"><%= form.field :name, hint: "“Home”, “The cabin”, “My shelf”" %></div>
+        <%= form.submit "Rename" %>
+      <% end %>
+    <% end %>
+
+    <%= render "shared/share_controls", subject: @kitchen,
+          subtitle: "Private to you unless shared",
+          note: "Anyone you share this kitchen with can add to its lists, check things off, " \
+                "change what's in the fridge and fill in the plan. Only you can rename, delete or re-share it." %>
+  <% end %>
+
+  <% if @kitchens.many? %>
+    <%= render Ui::CardComponent.new(title: "Your kitchens", subtitle: "The Food page opens on the one you pick") do %>
+      <ul class="divide-y divide-edge">
+        <% @kitchens.each do |kitchen| %>
+          <li class="flex items-center justify-between gap-2 py-2 text-sm">
+            <span class="min-w-0 truncate">
+              <span class="font-medium text-ink"><%= kitchen.name %></span>
+              <% unless kitchen.owned_by?(Current.user) %><span class="text-soft">· <%= kitchen.user.name %>'s</span><% end %>
+            </span>
+            <span class="flex shrink-0 gap-2">
+              <%= link_to "Settings", edit_kitchen_path(kitchen), class: "btn btn-ghost btn-sm" %>
+              <%= button_to "Open", select_kitchen_path(kitchen), method: :patch, class: "btn btn-secondary btn-sm" %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Another kitchen", subtitle: "For a second home, or a shelf of your own in a shared house") do %>
+    <%= form_with model: Kitchen.new(name: ""), url: kitchens_path, class: "flex flex-wrap items-end gap-2" do |form| %>
+      <div class="min-w-48 flex-1"><%= form.field :name, label_text: "Name", hint: "“The cabin”" %></div>
+      <%= form.submit "Make it" %>
+    <% end %>
+  <% end %>
+
+  <% if @owned %>
+    <%= render Ui::CardComponent.new(title: "Delete this kitchen") do %>
+      <p class="mb-3 text-sm text-soft">Its lists, fridge and plan go with it. Your recipes stay in your recipe box.</p>
+      <%= button_to "Delete #{@kitchen.name}", kitchen_path(@kitchen), method: :delete, class: "btn btn-danger btn-sm",
+            form: { data: { turbo_confirm: "Delete #{@kitchen.name} and everything in it?" } } %>
+    <% end %>
+  <% end %>
+</div>

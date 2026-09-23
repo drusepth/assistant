@@ -306,6 +306,17 @@ Rails.application.routes.draw do
       patch :reorder
     end
   end
+  # The Food section's kitchen (D-kitchen; docs/FOOD_PLAN.md). The hub is
+  # /sections/food; /food is its short name. Everything inside a kitchen
+  # nests under it, and every controller there goes through
+  # Kitchens::Scoped — whoever can see a kitchen can cook in it.
+  get "food" => redirect("/sections/food"), as: :food
+  resources :kitchens, only: %i[ create edit update destroy ] do
+    member do
+      patch :select
+      post :answer_share
+    end
+  end
   resources :share_links, only: %i[ create destroy ]
   get "s/:token" => "public#show", as: :shared
   get "s/:token/certificates/:id" => "public#certificate", as: :shared_certificate

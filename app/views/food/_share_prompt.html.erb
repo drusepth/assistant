@@ -1,0 +1,11 @@
+<%# D-kitchen: the one question the hub asks. A kitchen almost always should
+    be shared, so it's asked where the kitchen is — but nothing is shared
+    until the click, and it leaves once answered either way. %>
+<div class="callout">
+  <p class="callout-title">Share this kitchen with <%= panel.household_others.map(&:name).to_sentence %>?</p>
+  <p class="mt-1 text-sm">Then there's one shopping list everyone adds to, one fridge, and one meal plan. Anyone you share with can add and check things off; only you can rename or delete the kitchen.</p>
+  <div class="mt-3 flex flex-wrap gap-2">
+    <%= button_to "Share with everyone", answer_share_kitchen_path(kitchen, share: "everyone"), class: "btn btn-primary btn-sm" %>
+    <%= button_to "Keep it private", answer_share_kitchen_path(kitchen, share: "none"), class: "btn btn-ghost btn-sm" %>
+  </div>
+</div>

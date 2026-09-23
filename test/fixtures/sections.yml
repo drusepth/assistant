@@ -84,3 +84,8 @@ pets:
   slug: pets
   name: Pets
   position: 9
+
+food:
+  slug: food
+  name: Food
+  position: 10
