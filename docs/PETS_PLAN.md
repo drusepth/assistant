@@ -434,3 +434,11 @@ shut. The one shared file that did change is `Sections::Panel`, which grew the
 owned-lens rung the plan predicted, plus `Section#removable?` — because
 without it the generic "Remove this group" button sat on Rex's lens page and
 would have orphaned her.
+
+**The lens now says whose it is (D-owned-lens).** Each fix above was one more
+surface remembering to ask the pets table "is this child of People a pet?",
+and the ones that forgot kept treating the cat as a group: a vet contact was
+offered "Add to group → Dimitri", Settings listed her as an area of People,
+chips read "People · Dimitri", and switching People off took her out of every
+form's picker. `sections.owner_type` is written when the lens is created, and
+groups, subsection lists, name lookups, labels and the picker all read it.

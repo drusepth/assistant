@@ -12,9 +12,10 @@ class GroupsController < ApplicationController
   # just lose this tag.
   def destroy
     lens = Section.custom.find(params[:id])
-    if lens.lens_owner
+    if lens.owned?
+      owner = lens.owner_type.underscore.humanize(capitalize: false)
       return redirect_to section_path(lens.slug),
-        alert: "#{lens.name} belongs to a #{lens.lens_owner.downcase} — remove the #{lens.lens_owner.downcase} to remove this lens."
+        alert: "#{lens.name} belongs to a #{owner} — remove the #{owner} to remove this lens."
     end
 
     lens.destroy!

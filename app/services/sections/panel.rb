@@ -35,7 +35,7 @@ module Sections
     # `Pet` => `Sections::Panels::PetLens`, by the same naming convention the
     # parent fallback uses.
     def self.owned_lens_class(section)
-      section.lens_owner&.then { |model| constant("#{model.underscore}_lens") }
+      section.owner_type&.then { |model| constant("#{model.underscore}_lens") }
     end
     private_class_method :owned_lens_class
 

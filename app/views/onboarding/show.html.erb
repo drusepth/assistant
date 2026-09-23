@@ -14,8 +14,8 @@
                   id: "onboarding_section_#{section.slug}", class: "size-4 rounded accent-primary-600" %>
             <span class="size-2.5 rounded-full <%= section_dot_classes(section) %>"></span>
             <span class="text-sm font-medium text-ink"><%= section.name %></span>
-            <% if section.children.any? %>
-              <span class="min-w-0 text-xs text-soft"><%= section.children.map(&:name).join(" · ") %></span>
+            <% if section.subsections.any? %>
+              <span class="min-w-0 text-xs text-soft"><%= section.subsections.map(&:name).join(" · ") %></span>
             <% end %>
           </label>
         <% end %>

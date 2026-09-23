@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_053900) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_062004) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -745,6 +745,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_053900) do
     t.datetime "created_at", null: false
     t.boolean "custom", default: false, null: false
     t.string "name", null: false
+    t.string "owner_type"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
     t.string "slug", null: false

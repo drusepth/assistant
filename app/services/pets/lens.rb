@@ -11,7 +11,7 @@ module Pets
 
     # Always a fresh lens: a pet owns hers, so she can never share one with
     # another pet of the same name (Sections::Lens.create!).
-    def create!(name) = Sections::Lens.create!(PARENT, name, fallback_slug: "pet")
+    def create!(name) = Sections::Lens.create!(PARENT, name, fallback_slug: "pet", owner_type: "Pet")
 
     # Renaming a pet renames her lens but never its slug: slugs are a global
     # namespace feeding URLs and the LLM's taxonomy listing, and rewriting one
@@ -23,8 +23,7 @@ module Pets
     end
 
     # Every pet lens in the instance — the set a user's own care radar has to
-    # subtract (D-pet-care-radar) and the set the People page must not render
-    # as groups.
-    def section_ids = Pet.distinct.pluck(:section_id)
+    # subtract (D-pet-care-radar).
+    def section_ids = Section.where(owner_type: "Pet").ids
   end
 end

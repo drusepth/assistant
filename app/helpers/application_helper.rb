@@ -13,11 +13,18 @@ module ApplicationHelper
   # a tag the picker wouldn't otherwise list can't be dropped by saving the
   # form. A household that turned Rights off shouldn't be asked whether its
   # dinner is about voting.
+  #
+  # A pet's lens is the exception both ways (D-owned-lens): it is offered
+  # whatever the household did with People, since turning People off never
+  # meant "stop filing things about the cat", and only for pets this user can
+  # see, since a lens is household-wide but the pet behind it is private (D9).
   def section_picker_choices(item)
     enabled_ids = Current.user.enabled_sections.map(&:id)
+    pet_lenses = Pet.visible_to(Current.user).select(:section_id)
 
     Section.where(id: enabled_ids + item.section_ids)
-      .or(Section.where(parent_id: enabled_ids))
+      .or(Section.unowned.where(parent_id: enabled_ids))
+      .or(Section.where(id: pet_lenses))
       .order(:parent_id, :position)
   end
 

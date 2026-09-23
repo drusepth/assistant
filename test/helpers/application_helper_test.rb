@@ -44,4 +44,19 @@ class ApplicationHelperTest < ActionView::TestCase
     @recipe.sections << sections(:health)
     assert_equal "filed under Health", section_filing_hint(@recipe.reload)
   end
+
+  # D-owned-lens: turning People off never meant "stop filing things about
+  # the cat", and a lens is household-wide while the pet behind it is private.
+  test "offers your pets' lenses even with People switched off" do
+    rex = create_pet(name: "Rex")
+    users(:one).user_sections.create!(section: sections(:people), enabled: false)
+
+    assert_includes section_picker_choices(@recipe), rex.section
+  end
+
+  test "never offers another member's private pet" do
+    luna = create_pet(user: users(:two), name: "Luna")
+
+    assert_not_includes section_picker_choices(@recipe), luna.section
+  end
 end

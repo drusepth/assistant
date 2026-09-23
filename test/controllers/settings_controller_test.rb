@@ -134,4 +134,14 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to settings_path
     assert_equal sections(:money), users(:one).reload.ordered_sections.first
   end
+
+  test "People's row lists its groups, not the household's pets" do
+    create_pet(name: "Dimitri")
+    People::Group.find_or_create!("Book club")
+
+    get settings_path
+
+    assert_select "label", text: /Book club/
+    assert_select "label", text: /Dimitri/, count: 0
+  end
 end
