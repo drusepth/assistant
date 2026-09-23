@@ -48,6 +48,7 @@
   <% end %>
 
   <%= render Ui::CardComponent.new(title: "Sections", subtitle: "Choose which sections appear in your sidebar — drag to reorder them") do %>
+    <p class="hint mb-3">Deciding what to switch on? <%= link_to "Browse your sections", life_sections_path, class: "font-semibold text-primary-800 hover:underline" %> — one card each, with what it's for.</p>
     <%= form_with url: settings_path, method: :patch, class: "space-y-3", data: { controller: "sortable" } do |form| %>
       <% @sections.each do |section| %>
         <label draggable="true"
