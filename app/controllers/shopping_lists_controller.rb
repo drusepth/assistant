@@ -8,7 +8,7 @@ class ShoppingListsController < ApplicationController
 
   def show
     @lists = @kitchen.shopping_lists.ordered
-    @open_items = @list.open_items.includes(:added_by, :recipe)
+    @open_items = @list.open_items.includes(:added_by, :recipe, :food)
     @basket_items = @list.basket_items.includes(:checked_by)
   end
 

@@ -1,0 +1,51 @@
+<% content_for :title, "#{@food.name} · Foods" %>
+<% content_for :nav_section, "food" %>
+
+<%= render Ui::PageHeaderComponent.new(title: @food.name, subtitle: "A food in #{@kitchen.name}") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "All foods", kitchen_foods_path(@kitchen), class: "btn btn-ghost" %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-xl grid-cols-1 gap-4">
+  <%= render Ui::CardComponent.new(title: "Details") do %>
+    <%= form_with model: @food, url: kitchen_food_path(@kitchen, @food), class: "space-y-4" do |form| %>
+      <%= form.field :name %>
+      <%= form.field :aisle, label_text: "Aisle" do %>
+        <%= form.select :aisle, Food::AISLES.invert, { include_blank: "No aisle" } %>
+      <% end %>
+      <%= form.field :default_location, label_text: "Kept in", hint: "Where it goes when you check it off the list" do %>
+        <%= form.select :default_location, Food::LOCATIONS.invert, { include_blank: "Not set" } %>
+      <% end %>
+      <%= form.field :kind_of_id, label_text: "A kind of", hint: "Chicken thighs are a kind of chicken: they count when a recipe asks for chicken, never the reverse." do %>
+        <%= form.collection_select :kind_of_id, @others.where(kind_of_id: nil), :id, :name, { include_blank: "Nothing more general" } %>
+      <% end %>
+      <fieldset>
+        <legend class="text-sm font-medium text-ink">Contains</legend>
+        <p class="text-xs text-soft">Used only to leave dishes out for someone who can't eat them — never to call a dish safe. Always check the packet.</p>
+        <%= hidden_field_tag "food[allergens][]", "", id: nil %>
+        <div class="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+          <% Food::ALLERGENS.each do |value, label| %>
+            <label class="flex items-center gap-1.5 text-sm">
+              <%= check_box_tag "food[allergens][]", value, @food.allergens.include?(value), id: "food_allergen_#{value}" %>
+              <%= label %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+      <div class="flex gap-2 pt-2">
+        <%= form.submit "Save" %>
+        <%= link_to "Cancel", kitchen_foods_path(@kitchen), class: "btn btn-ghost" %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @others.any? %>
+    <%= render Ui::CardComponent.new(title: "The same as another food?", subtitle: "Merging sticks — every future “#{@food.name}” becomes the one you pick") do %>
+      <%= form_with url: merge_kitchen_food_path(@kitchen, @food), class: "flex flex-wrap items-end gap-2" do %>
+        <%= select_tag :target_id, options_from_collection_for_select(@others, :id, :name), class: "input min-w-40 flex-1", aria: { label: "Merge into" } %>
+        <%= submit_tag "Merge", class: "btn btn-secondary", data: { turbo_confirm: "Merge #{@food.name} into the one you picked?" } %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

@@ -63,3 +63,8 @@ production:
   sweep_shopping_history:
     command: "ShoppingList.sweep_history"
     schedule: every day at 3:45am
+  # Recipes saved or edited since yesterday get their ingredients filed onto
+  # each kitchen's foods (D-food-catalog) — a key is asked about once, ever.
+  resolve_kitchen_foods:
+    command: "ResolveFoodsJob.sweep"
+    schedule: every day at 4:15am

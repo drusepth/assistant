@@ -30,12 +30,17 @@ export default class extends Controller {
     const checking = row.dataset.checked !== "true"
 
     row.dataset.checked = checking ? "true" : "false"
-    const destination = checking ? this.basketTarget : this.openTarget
-    if (checking) destination.prepend(row)
-    else destination.append(row)
+    if (checking) this.basketTarget.prepend(row)
+    else this.aisleFor(row).append(row)
     if (this.hasBasketTarget) this.basketTarget.closest("[data-basket]")?.classList.toggle("hidden", this.basketTarget.children.length === 0)
 
     this.send(checking ? button.dataset.checkUrl : button.dataset.uncheckUrl)
+  }
+
+  // Back to its aisle, or to the last group when its aisle has emptied.
+  aisleFor(row) {
+    const groups = [...this.openTarget.querySelectorAll("[data-aisle-group]")]
+    return groups.find((group) => group.dataset.aisleGroup === (row.dataset.aisle || "")) || groups[groups.length - 1]
   }
 
   submitOnEnter(event) {

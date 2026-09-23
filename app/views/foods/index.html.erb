@@ -1,0 +1,63 @@
+<% content_for :title, "Foods · #{@kitchen.name}" %>
+<% content_for :nav_section, "food" %>
+<%= turbo_stream_from @kitchen %>
+
+<%= render Ui::PageHeaderComponent.new(title: "Foods", subtitle: "What #{@kitchen.name}'s recipes, lists and fridge are matched on") do |header| %>
+  <% header.with_actions do %>
+    <%= link_to "Food", food_path, class: "btn btn-ghost" %>
+  <% end %>
+<% end %>
+
+<div class="grid max-w-3xl grid-cols-1 gap-4">
+  <% if @catalog.model? %>
+    <p class="text-sm text-soft">Your assistant files each new ingredient onto one of these once — so “scallions” in the fridge counts for a recipe's “spring onions”. If it got one wrong, open it and fix it; your fix is the rule from then on.</p>
+  <% else %>
+    <div class="callout">
+      <p class="callout-title">Matching on exact words</p>
+      <p class="mt-1 text-sm">Without a model, “scallions” and “spring onions” are two different things. Merge them here — the merge sticks — or <%= link_to "connect a model", settings_path, class: "underline" %> and it's done for you.</p>
+    </div>
+  <% end %>
+
+  <% if @foods.empty? %>
+    <%= render Ui::EmptyStateComponent.new(title: "No foods yet", description: "They appear as you add recipes, list lines and fridge items.") %>
+  <% else %>
+    <%= render Ui::CardComponent.new(title: "By aisle", count: @foods.size) do %>
+      <% @groups.each do |aisle, foods| %>
+        <h3 class="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-soft first:mt-0"><%= aisle ? Food::AISLES[aisle] : "No aisle" %></h3>
+        <ul class="divide-y divide-edge">
+          <% foods.each do |food| %>
+            <li>
+              <%= link_to edit_kitchen_food_path(@kitchen, food), class: "flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-stone-50" do %>
+                <span class="min-w-0">
+                  <span class="text-ink"><%= food.name %></span>
+                  <% if food.kind_of %><span class="text-soft">· a kind of <%= food.kind_of.name %></span><% end %>
+                </span>
+                <span class="flex shrink-0 flex-wrap items-center gap-1.5">
+                  <% if food.location_label %><span class="chip bg-canvas text-soft"><%= food.location_label %></span><% end %>
+                  <% food.allergen_labels.each do |label| %><span class="chip bg-primary-100 text-primary-800"><%= label %></span><% end %>
+                </span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::CardComponent.new(title: "Your store's aisles", subtitle: "Lists read in this order — put them in the order you walk the shop", anchor: "aisles") do %>
+    <ol class="divide-y divide-edge">
+      <% order = @kitchen.aisles_in_order %>
+      <% order.each_with_index do |aisle, index| %>
+        <li class="flex items-center justify-between gap-2 py-1.5 text-sm">
+          <span class="text-ink"><%= Food::AISLES[aisle] %></span>
+          <span class="flex gap-1">
+            <%= button_to "Up", move_aisle_kitchen_foods_path(@kitchen, aisle: aisle, direction: "up"), method: :patch,
+                  class: "btn btn-ghost btn-sm", disabled: index.zero?, aria: { label: "Move #{Food::AISLES[aisle]} up" } %>
+            <%= button_to "Down", move_aisle_kitchen_foods_path(@kitchen, aisle: aisle, direction: "down"), method: :patch,
+                  class: "btn btn-ghost btn-sm", disabled: index == order.size - 1, aria: { label: "Move #{Food::AISLES[aisle]} down" } %>
+          </span>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>

@@ -316,6 +316,10 @@ Rails.application.routes.draw do
       patch :select
       post :answer_share
     end
+    resources :foods, only: %i[ index edit update ] do
+      post :merge, on: :member
+      patch :move_aisle, on: :collection
+    end
     resources :shopping_lists, path: "lists", only: %i[ show create update destroy ] do
       resources :items, controller: :shopping_list_items, only: %i[ create update destroy ] do
         member do

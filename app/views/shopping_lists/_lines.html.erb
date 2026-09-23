@@ -1,13 +1,25 @@
-<%# The open lines and the basket, as the shopping-list controller's two
-    targets. Shared by the hub's list zone and the in-store page. %>
+<%# The open lines — by aisle, in the order this household walks their store,
+    once the catalog has filed them (D-food-catalog) — and the basket. Shared
+    by the hub's list zone and the in-store page. With no model nothing has
+    an aisle, and the list is one list in the order things were added:
+    grouping is off rather than guessed. %>
+<% groups = shopping_list_groups(open_items, kitchen) %>
 <% if open_items.empty? && basket_items.empty? %>
   <p class="px-2 py-3 text-sm text-soft">Nothing on <%= list.name %>. Add what you need above — anyone who cooks here sees it straight away.</p>
 <% end %>
-<ul class="divide-y divide-edge" data-shopping-list-target="open">
-  <% open_items.each do |item| %>
-    <%= render "shopping_list_items/item", item: item, kitchen: kitchen %>
+<div data-shopping-list-target="open">
+  <% groups.each do |aisle, items| %>
+    <% if groups.size > 1 || aisle %>
+      <h3 class="mt-3 px-2 text-xs font-bold uppercase tracking-[0.12em] text-soft first:mt-0"><%= aisle ? Food::AISLES[aisle] : "Not sorted yet" %></h3>
+    <% end %>
+    <ul class="divide-y divide-edge" data-aisle-group="<%= aisle %>">
+      <% items.each do |item| %>
+        <%= render "shopping_list_items/item", item: item, kitchen: kitchen %>
+      <% end %>
+    </ul>
   <% end %>
-</ul>
+  <% if groups.empty? %><ul class="divide-y divide-edge" data-aisle-group=""></ul><% end %>
+</div>
 <div data-basket class="<%= "hidden" if basket_items.empty? %> mt-4">
   <h3 class="mb-1 px-2 text-xs font-bold uppercase tracking-[0.12em] text-soft">In the basket</h3>
   <ul class="divide-y divide-edge" data-shopping-list-target="basket">

@@ -3,7 +3,7 @@
     write leaves. Who added it, and which recipe it's for, ride along small. %>
 <% kitchen = local_assigns[:kitchen] || item.shopping_list.kitchen %>
 <% list = item.shopping_list %>
-<li id="<%= dom_id(item) %>" data-item-row data-checked="<%= item.checked? %>"
+<li id="<%= dom_id(item) %>" data-item-row data-checked="<%= item.checked? %>" data-aisle="<%= item.food&.aisle %>"
     class="group flex items-center gap-1 data-[checked=true]:opacity-60">
   <button type="button" data-action="shopping-list#toggle"
           data-check-url="<%= check_kitchen_shopping_list_item_path(kitchen, list, item) %>"

@@ -11,7 +11,12 @@ module Sections
     class Food < Panel
       RECIPES_SHOWN = 6
 
-      def kitchen = @kitchen ||= Kitchens::Current.for(viewer)
+      def kitchen
+        @kitchen ||= Kitchens::Current.for(viewer).tap do |kitchen|
+          # Recipes saved since the last visit get filed while you look.
+          ResolveFoodsJob.enqueue(kitchen) if Foods::Catalog.new(kitchen).unresolved?
+        end
+      end
 
       def owned_kitchen? = kitchen.owned_by?(viewer)
 
@@ -53,7 +58,7 @@ module Sections
       # always has somewhere to put the first thing typed.
       def list = @list ||= ShoppingList.default_for(kitchen)
       def lists = @lists ||= kitchen.shopping_lists.ordered.to_a
-      def open_items = @open_items ||= list.open_items.includes(:added_by, :recipe).to_a
+      def open_items = @open_items ||= list.open_items.includes(:added_by, :recipe, :food).to_a
       def basket_items = @basket_items ||= list.basket_items.includes(:checked_by, :recipe).to_a
 
       def recipes_count = @recipes_count ||= Recipe.visible_to(viewer).count

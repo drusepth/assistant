@@ -7,11 +7,11 @@ module ShoppingLists
   # cups) stays a second line rather than a converted guess
   # (Q-recipe-scale-units).
   #
-  # Which lines count as "the same item" is the one judgment in here, and
-  # it is exact: the parser's normalized key, i.e. the same words typed.
-  # The food catalog (D-food-catalog) replaces that with a model-filed food
-  # the day it lands; until then, "scallions" and "spring onions" are two
-  # lines, which is a miss and never a wrong merge.
+  # Which lines count as "the same item" is the one judgment in here, and it
+  # isn't made here: two lines are the same when the food catalog filed them
+  # onto the same food (D-food-catalog), or when they are the same words
+  # typed. A wording the catalog hasn't seen yet is filed by ResolveFoodsJob
+  # after the add, and the list regroups when it lands.
   class Add
     MAX_LINES = 100
 
@@ -28,8 +28,12 @@ module ShoppingLists
 
     # Already-structured rows (a recipe's own ingredients, scaled).
     def rows(rows, recipe: nil)
+      @foods = Foods::Catalog.new(@list.kitchen).foods_by_key(rows.map { |row| row[:item_key] }.compact)
       touched = rows.filter_map { |attributes| add(attributes, recipe: recipe) }
-      @list.kitchen.broadcast_change if touched.any?
+      if touched.any?
+        @list.kitchen.broadcast_change
+        ResolveFoodsJob.enqueue(@list.kitchen) if touched.any? { |item| item.food_id.nil? }
+      end
       touched
     end
 
@@ -43,13 +47,18 @@ module ShoppingLists
         @list.items.create!(
           attributes.slice(:item, :item_key, :quantity, :unit).merge(
             note: attributes[:note].to_s.truncate(200).presence,
-            recipe: recipe, added_by: @by
+            recipe: recipe, added_by: @by, food: food_for(attributes)
           )
         )
       end
 
+      def food_for(attributes) = @foods[attributes[:item_key]]
+
       def match_for(attributes)
-        @list.items.open.where(item_key: attributes[:item_key]).detect do |item|
+        food = food_for(attributes)
+        candidates = @list.items.open.where(item_key: attributes[:item_key])
+        candidates = candidates.or(@list.items.open.where(food: food)) if food
+        candidates.detect do |item|
           item.unit == attributes[:unit] || item.quantity.nil? || attributes[:quantity].nil?
         end
       end

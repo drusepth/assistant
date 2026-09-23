@@ -4,6 +4,7 @@
 <% list = panel.list %>
 <%= render Ui::CardComponent.new(title: "Shopping list", count: panel.open_items.size) do |card| %>
   <% card.with_actions do %>
+    <%= link_to "Foods & aisles", kitchen_foods_path(panel.kitchen), class: "btn btn-ghost btn-sm" %>
     <%= link_to "Open in-store view", kitchen_shopping_list_path(panel.kitchen, list), class: "btn btn-secondary btn-sm" %>
   <% end %>
   <div data-controller="shopping-list">

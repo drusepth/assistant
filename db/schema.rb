@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_072614) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -313,6 +313,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 
+  create_table "food_aliases", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "food_id", null: false
+    t.string "key", null: false
+    t.integer "kitchen_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["food_id"], name: "index_food_aliases_on_food_id"
+    t.index ["kitchen_id", "key"], name: "index_food_aliases_on_kitchen_id_and_key", unique: true
+    t.index ["kitchen_id"], name: "index_food_aliases_on_kitchen_id"
+  end
+
+  create_table "foods", force: :cascade do |t|
+    t.string "aisle"
+    t.json "allergens", default: [], null: false
+    t.datetime "created_at", null: false
+    t.string "default_location"
+    t.datetime "filed_at"
+    t.integer "kind_of_id"
+    t.integer "kitchen_id", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kind_of_id"], name: "index_foods_on_kind_of_id"
+    t.index ["kitchen_id"], name: "index_foods_on_kitchen_id"
+  end
+
   create_table "goals", force: :cascade do |t|
     t.datetime "broken_down_at"
     t.datetime "created_at", null: false
@@ -446,6 +471,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
   end
 
   create_table "kitchens", force: :cascade do |t|
+    t.json "aisle_order", default: [], null: false
     t.datetime "created_at", null: false
     t.string "name", default: "Home", null: false
     t.datetime "share_prompt_answered_at"
@@ -823,6 +849,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
     t.datetime "checked_at"
     t.integer "checked_by_id"
     t.datetime "created_at", null: false
+    t.integer "food_id"
     t.string "item", null: false
     t.string "item_key", null: false
     t.string "note"
@@ -833,6 +860,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
     t.datetime "updated_at", null: false
     t.index ["added_by_id"], name: "index_shopping_list_items_on_added_by_id"
     t.index ["checked_by_id"], name: "index_shopping_list_items_on_checked_by_id"
+    t.index ["food_id"], name: "index_shopping_list_items_on_food_id"
     t.index ["recipe_id"], name: "index_shopping_list_items_on_recipe_id"
     t.index ["shopping_list_id", "checked_at"], name: "index_shopping_list_items_on_shopping_list_id_and_checked_at"
     t.index ["shopping_list_id"], name: "index_shopping_list_items_on_shopping_list_id"
@@ -1196,6 +1224,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
   add_foreign_key "events", "users"
   add_foreign_key "feed_items", "feeds"
   add_foreign_key "feeds", "users"
+  add_foreign_key "food_aliases", "foods", on_delete: :cascade
+  add_foreign_key "food_aliases", "kitchens"
+  add_foreign_key "foods", "foods", column: "kind_of_id", on_delete: :nullify
+  add_foreign_key "foods", "kitchens"
   add_foreign_key "goals", "users"
   add_foreign_key "happening_matches", "happenings"
   add_foreign_key "happening_matches", "sections"
@@ -1242,6 +1274,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_072142) do
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "share_links", "users"
+  add_foreign_key "shopping_list_items", "foods", on_delete: :nullify
   add_foreign_key "shopping_list_items", "recipes", on_delete: :nullify
   add_foreign_key "shopping_list_items", "shopping_lists"
   add_foreign_key "shopping_list_items", "users", column: "added_by_id", on_delete: :nullify

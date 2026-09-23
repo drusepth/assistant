@@ -3,6 +3,7 @@
 class ShoppingListItem < ApplicationRecord
   belongs_to :shopping_list, touch: true
   belongs_to :recipe, optional: true
+  belongs_to :food, optional: true
   belongs_to :added_by, class_name: "User", optional: true
   belongs_to :checked_by, class_name: "User", optional: true
 
