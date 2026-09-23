@@ -9,6 +9,27 @@
   <% end %>
   <%= render layout: "shared/advanced", locals: { hint: section_filing_hint(form.object) } do %>
     <%= render "shared/section_picker", form: form %>
+    <% if document.persisted? %>
+      <%# Insurance (docs/HEALTH.md §4): where a plan the assistant missed is
+          marked, and where a hand-set answer is handed back. %>
+      <% automatic, = Health::Coverage.automatic_verdict(document) %>
+      <fieldset class="space-y-2">
+        <legend class="label">Insurance</legend>
+        <p class="hint">Insurance cards, policies, and benefits summaries — for a person or a pet — are listed with your coverage on the Health page, where the insurance tools can read them.</p>
+        <% [ [ "", "Decide from what it says", "Right now it #{automatic ? "counts" : "doesn’t count"} as insurance." ],
+             [ "true", "It’s insurance", nil ],
+             [ "false", "It isn’t insurance", nil ] ].each do |value, label, hint| %>
+          <label class="flex cursor-pointer items-start gap-3 text-sm">
+            <%= form.radio_button :health_plan, value, checked: document.health_plan.to_s == value,
+                  class: "mt-0.5 size-4 accent-primary-600" %>
+            <span>
+              <span class="block text-ink"><%= label %></span>
+              <% if hint %><span class="block text-soft"><%= hint %></span><% end %>
+            </span>
+          </label>
+        <% end %>
+      </fieldset>
+    <% end %>
   <% end %>
   <div class="flex items-center gap-2 pt-2">
     <%= form.submit %>

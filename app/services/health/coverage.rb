@@ -7,12 +7,13 @@ module Health
   # often a household fact, and a spouse's shared plan document is exactly
   # what these tools should read.
   #
-  # The `health_plan` pin decides whenever it is set — by the owner, or by
-  # the reader at analysis time (D-document-intake: the model says whether
-  # the document *is* a plan, and the job pins it unless the owner already
-  # has). The keyword patterns below therefore only ever see documents no
-  # model has read: the D-no-keyword-logic cleanup, taken as far as an
-  # instance without a model allows.
+  # Three voices can answer "is this insurance?", and the first one that
+  # has spoken decides: the owner (`documents.health_plan` — only ever set
+  # by a person), then the reader (`extracted_facts["health_plan"]`, the
+  # model's verdict at analysis time, replaced on every re-read —
+  # D-document-intake), then the keyword patterns below, which therefore
+  # only ever see documents no model has read: the D-no-keyword-logic
+  # cleanup, taken as far as an instance without a model allows.
   class Coverage
     PATTERNS = [
       /insurance/i, /summary of benefits/i, /\bsbc\b/i, /explanation of benefits/i, /\beob\b/i,
@@ -28,14 +29,24 @@ module Health
         .first(limit)
     end
 
-    # The owner's word beats the keywords (docs/HEALTH.md §4): health_plan
-    # true pins a document here, false banishes it, nil means the heuristic
-    # decides.
-    def self.match?(document)
-      return document.health_plan unless document.health_plan.nil?
+    def self.match?(document) = verdict(document).first
+
+    # [answer, who gave it] — who is :owner, :reader or :keywords, so the
+    # document page can say whose answer it is showing (docs/HEALTH.md §4).
+    def self.verdict(document)
+      return [ document.health_plan, :owner ] unless document.health_plan.nil?
+
+      automatic_verdict(document)
+    end
+
+    # What the document would count as if its owner hadn't answered — the
+    # "decide from what it says" choice on the edit form shows it.
+    def self.automatic_verdict(document)
+      read = document.extracted_facts["health_plan"]
+      return [ read, :reader ] if read == true || read == false
 
       haystack = [ document.title, document.summary ].compact.join("\n")
-      PATTERNS.any? { |pattern| haystack.match?(pattern) }
+      [ PATTERNS.any? { |pattern| haystack.match?(pattern) }, :keywords ]
     end
   end
 end

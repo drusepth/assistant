@@ -139,10 +139,24 @@ prefilled with the newest plan docs:
   warning appended by code. This is also the accept-target of the
   per-kind watcher and the radar's "Find a provider" links.
 
-The keyword heuristic is correctable the same way the radar is
-(`documents.health_plan`, set on the document page): the owner can pin a
-plan the keywords miss or banish the car-insurance policy they caught —
-the owner's word beats the pattern, and pinned plans lead the card.
+Whether a document counts is answered by the first of three voices that
+has spoken (`Health::Coverage.verdict`): the owner (`documents.health_plan`,
+only ever set by a person), the reader (`extracted_facts["health_plan"]`,
+the model's verdict at analysis, replaced on every re-read), then the
+keyword patterns, which only see documents no model has read. Pinned plans
+lead the card.
+
+The document page shows this as a statement, not a setting — it once
+asked every document, a vet discharge sheet included, to pick "Health
+plan: Auto / Yes / No", which read like a care plan and answered a question
+nobody had asked. Now an **Insurance** row appears only when the document
+counts or its owner has said it doesn't. It says where the document is
+listed (the coverage card, and the Papers of any pet whose lens it
+carries), whose answer that is, and offers the one correction that answer
+invites: "This isn't insurance" over the assistant's answer, "Undo" over
+the owner's. A plan the assistant missed is marked under Edit → Advanced
+(decide from what it says / it's insurance / it isn't), and the coverage
+card says so.
 
 Together with the existing family — decode-letter (the front door),
 results-explainer, doctor-visit-prep, insurance-appeal — Health now
