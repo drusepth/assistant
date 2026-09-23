@@ -244,20 +244,17 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h3", text: "Remembered"
   end
 
-  test "an empty Pets hub with a pet says what's missing, and files to her" do
+  test "an empty Pets hub leads with the pet card, not a \"nothing here\"" do
+    @rex.update!(born_on: nil) # a birthday this month would outrank the invitation
     get section_path("pets")
     assert_no_match "Nothing in Pets yet", response.body, "the pet card is right above it"
-    assert_match "Nothing filed about Rex yet", response.body
-    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
-      tasks_path, "task[section_ids][]", @rex.section_id.to_s
+    assert_select "a[href=?]", pet_path(@rex), text: /Start with (his|her|their) vaccines/
 
-    create_pet(name: "Luna", species: "cat")
+    @rex.pet_vaccinations.create!(user: users(:one), vaccine_key: "rabies", given_on: 1.month.ago.to_date, duration_months: 12)
     get section_path("pets")
-    assert_match "Nothing filed about your pets yet", response.body
-    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
-      tasks_path, "task[section_ids][]", sections(:pets).id.to_s
+    assert_no_match "Start with", response.body, "once one is on record the card goes quiet"
 
-    Pet.find_each(&:destroy)
+    @rex.destroy
     get section_path("pets")
     assert_match "Nothing in Pets yet", response.body
   end

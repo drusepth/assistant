@@ -55,28 +55,10 @@ module Sections
         end
       end
 
-      # With a pet on the page, "Nothing in Pets yet" reads as if the pet
-      # itself didn't count. Say what is actually missing — the things
-      # filed about them — and with one pet, file straight to her lens so
-      # the item lands on her page too.
-      def empty_state
-        return if active_pets.empty?
-
-        if active_pets.one?
-          pet = active_pets.first
-          EmptyState.new(
-            title: "Nothing filed about #{pet.name} yet",
-            description: "Vet visits, feeding reminders, notes — anything you add here lands on #{pet.name}'s page too.",
-            section_ids: [ pet.section_id ]
-          )
-        else
-          EmptyState.new(
-            title: "Nothing filed about your pets yet",
-            description: "Vet visits, feeding reminders, notes — pick which pet in the form, and it lands on their page too.",
-            section_ids: [ section.id ]
-          )
-        end
-      end
+      # With a pet on the page, the pet card is the way in — its signal line
+      # says where to start — so "Nothing in Pets yet" under it would only
+      # read as if the pet didn't count. With no pets, the generic card stays.
+      def show_empty_browse? = active_pets.empty?
 
       private
         def active_pets

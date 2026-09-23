@@ -52,6 +52,18 @@ module Pets
           "#{due.first.kind.label.downcase} due"
         elsif (celebration = celebration_within(pet))
           "#{celebration.last} #{celebration.first.strftime("%b %-d")}"
+        elsif unrecorded.include?(pet.id)
+          "Start with #{pet.pronouns.possessive} vaccines →"
+        end
+      end
+
+      # The honest invitation: a pet with no vaccination on record is pointed
+      # at the first thing her page can hold. Once there is one, the card goes
+      # quiet rather than nag. One query for every card, not one per pet.
+      def unrecorded
+        @unrecorded ||= begin
+          ids = pets.select(&:active?).map(&:id)
+          ids - PetVaccination.where(pet_id: ids).distinct.pluck(:pet_id)
         end
       end
 
