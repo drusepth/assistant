@@ -292,7 +292,11 @@
             <span class="min-w-0 truncate <%= "opacity-50" unless channel.enabled? %>">
               <%= channel.label %><%= " (disabled)" unless channel.enabled? %>
             </span>
-            <%= button_to "Remove", notification_channel_path(channel), method: :delete, class: "btn btn-danger btn-sm" %>
+            <div class="flex items-center gap-2">
+              <%= button_to "Send test", send_test_notification_channel_path(channel), class: "btn btn-secondary btn-sm",
+                    title: (channel.daily_limit ? "Counts toward this channel's #{channel.daily_limit}-a-day limit" : nil) %>
+              <%= button_to "Remove", notification_channel_path(channel), method: :delete, class: "btn btn-danger btn-sm" %>
+            </div>
           </li>
         <% end %>
       </ul>

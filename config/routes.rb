@@ -72,7 +72,9 @@ Rails.application.routes.draw do
   resources :budget_categories, only: %i[ create update destroy ]
 
   resource :export, only: %i[ create ]
-  resources :notification_channels, only: %i[ create destroy ]
+  resources :notification_channels, only: %i[ create destroy ] do
+    member { post :send_test }
+  end
   resources :reminders, only: %i[ create update destroy ]
   resource :model_profile, only: %i[ update ]
   resources :access_grants, only: %i[ create destroy ]

@@ -6,6 +6,17 @@ module Notifications
   class Deliver
     TIMEOUT = 5
 
+    TEST_TITLE = "Test notification".freeze
+    TEST_SUMMARY = "Test from your assistant — if you can read this, this channel works.".freeze
+
+    # The Settings "Send test" button: one message to one channel, sent now,
+    # raising instead of logging so the page can say what went wrong. A
+    # metered channel's test is counted like any other text — it costs the
+    # same — and refused once the day's cap is spent.
+    def self.test!(channel)
+      new(channel.user, titles: [ TEST_TITLE ], summary: TEST_SUMMARY).deliver_test!(channel)
+    end
+
     def initialize(user, titles:, summary: nil, link: nil)
       @user = user
       @titles = titles
@@ -29,6 +40,15 @@ module Notifications
       rescue StandardError => error
         Rails.logger.warn("notification #{channel.kind}##{channel.id} failed: #{error.class}: #{error.message}")
       end
+    end
+
+    def deliver_test!(channel)
+      if channel.over_daily_limit?
+        raise DeliveryError, "it has already sent its #{channel.daily_limit} messages for today"
+      end
+
+      deliver_to(channel)
+      channel.record_send! if channel.daily_limit
     end
 
     private
@@ -80,8 +100,12 @@ module Notifications
         request["Title"] = "Assistant"
         request.body = { title: "Assistant", message: summary, count: @titles.size, titles: @titles,
                          url: @link }.compact.to_json
-        Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
           open_timeout: TIMEOUT, read_timeout: TIMEOUT) { |http| http.request(request) }
+        # A 404 from a mistyped topic looks like success unless it's named.
+        unless response.is_a?(Net::HTTPSuccess)
+          raise DeliveryError, "#{uri.host} answered #{response.code}"
+        end
       end
 
       def deliver_web_push(channel)
@@ -101,6 +125,7 @@ module Notifications
         )
       rescue WebPush::ExpiredSubscription, WebPush::InvalidSubscription
         channel.update!(enabled: false)
+        raise DeliveryError, "this browser's subscription has expired — remove it and enable push again"
       end
 
       # Refuses rather than hands a message to an SMTP server that isn't
