@@ -31,6 +31,22 @@ class LlmClientTest < ActiveSupport::TestCase
     assert_match "Incorrect API key", error.message
   end
 
+  test "provider errors with a string error, an array wrapper, or a bare string still report the message" do
+    [
+      { error: "Model not loaded" }.to_json,
+      [ { error: { code: 400, message: "Model not loaded" } } ].to_json,
+      "Model not loaded".to_json,
+      { message: "Model not loaded" }.to_json,
+      "<html>Model not loaded</html>"
+    ].each do |body|
+      stub_request(:post, @endpoint).to_return(status: 400, body: body)
+
+      error = assert_raises(Llm::Error) { @client.chat([ { role: "user", content: "Hi" } ]) }
+      assert_match "400", error.message
+      assert_match "Model not loaded", error.message
+    end
+  end
+
   test "router-style providers: model omitted when nil, extra params included" do
     client = Llm::Client.new(base_url: "https://api.chromagolem.com/v1", api_key: "cg-key",
       extra_params: { client_id: "household_1" })

@@ -156,10 +156,29 @@ module Llm
         content.lines.first(3).join.truncate(200).inspect
       end
 
+      # Error bodies only loosely follow OpenAI's {"error": {"message": ...}}:
+      # some providers send {"error": "text"}, Gemini's compatibility layer
+      # wraps the object in an array, and proxies send plain text or HTML.
+      # Whatever the shape, this must never raise — it runs while reporting
+      # the provider's real failure, and a crash here would bury it.
       def error_message(body)
-        JSON.parse(body).dig("error", "message") || body.to_s.truncate(200)
+        provider_message(JSON.parse(body)).presence || body.to_s.truncate(200)
       rescue JSON::ParserError
         body.to_s.truncate(200)
+      end
+
+      def provider_message(payload)
+        case payload
+        when Array then provider_message(payload.first)
+        when Hash
+          error = payload["error"]
+          case error
+          when Hash then error["message"].presence&.to_s || provider_message(error)
+          when String then error
+          else payload["message"].is_a?(String) ? payload["message"] : nil
+          end
+        when String then payload
+        end
       end
   end
 end
