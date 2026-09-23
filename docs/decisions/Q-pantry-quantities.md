@@ -1,0 +1,2 @@
+<!-- open -->
+**Q-pantry-quantities.** Pantry items carry a free-text `quantity_note` and presence is the signal. Subtracting 200 g of flour when the bread is made needs unit conversion and densities (Q-recipe-scale-units) and a household willing to keep counts true — the HOBBIES.md trap of making tracking the hobby. Decide after the fridge (F4 of `docs/FOOD_PLAN.md`) has real use: do people want "running low" more than they want not to be asked? — *Not started.*

@@ -10,6 +10,13 @@ Decisions here are logged as **D-recipe-primitive**, **D-share-link**, and
 **D-pantry** in `DECISIONS.md`. Open questions are **Q-recipe-nutrition**,
 **Q-recipe-scale-units**, and **Q-recipe-collab**.
 
+> **The pantry and the AI wave moved to `docs/FOOD_PLAN.md`** — the Food
+> section (D-food-section), the shared kitchen that replaces the per-user
+> pantry (D-kitchen), the food catalog that replaces `item_key` matching
+> (D-food-catalog), and the suggestions (D-food-suggestions). §5 and waves
+> W5–W6 below are kept as the record of the first design; build from
+> FOOD_PLAN.
+
 ---
 
 ## 1. What we're building and why
@@ -384,8 +391,8 @@ shippable.
 | **W2 — books + household sharing** | `recipe_books` + entries, the book-grant visibility clause, book CRUD + covers, add/remove from book, `AccessGrant` type registration, sharing cards | ✅ built |
 | **W3 — links out of the household (D-share-link)** | `share_links`, `/s/:token` public page + bare layout, noindex, expiry, revoke, view counting | ✅ built |
 | **W4 — import, and the cook's-eye polish** | Ingredient sub-headings; import by link or paste (`Recipes::Split` + `Recipes::Import` + `ImportRecipeJob`); the `assistant-recipe` envelope both ways; album share links; monogram tiles, dish photos picked from the Photos library, and the show page re-ranked around cooking; print stylesheet and offline QR; library sorts and a book's running order | ✅ built |
-| **W5 — the pantry (D-pantry)** | `Pantry` + `pantry_items`, the container clause, quick-add UI, the deterministic match query and its "what can I make" surface | planned |
-| **W6 — the rest of the AI wave** | `whats_for_dinner`, `grocery_list` (no LLM), `meal_plan` + `events.recipe_id`, the three watchers, vision import of a recipe card | planned |
+| **W5 — the pantry (D-pantry)** | `Pantry` + `pantry_items`, the container clause, quick-add UI, the deterministic match query and its "what can I make" surface | superseded → `FOOD_PLAN.md` F3–F4 |
+| **W6 — the rest of the AI wave** | `whats_for_dinner`, `grocery_list` (no LLM), `meal_plan` + `events.recipe_id`, the three watchers, vision import of a recipe card | superseded → `FOOD_PLAN.md` F2, F5–F7 (vision import of a recipe card stays here) |
 
 W1–W4 are the storage-and-sharing foundation the rest hangs off: they are worth
 shipping alone (a recipe box you own, shareable to anyone, is the whole

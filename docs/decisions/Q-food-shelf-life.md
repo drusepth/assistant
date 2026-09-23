@@ -1,0 +1,2 @@
+<!-- open -->
+**Q-food-shelf-life.** Pre-filling an expiry date would make the fridge far more useful with far less typing, but a model's guess at how long opened pesto lasts is the confidently-wrong number this app refuses. The USDA's FoodKeeper data is public and would arrive through the `datasets` layer (D-public-datasets), shown as "typically 5–7 days in the fridge (USDA)" and accepted into `expires_on` with a tap, never silently. Check its licence and coverage first; decide with F4 of `docs/FOOD_PLAN.md`. — *Not started.*
