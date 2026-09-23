@@ -52,7 +52,7 @@
     <% end %>
 
     <% if own %>
-      <details id="add-food" class="border-t border-edge pt-3" <%= "open" if shelf.current.empty? %>>
+      <details id="add-food" class="border-t border-edge pt-3">
         <summary class="cursor-pointer text-sm font-medium text-primary-700 hover:underline">Add a food</summary>
         <%= form_with model: [ pet, PetFood.new ], url: pet_foods_path(pet), class: "mt-3 space-y-3" do |form| %>
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
