@@ -33,6 +33,7 @@
                   <% if food.kind_of %><span class="text-soft">· a kind of <%= food.kind_of.name %></span><% end %>
                 </span>
                 <span class="flex shrink-0 flex-wrap items-center gap-1.5">
+                  <% if food.staple? %><span class="chip bg-sage-100 text-sage-800">Always have</span><% end %>
                   <% if food.location_label %><span class="chip bg-canvas text-soft"><%= food.location_label %></span><% end %>
                   <% food.allergen_labels.each do |label| %><span class="chip bg-primary-100 text-primary-800"><%= label %></span><% end %>
                 </span>

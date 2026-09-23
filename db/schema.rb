@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_073854) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_074731) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -198,6 +198,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_073854) do
     t.index ["user_id"], name: "index_diary_settings_on_user_id", unique: true
   end
 
+  create_table "diners", force: :cascade do |t|
+    t.json "allergens", default: [], null: false
+    t.datetime "created_at", null: false
+    t.string "diet_note"
+    t.integer "kitchen_id", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["kitchen_id"], name: "index_diners_on_kitchen_id"
+    t.index ["user_id"], name: "index_diners_on_user_id"
+  end
+
   create_table "document_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "document_id", null: false
@@ -333,6 +345,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_073854) do
     t.integer "kind_of_id"
     t.integer "kitchen_id", null: false
     t.string "name", null: false
+    t.boolean "staple", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["kind_of_id"], name: "index_foods_on_kind_of_id"
     t.index ["kitchen_id"], name: "index_foods_on_kitchen_id"
@@ -1256,6 +1269,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_073854) do
   add_foreign_key "diary_imports", "users"
   add_foreign_key "diary_revisions", "diary_entries"
   add_foreign_key "diary_settings", "users"
+  add_foreign_key "diners", "kitchens"
+  add_foreign_key "diners", "users", on_delete: :nullify
   add_foreign_key "document_items", "documents"
   add_foreign_key "documents", "users"
   add_foreign_key "email_sender_rules", "users"

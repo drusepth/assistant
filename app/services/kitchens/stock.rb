@@ -4,7 +4,8 @@ module Kitchens
   #
   # A recipe line is satisfied by its own food, or by a food that is a kind
   # of it — chicken thighs in the fridge count for a recipe's "chicken",
-  # never the reverse. All of this is set arithmetic over rows the catalog
+  # never the reverse. A staple ("we always have salt") is always had. All
+  # of this is set arithmetic over rows the catalog
   # already filed; nothing here decides what anything is.
   class Stock
     def initialize(kitchen)
@@ -35,6 +36,8 @@ module Kitchens
     end
 
     def have?(key, food = foods_for([ key ])[key])
+      return true if food&.staple?
+
       food ? food_ids.include?(food.id) : keys.include?(key)
     end
 

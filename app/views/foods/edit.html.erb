@@ -20,6 +20,10 @@
       <%= form.field :kind_of_id, label_text: "A kind of", hint: "Chicken thighs are a kind of chicken: they count when a recipe asks for chicken, never the reverse." do %>
         <%= form.collection_select :kind_of_id, @others.where(kind_of_id: nil), :id, :name, { include_blank: "Nothing more general" } %>
       <% end %>
+      <label class="flex items-start gap-2 text-sm">
+        <%= form.check_box :staple %>
+        <span>We always have this<br><span class="text-soft">Like salt or oil — counts as in the kitchen for every recipe, and never goes on a list by itself.</span></span>
+      </label>
       <fieldset>
         <legend class="text-sm font-medium text-ink">Contains</legend>
         <p class="text-xs text-soft">Used only to leave dishes out for someone who can't eat them — never to call a dish safe. Always check the packet.</p>

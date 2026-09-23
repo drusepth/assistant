@@ -31,7 +31,7 @@ class Foods::CatalogTest < ActiveSupport::TestCase
         { line: 1, same_as: spring.id },
         { line: 2, name: "chicken thighs", aisle: "meat", location: "fridge", kind_of: chicken.id },
         { line: 3, same_as_line: 1 },
-        { line: 4, name: "tahini", aisle: "not-an-aisle", allergens: [ "sesame", "gluten" ], same_as: 999_999 }
+        { line: 4, name: "tahini", aisle: "not-an-aisle", allergens: [ "sesame", "gluten" ], same_as: 999_999, staple: "yes" }
       ] }.to_json } } ]
     }.to_json)
 
@@ -45,6 +45,7 @@ class Foods::CatalogTest < ActiveSupport::TestCase
     tahini = by_key["tahini"].food
     assert_nil tahini.aisle, "an aisle outside the set is dropped"
     assert_equal [ "sesame" ], tahini.allergens
+    assert_not tahini.staple?, "only a literal true makes a staple"
     assert tahini.filed_at
 
     assert_requested(:post, ENDPOINT) do |request|

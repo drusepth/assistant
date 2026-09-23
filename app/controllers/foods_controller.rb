@@ -19,7 +19,7 @@ class FoodsController < ApplicationController
   end
 
   def update
-    attributes = params.expect(food: [ :name, :aisle, :default_location, :kind_of_id, allergens: [] ])
+    attributes = params.expect(food: [ :name, :aisle, :default_location, :kind_of_id, :staple, allergens: [] ])
     attributes[:kind_of_id] = nil unless @kitchen.foods.exists?(id: attributes[:kind_of_id])
 
     if @food.update(attributes)

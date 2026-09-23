@@ -54,6 +54,31 @@ class MealsController < ApplicationController
     redirect_to kitchen_meals_path(@kitchen, week: start), notice: notice
   end
 
+  # A draft week — shown, not saved.
+  def propose
+    @week_start = week_start
+    planner = Kitchens::WeekPlanner.new(@kitchen, Current.user, profile: Foods::Catalog.new(@kitchen).profile)
+    @proposals = planner.propose(@week_start..(@week_start + 6))
+    @open_nights = planner.open_nights(@week_start..(@week_start + 6))
+  end
+
+  # The click: only the ticked nights, only recipes the planner can see,
+  # only dates still free — a partner may have filled one meanwhile.
+  def accept
+    submitted = params.permit(nights: [ :date, :recipe_id, :plan ])[:nights]
+    nights = Array(submitted.respond_to?(:values) ? submitted.values : submitted).select { |night| night[:plan] == "1" }
+    planned = nights.filter_map do |night|
+      date = Date.parse(night[:date].to_s) rescue nil
+      recipe = Recipe.visible_to(Current.user).find_by(id: night[:recipe_id])
+      next if date.nil? || recipe.nil? || @kitchen.meals.exists?(date: date, slot: "dinner")
+
+      @kitchen.meals.create!(date: date, slot: "dinner", recipe: recipe, servings: recipe.servings)
+    end
+    kitchen_changed! if planned.any?
+    redirect_to kitchen_meals_path(@kitchen, week: planned.first&.date || week_start),
+      notice: "#{helpers.pluralize(planned.size, "dinner")} planned."
+  end
+
   private
     def set_meal
       @meal = @kitchen.meals.find(params[:id])

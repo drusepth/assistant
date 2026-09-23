@@ -43,4 +43,15 @@ class Kitchens::StockTest < ActiveSupport::TestCase
 
     assert_equal [ "tomatoes" ], Kitchens::Stock.new(@kitchen).split(@recipe).first.map(&:item)
   end
+
+  test "a staple is always had, and never needs buying" do
+    food("tomato").update!(staple: false)
+    salt = food("salt", staple: true)
+    recipe = users(:one).recipes.create!(title: "Salted", ingredients_text: "salt\n1 tomato")
+
+    have, need = Kitchens::Stock.new(@kitchen).split(recipe)
+    assert_equal [ "salt" ], have.map(&:item)
+    assert_equal [ "tomato" ], need.map(&:item)
+    assert salt.staple?
+  end
 end

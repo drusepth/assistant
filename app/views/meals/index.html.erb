@@ -17,7 +17,8 @@
     <% end %>
     <%= submit_tag "Make the list for this week", class: "btn btn-primary" %>
   <% end %>
-  <p class="text-xs text-soft">Adds what the planned recipes need that isn't already in the kitchen, scaled to each meal.</p>
+  <%= button_to "Plan my week", propose_kitchen_meals_path(@kitchen, week: @days.first), class: "btn btn-secondary" %>
+  <p class="w-full text-xs text-soft">The list adds what the planned recipes need that isn't already in the kitchen, scaled to each meal.</p>
 </div>
 
 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">

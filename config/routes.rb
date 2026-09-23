@@ -325,8 +325,16 @@ Rails.application.routes.draw do
     end
     # The plan — /kitchens/:id/plan?week=2026-09-21.
     resources :meals, path: "plan", only: %i[ index create update destroy ] do
-      post :make_list, on: :collection
+      collection do
+        post :make_list
+        # Plan my week: a proposal to look at, then the click that lands it.
+        post :propose
+        post :accept
+      end
     end
+    # What can I make, use it up, buy to unlock (D-food-suggestions).
+    resource :ideas, only: %i[ show ]
+    resources :diners, only: %i[ create update destroy ]
     resources :foods, only: %i[ index edit update ] do
       post :merge, on: :member
       patch :move_aisle, on: :collection

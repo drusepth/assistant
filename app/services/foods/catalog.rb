@@ -145,7 +145,7 @@ module Foods
         return existing if existing
 
         @kitchen.foods.create!(name: decision.name, aisle: decision.aisle, default_location: decision.location,
-          kind_of: decision.kind_of, allergens: decision.allergens, filed_at: Time.current)
+          kind_of: decision.kind_of, allergens: decision.allergens, staple: decision.staple, filed_at: Time.current)
       end
   end
 end

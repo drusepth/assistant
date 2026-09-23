@@ -40,6 +40,8 @@
                 "change what's in the fridge and fill in the plan. Only you can rename, delete or re-share it." %>
   <% end %>
 
+  <%= render "kitchens/diners", kitchen: @kitchen %>
+
   <% if @kitchens.many? %>
     <%= render Ui::CardComponent.new(title: "Your kitchens", subtitle: "The Food page opens on the one you pick") do %>
       <ul class="divide-y divide-edge">

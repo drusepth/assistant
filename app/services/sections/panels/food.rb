@@ -78,6 +78,9 @@ module Sections
       def expiring = @expiring ||= kitchen.pantry_items.expiring.by_expiry.limit(6).to_a
       def pantry_counts = @pantry_counts ||= kitchen.pantry_items.group(:location).count
 
+      def ideas = @ideas ||= Kitchens::Ideas.new(kitchen, viewer)
+      def unlock = @unlock ||= ideas.buy_to_unlock
+
       def recipes_count = @recipes_count ||= Recipe.visible_to(viewer).count
     end
   end
