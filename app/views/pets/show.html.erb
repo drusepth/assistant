@@ -100,10 +100,6 @@
       <% end %>
     <% end %>
 
-    <% if @own && @pet.active? %>
-      <%= render "pets/tools", pet: @pet %>
-    <% end %>
-
     <% if @care_statuses.any? %>
       <%= render "pets/care_radar", pet: @pet, statuses: @care_statuses, health_section_id: @health_section_id %>
     <% end %>
@@ -146,6 +142,9 @@
               access_grants_path(subject_type: "Section", subject_id: @pet.section_id, everyone: 1),
               method: :post, class: "btn btn-secondary btn-sm w-full" %>
       <% end %>
+    <% end %>
+    <% if @own && @pet.active? %>
+      <%= render "pets/tools", pet: @pet %>
     <% end %>
   </div>
 </div>

@@ -1,16 +1,27 @@
 <%# Her Act zone (D18, applied to a primitive page): the pet tools with the
     pet already chosen, which is the reason they live here rather than only in
-    the Health page's list. "My pet is missing" leads when it is needed and is
-    never buried in a menu — the whole argument for a crisis tool. %>
-<%= render Ui::CardComponent.new(title: "What the app can do") do %>
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "Ask about #{pet.name}", new_tool_run_path("pet_care", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
-    <%= link_to "Prep for a vet visit", new_tool_run_path("vet_visit_prep", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
-    <%= link_to "Decode a vet estimate", new_tool_run_path("decode_vet_estimate", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
-    <%= link_to "Compare pet insurance", new_tool_run_path("compare_pet_insurance", inputs: { pet_id: pet.id }), class: "btn btn-secondary btn-sm" %>
-    <% if pet.vet.nil? %>
-      <%= link_to "Find a vet", new_tool_run_path("find_care", inputs: { specialty: "veterinarian for a #{pet.species_label.downcase}" }), class: "btn btn-secondary btn-sm" %>
+    the Health page's list. They are rarely reached for, so they sit at the
+    foot of the sidebar as a quiet list rather than a card in the main column.
+    "My pet is missing" still leads that list and is never folded behind a
+    menu — the whole argument for a crisis tool is that it is one tap away. %>
+<nav aria-label="Tools for <%= pet.name %>" class="space-y-1 px-1">
+  <h2 class="stack-label px-2">Tools</h2>
+  <ul class="flex flex-col text-sm">
+    <li>
+      <%= link_to "#{pet.name} is missing", new_tool_run_path("lost_pet", inputs: { pet_id: pet.id }),
+            class: "flex min-h-11 items-center rounded-lg px-2 font-medium text-primary-800 hover:bg-stone-200 lg:min-h-0 lg:py-1.5" %>
+    </li>
+    <% links = [
+         [ "Ask about #{pet.name}", new_tool_run_path("pet_care", inputs: { pet_id: pet.id }) ],
+         [ "Prep for a vet visit", new_tool_run_path("vet_visit_prep", inputs: { pet_id: pet.id }) ],
+         [ "Decode a vet estimate", new_tool_run_path("decode_vet_estimate", inputs: { pet_id: pet.id }) ],
+         [ "Compare pet insurance", new_tool_run_path("compare_pet_insurance", inputs: { pet_id: pet.id }) ]
+       ] %>
+    <% links << [ "Find a vet", new_tool_run_path("find_care", inputs: { specialty: "veterinarian for a #{pet.species_label.downcase}" }) ] if pet.vet.nil? %>
+    <% links.each do |label, path| %>
+      <li>
+        <%= link_to label, path, class: "flex min-h-11 items-center rounded-lg px-2 text-soft hover:bg-stone-200 hover:text-ink lg:min-h-0 lg:py-1.5" %>
+      </li>
     <% end %>
-    <%= link_to "#{pet.name} is missing", new_tool_run_path("lost_pet", inputs: { pet_id: pet.id }), class: "btn btn-ghost btn-sm" %>
-  </div>
-<% end %>
+  </ul>
+</nav>

@@ -25,6 +25,14 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @rex.reload.weight_lb
   end
 
+  test "the pet tools are a quiet list in the sidebar, led by the missing-pet tool" do
+    get pet_path(@rex)
+    assert_select "nav[aria-label=?] li", "Tools for #{@rex.name}", minimum: 5 do |items|
+      assert_equal "#{@rex.name} is missing", items.first.text.strip
+    end
+    assert_select "h2", text: "What the app can do", count: 0
+  end
+
   test "adding a pet creates her lens with her, so she is taggable immediately" do
     assert_difference -> { Pet.count } => 1, -> { Section.custom.count } => 1 do
       post pets_path, params: { pet: { name: "Luna", species: "cat" } }
