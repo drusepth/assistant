@@ -195,6 +195,34 @@ class LinkedAccount < ApplicationRecord
       (synced_at.nil? || synced_at < sync_every.ago)
   end
 
+  # Outgoing mail through this mailbox: the user's address, their server,
+  # their password. Used for job applications they approve (D-career-web)
+  # and for their own notification emails (D-instance-mail), which is why
+  # it lives on the link and not in either caller.
+  SMTP_PORT = 587
+
+  def sends_mail? = provider == "email" && allows?("send") && smtp_host.present?
+
+  def email_address = credentials.to_h["username"].to_s
+
+  # Blank means "the IMAP host with smtp. in front" — right for Gmail,
+  # Fastmail, iCloud, Zoho, and most self-run servers.
+  def smtp_host
+    creds = credentials.to_h
+    creds["smtp_host"].presence || creds["host"].to_s.sub(/\Aimap\./i, "smtp.").presence
+  end
+
+  # Every TLS key is spelled out, because ActionMailer merges these over
+  # the instance's own settings: an instance on port 465 must not leave
+  # its implicit-TLS flag on a mailbox that speaks STARTTLS on 587.
+  def smtp_settings
+    {
+      address: smtp_host, port: SMTP_PORT,
+      user_name: email_address, password: credentials.to_h["password"],
+      authentication: :plain, enable_starttls_auto: true, tls: false, ssl: false
+    }
+  end
+
   private
     def required_credentials_present
       provider_settings[:fields].each do |field|

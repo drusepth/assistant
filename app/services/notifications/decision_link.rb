@@ -52,15 +52,9 @@ module Notifications
         Rails.application.routes.url_helpers.agent_decision_url(token: token, **url_options)
       end
 
-      # Self-hosted instances live at whatever address their operator gave
-      # them, and the app has no way to know it from inside a job. APP_HOST
-      # is that answer ("assistant.example.org", or with a scheme and port).
-      # Without it there is simply no link in the payload — a wrong URL in a
-      # text message is worse than none.
-      def host
-        configured = ENV["APP_HOST"].presence || mailer_host
-        configured&.sub(%r{\Ahttps?://}, "")&.chomp("/")
-      end
+      # Where the instance lives now has one home (AppHost); this stays as
+      # the name the callers and tests already use.
+      def host = AppHost.host
 
       private
         # Built rather than taken from `Rails.application.message_verifier`
@@ -76,23 +70,7 @@ module Notifications
           )
         end
 
-        # In development and test the mailer host is already the real one.
-        # In production Rails ships "example.com" as a placeholder, and
-        # sending somebody a link to a domain we don't own is worse than
-        # sending no link — so there, only a deliberate APP_HOST counts.
-        def mailer_host
-          options = Rails.application.config.action_mailer.default_url_options || {}
-          host = options[:host]
-          return nil if host.blank?
-          return nil if Rails.env.production? && host == "example.com"
-
-          options[:port] ? "#{host}:#{options[:port]}" : host
-        end
-
-        def url_options
-          scheme = ENV["APP_HOST"].to_s.start_with?("http://") || host.start_with?("localhost") ? "http" : "https"
-          { host: host, protocol: scheme }
-        end
+        def url_options = AppHost.url_options
     end
   end
 end

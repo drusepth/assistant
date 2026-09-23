@@ -7,8 +7,6 @@ module Career
   class EmailApply
     class Error < StandardError; end
 
-    SMTP_PORT = 587
-
     # Tests flip this to :test to capture instead of connecting.
     cattr_accessor :delivery_override, default: nil
 
@@ -60,14 +58,9 @@ module Career
       end
 
       def smtp_settings
-        host = credentials["smtp_host"].presence || credentials["host"].to_s.sub(/\Aimap\./i, "smtp.")
-        raise Error, "No SMTP server on your email link — add one in Settings → Connected accounts." if host.blank?
+        raise Error, "No SMTP server on your email link — add one in Settings → Connected accounts." if account.smtp_host.blank?
 
-        {
-          address: host, port: SMTP_PORT,
-          user_name: credentials["username"], password: credentials["password"],
-          authentication: :plain, enable_starttls_auto: true
-        }
+        account.smtp_settings
       end
   end
 end

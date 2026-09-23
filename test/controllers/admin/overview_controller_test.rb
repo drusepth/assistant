@@ -12,6 +12,22 @@ class Admin::OverviewControllerTest < ActionDispatch::IntegrationTest
     assert_match "Rate limit reached", response.body
   end
 
+  test "the email card says whether this server sends mail, without its secrets" do
+    sign_in_as users(:one)
+
+    get admin_root_path
+    assert_match "this server sends no email of its own", response.body
+
+    with_instance_mail(address: "smtp.fastmail.com") do
+      ENV["SMTP_PASSWORD"] = "hunter2"
+      get admin_root_path
+    ensure
+      ENV.delete("SMTP_PASSWORD")
+    end
+    assert_match "Sending through smtp.fastmail.com", response.body
+    assert_no_match "hunter2", response.body
+  end
+
   test "a non-admin household member is turned away" do
     sign_in_as users(:two)
 

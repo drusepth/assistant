@@ -49,10 +49,12 @@ class NotificationsTest < ActiveJob::TestCase
   end
 
   test "email channel delivers a titles-only mail" do
-    @user.notification_channels.create!(kind: :email, config: { "address" => "alice@example.com" })
+    with_instance_mail do
+      @user.notification_channels.create!(kind: :email, config: { "address" => "alice@example.com" })
 
-    assert_emails 1 do
-      NotifyJob.perform_now(@user, [ "Book a health checkup" ])
+      assert_emails 1 do
+        NotifyJob.perform_now(@user, [ "Book a health checkup" ])
+      end
     end
 
     mail = ActionMailer::Base.deliveries.last
@@ -61,13 +63,63 @@ class NotificationsTest < ActiveJob::TestCase
   end
 
   test "a dead webhook fails silently and other channels still deliver" do
-    @user.notification_channels.create!(kind: :webhook, config: { "url" => "https://dead.example/hook" })
-    @user.notification_channels.create!(kind: :email, config: { "address" => "alice@example.com" })
-    stub_request(:post, "https://dead.example/hook").to_timeout
+    with_instance_mail do
+      @user.notification_channels.create!(kind: :webhook, config: { "url" => "https://dead.example/hook" })
+      @user.notification_channels.create!(kind: :email, config: { "address" => "alice@example.com" })
+      stub_request(:post, "https://dead.example/hook").to_timeout
+
+      assert_emails 1 do
+        assert_nothing_raised { NotifyJob.perform_now(@user, [ "Something" ]) }
+      end
+    end
+  end
+
+  # D-instance-mail: an email channel can send through the user's own
+  # linked mailbox, from them to them, with no instance SMTP at all.
+  test "an email channel sends through the user's linked mailbox, from their own address" do
+    mailbox = linked_accounts(:alice_email)
+    @user.notification_channels.create!(kind: :email,
+      config: { "address" => "one@example.com", "linked_account_id" => mailbox.id })
 
     assert_emails 1 do
+      NotifyJob.perform_now(@user, [ "Renew the car registration" ])
+    end
+
+    mail = ActionMailer::Base.deliveries.last
+    assert_equal [ "one@example.com" ], mail.from
+    assert_equal [ "one@example.com" ], mail.to
+    assert_equal "smtp.example.com", mail.delivery_method.settings[:address]
+    assert_equal "app-password", mail.delivery_method.settings[:password]
+  end
+
+  test "an email channel with nothing to send it is refused, not accepted and dropped" do
+    channel = @user.notification_channels.new(kind: :email, config: { "address" => "alice@example.com" })
+
+    assert_not channel.valid?
+    assert_match "doesn't send email", channel.errors.full_messages.to_sentence
+  end
+
+  test "a mailbox channel whose sending was switched off later stays quiet and says why" do
+    mailbox = linked_accounts(:alice_email)
+    channel = @user.notification_channels.create!(kind: :email,
+      config: { "address" => "one@example.com", "linked_account_id" => mailbox.id })
+    mailbox.update!(disabled_scopes: [ "send" ])
+
+    assert_emails 0 do
       assert_nothing_raised { NotifyJob.perform_now(@user, [ "Something" ]) }
     end
+    assert_match "can't send: sending is switched off", channel.reload.label
+  end
+
+  test "an email channel made before the sender choice keeps using instance mail" do
+    channel = with_instance_mail do
+      @user.notification_channels.create!(kind: :email, config: { "address" => "alice@example.com" })
+    end
+
+    assert_emails 0 do
+      NotifyJob.perform_now(@user, [ "Something" ])
+    end
+    assert_match "can't send: this server doesn't send email", channel.label
   end
 
   test "channel validations catch junk" do
@@ -77,6 +129,17 @@ class NotificationsTest < ActiveJob::TestCase
     assert @user.notification_channels.new(kind: :web_push, config: {
       "subscription" => { "endpoint" => "https://push.example/x", "keys" => { "p256dh" => "k", "auth" => "a" } }
     }).valid?
+  end
+
+  test "settings adds an email channel through a linked mailbox, addressed to that mailbox by default" do
+    sign_in = ActionDispatch::Integration::Session.new(Rails.application)
+    sign_in.post "/session", params: { email_address: @user.email_address, password: "password" }
+
+    sign_in.post "/notification_channels", params: { kind: "email", address: "", sender: linked_accounts(:alice_email).id }
+
+    channel = @user.notification_channels.sole
+    assert_equal "one@example.com", channel.config["address"]
+    assert_equal linked_accounts(:alice_email).id, channel.sending_account.id
   end
 
   test "channels are managed from settings" do
