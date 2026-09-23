@@ -10,6 +10,22 @@ module PetsHelper
     @pets_by_lens[section.id]
   end
 
+  # The "For" chips on a capture form pre-tagged with a pet's lens: every pet
+  # the viewer can tag, so the litter box that is both cats' job can be one
+  # task on both pages rather than two, or one hidden behind Advanced. Nil
+  # unless the item already carries a pet's lens and there is a second pet
+  # to offer — one pet has nothing to choose. A pet already tagged stays
+  # offered even once she's gone, so saving can't quietly drop her.
+  def pet_tag_choices(item)
+    return nil if item.section_ids.empty?
+
+    visible = Pet.visible_to(Current.user)
+    return nil unless visible.where(section_id: item.section_ids).exists?
+
+    pets = visible.select { |pet| pet.active? || item.section_ids.include?(pet.section_id) }
+    pets.sort_by(&:name) if pets.size > 1
+  end
+
   # One line under a food: what she eats a day, when the bag runs out, what it
   # costs. Each clause appears only when its numbers exist — a food with no
   # bag size says what it can and stops, rather than printing an estimate
