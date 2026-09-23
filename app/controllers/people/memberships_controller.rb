@@ -21,7 +21,7 @@ class People::MembershipsController < ApplicationController
 
   private
     def set_group
-      @group = Section.custom.where(parent: Section.find_by!(slug: "people")).find(params[:section_id])
+      @group = Section.people_groups.custom.find(params[:section_id])
     end
 
     def back_to_group(**flash)

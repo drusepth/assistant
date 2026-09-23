@@ -35,13 +35,9 @@ module People
     def cards = [ circle_card, *group_cards ]
 
     private
-      # Pet lenses are children of People too (D-pet-primitive) — but a pet
-      # is not a group of people, and her card is drawn by the pets strip.
+      # A pet's card is drawn by the pets strip, not here.
       def groups
-        @groups ||= begin
-          owned = Section.owned_lens_ids
-          section.children.reject { |child| owned.include?(child.id) }
-        end
+        @groups ||= Section.people_groups.to_a
       end
 
       def circle_card

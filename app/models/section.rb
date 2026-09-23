@@ -47,6 +47,15 @@ class Section < ApplicationRecord
     LENS_OWNERS.flat_map { |model| model.constantize.distinct.pluck(:section_id) }
   end
 
+  # People's groups (D-people-circles): its children, less the lenses a
+  # record owns. A pet's lens is a child of People too (D-pet-primitive) so
+  # "about Rex" is an ordinary tag, but Rex is not a group of people — every
+  # surface that offers "add to a group" or filters by one reads this.
+  def self.people_groups
+    people = find_by(slug: "people") or return none
+    LENS_OWNERS.inject(people.children) { |groups, model| groups.where.not(id: model.constantize.select(:section_id)) }
+  end
+
   # "Budget" reads ambiguously outside its section; "Money · Budget" doesn't.
   def qualified_name
     parent ? "#{parent.name} · #{name}" : name
