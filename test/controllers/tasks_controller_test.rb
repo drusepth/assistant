@@ -334,4 +334,58 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
   test "destroys own task" do
     assert_difference("Task.count", -1) { delete task_path(@task) }
   end
+
+  # --- routines (D-task-routines) -------------------------------------------
+
+  test "a task created with a repeat carries a standing reminder named for it" do
+    assert_difference -> { Reminder.count } => 1 do
+      post tasks_path, params: { task: { title: "Change the litter",
+        routine_attributes: { repeat: "weekly", deliver_on: Date.current.to_s, deliver_time: "08:00", repeat_days: [ "SU" ] } } }
+    end
+
+    task = users(:one).tasks.find_by!(title: "Change the litter")
+    routine = task.routine
+    assert_equal "FREQ=WEEKLY;BYDAY=SU", routine.rule
+    assert_equal "Change the litter", routine.body
+    assert_equal 0, routine.local_deliver_at.wday
+    assert_equal 8, routine.local_deliver_at.hour
+
+    get edit_task_path(task)
+    assert_select "select[name=?] option[selected][value=weekly]", "task[routine_attributes][repeat]"
+  end
+
+  test "a task saved without a repeat makes no reminder" do
+    assert_no_difference -> { Reminder.count } do
+      post tasks_path, params: { task: { title: "One-off", routine_attributes: { repeat: "none", deliver_on: Date.current.to_s } } }
+    end
+  end
+
+  test "choosing Doesn't repeat retires the routine and leaves other reminders alone" do
+    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    one_shot = users(:one).reminders.create!(subject: @task, deliver_on: Date.current + 2, deliver_time: "10:00")
+    assert @task.reload.routine?
+
+    patch task_path(@task), params: { task: { title: "Mine", routine_attributes: { repeat: "none" } } }
+
+    assert_not @task.reload.routine?
+    assert Reminder.exists?(one_shot.id)
+  end
+
+  test "editing the task's repeat changes the one routine rather than adding another" do
+    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    assert_no_difference -> { Reminder.count } do
+      patch task_path(@task), params: { task: { title: "Renamed", routine_attributes: { repeat: "monthly", deliver_on: Date.current.to_s } } }
+    end
+    routine = @task.reload.routine
+    assert_equal "FREQ=MONTHLY;BYMONTHDAY=#{Date.current.day}", routine.rule
+    assert_equal "Renamed", routine.body
+  end
+
+  test "completing a routine task keeps its cadence" do
+    patch task_path(@task), params: { task: { routine_attributes: { repeat: "daily", deliver_on: Date.current.to_s } } }
+    patch complete_task_path(@task)
+
+    assert @task.reload.completed?
+    assert @task.routine?
+  end
 end
