@@ -20,12 +20,6 @@ class AnalyzeDocumentJob < ApplicationJob
       # A title the reader chose beats "IMG 4032" and never beats one a
       # person typed (D16).
       title: document.filename_titled? && result.title ? result.title : document.title,
-      # Whether this is a health plan is a fact about the document itself,
-      # so it is filed like its sections (D16): set by the reader when the
-      # owner hasn't said, never over the owner's own pin (HEALTH.md §4).
-      # This is what retires Health::Coverage's keyword match for analyzed
-      # documents (D-no-keyword-logic).
-      health_plan: document.health_plan.nil? ? result.health_plan : document.health_plan,
       analysis_status: :analyzed,
       analysis_error: nil
     )

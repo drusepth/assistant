@@ -164,22 +164,29 @@ class AnalyzeDocumentJobTest < ActiveJob::TestCase
     assert_equal "Lease agreement", @document.reload.title
   end
 
-  test "the reader pins a health plan unless the owner already ruled, and the pin retires the keyword match" do
+  test "the reader's insurance verdict is filed as a fact, never over the owner's word, and a re-read can change it" do
     stub_request(:post, ENDPOINT).to_return(
       status: 200,
       body: { choices: [ { message: { content: { summary: "A dental bill mentioning insurance.", sections: [ "health" ], health_plan: false }.to_json } } ] }.to_json
     )
     @document.update!(title: "Insurance statement for the dental visit")
-    assert Health::Coverage.match?(@document), "before analysis the keywords catch the bill"
+    assert_equal [ true, :keywords ], Health::Coverage.verdict(@document), "before analysis the keywords catch the bill"
 
     AnalyzeDocumentJob.perform_now(@document)
-    assert_equal false, @document.reload.health_plan
-    assert_not Health::Coverage.match?(@document), "the reader's word replaced the keywords"
+    assert_nil @document.reload.health_plan, "the owner's column stays theirs"
+    assert_equal [ false, :reader ], Health::Coverage.verdict(@document), "the reader's word replaced the keywords"
 
-    pinned = users(:one).documents.create!(title: "Car policy", health_plan: true)
-    pinned.file.attach(io: StringIO.new("x"), filename: "car.txt", content_type: "text/plain")
-    AnalyzeDocumentJob.perform_now(pinned)
-    assert_equal true, pinned.reload.health_plan, "the owner's pin is never overwritten"
+    stub_request(:post, ENDPOINT).to_return(
+      status: 200,
+      body: { choices: [ { message: { content: { summary: "Actually a benefits summary.", sections: [ "health" ], health_plan: true }.to_json } } ] }.to_json
+    )
+    AnalyzeDocumentJob.perform_now(@document)
+    assert_equal [ true, :reader ], Health::Coverage.verdict(@document.reload), "a re-read can change the reader's mind"
+
+    banished = users(:one).documents.create!(title: "Car policy", health_plan: false)
+    banished.file.attach(io: StringIO.new("x"), filename: "car.txt", content_type: "text/plain")
+    AnalyzeDocumentJob.perform_now(banished)
+    assert_equal [ false, :owner ], Health::Coverage.verdict(banished.reload), "the owner's answer is never overwritten"
   end
 
   test "the reader may point the document at one allowed tool, and nothing else" do
