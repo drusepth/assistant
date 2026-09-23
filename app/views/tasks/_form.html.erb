@@ -4,6 +4,7 @@
   <%= form.field :due_on, label_text: "Due date" do %>
     <%= render "shared/date_shortcuts_field", form: form, method: :due_on %>
   <% end %>
+  <%= render "tasks/routine_fields", form: form %>
   <%= form.field :goal_id, label_text: "Goal" do %>
     <%= form.collection_select :goal_id, Current.user.goals.order(:title), :id, :title, include_blank: "None" %>
   <% end %>

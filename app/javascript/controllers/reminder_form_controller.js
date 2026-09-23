@@ -45,7 +45,9 @@ export default class extends Controller {
 
   sync() {
     this.daysTarget.hidden = !this.weekly
-    if (this.hasUntilTarget) this.untilTarget.hidden = !this.repeating
+    // Every target that only matters on a repeat — the reminder form has one
+    // (Until); the task form's Repeat picker folds its start and time too.
+    this.untilTargets.forEach((target) => { target.hidden = !this.repeating })
     if (this.weekly && this.checkedCodes().length === 0) this.checkDateWeekday()
   }
 

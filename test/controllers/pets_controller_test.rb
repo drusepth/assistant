@@ -33,6 +33,14 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "What the app can do", count: 0
   end
 
+  test "the header offers a task already tagged with her lens" do
+    get pet_path(@rex)
+    assert_select "a[href=?]", new_task_path(section_ids: [ @rex.section_id ]), text: "Add a task"
+
+    get new_task_path(section_ids: [ @rex.section_id ])
+    assert_response :success
+  end
+
   test "adding a pet creates her lens with her, so she is taggable immediately" do
     assert_difference -> { Pet.count } => 1, -> { Section.custom.count } => 1 do
       post pets_path, params: { pet: { name: "Luna", species: "cat" } }
