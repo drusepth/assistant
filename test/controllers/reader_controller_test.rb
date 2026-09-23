@@ -118,8 +118,8 @@ class ReaderControllerTest < ActionDispatch::IntegrationTest
     item(@feed, "Build a shop-made bench hook")
 
     get reader_path
-    assert_match CGI.escapeHTML(new_task_path(title: "Build a shop-made bench hook", section_ids: [ @lens.id ])),
-      response.body
+    assert_match CGI.escapeHTML(new_task_path(title: "Build a shop-made bench hook", section_ids: [ @lens.id ],
+      return_to: reader_path)), response.body
 
     get new_task_path(title: "Build a shop-made bench hook", section_ids: [ @lens.id ])
 

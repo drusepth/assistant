@@ -46,7 +46,7 @@
       <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-3 text-xs">
         <%= button_to "Unsave", unsave_feed_item_path(item), method: :patch,
               class: "reader-verb", form_class: "contents" %>
-        <%= link_to "Task", new_task_path(title: item.title, section_ids: item.feed.section_ids),
+        <%= link_to "Task", new_task_path(title: item.title, section_ids: item.feed.section_ids, return_to: current_page_path),
               class: "reader-verb" %>
         <% if url %>
           <%= link_to url, class: "reader-verb ml-auto", **ReaderHelper::OUTBOUND do %>

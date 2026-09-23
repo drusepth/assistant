@@ -53,7 +53,7 @@
     <p class="text-sm text-soft">
       Pay stubs added to <%= link_to "Documents", documents_path, class: "underline" %> join the same
       timeline automatically, and a
-      <%= link_to "“Tell me about your work” note", new_note_path(section_ids: [ section.id ], title: "About my work"), class: "underline" %>
+      <%= link_to "“Tell me about your work” note", new_note_path(section_ids: [ section.id ], title: "About my work", return_to: current_page_path), class: "underline" %>
       gives every Career tool its context.
     </p>
   </div>

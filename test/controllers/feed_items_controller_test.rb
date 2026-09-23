@@ -48,6 +48,14 @@ class FeedItemsControllerTest < ActionDispatch::IntegrationTest
     assert_match @item.title, response.body
   end
 
+  test "a row re-rendered by a verb still sends its Task link back to the page it was on" do
+    patch save_feed_item_path(@item), as: :turbo_stream,
+      headers: { "Referer" => "http://www.example.com/reader?filter=unread" }
+
+    assert_match CGI.escapeHTML(new_task_path(title: @item.title, section_ids: @feed.section_ids,
+      return_to: "/reader?filter=unread")), response.body
+  end
+
   test "an action re-renders just that row over Turbo" do
     patch read_feed_item_path(@item), as: :turbo_stream
 
