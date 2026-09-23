@@ -1,7 +1,10 @@
 class GroupsController < ApplicationController
   def create
     lens = People::Group.find_or_create!(params[:name])
-    redirect_to section_path("people"), notice: "#{lens.name} created — it has its own page now."
+    # Straight onto the new group's page, cursor in "Who's in it?": a group
+    # is its people, and the next thing anyone does is add them
+    # (D-person-picker). An empty group left on the grid stays empty.
+    redirect_to section_path(lens.slug, fresh: 1), notice: "#{lens.name} created. Who's in it?"
   rescue ArgumentError
     redirect_to section_path("people"), alert: "A group needs a name."
   end

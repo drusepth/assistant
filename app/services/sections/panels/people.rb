@@ -16,6 +16,15 @@ module Sections
       # only front door.
       def hidden_browse = %i[ events people ]
 
+      # The page leads with people, so "Nothing in People yet" under a
+      # circle card with faces on it read as broken. The capture and the
+      # cards are the way in.
+      def show_empty_browse? = false
+
+      # The three tools the page is about; the other seven fold away.
+      LEAD_TOOLS = %w[ reconnect gift_ideas get_together ].freeze
+      def lead_tool_slugs = LEAD_TOOLS
+
       # The circle and every group as one uniform card (D-people-circles).
       def circle_cards = @circle_cards ||= ::People::Circles.for(viewer, section)
 
@@ -29,17 +38,6 @@ module Sections
 
       def upcoming_birthdays
         @upcoming_birthdays ||= viewer.people.circle.birthday_within(30)
-      end
-
-      def circle_candidates
-        @circle_candidates ||= viewer.people.where(keep_in_touch: false).order(:name)
-      end
-
-      # Who a group card can add. Anyone the viewer can see (a group is a
-      # shared lens), circle first — the picker-scaling rule from
-      # docs/PEOPLE.md §3, since the address book is what gets long.
-      def member_candidates
-        @member_candidates ||= Person.visible_to(viewer).order(keep_in_touch: :desc, name: :asc)
       end
 
       def address_book_size

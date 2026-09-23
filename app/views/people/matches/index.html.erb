@@ -1,0 +1,35 @@
+<%# Option rows for the person picker (D-person-picker). The controller
+    reads data-person-id and data-name; everything else is for the eye. %>
+<% option_class = "flex cursor-pointer items-center gap-2.5 rounded-full px-2 py-1.5 text-sm text-ink aria-selected:bg-surface hover:bg-surface" %>
+<%# Two Sam Lees look identical in a list; the hint is what tells them
+    apart, so a repeated name always gets one. %>
+<% repeated = (@suggestions.map(&:person) + @people).map { |person| person.name.downcase }.tally.select { |_, count| count > 1 }.keys %>
+<% if @suggestions.any? %>
+  <li role="presentation" class="px-2 pb-0.5 pt-1 text-xs font-medium text-soft">Suggestions</li>
+  <% @suggestions.each do |suggestion| %>
+    <li role="option" aria-selected="false" data-person-id="<%= suggestion.person.id %>" data-name="<%= suggestion.person.name %>" class="<%= option_class %>">
+      <%= render Ui::AvatarComponent.new(person: suggestion.person, size: :xs) %>
+      <span class="min-w-0 flex-1 truncate"><%= suggestion.person.name %></span>
+      <% hint = repeated.include?(suggestion.person.name.downcase) && person_picker_hint(suggestion.person, repeated: true) %>
+      <span class="max-w-[55%] shrink-0 truncate text-xs text-soft"><%= [ hint, suggestion.reason ].compact_blank.join(" · ") %></span>
+    </li>
+  <% end %>
+<% end %>
+<% @people.each do |person| %>
+  <% hint = person_picker_hint(person, repeated: repeated.include?(person.name.downcase)) %>
+  <li role="option" aria-selected="false" data-person-id="<%= person.id %>" data-name="<%= person.name %>" class="<%= option_class %>">
+    <%= render Ui::AvatarComponent.new(person: person, size: :xs) %>
+    <span class="min-w-0 flex-1 truncate"><%= highlight(person.name, @query, highlighter: '<strong class="font-semibold text-primary-800">\1</strong>') %></span>
+    <% if hint %>
+      <span class="max-w-[45%] shrink-0 truncate text-xs text-soft"><%= hint %></span>
+    <% end %>
+  </li>
+<% end %>
+<% if @offer_new %>
+  <li role="option" aria-selected="false" data-name="<%= @query %>"
+      class="<%= option_class %> text-primary-700">
+    <span class="flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-primary-300">+</span>
+    <span class="min-w-0 flex-1 truncate">Add “<%= @query %>”</span>
+    <span class="shrink-0 text-xs text-soft">new contact</span>
+  </li>
+<% end %>

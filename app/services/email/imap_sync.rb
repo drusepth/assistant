@@ -172,7 +172,7 @@ class Email::ImapSync
     # The Q8 revisit (EMAIL_PLAN.md §7): outbound mail is OBSERVED contact,
     # not inference — with the per-link toggle on (default off), sending
     # someone mail advances their last_contacted_on, forward-only, matched
-    # people only. The manual "Log contact" button remains for everyone else.
+    # people only. The manual "Talked today" button remains for everyone else.
     def advance_contact_recency(message)
       return unless @account.setting(:contact_recency) == true
       return unless message.outbound? && message.person_id.present? && message.sent_at.present?

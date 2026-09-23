@@ -6,12 +6,12 @@ require "test_helper"
 class GroupsControllerTest < ActionDispatch::IntegrationTest
   setup { sign_in_as users(:one) }
 
-  test "create adds a group lens under People and returns to the People page" do
+  test "create adds a group lens under People and lands on its page to fill it" do
     assert_difference "Section.custom.count", 1 do
       post groups_path, params: { name: "Book club" }
     end
 
-    assert_redirected_to section_path("people")
+    assert_redirected_to section_path("book-club", fresh: 1)
     lens = Section.find_by(slug: "book-club")
     assert_equal sections(:people), lens.parent
   end

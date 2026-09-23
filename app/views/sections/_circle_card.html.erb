@@ -4,44 +4,34 @@
     a hobby card is: it carries its own links and a form, and an <a> inside
     an <a> is invalid markup and a broken touch target. So the title is the
     link and `group-hover:` carries the whole-card affordance. %>
-<div class="card group flex flex-col gap-3 border-edge p-4 transition hover:border-primary-300 hover:shadow-sm">
-  <%# The signal line already says there's nobody — the empty stack just
-      holds the row so a new group lines up with the cards beside it. %>
-  <%= render Ui::AvatarStackComponent.new(
-        people: card.members, total: card.member_count, size: :md, ghost: true) %>
+<div class="card group relative flex flex-col gap-3 border-edge p-4 transition hover:border-primary-300 hover:shadow-sm">
+  <%= render "sections/circle_card_summary", card: card %>
 
-  <div class="min-w-0">
-    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <%= link_to card.name, card.path, class: "text-sm font-semibold text-ink group-hover:text-primary-700" %>
-      <% if card.private %>
-        <%# They look alike; they are not the same thing. The circle is a
-            per-user flag, a group is household-shared taxonomy — say so
-            rather than let matching boxes imply matching privacy (D9). %>
-        <span class="chip whitespace-nowrap bg-stone-100 text-stone-600"
-              title="Your circle is yours alone — groups are shared with your household">Only you</span>
-      <% end %>
-    </div>
-    <p class="mt-0.5 text-xs text-soft"><%= card.signal %></p>
-  </div>
-
-  <%# The capture folds away in a <details> — no JS, and the closed card
-      stays a scannable tile rather than a form. %>
-  <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-edge pt-2.5 text-xs font-semibold">
-    <details class="min-w-0 [&[open]]:w-full">
-      <summary class="cursor-pointer list-none text-primary-700 hover:underline [&::-webkit-details-marker]:hidden">
-        Add someone
+  <%# Adding someone is the card's main verb, so it is a visible "+" beside
+      the faces rather than a text link in the footer (D-person-picker).
+      Still a <details> — no JS to open it — whose summary sits in the
+      corner and whose form unfolds at the foot of the card. An empty
+      circle's card skips it: the page's lead capture sits right above and
+      does the same thing. %>
+  <% unless local_assigns[:capture_above] %>
+    <details class="group/add" data-controller="details-focus" data-action="keydown.esc->details-focus#close">
+      <summary class="absolute right-4 top-4 flex size-10 cursor-pointer list-none items-center justify-center rounded-full border border-dashed border-primary-300 text-primary-700 transition hover:border-primary-500 hover:bg-primary-50 [&::-webkit-details-marker]:hidden"
+               title="Add someone" aria-label="<%= card.circle? ? "Add someone to your circle" : "Add someone to #{card.name}" %>">
+        <%= icon(:plus, css_class: "size-5 transition group-open/add:rotate-45") %>
       </summary>
-      <div class="mt-2 w-full font-normal">
+      <div class="border-t border-edge pt-3">
         <%= render "sections/circle_add_person",
               url: card.circle? ? people_circle_path : people_memberships_path,
-              section: card.section, candidates: candidates,
+              section: card.section,
               label: card.circle? ? "Add to your circle" : "Add to #{card.name}" %>
       </div>
     </details>
+  <% end %>
 
-    <% unless card.circle? %>
+  <% unless card.circle? %>
+    <div class="mt-auto border-t border-edge pt-2.5 text-xs font-semibold">
       <%= link_to "Plan something", new_tool_run_path("get_together", inputs: { who: card.name }),
             class: "text-primary-700 hover:underline" %>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
 </div>

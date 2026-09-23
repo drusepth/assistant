@@ -15,14 +15,16 @@ module Sections
       # control the generic person grid has no place for.
       def hidden_browse = %i[ people ]
 
+      # The Members card is the page; "Nothing in Book club yet" under it
+      # would contradict the faces in it.
+      def show_empty_browse? = false
+
+      # Same three as the People page, for the same reason.
+      def lead_tool_slugs = Sections::Panels::People::LEAD_TOOLS
+
       def members
         @members ||= Person.visible_to(viewer).in_section(section)
           .order(:name).preload(:linked_user).with_attached_avatar
-      end
-
-      # Circle first, then everyone else — docs/PEOPLE.md §3.
-      def candidates
-        @candidates ||= Person.visible_to(viewer).order(keep_in_touch: :desc, name: :asc)
       end
     end
   end

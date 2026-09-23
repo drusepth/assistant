@@ -13,7 +13,7 @@ module People
     # Returns the person, or nil when the caller gave neither an existing
     # person nor a name to make one from.
     def add(viewer, section, person_id: nil, name: nil)
-      person = resolve(viewer, person_id, name)
+      person = Picker.for_group(viewer, section).resolve(person_id: person_id, name: name)
       return nil unless person
 
       # Idempotent: a double-tap on a phone can't produce two taggings.
@@ -29,16 +29,6 @@ module People
 
       SectionTagging.where(section: section, taggable: person).destroy_all
       person
-    end
-
-    # A group can hold anyone the viewer can see (it's a shared lens);
-    # a brand-new name becomes the viewer's own contact.
-    def resolve(viewer, person_id, name)
-      if person_id.present?
-        Person.visible_to(viewer).find_by(id: person_id)
-      elsif name.to_s.squish.present?
-        viewer.people.create!(name: name.to_s.squish)
-      end
     end
   end
 end

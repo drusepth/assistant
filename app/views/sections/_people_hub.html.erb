@@ -31,37 +31,13 @@
   <h2 class="mb-3 text-sm font-medium text-soft">Your people</h2>
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
     <% cards.each do |card| %>
-      <%= render "sections/circle_card", card: card, candidates: candidates %>
+      <%= render "sections/circle_card", card: card, capture_above: card.circle? && card.member_count.zero? %>
     <% end %>
     <%= render "sections/circle_add_tile" %>
   </div>
 </div>
 
-<%# The pull-side twin of the stay-in-touch watcher (docs/PEOPLE.md §3.2):
-    same math, always visible, no nudge required. Rows, not tiles — name,
-    recency and a button is the whole point. It is no longer the entire
-    circle; that's one tap away on the circle card. %>
-<% if reach_out.any? %>
-  <%= render Ui::CardComponent.new(title: "Reach out", subtitle: "Your circle, stalest first — one tap says you talked.", padded: false) do %>
-    <div class="divide-y divide-edge">
-      <% reach_out.each do |person| %>
-        <div class="flex flex-wrap items-center gap-3 p-4">
-          <%= render Ui::AvatarComponent.new(person: person) %>
-          <div class="min-w-0 flex-1">
-            <%= link_to person.name, person, class: "text-sm font-medium text-ink hover:text-primary-700" %>
-            <p class="text-xs text-soft">
-              <% if person.relationship.present? %><%= person.relationship %> · <% end %><%= contact_recency_phrase(person) %>
-            </p>
-          </div>
-          <div class="row-actions">
-            <%= button_to "Log contact", log_contact_person_path(person), method: :patch, class: "btn btn-ghost" %>
-            <%= link_to "Reconnect", new_tool_run_path("reconnect", inputs: { person_id: person.id }), class: "btn btn-secondary" %>
-          </div>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
-<% end %>
+<%= render "sections/reach_out", reach_out: reach_out %>
 
 <% if address_book_size.positive? %>
   <p class="text-sm text-soft">

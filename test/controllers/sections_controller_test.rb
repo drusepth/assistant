@@ -328,19 +328,26 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Last contact", response.body
     assert_match "in your Address Book", response.body
     assert_select "a", { text: "Rolodex Rex", count: 0 },
-      "unflagged people belong to the Address Book (the capture dropdown may list them; rows must not)"
+      "unflagged people belong to the Address Book"
   end
 
-  test "the People page leads with circle capture and offers address-book candidates" do
+  # D-person-picker: the address book is searched, never listed — a real
+  # import made the old <select> unusable — and the lead capture steps
+  # aside once the circle card can do the same job.
+  test "the People page leads with circle capture while the circle is empty, without listing the address book" do
     users(:one).people.create!(name: "Pickable Pat")
 
     get section_path("people")
     assert_match "Who do you want to stay close to?", response.body
-    assert_match "Pickable Pat", response.body
+    assert_select "form[action=?] input[role=combobox][name=name]", people_circle_path
+    assert_no_match "Pickable Pat", response.body, "the roster is found by typing, not rendered into the page"
+    assert_select "select[name=person_id]", false
 
     users(:one).people.create!(name: "Flagged", keep_in_touch: true)
     get section_path("people")
-    assert_match "Add someone to your circle", response.body
+    assert_no_match "Who do you want to stay close to?", response.body
+    # A non-empty circle is added to from its own card.
+    assert_select "details form[action=?] input[role=combobox]", people_circle_path
   end
 
   test "Coming up lists circle birthdays but not the rolodex's" do
@@ -351,14 +358,14 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Coming up", response.body
     assert_match "Birthday Kid", response.body
     assert_select "a", { text: "Distant Cousin", count: 0 },
-      "rolodex birthdays stay off the dashboard (the capture dropdown may list the person; rows must not)"
+      "rolodex birthdays stay off the dashboard"
   end
 
   test "the People page offers group capture and lists existing groups" do
     People::Group.find_or_create!("D&D table")
 
     get section_path("people")
-    assert_match "Start a group", response.body
+    assert_match "New group", response.body
     assert_match "D&amp;D table", response.body
   end
 
@@ -381,6 +388,23 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", section_path(group.slug)
     assert_no_match "People · Book club", response.body,
       "a card is inside People already — the qualified name was noise"
+  end
+
+  test "the People page skips the generic empty state and folds all but three tools away" do
+    users(:one).people.create!(name: "Circle Sam", keep_in_touch: true)
+
+    get section_path("people")
+    assert_no_match "Nothing in People yet", response.body, "the circle card is the page — nothing contradicts it"
+    assert_select "details summary", text: /More tools/
+    assert_select "a[href=?]", new_tool_run_path("reconnect")
+  end
+
+  test "a new group lands on its page with the picker asking who's in it" do
+    group = People::Group.find_or_create!("Book club")
+
+    get section_path(group.slug, fresh: 1)
+    assert_select "input[role=combobox][autofocus][aria-label=?]", "Who's in Book club?"
+    assert_no_match "Nothing in Book club yet", response.body
   end
 
   test "every card can add someone, and a group card can plan something" do

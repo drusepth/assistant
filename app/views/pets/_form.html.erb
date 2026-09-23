@@ -67,18 +67,18 @@
 
   <%# Type the vet, don't go and make a contact first: a name you already
       have is offered as you type and linked, a new one becomes a contact
-      (Pets::VetContact). Blank means no vet on file. %>
+      (Pets::VetContact). Blank means no vet on file. The person picker
+      (D-person-picker) replaced a <datalist> of the whole address book;
+      it only fills the name — the vet is matched by it on save. %>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%= form.field :vet_name, label_text: "Vet", placeholder: "Dr. Alvarez, Riverside Animal Clinic",
-          list: "pet-vet-contacts", autocomplete: "off",
-          hint: "Pick someone from your contacts, or type a new name and they'll be added." %>
+    <%= form.field :vet_name, label_text: "Vet",
+          hint: "Pick someone from your contacts, or type a new name and they'll be added." do %>
+      <%= render Ui::PersonPickerComponent.new(place: :any, label: "Vet", id_field: nil,
+            name_field: "pet[vet_name]", input_id: "pet_vet_name", value: pet.vet_name,
+            submit_on_pick: false, placeholder: "Dr. Alvarez, Riverside Animal Clinic") %>
+    <% end %>
     <%= form.field :vet_phone, as: :telephone_field, label_text: "Vet's phone", autocomplete: "off" %>
   </div>
-  <datalist id="pet-vet-contacts">
-    <% Person.visible_to(Current.user).order(:name).distinct.pluck(:name).each do |name| %>
-      <option value="<%= name %>"></option>
-    <% end %>
-  </datalist>
 
   <%= form.field :notes, as: :text_area, hint: "Temperament, allergies, what the sitter needs to know." %>
 

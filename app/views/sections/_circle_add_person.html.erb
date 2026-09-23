@@ -1,17 +1,17 @@
 <%# The one capture for "put a person here" (D-people-circles), shared by the
-    circle card, every group card, and the group page — pick from people you
-    already have, or name someone new. Circle-first ordering is the
-    picker-scaling rule from docs/PEOPLE.md §3: the address book is the
-    thing that gets long, and the people you tend are the ones you mean. %>
-<%= form_with url: url, class: "space-y-2" do %>
+    circle card, every group card, and the group page: one type-to-find
+    field (D-person-picker) — pick someone you have, or type someone new —
+    and its button. The address book is the thing that gets long, so it is
+    searched, never listed. `inline` asks for the answer as Turbo Streams:
+    the new face lands on the page, the field clears and keeps the cursor,
+    and the next name can be typed straight away. %>
+<%= form_with url: url, class: "flex items-center gap-2" do %>
   <% if local_assigns[:section] %>
     <%= hidden_field_tag :section_id, section.id %>
   <% end %>
-  <% if candidates.any? %>
-    <%= select_tag :person_id, options_from_collection_for_select(candidates, :id, :name),
-          include_blank: "Choose someone…", class: "input w-full text-sm", "aria-label": label %>
-  <% end %>
-  <%= text_field_tag :name, nil, class: "input w-full text-sm",
-        placeholder: candidates.any? ? "…or someone new" : "Name someone…", "aria-label": label %>
-  <%= submit_tag "Add", class: "btn btn-secondary w-full" %>
+  <%= render Ui::PersonPickerComponent.new(
+        place: local_assigns[:section] ? :group : :circle, section: local_assigns[:section],
+        label: label, placeholder: label.end_with?("?") ? label : "Type a name…",
+        input_class: "text-sm", autofocus: local_assigns[:autofocus], inline: true) %>
+  <%= submit_tag "Add", class: "btn btn-secondary shrink-0" %>
 <% end %>

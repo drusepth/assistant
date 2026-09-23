@@ -57,6 +57,12 @@ module Sections
     # their cards.
     def hidden_tool_slugs = []
 
+    # The tool cards that stay in view; the rest of the Act zone folds under
+    # "More tools". Nil keeps every card out, which is right for a section
+    # with a handful — a hub with ten equal cards buries the panel above
+    # them, so it names the few its page is about (D-person-picker).
+    def lead_tool_slugs = nil
+
     # Generic browse cards the panel replaces with better-context versions
     # (symbols: :events, :people, …); the browse zone skips them. People
     # hides the roster grid this way — the Address Book is the roster (D-people-dashboard).

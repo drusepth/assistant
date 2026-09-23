@@ -1,11 +1,13 @@
-<%# The People lead panel (D-people-dashboard, docs/PEOPLE.md §3): identity capture, then
-    the social dashboard. The events card renders inside Coming up and the
+<%# The People lead panel (D-people-dashboard, docs/PEOPLE.md §3): identity capture while
+    the circle is empty, then the social dashboard. The events card renders inside Coming up and the
     roster lives in the Address Book — the panel hides both generic
     versions via hidden_browse. %>
-<%= render "sections/people_capture", circle_size: panel.circle_size, candidates: panel.circle_candidates %>
+<% if panel.circle_size.zero? %>
+  <%= render "sections/people_capture", address_book_size: panel.address_book_size %>
+<% end %>
 
 <%= render "sections/give_time", openings: panel.openings %>
 
 <%= render "sections/people_hub",
-      cards: panel.circle_cards, reach_out: panel.reach_out, candidates: panel.member_candidates,
+      cards: panel.circle_cards, reach_out: panel.reach_out,
       birthdays: panel.upcoming_birthdays, events: @events, address_book_size: panel.address_book_size %>

@@ -53,12 +53,12 @@
                 <% end %>
               </span>
             <% end %>
-            <% if own && @taggable_people.any? %>
-              <%= form_with url: photo_people_path, class: "inline-flex items-center gap-1.5" do %>
+            <% if own %>
+              <%= form_with url: photo_people_path, class: "flex w-full max-w-xs items-center gap-1.5" do %>
                 <%= hidden_field_tag :photo_id, @photo.id %>
-                <%= select_tag :person_id, options_from_collection_for_select(@taggable_people, :id, :name),
-                      prompt: "Who's in it?", class: "input !w-auto py-1 text-sm" %>
-                <button type="submit" class="btn btn-ghost btn-sm">Tag</button>
+                <%= render Ui::PersonPickerComponent.new(place: :photo, photo: @photo,
+                      label: "Tag someone in this photo", placeholder: "Who's in it?", input_class: "py-1 text-sm") %>
+                <button type="submit" class="btn btn-ghost btn-sm shrink-0">Tag</button>
               <% end %>
             <% elsif @person_tags.none? %>
               <span class="text-soft">—</span>

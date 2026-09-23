@@ -10,8 +10,11 @@
     <div role="status"
          class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-4 py-3 text-sm <%= style %>">
       <span class="min-w-0 flex-1"><%= message %></span>
+      <% if follow_up && type == "notice" %>
+        <%= link_to follow_up["label"], follow_up["url"], class: "shrink-0 font-medium underline-offset-2 hover:underline" %>
+      <% end %>
       <% if undo && type == "notice" %>
-        <%= button_to undo["label"], undo["url"], method: :patch,
+        <%= button_to undo["label"], undo["url"], method: undo_method,
               class: "btn btn-secondary btn-sm", form_class: "shrink-0" %>
       <% end %>
     </div>

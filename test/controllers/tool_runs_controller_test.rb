@@ -298,15 +298,51 @@ class ToolRunsControllerTest < ActionDispatch::IntegrationTest
       text: /Start/
   end
 
-  test "new renders the person picker from visible people" do
+  # D-person-picker: a person input is type-to-find, never a <select> of
+  # the whole address book — so the page carries no roster at all.
+  test "new renders the person picker, not a list of the address book" do
     users(:one).people.create!(name: "Rosa")
-    users(:two).people.create!(name: "Private Pete")
 
     get new_tool_run_path("reconnect")
 
     assert_response :success
-    assert_select "select#inputs_person_id option", text: "Rosa"
-    assert_select "select#inputs_person_id option", text: "Private Pete", count: 0
+    assert_select "input#inputs_person_id[role=combobox][name=?]", "person_names[person_id]"
+    assert_select "input[type=hidden][name=?]", "inputs[person_id]"
+    assert_select "select#inputs_person_id", false
+    assert_no_match "Rosa", response.body
+  end
+
+  test "a prefilled person shows their name in the picker" do
+    rosa = users(:one).people.create!(name: "Rosa")
+
+    get new_tool_run_path("reconnect", inputs: { person_id: rosa.id })
+
+    assert_select "input[type=hidden][name=?][value=?]", "inputs[person_id]", rosa.id.to_s
+    assert_select "input#inputs_person_id[value=Rosa]"
+  end
+
+  test "a typed name reuses the contact who has it, or makes a new one" do
+    rosa = users(:one).people.create!(name: "Rosa")
+
+    assert_no_difference "Person.count" do
+      post run_tool_path("gift_ideas"), params: { inputs: { person_id: "" }, person_names: { person_id: "rosa" } }
+    end
+    assert_equal rosa.id.to_s, ToolRun.order(:id).last.inputs["person_id"]
+
+    assert_difference "Person.count", 1 do
+      post run_tool_path("gift_ideas"), params: { inputs: { person_id: "" }, person_names: { person_id: "Cousin Ada" } }
+    end
+    ada = users(:one).people.find_by!(name: "Cousin Ada")
+    assert_equal ada.id.to_s, ToolRun.order(:id).last.inputs["person_id"]
+  end
+
+  test "a picked person wins over the text beside it" do
+    rosa = users(:one).people.create!(name: "Rosa")
+
+    assert_no_difference "Person.count" do
+      post run_tool_path("gift_ideas"), params: { inputs: { person_id: rosa.id }, person_names: { person_id: "Rosa (edited)" } }
+    end
+    assert_equal rosa.id.to_s, ToolRun.order(:id).last.inputs["person_id"]
   end
 
   test "new renders select and checkbox input kinds" do

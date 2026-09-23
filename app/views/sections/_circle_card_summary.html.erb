@@ -1,0 +1,23 @@
+<%# The part of a circle card that changes when someone is added — its own
+    partial and id so the person picker can swap it in place without
+    touching the form the cursor is still in (D-person-picker). %>
+<div id="<%= card.dom_id %>-summary" class="flex flex-col gap-3 pr-12">
+  <%# The signal line already says there's nobody — the empty stack just
+      holds the row so a new group lines up with the cards beside it. %>
+  <%= render Ui::AvatarStackComponent.new(
+        people: card.members, total: card.member_count, size: :md, ghost: true) %>
+
+  <div class="min-w-0">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <%= link_to card.name, card.path, class: "text-sm font-semibold text-ink group-hover:text-primary-700" %>
+      <% if card.private %>
+        <%# They look alike; they are not the same thing. The circle is a
+            per-user flag, a group is household-shared taxonomy — say so
+            rather than let matching boxes imply matching privacy (D9). %>
+        <span class="chip whitespace-nowrap bg-stone-100 text-stone-600"
+              title="Your circle is yours alone — groups are shared with your household">Only you</span>
+      <% end %>
+    </div>
+    <p class="mt-0.5 text-xs text-soft"><%= card.signal %></p>
+  </div>
+</div>

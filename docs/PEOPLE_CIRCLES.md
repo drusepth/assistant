@@ -136,9 +136,10 @@ redesign shouldn't hide it just because the boxes match.
 This is the functional half, and the reason the visual half sticks.
 
 - **`Add someone` on a group card** opens the same capture the circle already
-  has: a select over existing people plus a free-text field for a new name.
-  Picker order is circle-first, then alphabetical — the PEOPLE.md §3 scaling
-  rule, which the circle capture already follows.
+  has — since D-person-picker, one type-to-find combobox that searches the
+  address book (circle first within each match rank) and offers to add a
+  typed name as a new contact. The original `<select>` over everyone didn't
+  survive a real import.
 - **New service `People::Membership`** — `add(viewer, section, person_id: nil,
   name: nil)`: finds or creates the Person (`viewer.people.create!` when the
   name is new), then `find_or_create` the `SectionTagging`. Idempotent, so a
