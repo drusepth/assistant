@@ -27,7 +27,9 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
 
   test "the header offers a task already tagged with her lens" do
     get pet_path(@rex)
-    assert_select "a[href=?]", new_task_path(section_ids: [ @rex.section_id ]), text: "Add a task"
+    assert_select "button[data-quick-add-name-param=task]", text: /Add a task/
+    assert_select "form[action=?] input[type=hidden][name=?][value=?]",
+      tasks_path, "task[section_ids][]", @rex.section_id.to_s
 
     get new_task_path(section_ids: [ @rex.section_id ])
     assert_response :success

@@ -7,8 +7,10 @@
   <% end %>
   <% if @own %>
     <% header.with_actions do %>
-      <%= link_to "Add an appointment", new_event_path(section_ids: [ @pet.section_id ]), class: "btn btn-secondary" %>
-      <%= link_to "Add a task", new_task_path(section_ids: [ @pet.section_id ]), class: "btn btn-secondary" %>
+      <%= quick_add :event, label: "Add an appointment", title: "New appointment for #{@pet.name}",
+            prefill: { section_ids: [ @pet.section_id ] } %>
+      <%= quick_add :task, label: "Add a task", title: "New task for #{@pet.name}",
+            prefill: { section_ids: [ @pet.section_id ] } %>
       <%= link_to "Edit", edit_pet_path(@pet), class: "btn btn-secondary" %>
     <% end %>
   <% end %>
