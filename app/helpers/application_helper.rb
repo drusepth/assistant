@@ -13,11 +13,16 @@ module ApplicationHelper
   # a tag the picker wouldn't otherwise list can't be dropped by saving the
   # form. A household that turned Rights off shouldn't be asked whether its
   # dinner is about voting.
+  #
+  # A pet's lens is household-wide but the pet behind it is private (D9), so
+  # the lenses of pets this user can't see are left out: another member's
+  # private cat is not a tag you should be offered.
   def section_picker_choices(item)
     enabled_ids = Current.user.enabled_sections.map(&:id)
+    unseen_pet_lenses = Pet.where.not(id: Pet.visible_to(Current.user).select(:id)).select(:section_id)
 
     Section.where(id: enabled_ids + item.section_ids)
-      .or(Section.where(parent_id: enabled_ids))
+      .or(Section.where(parent_id: enabled_ids).where.not(id: unseen_pet_lenses))
       .order(:parent_id, :position)
   end
 

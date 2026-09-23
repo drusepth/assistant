@@ -242,4 +242,27 @@ class PeopleControllerTest < ActionDispatch::IntegrationTest
     get person_path(person)
     assert_select "form[action=?]", people_membership_path(section_id: group.id, person_id: person.id)
   end
+
+  # Rex is not a group of people: before pet lenses moved under Pets
+  # (D-pets-section), the vet made from the pet form was offered
+  # "Add to group → Rex".
+  test "a pet's lens is never offered as a group" do
+    rex = create_pet(name: "Rex")
+    club = People::Group.find_or_create!("Book club")
+    vet = users(:one).people.create!(name: "Bethany Family Pet Clinic")
+
+    get person_path(vet)
+
+    assert_select "select[name=section_id] option[value=?]", club.id.to_s
+    assert_select "select[name=section_id] option[value=?]", rex.section_id.to_s, false
+  end
+
+  test "the address book has no group chip for a pet" do
+    rex = create_pet(name: "Rex")
+    users(:one).people.create!(name: "Dr. Alvarez").sections << rex.section
+
+    get people_path
+
+    assert_select "a[href=?]", people_path(group: rex.section.slug), false
+  end
 end

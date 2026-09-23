@@ -44,4 +44,17 @@ class ApplicationHelperTest < ActionView::TestCase
     @recipe.sections << sections(:health)
     assert_equal "filed under Health", section_filing_hint(@recipe.reload)
   end
+
+  # A lens is household-wide, but the pet behind it is private (D9).
+  test "offers your own pets' lenses" do
+    rex = create_pet(name: "Rex")
+
+    assert_includes section_picker_choices(@recipe), rex.section
+  end
+
+  test "never offers another member's private pet" do
+    luna = create_pet(user: users(:two), name: "Luna")
+
+    assert_not_includes section_picker_choices(@recipe), luna.section
+  end
 end

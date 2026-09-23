@@ -60,4 +60,14 @@ class People::MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_empty rosa.reload.sections
   end
+
+  test "a pet's lens is not a group anyone can be added to" do
+    rex = create_pet(name: "Rex")
+    rosa = users(:one).people.create!(name: "Rosa")
+
+    post people_memberships_path, params: { section_id: rex.section_id, person_id: rosa.id }
+
+    assert_response :not_found
+    assert_empty rosa.reload.sections
+  end
 end
