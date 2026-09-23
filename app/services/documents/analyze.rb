@@ -36,7 +36,7 @@ module Documents
     NEXT_TOOLS = %w[ decode_letter results_explainer insurance_explainer decode_vet_estimate
                      check_pay_stub decode_offer debt_collector_response ].freeze
 
-    Result = Data.define(:summary, :section_slugs, :extracted_text, :facts, :landings, :title, :health_plan)
+    Result = Data.define(:summary, :section_slugs, :extracted_text, :facts, :landings, :title)
 
     # Career-aware extraction (D-career-signal, docs/CAREER.md §1): the fields kept from
     # a pay-stub read. Code whitelists, so the stored JSON never grows keys
@@ -69,8 +69,7 @@ module Documents
         extracted_text: stored_text(content, response),
         facts: extracted_facts(response),
         landings: Landing.propose(landings, @context),
-        title: response["title"].to_s.squish.truncate(TITLE_LIMIT).presence,
-        health_plan: response["health_plan"] == true
+        title: response["title"].to_s.squish.truncate(TITLE_LIMIT).presence
       )
     end
 
@@ -186,7 +185,13 @@ module Documents
       end
 
       def extracted_facts(response)
+        # Whether the document *is* a policy (D-document-intake): the
+        # reader's verdict, kept apart from the owner's own answer in
+        # `documents.health_plan` so a re-read can change its mind and the
+        # page can say whose answer it shows (Health::Coverage.verdict). A
+        # reader that didn't answer leaves no verdict rather than a "no".
         facts = {}
+        facts["health_plan"] = response["health_plan"] if [ true, false ].include?(response["health_plan"])
         if (tool = next_tool(response["next_tool"]))
           facts["next_tool"] = tool
         end

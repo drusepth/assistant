@@ -221,6 +221,9 @@
               class: "text-primary-700 hover:underline" %>
       <% end %>
     </div>
+    <p class="hint border-t border-edge px-5 py-3">
+      Missing one? Open the document and mark it as insurance under Edit → Advanced.
+    </p>
   <% else %>
     <div class="space-y-2 p-5">
       <p class="text-sm text-soft">
@@ -228,6 +231,7 @@
         insurance tools can read them — plain-language answers about your own coverage.
       </p>
       <%= link_to "Upload a plan document", new_document_path, class: "btn btn-secondary btn-sm" %>
+      <p class="hint">Already uploaded one? Open it and mark it as insurance under Edit → Advanced.</p>
     </div>
   <% end %>
 <% end %>

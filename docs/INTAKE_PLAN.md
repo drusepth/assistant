@@ -498,6 +498,14 @@ ruled, and the owner's pin still beats everything. The consequence the plan
 wanted holds: `Health::Coverage`'s keyword patterns now only ever see a
 document no model has read.
 
+*Amended 2026-09-23:* the job no longer writes the verdict into
+`documents.health_plan`. One column holding two people's answers meant the
+document page showed the reader's "no" as the owner's own "keep it off",
+and a re-read could never change the reader's mind. The verdict is now
+`extracted_facts["health_plan"]`, replaced on each read; the column is the
+owner's word only; `Health::Coverage.verdict` returns the answer *and* whose
+it is (owner → reader → keywords). See docs/HEALTH.md §4 for the page.
+
 **`Suggestion#materialize` kept its task and event keys.** W5 had them
 moving onto the registry "where they are creates". Their semantics differ
 from a document's: a suggestion's task always lands in Today (the nudge's

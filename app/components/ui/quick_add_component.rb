@@ -48,7 +48,7 @@ module Ui
     attr_reader :name, :label, :title, :icon, :full_form_url
 
     def panel_classes
-      "hidden fixed inset-x-3 top-20 z-30 card p-5 shadow-lg sm:absolute sm:inset-x-auto #{@align} " \
+      "hidden fixed inset-x-3 top-20 z-30 max-h-[calc(100dvh-6rem)] overflow-y-auto card p-5 shadow-lg sm:absolute sm:inset-x-auto #{@align} " \
         "sm:top-full sm:mt-2 sm:w-96 sm:max-w-[calc(100vw-3rem)]"
     end
 
