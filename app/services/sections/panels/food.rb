@@ -66,6 +66,14 @@ module Sections
       def open_items = @open_items ||= list.open_items.includes(:added_by, :recipe, :food).to_a
       def basket_items = @basket_items ||= list.basket_items.includes(:checked_by, :recipe).to_a
 
+      # The next seven days from today — on a phone the strip opens on
+      # tonight, not on a Monday that's already been eaten.
+      def week = @week ||= (Date.current..(Date.current + 6)).to_a
+
+      def meals_by_day
+        @meals_by_day ||= kitchen.meals.between(week.first..week.last).in_order.to_a.group_by(&:date)
+      end
+
       # What needs using, then how much is where.
       def expiring = @expiring ||= kitchen.pantry_items.expiring.by_expiry.limit(6).to_a
       def pantry_counts = @pantry_counts ||= kitchen.pantry_items.group(:location).count

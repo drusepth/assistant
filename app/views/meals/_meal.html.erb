@@ -1,0 +1,42 @@
+<%# One planned meal: its title (linked when the viewer can open the recipe),
+    and — folded away — who's cooking, how many, and moving it. %>
+<% kitchen = meal.kitchen %>
+<% recipe = meal.recipe_for(Current.user) %>
+<details class="group rounded-lg bg-canvas px-2 py-1.5">
+  <summary class="flex cursor-pointer list-none items-start justify-between gap-2">
+    <span class="min-w-0">
+      <span class="block text-xs text-soft"><%= meal.slot_label %><%= " · #{meal.cook.name.split.first} cooks" if meal.cook %></span>
+      <span class="block text-sm font-medium text-ink"><%= meal.title %></span>
+    </span>
+    <%= icon(:chevron_down, css_class: "mt-1 size-4 shrink-0 text-soft transition group-open:rotate-180") %>
+  </summary>
+  <div class="mt-2 space-y-2">
+    <% if recipe %>
+      <%= link_to "Open the recipe", recipe_path(recipe, servings: meal.servings), class: "text-sm font-medium text-primary-800 hover:underline" %>
+    <% end %>
+    <% if meal.event&.visible_to?(Current.user) %>
+      <%= link_to meal.event.title, event_path(meal.event), class: "block text-sm text-primary-800 hover:underline" %>
+    <% end %>
+    <%= form_with model: meal, url: kitchen_meal_path(kitchen, meal), class: "grid grid-cols-2 gap-2" do |form| %>
+      <%= form.field :date, as: :date_field, label_text: "Day" %>
+      <%= form.field :slot, label_text: "Meal" do %>
+        <%= form.select :slot, Meal::SLOTS.invert %>
+      <% end %>
+      <%= form.field :servings, as: :number_field, label_text: "Serves", min: 1, max: 100 %>
+      <%= form.field :cook_id, label_text: "Cook" do %>
+        <%= form.collection_select :cook_id, cooks, :id, :name, { include_blank: "Anyone" } %>
+      <% end %>
+      <% if local_assigns[:events].present? %>
+        <div class="col-span-2">
+          <%= form.field :event_id, label_text: "It's this event" do %>
+            <%= form.collection_select :event_id, events, :id, :title, { include_blank: "Not an event" } %>
+          <% end %>
+        </div>
+      <% end %>
+      <div class="col-span-2 flex flex-wrap gap-2">
+        <%= form.submit "Save", class: "btn btn-secondary btn-sm" %>
+      </div>
+    <% end %>
+    <%= button_to "Take it off the plan", kitchen_meal_path(kitchen, meal), method: :delete, class: "btn btn-ghost btn-sm" %>
+  </div>
+</details>

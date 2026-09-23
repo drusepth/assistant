@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_073144) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_073854) do
   create_table "access_grants", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "grantee_id", null: false
@@ -516,6 +516,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_073144) do
     t.index ["last_fetched_at"], name: "index_listing_sources_on_last_fetched_at"
     t.index ["place_id", "url"], name: "index_listing_sources_on_place_id_and_url", unique: true
     t.index ["place_id"], name: "index_listing_sources_on_place_id"
+  end
+
+  create_table "meals", force: :cascade do |t|
+    t.integer "cook_id"
+    t.datetime "created_at", null: false
+    t.date "date", null: false
+    t.integer "event_id"
+    t.integer "kitchen_id", null: false
+    t.datetime "listed_at"
+    t.integer "recipe_id"
+    t.integer "servings"
+    t.string "slot", default: "dinner", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cook_id"], name: "index_meals_on_cook_id"
+    t.index ["event_id"], name: "index_meals_on_event_id"
+    t.index ["kitchen_id", "date"], name: "index_meals_on_kitchen_id_and_date"
+    t.index ["kitchen_id"], name: "index_meals_on_kitchen_id"
+    t.index ["recipe_id"], name: "index_meals_on_recipe_id"
   end
 
   create_table "model_profiles", force: :cascade do |t|
@@ -1265,6 +1284,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_073144) do
   add_foreign_key "kitchens", "users"
   add_foreign_key "linked_accounts", "users"
   add_foreign_key "listing_sources", "places"
+  add_foreign_key "meals", "events", on_delete: :nullify
+  add_foreign_key "meals", "kitchens"
+  add_foreign_key "meals", "recipes", on_delete: :nullify
+  add_foreign_key "meals", "users", column: "cook_id", on_delete: :nullify
   add_foreign_key "model_profiles", "households"
   add_foreign_key "notes", "users"
   add_foreign_key "notification_channels", "users"

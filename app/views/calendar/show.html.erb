@@ -55,6 +55,7 @@
               <% end %>
             <% end %>
           <% end %>
+          <%= render "calendar/meals", meals: @meals_by_day.fetch(day, []), day: day %>
           <% events = @events_by_day.fetch(day, []) %>
           <div class="hidden space-y-0.5 sm:block">
             <% events.first(3).each do |event| %>

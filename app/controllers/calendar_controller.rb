@@ -28,6 +28,11 @@ class CalendarController < ApplicationController
       span_end = [ stay.check_out, grid_range.last ].min
       (span_start..span_end).each { |day| (by_day[day] ||= []) << stay }
     end
+
+    # What's for dinner (D-kitchen): the meal plans of every kitchen the
+    # viewer cooks in, as a line under the day — plans, not events.
+    @meals_by_day = Meal.where(kitchen: Kitchen.visible_to(Current.user)).between(grid_range)
+      .in_order.group_by(&:date)
   end
 
   private

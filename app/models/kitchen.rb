@@ -13,6 +13,7 @@ class Kitchen < ApplicationRecord
   has_many :food_aliases, dependent: :delete_all
   has_many :foods, dependent: :destroy
   has_many :pantry_items, dependent: :delete_all
+  has_many :meals, dependent: :delete_all
 
   validates :name, presence: true, length: { maximum: 60 }
   validate :aisle_order_is_aisles

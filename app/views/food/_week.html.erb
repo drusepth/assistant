@@ -1,0 +1,24 @@
+<%# This week (docs/FOOD_PLAN.md §4): seven days, a swipeable strip on a
+    phone, each showing what's planned; an empty day is a way to plan it. %>
+<% kitchen = panel.kitchen %>
+<%= render Ui::CardComponent.new(title: "This week") do |card| %>
+  <% card.with_actions do %>
+    <%= link_to "Plan the week", kitchen_meals_path(kitchen), class: "btn btn-secondary btn-sm" %>
+  <% end %>
+  <div class="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 lg:grid lg:grid-cols-7 lg:overflow-visible">
+    <% panel.week.each do |day| %>
+      <% meals = panel.meals_by_day.fetch(day, []) %>
+      <%= link_to kitchen_meals_path(kitchen, week: day, anchor: "day-#{day.iso8601}"),
+            class: "block min-h-20 w-28 shrink-0 snap-start rounded-xl p-2 lg:w-auto #{day == Date.current ? "bg-primary-100 ring-1 ring-primary-300" : "bg-canvas"} hover:bg-stone-100" do %>
+        <span class="block text-xs font-semibold <%= day == Date.current ? "text-primary-800" : "text-soft" %>"><%= day == Date.current ? "Today" : day.strftime("%a %-d") %></span>
+        <% if meals.any? %>
+          <% meals.first(3).each do |meal| %>
+            <span class="mt-1 block text-xs text-ink <%= "font-medium" if meal.slot == "dinner" %>"><%= meal.title %></span>
+          <% end %>
+        <% else %>
+          <span class="mt-1 block text-lg leading-none text-stone-400" aria-label="Plan a meal">+</span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

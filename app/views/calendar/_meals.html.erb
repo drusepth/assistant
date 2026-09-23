@@ -1,0 +1,11 @@
+<%# The meal band (D-kitchen): the plan, drawn the way a trip's stay is — a
+    line under the day, not an event. Dinner speaks for the day; the rest
+    are a count. %>
+<% if meals.any? %>
+  <% lead = meals.find { |meal| meal.slot == "dinner" } || meals.first %>
+  <%= link_to kitchen_meals_path(lead.kitchen_id, week: day, anchor: "day-#{day.iso8601}"),
+        title: meals.map { |meal| "#{meal.slot_label}: #{meal.title}" }.join(" · "),
+        class: "mb-0.5 block h-4 truncate rounded bg-primary-100 px-1 text-[10px] font-medium leading-4 text-primary-900" do %>
+    <%= lead.title %><% if meals.size > 1 %> +<%= meals.size - 1 %><% end %>
+  <% end %>
+<% end %>

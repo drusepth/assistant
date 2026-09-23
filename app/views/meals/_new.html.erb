@@ -1,0 +1,15 @@
+<%# Plan a meal on a day: a recipe from the box, or a line of text. %>
+<details class="rounded-lg border border-dashed border-edge px-2 py-1.5">
+  <summary class="cursor-pointer list-none text-sm text-soft hover:text-ink">+ Plan a meal</summary>
+  <%= form_with model: Meal.new(date: day, slot: "dinner"), url: kitchen_meals_path(kitchen), class: "mt-2 space-y-2" do |form| %>
+    <%= form.hidden_field :date %>
+    <%= form.field :slot, label_text: "Meal" do %>
+      <%= form.select :slot, Meal::SLOTS.invert %>
+    <% end %>
+    <%= form.field :recipe_id, label_text: "A recipe" do %>
+      <%= form.select :recipe_id, recipes, { include_blank: "—" } %>
+    <% end %>
+    <%= form.field :title, label_text: "…or something else", placeholder: "Leftovers, takeout, at Mum's" %>
+    <%= form.submit "Plan it", class: "btn btn-secondary btn-sm" %>
+  <% end %>
+</details>

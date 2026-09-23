@@ -8,6 +8,7 @@
   <% if panel.share_prompt? %>
     <%= render "food/share_prompt", panel: panel, kitchen: kitchen %>
   <% end %>
+  <%= render "food/week", panel: panel %>
   <%= render "food/list", panel: panel %>
   <%= render "food/pantry", panel: panel %>
   <%= render "food/recipes", panel: panel %>

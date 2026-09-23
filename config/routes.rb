@@ -323,6 +323,10 @@ Rails.application.routes.draw do
         post :add_to_list
       end
     end
+    # The plan — /kitchens/:id/plan?week=2026-09-21.
+    resources :meals, path: "plan", only: %i[ index create update destroy ] do
+      post :make_list, on: :collection
+    end
     resources :foods, only: %i[ index edit update ] do
       post :merge, on: :member
       patch :move_aisle, on: :collection
