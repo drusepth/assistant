@@ -38,6 +38,15 @@ class People::DirectoryTest < ActiveSupport::TestCase
     assert_equal [ "Dee Ellis" ], names_for(query: "co-op")
   end
 
+  test "a phone number is found however it's punctuated" do
+    @user.people.create!(name: "Rosa Alvarez", phone: "(503) 614-9061")
+    @user.people.create!(name: "Bo 503 Chen")
+
+    assert_equal [ "Rosa Alvarez" ], names_for(query: "503-614")
+    assert_equal [ "Rosa Alvarez" ], names_for(query: "(503) 614-9061")
+    assert_equal [ "Bo 503 Chen", "Rosa Alvarez" ], names_for(query: "503")
+  end
+
   test "a LIKE wildcard in the query is a character, not a wildcard" do
     @user.people.create!(name: "Rosa Alvarez")
 

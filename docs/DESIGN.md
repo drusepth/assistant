@@ -110,6 +110,11 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    builder app-wide. `f.field :title` renders label + input + errors with the
    system's classes; all input helpers pick up `.input` automatically.
    The section-tag picker is `app/views/shared/_section_picker.html.erb`.
+   A phone number is always `f.field :phone, as: :telephone_field`: the
+   builder adds the typing mask (`phone-input` controller), the printed
+   value, and the completeness pattern, and the model stores it through
+   `normalizes :phone` with `PhoneNumber` (D-phone-numbers). Print a
+   stored number with `phone_link` / `PhoneNumber.format`, never raw.
 5. **Item rows** — each primitive renders through its collection partial
    (`tasks/_task`, `events/_event`, …), so a list row is redesigned once and
    updates in every view that renders that primitive (index, section pages,

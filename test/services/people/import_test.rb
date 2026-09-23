@@ -17,7 +17,7 @@ class People::ImportTest < ActiveSupport::TestCase
     assert_nil result.error
 
     maria = @user.people.find_by!(name: "Maria Rivera")
-    assert_equal "+1 (555) 010-2000", maria.phone
+    assert_equal "+15550102000", maria.phone
     assert_equal "maria@example.com", maria.email
     assert_equal "123 Main St, Springfield, IL, 62704, USA", maria.address
     assert_equal Date.new(1975, 4, 5), maria.birthday
@@ -48,7 +48,7 @@ class People::ImportTest < ActiveSupport::TestCase
     import("contacts.vcf")
 
     linh = @user.people.find_by!(name: "Linh Nguyen")
-    assert_equal "+1 555 010 3000", linh.phone
+    assert_equal "+15550103000", linh.phone
     assert_equal Date.new(1988, 11, 20), linh.birthday
     assert_includes linh.notes, "Met at the café"
   end
@@ -71,7 +71,7 @@ class People::ImportTest < ActiveSupport::TestCase
     assert_equal 2, result.imported
 
     rosa = @user.people.find_by!(name: "Rosa Diaz")
-    assert_equal "+1 555 020 1000", rosa.phone
+    assert_equal "+15550201000", rosa.phone
     assert_equal "rosa@example.com", rosa.email
     assert_equal "456 Oak Ave, Portland, OR 97201", rosa.address
     assert_equal Date.new(1990, 2, 14), rosa.birthday
@@ -91,7 +91,7 @@ class People::ImportTest < ActiveSupport::TestCase
 
     priya = @user.people.find_by!(name: "Priya Patel")
     assert_equal "priya@example.com", priya.email
-    assert_equal "+1 555 030 1000", priya.phone
+    assert_equal "+15550301000", priya.phone
     assert_equal "12 Elm St, Austin, TX, 78701, USA", priya.address
     assert_equal Date.new(1985, 4, 5), priya.birthday
     assert_includes priya.notes, "Old coworker"
@@ -107,7 +107,7 @@ class People::ImportTest < ActiveSupport::TestCase
 
     joe = @user.people.find_by!(name: "Uncle Joe")
     assert_equal "uncle", joe.relationship
-    assert_equal "+1 555 040 1000", joe.phone
+    assert_equal "+15550401000", joe.phone
     assert_equal "joe@example.com", joe.email
     assert_equal "9 Pine Rd, Boise, ID", joe.address
     assert_equal Date.new(1960, 6, 1), joe.birthday
@@ -122,7 +122,7 @@ class People::ImportTest < ActiveSupport::TestCase
     assert_nil result.error
 
     nadia = @user.people.find_by!(name: "Nadia Osman")
-    assert_equal "+1 555 030 1000", nadia.phone
+    assert_equal "+15550301000", nadia.phone
     assert_equal "nadia@example.com", nadia.email
     assert_equal "12 Elm Court, Apt 4, Austin, TX, 78701, USA", nadia.address
     assert_includes nadia.notes, "Other phone: +1 555 030 1001"

@@ -3,7 +3,7 @@
 # label + control + errors stack — restyle forms here, once.
 class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
   TEXTUAL_HELPERS = %i[
-    text_field email_field password_field url_field telephone_field
+    text_field email_field password_field url_field
     number_field date_field datetime_local_field time_field search_field
   ].freeze
 
@@ -12,6 +12,36 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
       super(method, merge_classes(options, "input"))
     end
   end
+
+  # Every phone box in the app is this one: the value shows in the printed
+  # shape rather than the stored E.164 (PhoneNumber), the Stimulus mask
+  # formats it as it's typed, and the pattern stops a half-typed number at
+  # the browser. The server normalizes whatever arrives, so a form that
+  # never ran the JavaScript still saves the same thing.
+  def telephone_field(method, options = {})
+    saved = object.try(method)
+    options = {
+      value: PhoneNumber.format(saved),
+      placeholder: "(555) 555-0142",
+      autocomplete: "tel",
+      inputmode: "tel",
+      title: "A 10-digit number like (555) 555-0142. Outside the US or Canada? Start with + and the country code."
+    }.merge(options)
+    # A number saved before the mask, or imported in a shape PhoneNumber
+    # wouldn't guess at ("555-1234"), is left submittable: editing a
+    # contact's birthday shouldn't be blocked on a phone number nobody
+    # touched. Retyping it runs the mask like any other.
+    options[:pattern] ||= PHONE_PATTERN if saved.blank? || saved.to_s.start_with?("+")
+    options[:data] = { controller: "phone-input", action: "input->phone-input#format" }.merge(options[:data] || {})
+
+    super(method, merge_classes(options, "input tabular-nums"))
+  end
+  alias_method :phone_field, :telephone_field
+
+  # What the mask produces: a complete North American number, or a "+" and
+  # up to fifteen digits. Escaped for the `v` flag browsers compile
+  # `pattern` with, where a bare "(" inside a class is a syntax error.
+  PHONE_PATTERN = '\(\d{3}\) \d{3}-\d{4}|\+[\d \(\)\-]{8,24}'.freeze
 
   def text_area(method, options = {})
     super(method, merge_classes({ rows: 4 }.merge(options), "input"))
