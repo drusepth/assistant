@@ -11,9 +11,9 @@ household, owned instead of rented.
 Decisions here are logged as **D-food-section**, **D-kitchen**,
 **D-food-catalog**, and **D-food-suggestions**. They amend two earlier ones:
 D-recipe-primitive ("not an eighth section") and D-pantry (one pantry per
-user; aisles from a static table; matching over `item_key`). Open questions
-are **Q-pantry-quantities**, **Q-food-shelf-life**, **Q-grocery-prices**, and
-**Q-kitchen-offline**; **Q-recipe-nutrition**, **Q-recipe-scale-units** and
+user; aisles from a static table; matching over `item_key`). Its own
+questions — **Q-pantry-quantities**, **Q-food-shelf-life**, **Q-grocery-prices**,
+and **Q-kitchen-offline** — were resolved on 2026-09-23 (§8); **Q-recipe-nutrition**, **Q-recipe-scale-units** and
 **Q-recipe-collab** carry over from `RECIPES_PLAN.md` unchanged.
 
 This supersedes `RECIPES_PLAN.md` §5 and waves W5–W6. Everything W1–W4 built
@@ -549,7 +549,13 @@ and building it on `item_key` first would ship the silent-miss version of
 
 ---
 
-## 8. Open questions
+## 8. Open questions (resolved 2026-09-23)
+
+All four were answered the recommended way; the entries in `docs/decisions/`
+carry the answers, and the paragraphs below are the reasoning. The three
+calls flagged for pushback were also confirmed as designed: a kitchen share
+always lets the grantee cook, meals are kitchen rows drawn as a calendar band,
+and one share covers the lists, the fridge and the plan together.
 
 - **Q-pantry-quantities.** v1 pantry items carry a free-text `quantity_note`
   and presence is the signal. Real quantity tracking (subtract 200 g flour

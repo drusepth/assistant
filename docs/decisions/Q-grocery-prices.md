@@ -1,2 +1,2 @@
-<!-- open -->
-**Q-grocery-prices.** A list estimate ("about $84") wants prices, and the only honest source is the household's own receipts — the Money ledger's grocery transactions and intake'd receipt photos — giving per-food last-paid prices over time. Worth it once the receipt doors (F7 of `docs/FOOD_PLAN.md`) exist; not before. — *Not started.*
+<!-- resolved -->
+**Q-grocery-prices.** A list estimate ("about $84") wants prices, and the only honest source is the household's own receipts — the Money ledger's grocery transactions and intake'd receipt photos — giving per-food last-paid prices over time. Worth it once the receipt doors (F7 of `docs/FOOD_PLAN.md`) exist; not before. Resolved 2026-09-23: **later, from the household's own receipts.** No estimates until F7's receipt doors exist; then last-paid prices per food from intake'd receipts and the Money ledger.

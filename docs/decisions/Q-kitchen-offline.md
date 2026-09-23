@@ -1,2 +1,2 @@
-<!-- open -->
-**Q-kitchen-offline.** The in-store list queues taps in memory while the signal drops; a dead zone plus a closed tab loses them. A real offline list needs a service worker and a merge rule for two phones that both went dark mid-shop. Build only if the queue proves insufficient in real stores. — *Not started.*
+<!-- resolved -->
+**Q-kitchen-offline.** The in-store list queues taps in memory while the signal drops; a dead zone plus a closed tab loses them. A real offline list needs a service worker and a merge rule for two phones that both went dark mid-shop. Build only if the queue proves insufficient in real stores. Resolved 2026-09-23: **queue taps in memory for now.** Optimistic check-offs sync when the signal returns; a service worker waits until real stores prove the queue insufficient.
