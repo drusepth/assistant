@@ -64,4 +64,34 @@ class People::PickerTest < ActiveSupport::TestCase
 
     assert_nil People::Picker.for_circle(@user).resolve(person_id: theirs.id)
   end
+
+  test "suggestions come from plain facts, strongest first, each with its reason" do
+    photographed = @user.people.create!(name: "Photo Pal")
+    talked = @user.people.create!(name: "Chatty", last_contacted_on: 3.days.ago.to_date)
+    birthday = @user.people.create!(name: "Soon", birthday: 10.days.from_now.to_date - 30.years)
+    @user.people.create!(name: "Old Contact", created_at: 1.year.ago)
+    photo = @user.photos.create!(image: { io: File.open(file_fixture("photo.jpg")), filename: "photo.jpg", content_type: "image/jpeg" })
+    photo.photo_people.create!(person: photographed)
+
+    suggestions = People::Picker.for_circle(@user).suggestions
+
+    assert_equal [ photographed, talked, birthday ], suggestions.map(&:person).first(3)
+    assert_equal "In 1 photo", suggestions.first.reason
+    assert_match(/\ATalked /, suggestions.second.reason)
+    assert_match(/\ABirthday /, suggestions.third.reason)
+    assert_not_includes suggestions.map { |row| row.person.name }, "Old Contact",
+      "long-ago additions with nothing else going for them aren't suggested"
+  end
+
+  test "suggestions leave out who's already there" do
+    @user.people.create!(name: "In Already", keep_in_touch: true, last_contacted_on: Date.current)
+
+    assert_empty People::Picker.for_circle(@user).suggestions.map(&:person).select(&:keep_in_touch?)
+  end
+
+  test "an import's worth of new contacts isn't 'added recently'" do
+    (People::Picker::BULK + 1).times { |i| @user.people.create!(name: "Imported #{i}") }
+
+    assert_empty People::Picker.for_circle(@user).suggestions
+  end
 end

@@ -9,7 +9,10 @@ class People::MatchesController < ApplicationController
   def index
     @query = params[:q].to_s.squish
     picker = picker_for(params[:for])
-    @people = picker.matches(@query)
+    # An empty field gets a few suggestions to recognize rather than a
+    # name to remember; a typed one gets the search.
+    @suggestions = @query.empty? ? picker.suggestions : []
+    @people = @query.empty? ? [] : picker.matches(@query)
     # Offer "add as new" unless the typed name is already someone's —
     # including someone already in the circle, group or photo, who the
     # list leaves out but who still isn't new.

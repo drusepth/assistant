@@ -91,6 +91,9 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
    - `.row-leaving`/`.row-gone` (+ `.btn-chosen`) — a row's send-off off
      the list its own button just took it off (see Lists)
    - `.row-actions`, `.capture-row` — the phone shapes (see Narrow screens)
+   - `.picker-sheet` (+ `-open`, `-cancel`) — the person picker's
+     full-screen phone sheet; `Ui::PersonPickerComponent` owns it
+     (D-person-picker)
    - `.bubble` (+ `-user`, `-assistant`), `.composer` (+ `-input`, `-send`)
      — the chat surface
    - `.working-bars`/`.working-bar` — a full-width row of rounded columns

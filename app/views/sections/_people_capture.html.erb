@@ -9,7 +9,7 @@
     ) do %>
   <div class="space-y-3">
     <%= form_with url: people_circle_path, class: "flex max-w-lg items-center gap-2" do %>
-      <%= render Ui::PersonPickerComponent.new(place: :circle, label: "Add to your circle",
+      <%= render Ui::PersonPickerComponent.new(place: :circle, label: "Add to your circle", inline: true,
             placeholder: address_book_size.positive? ? "Search your address book, or type a new name…" : "Name someone…") %>
       <%= submit_tag "Add", class: "btn btn-primary shrink-0" %>
     <% end %>

@@ -14,16 +14,22 @@ module Ui
   # `place:` is where the person is going — :circle, :group (with
   # `section:`) or :photo (with `photo:`) — and decides who's suggested.
   class PersonPickerComponent < ApplicationComponent
-    def initialize(place:, label:, section: nil, photo: nil, placeholder: "Type a name…", input_class: nil)
+    # `inline: true` adds the flag the circle and membership endpoints read
+    # as "answer in place" (Turbo Streams, cursor kept) rather than a
+    # redirect — only the forms whose page has the targets set it.
+    def initialize(place:, label:, section: nil, photo: nil, placeholder: "Type a name…", input_class: nil,
+                   autofocus: false, inline: false)
       @place = place
       @label = label
       @section = section
       @photo = photo
       @placeholder = placeholder
       @input_class = input_class
+      @autofocus = autofocus
+      @inline = inline
     end
 
-    attr_reader :label, :placeholder
+    attr_reader :label, :placeholder, :autofocus, :inline
 
     def matches_url
       helpers.people_matches_path(for: @place, section_id: @section&.id, photo_id: @photo&.id)

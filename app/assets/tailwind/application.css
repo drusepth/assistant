@@ -901,6 +901,42 @@
   .capture-row {
     @apply flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center;
   }
+  /* The person picker (D-person-picker). On a wide screen it is a field
+     with a dropdown; on a phone the dropdown would open under the
+     keyboard, so while the field has focus the picker becomes a
+     full-screen sheet — field and Cancel on top, results filling the
+     rest. !important because the dropdown's own placement is utilities,
+     which outrank this layer (the print block's reason too). */
+  .picker-sheet .picker-sheet-cancel {
+    display: none;
+  }
+  @media (max-width: 639px) {
+    .picker-sheet-open {
+      position: fixed !important;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: calc(env(safe-area-inset-top) + 1rem) 1rem 1rem;
+      background: var(--color-canvas);
+    }
+    .picker-sheet-open .picker-sheet-cancel {
+      display: inline-flex;
+    }
+    .picker-sheet-open .picker-list {
+      position: static !important;
+      flex: 1 1 auto;
+      min-height: 0;
+      width: auto !important;
+      max-width: none !important;
+      max-height: none !important;
+      margin: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+  }
 
   /* Print. Recipes are the page people actually print (and hand to
      someone, and splatter), so the app has one honest print face: the

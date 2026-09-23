@@ -365,7 +365,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     People::Group.find_or_create!("D&D table")
 
     get section_path("people")
-    assert_match "Start a group", response.body
+    assert_match "New group", response.body
     assert_match "D&amp;D table", response.body
   end
 
@@ -388,6 +388,23 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", section_path(group.slug)
     assert_no_match "People · Book club", response.body,
       "a card is inside People already — the qualified name was noise"
+  end
+
+  test "the People page skips the generic empty state and folds all but three tools away" do
+    users(:one).people.create!(name: "Circle Sam", keep_in_touch: true)
+
+    get section_path("people")
+    assert_no_match "Nothing in People yet", response.body, "the circle card is the page — nothing contradicts it"
+    assert_select "details summary", text: /More tools/
+    assert_select "a[href=?]", new_tool_run_path("reconnect")
+  end
+
+  test "a new group lands on its page with the picker asking who's in it" do
+    group = People::Group.find_or_create!("Book club")
+
+    get section_path(group.slug, fresh: 1)
+    assert_select "input[role=combobox][autofocus][aria-label=?]", "Who's in Book club?"
+    assert_no_match "Nothing in Book club yet", response.body
   end
 
   test "every card can add someone, and a group card can plan something" do

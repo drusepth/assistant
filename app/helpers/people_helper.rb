@@ -1,4 +1,15 @@
 module PeopleHelper
+  # The quiet text at the right of a person picker row (D-person-picker):
+  # the relationship when there is one ("mother"). A name the results
+  # repeat always gets *something* — email, then phone, then the last line
+  # of the address — since two identical rows are a coin flip.
+  def person_picker_hint(person, repeated: false)
+    return person.relationship if person.relationship.present?
+    return nil unless repeated
+
+    person.email.presence || PhoneNumber.format(person.phone) || person.address.to_s.lines.map(&:strip).reject(&:blank?).last
+  end
+
   def contact_recency_phrase(person)
     if person.last_contacted_on
       "Last contact #{time_ago_in_words(person.last_contacted_on)} ago"

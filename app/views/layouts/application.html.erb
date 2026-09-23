@@ -233,7 +233,10 @@
             <%= yield %>
           <% else %>
             <div class="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
-              <%= render Ui::FlashComponent.new(flash: flash) %>
+              <%# The id is a Turbo Stream target: a capture that updates
+                  the page in place (the person picker) says what it did
+                  here without a reload. %>
+              <div id="flash"><%= render Ui::FlashComponent.new(flash: flash) %></div>
               <%= yield %>
             </div>
           <% end %>

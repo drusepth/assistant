@@ -38,4 +38,22 @@ class People::MatchesControllerTest < ActionDispatch::IntegrationTest
     get people_matches_path(for: "photo", photo_id: theirs.id, q: "a")
     assert_response :not_found
   end
+
+  test "an empty query answers with suggestions instead of a search" do
+    users(:one).people.create!(name: "Chatty", last_contacted_on: 2.days.ago.to_date)
+
+    get people_matches_path(for: "circle", q: "")
+    assert_match "Suggestions", response.body
+    assert_select "li[role=option][data-name=Chatty]", text: /Talked/
+  end
+
+  test "the matched text is bold, and a repeated name carries a hint to tell them apart" do
+    users(:one).people.create!(name: "Sam Lee", email: "sam@work.test")
+    users(:one).people.create!(name: "Sam Lee", phone: "5036149061")
+
+    get people_matches_path(for: "circle", q: "lee")
+    assert_select "li[role=option] strong", text: "Lee", count: 2
+    assert_match "sam@work.test", response.body
+    assert_match "(503) 614-9061", response.body
+  end
 end

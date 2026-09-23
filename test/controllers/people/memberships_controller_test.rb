@@ -70,4 +70,16 @@ class People::MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_empty rosa.reload.sections
   end
+
+  test "an inline add redraws the group card and the member list in place" do
+    rosa = users(:one).people.create!(name: "Rosa")
+
+    post people_memberships_path, params: { section_id: @group.id, person_id: rosa.id, inline: "1" }, as: :turbo_stream
+
+    assert_select "turbo-stream[action=replace][target=?]", "group-#{@group.id}-summary"
+    assert_select "turbo-stream[action=replace][target=group-members]" do
+      assert_select "template", text: /Rosa/
+    end
+    assert_match people_membership_path(section_id: @group.id, person_id: rosa.id), response.body
+  end
 end

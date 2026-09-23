@@ -64,4 +64,38 @@ class People::CirclesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_not person.reload.keep_in_touch?
   end
+
+  # D-person-picker: the picker's own forms are answered in place so the
+  # next name can be typed straight away.
+  test "an inline add answers with streams: the card, reach out, and a notice with Undo" do
+    person = users(:one).people.create!(name: "Sam")
+
+    post people_circle_path, params: { person_id: person.id, inline: "1" }, as: :turbo_stream
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    assert_select "turbo-stream[action=replace][target=circle-summary]"
+    assert_select "turbo-stream[action=replace][target=reach-out]"
+    assert_select "turbo-stream[action=update][target=flash]" do
+      assert_select "template", text: /Sam added to your circle/
+    end
+    assert_match people_circle_path(person_id: person.id), response.body, "the notice carries its Undo"
+    assert_no_match "Add a birthday or phone", response.body, "an existing contact needs no nudge"
+  end
+
+  test "a brand-new contact from the picker is offered its next step" do
+    post people_circle_path, params: { name: "Cousin Ada", inline: "1" }, as: :turbo_stream
+
+    assert_match "Add a birthday or phone", response.body
+    assert_match edit_person_path(Person.find_by(name: "Cousin Ada")), response.body
+  end
+
+  test "without the inline flag a Turbo form still gets the redirect, with Undo in the flash" do
+    person = users(:one).people.create!(name: "Sam")
+
+    post people_circle_path, params: { person_id: person.id }, as: :turbo_stream
+
+    assert_redirected_to section_path("people")
+    assert_equal "delete", flash[:undo]["method"]
+  end
 end

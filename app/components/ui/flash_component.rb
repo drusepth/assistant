@@ -11,8 +11,10 @@ module Ui
 
     # Flash keys the app uses to carry data rather than a sentence to read —
     # they travel the same redirect, but they are never banners of their own.
-    # `undo` is an action that rides *inside* the notice describing it.
-    SILENT = %w[ celebrate undo ].freeze
+    # `undo` is an action that rides *inside* the notice describing it, and
+    # `follow_up` a link to the obvious next step (a contact that was just
+    # made from a bare name wants a birthday and a phone).
+    SILENT = %w[ celebrate undo follow_up ].freeze
 
     def render? = messages.any?
 
@@ -22,8 +24,14 @@ module Ui
     end
 
     # `{"label" =>, "url" =>}` — a one-click way back from the action the
-    # notice just described. PATCH, because every undo the app has is a
-    # write that puts a field back where it was.
+    # notice just described. PATCH by default, because most undos are a
+    # write that puts a field back where it was; `"method" => "delete"` for
+    # the ones that take something back out (a person off the circle).
     def undo = @flash[:undo]
+
+    def undo_method = (undo["method"] || "patch").to_sym
+
+    # `{"label" =>, "url" =>}`, a plain link.
+    def follow_up = @flash[:follow_up]
   end
 end

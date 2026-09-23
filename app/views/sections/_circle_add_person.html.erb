@@ -2,13 +2,16 @@
     circle card, every group card, and the group page: one type-to-find
     field (D-person-picker) — pick someone you have, or type someone new —
     and its button. The address book is the thing that gets long, so it is
-    searched, never listed. %>
+    searched, never listed. `inline` asks for the answer as Turbo Streams:
+    the new face lands on the page, the field clears and keeps the cursor,
+    and the next name can be typed straight away. %>
 <%= form_with url: url, class: "flex items-center gap-2" do %>
   <% if local_assigns[:section] %>
     <%= hidden_field_tag :section_id, section.id %>
   <% end %>
   <%= render Ui::PersonPickerComponent.new(
         place: local_assigns[:section] ? :group : :circle, section: local_assigns[:section],
-        label: label, input_class: "text-sm") %>
+        label: label, placeholder: label.end_with?("?") ? label : "Type a name…",
+        input_class: "text-sm", autofocus: local_assigns[:autofocus], inline: true) %>
   <%= submit_tag "Add", class: "btn btn-secondary shrink-0" %>
 <% end %>

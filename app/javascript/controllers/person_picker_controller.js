@@ -2,13 +2,22 @@ import { Controller } from "@hotwired/stimulus"
 
 // The person picker (D-person-picker): a combobox over the address book.
 // Typing asks the server for up to eight matches (People::MatchesController,
-// which renders the option rows) plus an "Add … as a new contact" row when
-// the name is nobody's yet. Picking a person fills the hidden person_id and
-// submits; picking the new row, or pressing Enter without picking anything,
-// submits the typed name and the server makes (or finds) the contact.
+// which renders the option rows) plus an "Add …" row when the name is
+// nobody's yet; focusing the empty field asks for a few suggestions instead
+// (people you just added, who's in your photos, birthdays coming up).
+// Picking a person fills the hidden person_id and submits; picking the new
+// row, or pressing Enter without picking anything, submits the typed name
+// and the server makes (or finds) the contact.
 //
 // Nothing is highlighted until you arrow to it, unless the typed name is
 // exactly someone's: Enter on "Ann" must not quietly add "Anna Lee".
+//
+// A form answered in place (Turbo Streams) keeps this field on the page, so
+// a successful submit clears it and keeps the cursor for the next name.
+//
+// On a phone the dropdown would open under the keyboard, so there the field
+// becomes a full-screen sheet while it has focus: field and Cancel at the
+// top, results filling the rest.
 //
 // Without this controller the field is a plain name input that still works.
 export default class extends Controller {
@@ -18,17 +27,34 @@ export default class extends Controller {
   activeIndex = -1
 
   connect() {
-    // A picker folded inside a <details> ("Add someone" on a card) is
-    // opened in order to type, so opening it focuses the field.
-    this.details = this.element.closest("details")
-    this.onToggle = () => { if (this.details.open) this.inputTarget.focus() }
-    this.details?.addEventListener("toggle", this.onToggle)
+    this.form = this.inputTarget.form
+    this.onSubmitEnd = event => {
+      if (!event.detail.success) return
+      // A keystroke's search still in flight would reopen the list over
+      // the face that just landed.
+      this.#cancelPending()
+      this.inputTarget.value = ""
+      this.idTarget.value = ""
+      this.close()
+      // Back in the field for the next name, but without reopening the
+      // suggestions over the face that just landed — typing brings them.
+      this.quiet = true
+      this.inputTarget.focus({ preventScroll: true })
+      this.quiet = false
+    }
+    this.form?.addEventListener("turbo:submit-end", this.onSubmitEnd)
+    this.phone = window.matchMedia("(max-width: 639px)")
   }
 
   disconnect() {
-    this.details?.removeEventListener("toggle", this.onToggle)
-    this.abort?.abort()
-    clearTimeout(this.timer)
+    this.form?.removeEventListener("turbo:submit-end", this.onSubmitEnd)
+    this.#cancelPending()
+    this.#sheet(false)
+  }
+
+  focus() {
+    if (this.phone.matches) this.#sheet(true)
+    if (!this.quiet) this.fetch()
   }
 
   search(event) {
@@ -40,7 +66,6 @@ export default class extends Controller {
 
   async fetch() {
     const query = this.inputTarget.value.trim()
-    if (!query) return this.close()
 
     this.abort?.abort()
     this.abort = new AbortController()
@@ -56,13 +81,14 @@ export default class extends Controller {
       return // superseded by a newer keystroke, or offline — the field still submits
     }
     if (this.inputTarget.value.trim() !== query) return
+    if (document.activeElement !== this.inputTarget) return
 
     this.listTarget.innerHTML = html
     this.options.forEach((option, index) => { option.id = `${this.listTarget.id}-${index}` })
-    if (this.options.length === 0) return this.close()
+    if (this.options.length === 0) return this.close({ keepSheet: true })
 
     this.open()
-    const exact = this.options.find(option => option.dataset.personId && option.dataset.name.toLowerCase() === query.toLowerCase())
+    const exact = query && this.options.find(option => option.dataset.personId && option.dataset.name.toLowerCase() === query.toLowerCase())
     this.highlight(exact ? this.options.indexOf(exact) : -1)
   }
 
@@ -86,12 +112,15 @@ export default class extends Controller {
         if (expanded && this.active) {
           event.preventDefault()
           this.choose(this.active)
+        } else {
+          this.#cancelPending() // the form submits the typed name as-is
+          this.close({ keepSheet: true })
         }
         break
       case "Escape":
-        if (expanded) {
+        if (expanded || this.sheetOpen) {
           event.preventDefault()
-          this.close()
+          this.dismiss()
         }
         break
     }
@@ -107,16 +136,28 @@ export default class extends Controller {
   }
 
   choose(option) {
+    this.#cancelPending()
     this.idTarget.value = option.dataset.personId || ""
     this.inputTarget.value = option.dataset.name
     this.close()
-    this.inputTarget.form?.requestSubmit()
+    this.form?.requestSubmit()
   }
 
-  close() {
+  // The sheet's Cancel, and Escape: out of the field altogether.
+  dismiss() {
+    this.close()
+    this.inputTarget.blur()
+  }
+
+  blur() {
+    this.close()
+  }
+
+  close({ keepSheet = false } = {}) {
     this.listTarget.hidden = true
     this.inputTarget.setAttribute("aria-expanded", "false")
     this.inputTarget.removeAttribute("aria-activedescendant")
+    if (!keepSheet && document.activeElement !== this.inputTarget) this.#sheet(false)
   }
 
   open() {
@@ -141,5 +182,19 @@ export default class extends Controller {
 
   get active() {
     return this.options[this.activeIndex]
+  }
+
+  get sheetOpen() {
+    return this.element.classList.contains("picker-sheet-open")
+  }
+
+  #cancelPending() {
+    clearTimeout(this.timer)
+    this.abort?.abort()
+  }
+
+  #sheet(on) {
+    this.element.classList.toggle("picker-sheet-open", on)
+    document.documentElement.classList.toggle("overflow-hidden", on)
   }
 }

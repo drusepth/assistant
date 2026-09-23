@@ -34,13 +34,28 @@
   <%# Act zone (D18): what the app can do here — present even, especially,
       when the section is empty. %>
   <% if @tools.any? %>
+    <% lead = @panel&.lead_tool_slugs %>
+    <% shown, more = lead ? @tools.partition { |tool| lead.include?(tool.slug) } : [ @tools, [] ] %>
     <div>
       <h2 class="mb-3 text-sm font-medium text-soft">Tools</h2>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <% @tools.each do |tool| %>
+        <% shown.each do |tool| %>
           <%= render Ui::ToolCardComponent.new(tool: tool) %>
         <% end %>
       </div>
+      <% if more.any? %>
+        <details class="group/more mt-3">
+          <summary class="cursor-pointer list-none text-sm font-medium text-primary-700 hover:underline [&::-webkit-details-marker]:hidden">
+            <span class="group-open/more:hidden">More tools (<%= more.size %>)</span>
+            <span class="hidden group-open/more:inline">Fewer tools</span>
+          </summary>
+          <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <% more.each do |tool| %>
+              <%= render Ui::ToolCardComponent.new(tool: tool) %>
+            <% end %>
+          </div>
+        </details>
+      <% end %>
     </div>
   <% end %>
 

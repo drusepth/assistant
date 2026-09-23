@@ -16,6 +16,15 @@ module Sections
       # only front door.
       def hidden_browse = %i[ events people ]
 
+      # The page leads with people, so "Nothing in People yet" under a
+      # circle card with faces on it read as broken. The capture and the
+      # cards are the way in.
+      def show_empty_browse? = false
+
+      # The three tools the page is about; the other seven fold away.
+      LEAD_TOOLS = %w[ reconnect gift_ideas get_together ].freeze
+      def lead_tool_slugs = LEAD_TOOLS
+
       # The circle and every group as one uniform card (D-people-circles).
       def circle_cards = @circle_cards ||= ::People::Circles.for(viewer, section)
 
