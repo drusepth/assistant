@@ -5,7 +5,12 @@
     <%= form.field :species do %>
       <%= form.select :species, Pet::SPECIES.map { |slug| [ Pet::SPECIES_LABELS[slug], slug ] } %>
     <% end %>
-    <%= form.field :breed, placeholder: "Golden retriever, tabby, lop…" %>
+    <div data-controller="breed-guess" data-breed-guess-url-value="<%= breed_guess_path %>">
+      <%= form.field :breed do %>
+        <%= form.text_field :breed, placeholder: "Golden retriever, tabby, lop…", data: { breed_guess_target: "input" } %>
+        <%= render "pets/breed_guess", pet: pet %>
+      <% end %>
+    </div>
   </div>
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <%# Sex is what the app reads to decide whether to write "she", "he" or

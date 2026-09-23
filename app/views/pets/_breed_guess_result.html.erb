@@ -1,0 +1,17 @@
+<% if local_assigns[:error] %>
+  <p class="field-error"><%= error %></p>
+<% elsif result.guesses.any? %>
+  <p class="text-soft">Tap one to fill in the box — it's saved with the form.</p>
+  <div class="mt-1.5 flex flex-wrap gap-1.5">
+    <% result.guesses.each do |guess| %>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="breed-guess#use" data-breed-guess-name-param="<%= guess.name %>">
+        <%= guess.name %><% if guess.likelihood == "possible" %> <span class="font-normal text-soft">· maybe</span><% end %>
+      </button>
+    <% end %>
+  </div>
+  <% if result.note %>
+    <p class="mt-1.5 text-soft"><%= result.note %></p>
+  <% end %>
+<% else %>
+  <p class="text-soft"><%= result.note || "The model couldn't tell from that photo." %> Try another, or leave the box blank.</p>
+<% end %>
