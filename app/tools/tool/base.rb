@@ -59,6 +59,12 @@ module Tool
       Respond with a JSON object:
       {"draft": {"title": "...", "body": "..."},
        "follow_ups": [{"title": "...", "due_on": "YYYY-MM-DD" or null}, ...]}.
+      The body is Markdown, and the page renders it: "## " headings for the
+      sections, "-" or "1." lists, **bold** for the few words that must not be
+      missed. Use a table only for rows of like records, with a header row and
+      a |---| divider, and keep each row on one line — no line breaks and no
+      lists inside a cell; if a cell needs a list, use a heading and a list
+      instead.
       follow_ups are at most #{MAX_FOLLOW_UPS} small concrete actions, each completable
       within a single day; set due_on only when a real deadline is stated or
       clearly implied, resolved against today's date.

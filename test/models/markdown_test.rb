@@ -2,8 +2,8 @@ require "test_helper"
 
 # The renderer's whole safety argument is "everything is escaped before a
 # single rule runs", so most of this file is attempts to get a tag past it.
-class DiaryMarkdownTest < ActiveSupport::TestCase
-  def render(text) = Diary::Markdown.render(text)
+class MarkdownTest < ActiveSupport::TestCase
+  def render(text) = Markdown.render(text)
 
   # --- the safety argument ---
 
@@ -135,5 +135,75 @@ class DiaryMarkdownTest < ActiveSupport::TestCase
 
   test "windows line endings behave like any others" do
     assert_match "<p>One<br>Two</p>", render("One\r\nTwo")
+  end
+
+  # --- the shapes a model's draft takes ---
+
+  test "deeper headings all become the smallest marker" do
+    assert_match "<h4>Deep</h4>", render("#### Deep")
+    assert_match "<h3>Closed</h3>", render("## Closed ##")
+  end
+
+  test "a table with a header renders as one, with each cell labelled by its column" do
+    html = render("| Who | Why |\n|---|---|\n| **Vet** | They check the chip |")
+
+    assert_match "<thead><tr><th>Who</th><th>Why</th></tr></thead>", html
+    assert_match %(<td data-label="Who"><strong>Vet</strong></td>), html
+    assert_match %(<td data-label="Why">They check the chip</td>), html
+    assert_match %(<div class="prose-table">), html
+  end
+
+  test "a row a model broke across lines to fit a list in a cell stays one row" do
+    html = render(<<~MD)
+      | Organisation | What to give them | Why |
+      |---|---|---|
+      | **Microchip registry** | • Microchip number
+      • Description
+      • Last seen | Flag him as missing. |
+      | Shelters | Description | They can alert staff. |
+    MD
+
+    assert_equal 2, html.scan("<tr><td").length
+    assert_match "<ul><li>Microchip number</li><li>Description</li><li>Last seen</li></ul>", html
+    assert_match "Flag him as missing.", html
+    assert_no_match(/<p>/, html, "no row may leak out of the table as a paragraph")
+  end
+
+  test "a literal br inside a cell is a line break, and nothing else typed there is markup" do
+    html = render("| A | B |\n|---|---|\n| one<br>two | <b>x</b> |")
+
+    assert_match "one<br>two", html
+    assert_match "&lt;b&gt;x&lt;/b&gt;", html
+  end
+
+  test "a header label cannot break out of its attribute" do
+    html = render(%(| "><script> |\n|---|\n| x |))
+
+    assert_no_match(/<script/i, html)
+    assert_match %(data-label="&quot;&gt;&lt;script&gt;"), html
+  end
+
+  test "indented sub-points nest under their item, and wrapped lines join it" do
+    html = render("- Poster\n  - name\n  - photo\n- Posts\n  on every group")
+
+    assert_match "<ul><li>Poster<ul><li>name</li><li>photo</li></ul></li><li>Posts<br>on every group</li></ul>", html
+  end
+
+  test "numbered steps split by blank lines keep counting" do
+    html = render("1. Search the house\n\n2. Take a torch")
+
+    assert_match "<ol><li>Search the house</li></ol>", html
+    assert_match %(<ol start="2"><li>Take a torch</li></ol>), html
+  end
+
+  test "bullet dots and horizontal rules" do
+    assert_match "<ul><li>one</li><li>two</li></ul>", render("• one\n• two")
+    assert_match "<hr>", render("above\n\n---\n\nbelow")
+  end
+
+  test "plain drops the markers for a preview" do
+    text = "## The first hour\n**Search** the house\n| Who | Why |\n|---|---|\n| Vet | Chip |\n- a [link](https://x.test)"
+
+    assert_equal "The first hour\nSearch the house\nWho · Why\nVet · Chip\n• a link", Markdown.plain(text)
   end
 end

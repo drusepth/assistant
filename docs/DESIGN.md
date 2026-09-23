@@ -75,6 +75,8 @@ reaches `btn-danger`'s saturation, so the two can't be confused.
      so each surface is a URL (see D-tasks-two-surfaces)
    - `.callout` (+ `-warn`, `-title`) — a tinted aside inside a card: a
      recommendation or caveat that belongs to the form, not the request
+   - `.prose-body` (+ `.prose-table`) — rendered Markdown (`Markdown.render`):
+     tool drafts, notes, the diary; tables fold into stacked cards on a phone
    - `.item-stack`/`.item-row` (+ `.stack-label`) — list shapes (see Lists)
    - `.reader-row`/`.reader-line` (+ `.reader-face`, `.reader-headline`,
      `.reader-signal`, `.reader-verbs`, `.reader-verb`, `.reader-verb-lg`,
