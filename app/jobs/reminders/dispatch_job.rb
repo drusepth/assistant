@@ -49,6 +49,10 @@ class Reminders::DispatchJob < ApplicationJob
       changes = next_at ? { deliver_at: next_at, last_delivered_at: now } : { delivered_at: now, last_delivered_at: now }
 
       return if Reminder.pending.where(id: reminder.id, deliver_at: reminder.deliver_at).update_all(changes).zero?
+      # A routine (D-task-routines): the chore comes back onto the board on
+      # its day, missed ping or not — the chore is owed even when a late
+      # notification about it would be noise.
+      reminder.subject.come_round! if reminder.subject.is_a?(Task)
       # Missed by more than a day: the series is already re-armed above, and
       # the same judgment as a stale one-shot says this ping is noise.
       return if reminder.stale?(now)
