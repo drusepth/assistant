@@ -1,0 +1,42 @@
+<%# An event or a reminder in the day view: the time in its own column, so
+    the schedule reads down one edge. Tasks use their own row (tasks/_task),
+    which carries the complete button. Locals: entry. %>
+<% record = entry.record %>
+<% shared = !entry.own?(Current.user) %>
+<div class="item-row flex items-start gap-3 px-4 py-3">
+  <p class="w-16 shrink-0 pt-0.5 text-xs tabular-nums text-soft">
+    <% if entry.at %>
+      <%= entry.at.strftime("%-l:%M %p") %>
+    <% elsif entry.kind == :event && record.starts_at.to_date < @date %>
+      Continues
+    <% else %>
+      All day
+    <% end %>
+  </p>
+  <div class="min-w-0 flex-1">
+    <% if entry.kind == :event %>
+      <%= link_to record.title, record, class: "text-sm font-medium text-ink hover:text-primary-700" %>
+      <% details = [ (entry.at && record.ends_at && "until #{record.ends_at.strftime(record.ends_at.to_date == @date ? "%-l:%M %p" : "%a %-l:%M %p")}"),
+                     (record.all_day? && record.ends_at && record.ends_at.to_date > @date && "through #{record.ends_at.strftime("%a %b %-d")}"),
+                     record.location.presence, (record.user.name if shared) ].compact_blank %>
+      <% if details.any? %>
+        <p class="mt-0.5 text-xs text-soft"><%= details.join(" · ") %></p>
+      <% end %>
+      <div class="mt-1 flex flex-wrap items-center gap-1.5">
+        <%= render "shared/item_chips", item: record %>
+      </div>
+    <% else %>
+      <p class="flex items-center gap-1.5 text-sm text-ink">
+        <%= icon(:bell, css_class: "size-4 shrink-0 text-soft") %>
+        <span class="min-w-0"><%= record.body %></span>
+      </p>
+      <p class="mt-0.5 text-xs text-soft">
+        Reminder<%= " · #{record.cadence}" if record.standing? %>
+        <% if record.subject %>
+          · <%= link_to "on this #{record.subject_type.downcase}", record.subject, class: "text-primary-700 hover:underline" %>
+        <% end %>
+        · <%= link_to "Change", today_path, class: "text-primary-700 hover:underline" %>
+      </p>
+    <% end %>
+  </div>
+</div>
