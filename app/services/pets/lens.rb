@@ -1,11 +1,11 @@
 module Pets
-  # A pet's lens (D-pet-primitive): a custom child section of People, riding
-  # the same generalized D25 mechanism as hobbies and groups. Pets are family,
-  # and the People page is the household roster — but the parent matters less
-  # than what the lens buys, which is that "about Rex" becomes a tag every
-  # existing form, query, filter and grant already understands.
+  # A pet's lens (D-pet-primitive): a custom child section of Pets
+  # (D-pets-section), riding the same generalized D25 mechanism as hobbies and
+  # groups. The parent matters less than what the lens buys, which is that
+  # "about Rex" becomes a tag every existing form, query, filter and grant
+  # already understands.
   module Lens
-    PARENT = "people".freeze
+    PARENT = "pets".freeze
 
     module_function
 
@@ -23,8 +23,7 @@ module Pets
     end
 
     # Every pet lens in the instance — the set a user's own care radar has to
-    # subtract (D-pet-care-radar) and the set the People page must not render
-    # as groups.
+    # subtract (D-pet-care-radar).
     def section_ids = Pet.distinct.pluck(:section_id)
   end
 end

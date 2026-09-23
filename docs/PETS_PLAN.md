@@ -10,6 +10,13 @@ library, and "teach Rex to walk on a leash" is a Goal. Nothing about a pet
 wants a new silo — what's missing is the ability to say *this item is about
 Rex*, and one page where all of it converges.
 
+> **Amended by D-pets-section.** Pets now has a top-level section of its own:
+> each pet's lens is a child of Pets rather than People, and the pet cards
+> moved from the People page to the Pets hub. The claim above still holds —
+> the vet visit is still Health + Rex, never Pets instead of Health — so read
+> "under People" below as "under Pets", and the People row of the hubs table
+> as the Pets hub.
+
 Decisions here are logged as **D-pet-primitive**, **D-pet-care-radar**, and
 **D-pet-food-shelf**. Open questions are **Q-pet-metrics** and
 **Q-pet-sitter**.

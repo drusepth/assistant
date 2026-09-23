@@ -16,7 +16,7 @@ class Section < ApplicationRecord
   validates :name, presence: true
 
   # Models that own a lens each (D-pet-primitive): a Pet holds a custom child
-  # of People. One registry, two consumers — Sections::Panel resolves the
+  # of Pets (D-pets-section). One registry, two consumers — Sections::Panel resolves the
   # lens's page through it, and `removable?` keeps the generic "remove this
   # group" button off a lens whose life belongs to a record.
   LENS_OWNERS = %w[ Pet ].freeze

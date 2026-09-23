@@ -96,6 +96,6 @@
 
   <div class="flex items-center gap-2 pt-2">
     <%= form.submit %>
-    <%= link_to "Cancel", pet.persisted? ? pet_path(pet) : section_path("people"), class: "btn btn-ghost" %>
+    <%= link_to "Cancel", pet.persisted? ? pet_path(pet) : section_path("pets"), class: "btn btn-ghost" %>
   </div>
 <% end %>
