@@ -1,0 +1,30 @@
+<%# The Pets hub lead panel (D-pets-section): the pets, what the app can do
+    for them, and — once there are enough of them — their care at a glance. %>
+<%= render "sections/pets_strip", pets: panel.pets, remembered: panel.remembered_pets %>
+
+<%= render Ui::CardComponent.new(title: "What the app can do") do %>
+  <div class="flex flex-wrap gap-2">
+    <% panel.tools.each do |tool| %>
+      <%= link_to tool.title, new_tool_run_path(tool.slug, inputs: panel.tool_inputs(tool).presence), class: "btn btn-secondary btn-sm" %>
+    <% end %>
+    <% if (tool = panel.lost_pet_tool) %>
+      <%= link_to tool.title, new_tool_run_path(tool.slug, inputs: panel.tool_inputs(tool).presence), class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if panel.show_care? %>
+  <%= render Ui::CardComponent.new(
+        title: "Routine care",
+        subtitle: "Booked means you can stop thinking about it. Due means it's worth a call this week."
+      ) do %>
+    <div class="space-y-3">
+      <% panel.care.each do |pet, statuses| %>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= link_to pet.name, pet_path(pet), class: "min-w-24 text-sm font-medium text-ink hover:text-primary-700" %>
+          <%= render "sections/care_chips", statuses: statuses %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

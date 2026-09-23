@@ -16,9 +16,8 @@ module Sections
     end
 
     # By slug first. Then a lens a model owns — a `Pet` holds a custom child
-    # of People (`Section::LENS_OWNERS`), and without this rung Rex's lens
-    # would fall through to the parent rule below and render as a group's
-    # members page. Failing both, a parent may
+    # of Pets (`Section::LENS_OWNERS`), and without this rung Rex's lens
+    # would fall through to the parent rule below and find no panel. Failing both, a parent may
     # claim its user-created lenses as one class, since those slugs are named
     # by the user and can't be known here: `Panels::PeopleLens` for every
     # group under People (D-people-circles), `Panels::HobbiesLens` for every

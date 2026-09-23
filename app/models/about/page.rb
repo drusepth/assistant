@@ -16,8 +16,8 @@ module About
 
       # The tools this page speaks for. Declared here rather than read from
       # the section taxonomy because a hub does not map cleanly onto one
-      # section row: Money covers its seven subsections, Health covers the
-      # pet tools, and the two cross-cutting hubs cover no section at all.
+      # section row: Money covers its seven subsections, Health and Pets
+      # both cover the pet tools, and the two cross-cutting hubs cover no section at all.
       def tools
         return [] if sections.empty?
 
@@ -63,7 +63,7 @@ module About
         "Read every line, change what you like, and keep it if we disappear.")
     ].freeze
 
-    # The ten hubs. Eight are the app's sections; `your-day` and
+    # The eleven hubs. Nine are the app's sections; `your-day` and
     # `your-stuff` exist because much of what is built lives across all of
     # them and would otherwise have no page to live on.
     HUBS = [
@@ -104,7 +104,12 @@ module About
                       debt_collector_response wage_claim accommodation_request ]),
       entry("travel", "Travel",
         "Where you've been, drawn from your own photos, and where you're going.",
-        sections: %w[ travel ])
+        sections: %w[ travel ]),
+      entry("pets", "Pets",
+        "The dependents who can't tell you what hurts, or when the food runs out.",
+        sections: %w[ pets ],
+        featured: %w[ pet_care vet_visit_prep decode_vet_estimate
+                      compare_pet_insurance new_pet lost_pet ])
     ].freeze
 
     # One page per substantial feature, each declaring the hub it hangs
@@ -145,7 +150,7 @@ module About
         "What's quietly gone too long — for everyone in the house, including the pets."),
       feature("insurance", "health", "Insurance",
         "Your plan in plain language, and the appeal for when they say no."),
-      feature("pets", "health", "Pets",
+      feature("pets", "pets", "Pets",
         "The dependent who can't tell you what hurts, given a record and a reorder date."),
 
       feature("budget", "money", "Budget",

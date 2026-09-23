@@ -1,3 +1,12 @@
-<%= link_to helpers.section_path(section.slug), class: "chip #{helpers.section_chip_classes(section)}" do %>
-  <%= section.qualified_name %>
+<%# A pet's lens chip reads as her name and opens her page (D-pets-section):
+    "Pets · Rex" on every row said the obvious, and the list it opened was
+    the thin one. %>
+<% if (pet = helpers.pet_for_lens(section)) %>
+  <%= link_to helpers.pet_path(pet), class: "chip #{helpers.section_chip_classes(section)}" do %>
+    <%= pet.name %>
+  <% end %>
+<% else %>
+  <%= link_to helpers.section_path(section.slug), class: "chip #{helpers.section_chip_classes(section)}" do %>
+    <%= section.qualified_name %>
+  <% end %>
 <% end %>

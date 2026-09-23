@@ -1,4 +1,15 @@
 module PetsHelper
+  # The pet who owns a lens, when the viewer can see her — what lets a
+  # "Rex" chip open Rex's page rather than the bare list of her tagged items.
+  # One query per render however many chips ask, and none for the seeded
+  # taxonomy, which is never a pet's.
+  def pet_for_lens(section)
+    return nil unless section.custom? && Current.user
+
+    @pets_by_lens ||= Pet.visible_to(Current.user).select(:id, :name, :section_id).index_by(&:section_id)
+    @pets_by_lens[section.id]
+  end
+
   # One line under a food: what she eats a day, when the bag runs out, what it
   # costs. Each clause appears only when its numbers exist — a food with no
   # bag size says what it can and stops, rather than printing an estimate

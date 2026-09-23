@@ -1,6 +1,12 @@
 <%# The pet's page (D-pet-primitive): the one place her care, food, papers,
     pictures and cost converge. Her lens's section page is the raw browse of
     everything tagged with her — linked at the foot, two surfaces, two jobs. %>
+<% content_for :nav_section, "pets" %>
+
+<div class="mb-3">
+  <%= link_to "← Pets", section_path("pets"), class: "text-sm font-medium text-primary-700" %>
+</div>
+
 <%= render Ui::PageHeaderComponent.new(title: @pet.name, subtitle: @pet.descriptor.presence) do |header| %>
   <% header.with_avatar do %>
     <%= render Ui::AvatarComponent.new(person: @pet, size: :lg, tone: :sage) %>
@@ -131,6 +137,12 @@
     <% if @photos.any? %>
       <%= render "pets/photos", pet: @pet, photos: @photos, memorial: @own && @pet.died? %>
     <% end %>
+
+    <%# The filing cabinet: every note, document and done task under her name.
+        Item chips open this page rather than it, so this is its way in. %>
+    <p class="text-sm">
+      <%= link_to "Everything filed under #{@pet.name} →", section_path(@pet.section.slug), class: "text-primary-700 hover:underline" %>
+    </p>
   </div>
 
   <div class="space-y-6">

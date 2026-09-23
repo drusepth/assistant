@@ -8,7 +8,7 @@ module Tool
   class ComparePetInsurance < Base
     self.title = "Compare pet insurance"
     self.description = "Two policies side by side — the premium, and the exclusions that actually bite."
-    self.section_slugs = %w[ health ]
+    self.section_slugs = %w[ pets health ]
     self.kind = :draft
 
     input :policy_a_id, kind: :document, required: true, label: "First policy document"

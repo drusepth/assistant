@@ -11,7 +11,7 @@ module Tool
   class NewPet < Base
     self.title = "Bringing a pet home"
     self.description = "The first fortnight as a plan — vet, microchip, supplies, budget, and settling in."
-    self.section_slugs = %w[ people health ]
+    self.section_slugs = %w[ pets health ]
     self.kind = :plan
 
     input :name, required: true, label: "What's their name?"
