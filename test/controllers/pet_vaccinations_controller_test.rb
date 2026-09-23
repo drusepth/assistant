@@ -208,4 +208,97 @@ class PetVaccinationsControllerTest < ActionDispatch::IntegrationTest
     get document_path(document)
     assert_select "a[href=?]", pet_vaccinations_path(@rex), text: "Rabies"
   end
+
+  # ── Pre-merge polish ─────────────────────────────────────────────────
+
+  test "one Book button covers everything due, marked as a vaccination visit" do
+    @rex.pet_vaccinations.create!(user: @owner, vaccine_key: "rabies", given_on: 3.years.ago.to_date, due_on: 10.days.from_now.to_date)
+    @rex.pet_vaccinations.create!(user: @owner, vaccine_key: "dhpp", given_on: 3.years.ago.to_date, due_on: 20.days.from_now.to_date)
+
+    get pet_path(@rex)
+    booking = new_event_path(Pets::VaccineStatus.new(@rex, viewer: @owner).booking_params)
+    assert_select "a[href=?]", booking, text: "Book a visit", count: 1
+    assert_match "Rex — vaccinations (Rabies, DHPP)", CGI.unescape(booking)
+    assert_select "a", text: "Book", count: 0
+    assert_match "Rabies and DHPP need doing", response.body
+  end
+
+  test "a pet who has died keeps her record as history, with no states and no buttons" do
+    @rex.pet_vaccinations.create!(user: @owner, vaccine_key: "rabies", given_on: 3.years.ago.to_date, due_on: 1.month.ago.to_date)
+    @rex.update!(died_on: 1.week.ago.to_date)
+
+    get pet_path(@rex)
+    assert_select "h2", text: "Vaccinations"
+    assert_no_match "Overdue", response.body
+    assert_no_match "Book a visit", response.body
+    assert_no_match "No record of", response.body
+    assert_select "a", text: "Log vaccines", count: 0
+
+    get pet_vaccinations_path(@rex)
+    assert_no_match "Overdue", response.body
+  end
+
+  test "a species with no vaccine list gets a sidebar link instead of an empty card" do
+    nemo = create_pet(user: @owner, name: "Nemo", species: "fish")
+    get pet_path(nemo)
+    assert_select "h2", text: "Vaccinations", count: 0
+    assert_select "nav a[href=?]", new_pet_vaccination_path(nemo), text: "Log a vaccine"
+
+    nemo.pet_vaccinations.create!(user: @owner, name: "Koi herpes", given_on: 1.month.ago.to_date)
+    get pet_path(nemo)
+    assert_select "h2", text: "Vaccinations"
+    assert_select "nav a", text: "Log a vaccine", count: 0
+  end
+
+  test "the empty card's upload link files the certificate under Health and her name" do
+    get pet_path(@rex)
+    upload = new_document_path(section_ids: [ @rex.section_id, sections(:health).id ])
+    assert_select "a[href=?]", upload
+
+    get upload
+    assert_select "input[type=hidden][name='document[section_ids][]'][value=?]", @rex.section_id.to_s
+    assert_select "input[type=hidden][name='document[section_ids][]'][value=?]", sections(:health).id.to_s
+  end
+
+  test "typed vaccine rows arrive one at a time, and a filled one always shows" do
+    get new_pet_vaccination_path(@rex)
+    assert_select "input[name='log[rows][other_0][include]'][data-reveals-1]"
+    assert_select "div.hidden input[name='log[rows][other_0][include]']", count: 0
+    assert_select "div.hidden input[name='log[rows][other_1][include]']"
+
+    post pet_vaccinations_path(@rex), params: visit_params({ "other_1" => { include: "1", name: "" }, "dhpp" => { include: "1", due_on: 1.year.ago.to_date.iso8601 } })
+    assert_select "div.hidden input[name='log[rows][other_1][include]']", count: 0
+  end
+
+  test "with no vet in the Address Book the form asks for a name, not a pick from nothing" do
+    get new_pet_vaccination_path(@rex)
+    assert_select "select[name='log[vet_id]']", count: 0
+    assert_select "input[name='log[administered_by]']"
+
+    @rex.update!(vet: @owner.people.create!(name: "Dr. Okafor", relationship: "Vet"))
+    get new_pet_vaccination_path(@rex)
+    assert_select "select[name='log[vet_id]'] option[selected]", text: "Dr. Okafor"
+    assert_select "input[name='log[administered_by]']"
+  end
+
+  test "each row's length buttons defer to a typed date" do
+    get new_pet_vaccination_path(@rex)
+    assert_select "div[data-controller=vaccine-row] input[name='log[rows][rabies][due_on]'][data-vaccine-row-target=date]"
+    assert_select "fieldset[data-vaccine-row-target=durations]"
+  end
+
+  test "a kennel link defaults to expiring in 30 days" do
+    get record_pet_vaccinations_path(@rex)
+    assert_select "select[name=expires_in_days] option[selected][value='30']"
+  end
+
+  test "the Pets hub roll-up shows vaccines beside the radar" do
+    @rex.pet_vaccinations.create!(user: @owner, vaccine_key: "rabies", given_on: 3.years.ago.to_date, due_on: 10.days.from_now.to_date)
+    create_pet(user: @owner, name: "Luna", species: "cat")
+    create_pet(user: @owner, name: "Bean", species: "rabbit")
+
+    get section_path("pets")
+    assert_select "h2", text: "Routine care"
+    assert_match "Rabies — due soon", response.body
+  end
 end

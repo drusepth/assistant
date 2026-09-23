@@ -25,9 +25,14 @@
   <% end %>
 
   <% @status.entries.each do |entry| %>
-    <%= render Ui::CardComponent.new(title: entry.label, subtitle: vaccine_entry_line(entry), padded: false) do |card| %>
-      <% card.with_actions do %>
-        <span class="chip <%= vaccine_state_chip_classes(entry.state) %>"><%= vaccine_state_label(entry.state) %></span>
+    <%# A pet who is gone keeps the history, without states that read as a
+        to-do (D-pet-primitive). %>
+    <%= render Ui::CardComponent.new(title: entry.label, padded: false,
+          subtitle: @pet.active? ? vaccine_entry_line(entry) : "Last given #{entry.latest.given_on.strftime("%b %-d, %Y")}") do |card| %>
+      <% if @pet.active? %>
+        <% card.with_actions do %>
+          <span class="chip <%= vaccine_state_chip_classes(entry.state) %>"><%= vaccine_state_label(entry.state) %></span>
+        <% end %>
       <% end %>
       <ol class="divide-y divide-edge">
         <% entry.doses.each do |dose| %>

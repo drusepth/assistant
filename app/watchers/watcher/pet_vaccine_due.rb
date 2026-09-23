@@ -47,7 +47,7 @@ module Watcher
           fingerprint: "pet:#{pet.id}/due:#{earliest.due_on.iso8601}/#{stage}",
           title: title_for(pet, earliest, labels),
           body: body_for(pet, entries),
-          action: action_for(pet, labels),
+          action: action_for(pet, entries),
           sections: [ "health", pet.section.slug ]
         )
       end
@@ -74,12 +74,10 @@ module Watcher
       # filed, and marked as a vaccination visit — which is what flips the
       # card to Booked and retires this. Without one, finding a vet is the
       # real first step.
-      def action_for(pet, labels)
+      def action_for(pet, entries)
         if pet.vet
-          sections = [ pet.section_id, Section.find_by(slug: "health")&.id ].compact
           path = Rails.application.routes.url_helpers.new_event_path(
-            title: "#{pet.name} — vaccinations (#{labels.join(", ")})",
-            care_kind: Pets::VaccineStatus::VISIT_KIND, section_ids: sections
+            Pets::VaccineStatus.new(pet, viewer: user).booking_params(entries)
           )
           { "path" => path, "accept_label" => "Book the visit" }
         else

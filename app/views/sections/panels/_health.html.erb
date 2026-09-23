@@ -76,11 +76,7 @@
         <div class="flex flex-wrap items-center gap-2">
           <%= link_to pet.name, pet_path(pet), class: "min-w-24 text-sm font-medium text-ink hover:text-primary-700" %>
           <%= render "sections/care_chips", statuses: statuses %>
-          <% vaccines.each do |entry| %>
-            <%= link_to pet_vaccinations_path(pet), class: "chip #{vaccine_state_chip_classes(entry.state)}" do %>
-              <%= entry.label %> — <%= vaccine_state_label(entry.state).downcase %> <%= (entry.state == :booked ? entry.booked_visit.starts_at : entry.due_on).strftime("%b %-d") %>
-            <% end %>
-          <% end %>
+          <%= render "pets/vaccine_chips", pet: pet, entries: vaccines %>
         </div>
       <% end %>
     </div>

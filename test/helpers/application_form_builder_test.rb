@@ -9,7 +9,20 @@ class ApplicationFormBuilderTest < ActionView::TestCase
     assert_match 'data-controller="file-input"', html
     assert_match 'data-file-input-target="input"', html
     assert_match "Click to choose a file", html
-    assert_match "Accepted formats: .pdf,.csv", html
+    assert_match "Accepted formats: PDF or CSV", html
+    assert_match 'accept=".pdf,.csv"', html, "the input keeps the real list"
+  end
+
+  test "the accepted-formats line is words, not a MIME list" do
+    assert_equal "photos or PDF", ApplicationFormBuilder.accept_phrase("image/*,application/pdf")
+    assert_equal "ICS, ICAL or CSV", ApplicationFormBuilder.accept_phrase(".ics,.ical,.csv,text/calendar,text/csv"),
+      "a MIME type that repeats an extension is dropped"
+    assert_equal "PNG, JPEG, WebP or GIF", ApplicationFormBuilder.accept_phrase("image/png, image/jpeg, image/webp, image/gif")
+
+    builder = ApplicationFormBuilder.new(:document, Document.new, self, {})
+    html = builder.file_field(:file, accept: "image/*", accept_label: "a photo of the label")
+    assert_match "Accepted formats: a photo of the label", html
+    assert_no_match "accept_label", html
   end
 
   test "telephone_field shows the stored number masked and wires the mask" do

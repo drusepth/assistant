@@ -390,3 +390,15 @@ complaint.
   `PetFood`; the resolver that sends a dose to her record sends a food to her
   page.
 
+- **Pre-merge polish.** A pet who has died keeps her record as history —
+  dates, no status chips, no buttons. One "Book a visit" covers everything
+  due, with the same prefill the reminder uses (`VaccineStatus#booking_params`),
+  instead of a Book button per vaccine. The card shows only for species the
+  catalog lists or once records exist; a fish's page gets "Log a vaccine" in
+  its Tools list instead. Typed vaccine rows appear one at a time, the length
+  buttons step aside once a good-until date is typed (the `vaccine-row`
+  controller; the server applies the same rule without it), the vet picker is
+  only a picker when there are vets to pick, and a kennel link defaults to 30
+  days. Two fixes outside the feature came with it: the new-document page now
+  honours the `section_ids` its links already sent, and the upload box's
+  "Accepted formats" line is words ("photos or PDF") rather than a MIME list.

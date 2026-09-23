@@ -67,6 +67,19 @@ module Pets
 
     def needing_attention = entries.select(&:attention?)
 
+    # The new-event form's prefill for booking one visit that covers
+    # everything due: titled with the vaccines, filed under Health and her
+    # name, and marked as a vaccination visit — which is what flips each of
+    # them to Booked. The card's button and the watcher's nudge both use it,
+    # so a click from either books the same visit.
+    def booking_params(entries = needing_attention)
+      {
+        title: "#{pet.name} — vaccinations (#{entries.map(&:label).join(", ")})",
+        care_kind: VISIT_KIND,
+        section_ids: [ pet.section_id, Section.find_by(slug: "health")&.id ].compact
+      }
+    end
+
     # The core vaccines for her species with no row at all — a gap, stated
     # plainly, never an alarm. Empty for species the catalog doesn't list.
     def missing_core

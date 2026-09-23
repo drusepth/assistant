@@ -13,7 +13,7 @@
   </div>
   <% if @pet.user_id == Current.user.id %>
     <div class="print:hidden">
-      <%= render "share_links/card", links: @links, subject: @pet, noun: "record",
+      <%= render "share_links/card", links: @links, subject: @pet, noun: "record", default_expiry: "30",
             detail: "Anyone with the link sees this sheet — #{@pet.name}'s name, photo, microchip, vet and vaccines, and the certificates " \
                     "you attached. Not reactions, notes, or anything else. Set it to expire after the stay, and revoke it any time." %>
     </div>

@@ -65,7 +65,8 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
   end
 
   def file_field(method, options = {})
-    accept_hint = options[:accept]
+    options = options.dup
+    accept_hint = options.delete(:accept_label) || self.class.accept_phrase(options[:accept])
 
     input_data = (options[:data] || {}).merge(
       file_input_target: "input",
@@ -169,6 +170,30 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
     return if messages.blank?
 
     @template.tag.p(messages.to_sentence, class: "field-error")
+  end
+
+  # The drop zone's "Accepted formats" line, in words rather than the raw
+  # `accept` list: "image/*,application/pdf" reads "photos or PDF", and a
+  # MIME type that only repeats an extension beside it (text/csv next to
+  # .csv) is dropped. `accept_label:` overrides it where words say it better.
+  ACCEPT_WORDS = {
+    "image/*" => "photos", "video/*" => "videos", "audio/*" => "audio",
+    "application/pdf" => "PDF", "image/png" => "PNG", "image/jpeg" => "JPEG",
+    "image/webp" => "WebP", "image/gif" => "GIF", "image/heic" => "HEIC"
+  }.freeze
+
+  def self.accept_phrase(accept)
+    return nil if accept.blank?
+
+    parts = accept.to_s.split(",").map(&:strip).compact_blank
+    extensions = parts.select { |part| part.start_with?(".") }
+    words = parts.filter_map do |part|
+      if part.start_with?(".") then part.delete_prefix(".").upcase
+      elsif ACCEPT_WORDS.key?(part) then ACCEPT_WORDS[part]
+      elsif extensions.empty? then part.split("/").last.delete_prefix("x-").upcase
+      end
+    end
+    words.uniq.to_sentence(two_words_connector: " or ", last_word_connector: " or ").presence
   end
 
   private

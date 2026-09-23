@@ -18,6 +18,8 @@
          [ "Compare pet insurance", new_tool_run_path("compare_pet_insurance", inputs: { pet_id: pet.id }) ]
        ] %>
     <% links << [ "Find a vet", new_tool_run_path("find_care", inputs: { specialty: "veterinarian for a #{pet.species_label.downcase}" }) ] if pet.vet.nil? %>
+    <%# Species with no vaccine card get their way in here (D-pet-vaccinations). %>
+    <% links << [ "Log a vaccine", new_pet_vaccination_path(pet) ] if local_assigns[:log_vaccine] %>
     <% links.each do |label, path| %>
       <li>
         <%= link_to label, path, class: "flex min-h-11 items-center rounded-lg px-2 text-soft hover:bg-stone-200 hover:text-ink lg:min-h-0 lg:py-1.5" %>

@@ -15,14 +15,23 @@
 
   <%= render Ui::CardComponent.new(title: "The visit") do %>
     <div class="space-y-4">
+      <%# With vets in the Address Book, pick one or type a clinic; with none,
+          a picker offering only "someone else" is a question with no answer,
+          so it is just the box. %>
+      <% vets = ([ @pet.vet ] + Person.visible_to(Current.user).where(relationship: "Vet").order(:name).to_a).compact.uniq %>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <%= form.field :given_on, as: :date_field, label_text: "Date given", hint: "As printed on the certificate." %>
-        <% vets = ([ @pet.vet ] + Person.visible_to(Current.user).where(relationship: "Vet").order(:name).to_a).compact.uniq %>
-        <%= form.field :vet_id, label_text: "Vet" do %>
-          <%= form.select :vet_id, vets.map { |vet| [ vet.name, vet.id ] }, { include_blank: vets.any? ? "Someone else" : "Not in your contacts" }, class: "input w-full" %>
+        <% if vets.any? %>
+          <%= form.field :vet_id, label_text: "Vet" do %>
+            <%= form.select :vet_id, vets.map { |vet| [ vet.name, vet.id ] }, { include_blank: "Someone else (type below)" }, class: "input w-full" %>
+          <% end %>
+        <% else %>
+          <%= form.field :administered_by, label_text: "Vet or clinic", placeholder: "Riverside Animal Hospital" %>
         <% end %>
       </div>
-      <%= form.field :administered_by, label_text: "Clinic or vet, if not listed", placeholder: "Riverside Animal Hospital" %>
+      <% if vets.any? %>
+        <%= form.field :administered_by, label_text: "Or a clinic not in your contacts", placeholder: "Riverside Animal Hospital" %>
+      <% end %>
 
       <% visits = @pet.items(Event, Current.user).where(starts_at: 1.year.ago..Time.current).order(starts_at: :desc).limit(10) %>
       <% if visits.any? %>
@@ -51,9 +60,20 @@
       <% @log.catalog.each do |vaccine| %>
         <%= render "pet_vaccinations/row", log: @log, key: vaccine.key, vaccine: vaccine, durations: vaccine.durations %>
       <% end %>
-      <% @log.other_keys.each do |key| %>
-        <%= render "pet_vaccinations/row", log: @log, key: key, vaccine: nil, durations: Pets::Vaccines::GENERIC_DURATIONS %>
-      <% end %>
+      <%# The typed rows arrive one at a time: ticking one reveals the next, in
+          CSS alone. Literal class strings, so Tailwind sees them; a row that
+          was already filled in (a re-render after an error) always shows. %>
+      <% reveal = { 1 => "hidden group-has-[[data-reveals-1]:checked]/others:block",
+                    2 => "hidden group-has-[[data-reveals-2]:checked]/others:block" } %>
+      <div class="group/others space-y-3">
+        <% @log.other_keys.each_with_index do |key, index| %>
+          <div class="<%= reveal[index] unless index.zero? || @log.ticked?(key) %>">
+            <%= render "pet_vaccinations/row", log: @log, key: key, vaccine: nil, durations: Pets::Vaccines::GENERIC_DURATIONS,
+                  other_index: index, reveals_next: index < @log.other_keys.size - 1,
+                  other_label: index.zero? ? (@log.catalog.any? ? "A vaccine not on this list" : "A vaccine") : "Another vaccine" %>
+          </div>
+        <% end %>
+      </div>
     </div>
   <% end %>
 

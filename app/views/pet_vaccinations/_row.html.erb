@@ -1,14 +1,17 @@
 <%# One vaccine on the visit form. Ticking the box opens its details — done in
-    CSS alone (`:has`), so the form works the same with scripts off. A listed
+    CSS alone (`:has`), so the form works the same with scripts off. The
+    vaccine-row controller only greys the length buttons once a date is typed,
+    since the date wins either way. A listed
     vaccine carries its catalog key in the row's name; a typed one gets a
     name box instead. Durations are offered, never preselected
     (D-pet-vaccinations): the certificate or the owner knows, the app doesn't. %>
 <% row = log.row(key) %>
 <% prefix = "log[rows][#{key}]" %>
 <% field_id = ->(name) { "log_rows_#{key}_#{name}" } %>
-<div class="group/row rounded-xl border border-edge bg-canvas p-3 has-[[data-include]:checked]:border-primary-300">
+<div class="group/row rounded-xl border border-edge bg-canvas p-3 has-[[data-include]:checked]:border-primary-300" data-controller="vaccine-row">
   <label class="flex cursor-pointer items-start gap-3">
-    <%= check_box_tag "#{prefix}[include]", "1", log.ticked?(key), id: field_id.call(:include), class: "mt-1", data: { include: true } %>
+    <%= check_box_tag "#{prefix}[include]", "1", log.ticked?(key), id: field_id.call(:include), class: "mt-1",
+          data: { include: true }.merge(local_assigns[:reveals_next] ? { "reveals-#{local_assigns[:other_index] + 1}" => true } : {}) %>
     <span class="min-w-0 flex-1">
       <% if vaccine %>
         <span class="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">
@@ -18,8 +21,10 @@
         <% details = [ vaccine.also_called.join(" · ").presence, vaccine.about ].compact %>
         <% if details.any? %><span class="block text-xs text-soft"><%= details.join(" — ") %></span><% end %>
       <% else %>
-        <span class="text-sm font-medium text-ink">Another vaccine</span>
-        <span class="block text-xs text-soft">Anything not listed, by the name on the certificate.</span>
+        <span class="text-sm font-medium text-ink"><%= local_assigns[:other_label] || "Another vaccine" %></span>
+        <span class="block text-xs text-soft">
+          By the name on the certificate.<% if local_assigns[:reveals_next] %> Tick it and another box appears below.<% end %>
+        </span>
       <% end %>
     </span>
   </label>
@@ -38,10 +43,11 @@
       </div>
       <div>
         <%= label_tag field_id.call(:due_on), "Good until / next dose due", class: "label" %>
-        <%= date_field_tag "#{prefix}[due_on]", row["due_on"], id: field_id.call(:due_on), class: "input w-full" %>
+        <%= date_field_tag "#{prefix}[due_on]", row["due_on"], id: field_id.call(:due_on), class: "input w-full",
+              data: { vaccine_row_target: "date", action: "input->vaccine-row#sync change->vaccine-row#sync" } %>
       </div>
     </div>
-    <fieldset>
+    <fieldset class="disabled:opacity-50" data-vaccine-row-target="durations">
       <legend class="label">No date on the certificate? It lasts…</legend>
       <div class="flex flex-wrap gap-2">
         <% [ [ "Not sure", "" ], *vaccine_duration_options(durations) ].each do |label, months| %>
@@ -51,7 +57,8 @@
           </label>
         <% end %>
       </div>
-      <p class="hint mt-1">Check the certificate or ask the vet — the same vaccine can be labelled for one year or three. Leave both blank if you don't know.</p>
+      <p class="hint mt-1" data-vaccine-row-target="hint">Check the certificate or ask the vet — the same vaccine can be labelled for one year or three. Leave both blank if you don't know.</p>
+      <p class="hint mt-1" data-vaccine-row-target="note" hidden>Using the date above, from the certificate. Clear it to pick a length instead.</p>
     </fieldset>
     <details class="text-sm" <%= "open" if row.values_at("product", "lot_number", "tag_number", "site", "series_dose", "reaction", "notes").any?(&:present?) %>>
       <summary class="cursor-pointer text-primary-700 hover:underline">Brand, lot, tag number, reaction…</summary>
