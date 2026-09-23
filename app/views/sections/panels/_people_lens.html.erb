@@ -38,9 +38,8 @@
     </div>
   <% end %>
 
-  <div class="max-w-sm border-t border-edge p-4">
+  <div class="max-w-md border-t border-edge p-4">
     <%= render "sections/circle_add_person",
-          url: people_memberships_path, section: section,
-          candidates: panel.candidates, label: "Add to #{section.name}" %>
+          url: people_memberships_path, section: section, label: "Add to #{section.name}" %>
   </div>
 <% end %>

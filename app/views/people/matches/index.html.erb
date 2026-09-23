@@ -1,0 +1,20 @@
+<%# Option rows for the person picker (D-person-picker). The controller
+    reads data-person-id and data-name; everything else is for the eye. %>
+<% @people.each do |person| %>
+  <li role="option" aria-selected="false" data-person-id="<%= person.id %>" data-name="<%= person.name %>"
+      class="flex cursor-pointer items-center gap-2.5 rounded-full px-2 py-1.5 text-sm text-ink aria-selected:bg-surface hover:bg-surface">
+    <%= render Ui::AvatarComponent.new(person: person, size: :xs) %>
+    <span class="min-w-0 flex-1 truncate"><%= person.name %></span>
+    <% if person.relationship.present? %>
+      <span class="shrink-0 truncate text-xs text-soft"><%= person.relationship %></span>
+    <% end %>
+  </li>
+<% end %>
+<% if @offer_new %>
+  <li role="option" aria-selected="false" data-name="<%= @query %>"
+      class="flex cursor-pointer items-center gap-2.5 rounded-full px-2 py-1.5 text-sm text-primary-700 aria-selected:bg-surface hover:bg-surface">
+    <span class="flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-primary-300">+</span>
+    <span class="min-w-0 flex-1 truncate">Add “<%= @query %>”</span>
+    <span class="shrink-0 text-xs text-soft">new contact</span>
+  </li>
+<% end %>

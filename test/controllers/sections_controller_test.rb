@@ -328,19 +328,26 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Last contact", response.body
     assert_match "in your Address Book", response.body
     assert_select "a", { text: "Rolodex Rex", count: 0 },
-      "unflagged people belong to the Address Book (the capture dropdown may list them; rows must not)"
+      "unflagged people belong to the Address Book"
   end
 
-  test "the People page leads with circle capture and offers address-book candidates" do
+  # D-person-picker: the address book is searched, never listed — a real
+  # import made the old <select> unusable — and the lead capture steps
+  # aside once the circle card can do the same job.
+  test "the People page leads with circle capture while the circle is empty, without listing the address book" do
     users(:one).people.create!(name: "Pickable Pat")
 
     get section_path("people")
     assert_match "Who do you want to stay close to?", response.body
-    assert_match "Pickable Pat", response.body
+    assert_select "form[action=?] input[role=combobox][name=name]", people_circle_path
+    assert_no_match "Pickable Pat", response.body, "the roster is found by typing, not rendered into the page"
+    assert_select "select[name=person_id]", false
 
     users(:one).people.create!(name: "Flagged", keep_in_touch: true)
     get section_path("people")
-    assert_match "Add someone to your circle", response.body
+    assert_no_match "Who do you want to stay close to?", response.body
+    # A non-empty circle is added to from its own card.
+    assert_select "details form[action=?] input[role=combobox]", people_circle_path
   end
 
   test "Coming up lists circle birthdays but not the rolodex's" do
@@ -351,7 +358,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Coming up", response.body
     assert_match "Birthday Kid", response.body
     assert_select "a", { text: "Distant Cousin", count: 0 },
-      "rolodex birthdays stay off the dashboard (the capture dropdown may list the person; rows must not)"
+      "rolodex birthdays stay off the dashboard"
   end
 
   test "the People page offers group capture and lists existing groups" do

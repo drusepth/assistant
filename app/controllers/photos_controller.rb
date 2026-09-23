@@ -69,10 +69,6 @@ class PhotosController < ApplicationController
     # could already see.
     @person_tags = @photo.photo_people.joins(:person)
       .merge(Person.visible_to(Current.user)).includes(:person)
-    if @photo.user_id == Current.user.id
-      @taggable_people = Person.visible_to(Current.user)
-        .where.not(id: @photo.photo_people.select(:person_id)).order(:name)
-    end
   end
 
   # Batch capture: files from the multipart fallback or signed blob ids from

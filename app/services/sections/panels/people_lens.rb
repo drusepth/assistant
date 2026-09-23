@@ -19,11 +19,6 @@ module Sections
         @members ||= Person.visible_to(viewer).in_section(section)
           .order(:name).preload(:linked_user).with_attached_avatar
       end
-
-      # Circle first, then everyone else — docs/PEOPLE.md §3.
-      def candidates
-        @candidates ||= Person.visible_to(viewer).order(keep_in_touch: :desc, name: :asc)
-      end
     end
   end
 end

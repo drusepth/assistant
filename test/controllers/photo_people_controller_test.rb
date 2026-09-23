@@ -81,6 +81,18 @@ class PhotoPeopleControllerTest < ActionDispatch::IntegrationTest
     assert_match "1 photo", response.body
   end
 
+  test "a typed name tags an existing contact, or makes a new one" do
+    assert_no_difference "Person.count" do
+      post photo_people_path, params: { photo_id: @photo.id, name: @mom.name.upcase }
+    end
+    assert_includes @photo.reload.photo_people.map(&:person), @mom
+
+    assert_difference "Person.count", 1 do
+      post photo_people_path, params: { photo_id: @photo.id, name: "Cousin Ada" }
+    end
+    assert_includes @photo.reload.photo_people.map { |tag| tag.person.name }, "Cousin Ada"
+  end
+
   private
     def create_photo(user, fixture: "photo.jpg")
       user.photos.create!(image: {

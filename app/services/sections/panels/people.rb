@@ -31,17 +31,6 @@ module Sections
         @upcoming_birthdays ||= viewer.people.circle.birthday_within(30)
       end
 
-      def circle_candidates
-        @circle_candidates ||= viewer.people.where(keep_in_touch: false).order(:name)
-      end
-
-      # Who a group card can add. Anyone the viewer can see (a group is a
-      # shared lens), circle first — the picker-scaling rule from
-      # docs/PEOPLE.md §3, since the address book is what gets long.
-      def member_candidates
-        @member_candidates ||= Person.visible_to(viewer).order(keep_in_touch: :desc, name: :asc)
-      end
-
       def address_book_size
         @address_book_size ||= Person.visible_to(viewer).count
       end

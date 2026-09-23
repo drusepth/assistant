@@ -25,23 +25,27 @@
   </div>
 
   <%# The capture folds away in a <details> — no JS, and the closed card
-      stays a scannable tile rather than a form. %>
-  <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-edge pt-2.5 text-xs font-semibold">
-    <details class="min-w-0 [&[open]]:w-full">
-      <summary class="cursor-pointer list-none text-primary-700 hover:underline [&::-webkit-details-marker]:hidden">
-        Add someone
-      </summary>
-      <div class="mt-2 w-full font-normal">
-        <%= render "sections/circle_add_person",
-              url: card.circle? ? people_circle_path : people_memberships_path,
-              section: card.section, candidates: candidates,
-              label: card.circle? ? "Add to your circle" : "Add to #{card.name}" %>
-      </div>
-    </details>
+      stays a scannable tile rather than a form. An empty circle's card has
+      no footer at all: the page's lead capture sits right above it and
+      does the same thing (D-person-picker). %>
+  <% unless local_assigns[:capture_above] %>
+    <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-edge pt-2.5 text-xs font-semibold">
+      <details class="min-w-0 [&[open]]:w-full">
+        <summary class="cursor-pointer list-none text-primary-700 hover:underline [&::-webkit-details-marker]:hidden">
+          Add someone
+        </summary>
+        <div class="mt-2 w-full font-normal">
+          <%= render "sections/circle_add_person",
+                url: card.circle? ? people_circle_path : people_memberships_path,
+                section: card.section,
+                label: card.circle? ? "Add to your circle" : "Add to #{card.name}" %>
+        </div>
+      </details>
 
-    <% unless card.circle? %>
-      <%= link_to "Plan something", new_tool_run_path("get_together", inputs: { who: card.name }),
-            class: "text-primary-700 hover:underline" %>
-    <% end %>
-  </div>
+      <% unless card.circle? %>
+        <%= link_to "Plan something", new_tool_run_path("get_together", inputs: { who: card.name }),
+              class: "text-primary-700 hover:underline" %>
+      <% end %>
+    </div>
+  <% end %>
 </div>

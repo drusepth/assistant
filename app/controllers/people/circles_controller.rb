@@ -4,14 +4,11 @@
 # someone off the dashboard, the Address Book keeps them.
 class People::CirclesController < ApplicationController
   def create
-    person =
-      if params[:person_id].present?
-        Current.user.people.find(params[:person_id])
-      elsif params[:name].to_s.squish.present?
-        Current.user.people.create!(name: params[:name].to_s.squish).tap(&:enqueue_auto_sort!)
-      end
+    person = People::Picker.for_circle(Current.user).resolve(person_id: params[:person_id], name: params[:name])
+    raise ActiveRecord::RecordNotFound if person.nil? && params[:person_id].present?
     return redirect_back_to_people(alert: "Pick someone, or name someone new.") if person.nil?
 
+    person.enqueue_auto_sort! if person.previously_new_record?
     person.update!(keep_in_touch: true)
     redirect_back_to_people(notice: "#{person.name} added to your circle.")
   end

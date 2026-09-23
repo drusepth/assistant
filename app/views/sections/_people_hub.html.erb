@@ -31,7 +31,7 @@
   <h2 class="mb-3 text-sm font-medium text-soft">Your people</h2>
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
     <% cards.each do |card| %>
-      <%= render "sections/circle_card", card: card, candidates: candidates %>
+      <%= render "sections/circle_card", card: card, capture_above: card.circle? && card.member_count.zero? %>
     <% end %>
     <%= render "sections/circle_add_tile" %>
   </div>

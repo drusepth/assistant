@@ -115,6 +115,9 @@ Rails.application.routes.draw do
     resource :circle, only: %i[ create destroy ]
     # Group membership (D-people-circles) — a person into a People lens.
     resources :memberships, only: %i[ create destroy ], param: :section_id
+    # The person picker's type-to-find (D-person-picker): an HTML fragment
+    # of options, scoped to where the person is being put.
+    resources :matches, only: %i[ index ]
   end
   resources :people do
     member do

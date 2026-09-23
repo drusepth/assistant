@@ -1,0 +1,13 @@
+<div class="relative min-w-0 flex-1" data-controller="person-picker"
+     data-person-picker-url-value="<%= matches_url %>">
+  <input type="hidden" name="person_id" data-person-picker-target="id">
+  <input type="text" name="name" class="<%= input_classes %>" placeholder="<%= placeholder %>"
+         aria-label="<%= label %>" autocomplete="off" spellcheck="false"
+         role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="<%= list_id %>"
+         data-person-picker-target="input"
+         data-action="input->person-picker#search keydown->person-picker#navigate focus->person-picker#search blur->person-picker#close">
+  <ul id="<%= list_id %>" role="listbox" aria-label="<%= label %>" hidden
+      class="absolute left-0 top-full z-20 mt-1.5 max-h-72 w-max min-w-full max-w-[min(20rem,calc(100vw-2rem))] space-y-0.5 overflow-y-auto rounded-2xl border border-edge bg-canvas p-1.5 shadow-lg"
+      data-person-picker-target="list"
+      data-action="mousedown->person-picker#pick"></ul>
+</div>

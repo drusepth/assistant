@@ -24,6 +24,15 @@ class People::CirclesControllerTest < ActionDispatch::IntegrationTest
     assert person.keep_in_touch?
   end
 
+  test "a typed name that's already a contact reuses them rather than duplicating" do
+    person = users(:one).people.create!(name: "Aunt Rosa")
+
+    assert_no_difference "Person.count" do
+      post people_circle_path, params: { name: "aunt rosa" }
+    end
+    assert person.reload.keep_in_touch?
+  end
+
   test "prefers the picked person over a typed name" do
     person = users(:one).people.create!(name: "Sam")
 
