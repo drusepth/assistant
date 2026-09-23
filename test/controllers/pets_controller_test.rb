@@ -162,4 +162,13 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", pet_path(@rex)
     assert_match "Wellness exam", response.body
   end
+
+  test "the cost card waits for a Pets envelope rather than asking for one" do
+    get pet_path(@rex)
+    assert_select "h2", { text: "Cost of care", count: 0 }
+
+    users(:one).budget_categories.create!(name: "Pets", group: "needs")
+    get pet_path(@rex)
+    assert_select "h2", text: "Cost of care"
+  end
 end
