@@ -114,10 +114,9 @@
   </div>
 
   <div class="space-y-6">
-    <% if @cost %>
+    <% if @cost&.category %>
       <%= render "pets/cost", pet: @pet, cost: @cost %>
     <% end %>
-    <%= render "pets/filing", pet: @pet %>
     <% if @own %>
       <%= render "shared/share_controls", subject: @pet %>
     <% else %>
