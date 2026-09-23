@@ -169,6 +169,9 @@ module Health
       # (or EXCLUDED), anything else falls back to classification.
       def kind_for(event)
         return nil if event.care_kind == EXCLUDED
+        # A pet's vaccination visit belongs to her vaccine record, not to a
+        # radar tile — and must not fall through to "wellness" on "vet".
+        return nil if event.care_kind == Pets::VaccineStatus::VISIT_KIND
 
         kinds.find { |kind| kind.key == event.care_kind } || classify(event.title)
       end

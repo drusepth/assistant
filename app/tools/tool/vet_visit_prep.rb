@@ -33,6 +33,10 @@ module Tool
       breathing, a swollen belly, repeated unproductive retching, straining to
       urinate, seizures, suspected poisoning), open the sheet by saying plainly
       that this is a same-day call, not a prep sheet.
+      If the record lists a vaccine reaction, open the history with it, so the
+      owner tells the vet before anything is given. If a vaccine on the record
+      is overdue or due soon, list it among the questions ("Is Rex due for
+      rabies while we're here?") — never as a recommendation to vaccinate.
       follow_ups are practical (weigh the pet, photograph the label, bring the
       vaccination record).
       #{DRAFT_FORMAT}

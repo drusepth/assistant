@@ -15,7 +15,9 @@ class DocumentsController < ApplicationController
   end
 
   def new
-    @document = Current.user.documents.new
+    # Pre-tags arrive from links like a pet's "Add a document", so the upload
+    # is filed under her name rather than left for auto-sort to guess.
+    @document = Current.user.documents.new(params.permit(section_ids: []))
   end
 
   def create

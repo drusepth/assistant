@@ -1,0 +1,8 @@
+<%# The vaccines that need doing, or are booked, as chips beside a pet's
+    radar chips (D-pet-vaccinations) — on the Health page's household strip
+    and the Pets hub's roll-up, so the two can never disagree. %>
+<% entries.each do |entry| %>
+  <%= link_to pet_vaccinations_path(pet), class: "chip #{vaccine_state_chip_classes(entry.state)}" do %>
+    <%= entry.label %> — <%= vaccine_state_label(entry.state).downcase %> <%= (entry.state == :booked ? entry.booked_visit.starts_at : entry.due_on).strftime("%b %-d") %>
+  <% end %>
+<% end %>

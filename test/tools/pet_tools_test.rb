@@ -46,6 +46,23 @@ class PetToolsTest < ActiveSupport::TestCase
       Tool::LostPet.new(run_for("lost_pet", pet_id: @rex.id)).send(:user_prompt)
   end
 
+  test "the vaccine record reaches the pet tools, reactions first in line and the rabies tag on the lost-pet sheet" do
+    @rex.pet_vaccinations.create!(user: @user, vaccine_key: "rabies", given_on: 1.year.ago.to_date,
+      due_on: 2.years.from_now.to_date, tag_number: "R-2291", administered_by: "Riverside")
+    @rex.pet_vaccinations.create!(user: @user, vaccine_key: "leptospirosis", given_on: 13.months.ago.to_date,
+      due_on: 1.month.ago.to_date, reaction: "Facial swelling")
+
+    prep = Tool::VetVisitPrep.new(run_for("vet_visit_prep", pet_id: @rex.id)).send(:user_prompt)
+    assert_match "Vaccinations on record:", prep
+    assert_match(/Rabies: last given .*good until .*current, tag R-2291/, prep)
+    assert_match(/Leptospirosis: .*overdue/, prep)
+    assert_match "VACCINE REACTIONS on record", prep
+    assert_match "Facial swelling", prep
+
+    poster = Tool::LostPet.new(run_for("lost_pet", pet_id: @rex.id)).send(:user_prompt)
+    assert_match "Rabies tag number: R-2291 (issued by Riverside)", poster
+  end
+
   test "a pet tool's draft files under her lens as well as its section" do
     tool = Tool::VetVisitPrep.new(run_for("vet_visit_prep", pet_id: @rex.id))
     filing = tool.send(:filing)

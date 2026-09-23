@@ -194,6 +194,16 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Vision —", response.body, "the unshared eye exam stays invisible"
   end
 
+  test "a pet's vaccines needing attention join the household care strip" do
+    rex = create_pet(user: users(:one))
+    rex.pet_vaccinations.create!(user: users(:one), vaccine_key: "rabies", given_on: 3.years.ago.to_date,
+      due_on: 10.days.from_now.to_date)
+
+    get section_path("health")
+    assert_match "Household care", response.body
+    assert_match "Rabies — due soon #{10.days.from_now.strftime("%b %-d")}", response.body
+  end
+
   test "no shared health events means no household care card" do
     get section_path("health")
     assert_no_match "Household care", response.body

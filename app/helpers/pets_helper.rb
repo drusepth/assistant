@@ -39,4 +39,46 @@ module PetsHelper
     "About #{money_amount(cost.monthly_average_cents)} a month over the last year — " \
       "what the ledger has filed under #{Pets::CostOfCare::CATEGORY_NAME}. Cash and mixed grocery trips aren't in it."
   end
+
+  # ── Vaccines (D-pet-vaccinations) ───────────────────────────────────
+
+  VACCINE_STATE_CHIPS = {
+    current: [ "Current", "bg-sage-100 text-sage-700" ],
+    due_soon: [ "Due soon", "bg-primary-200 text-primary-800" ],
+    overdue: [ "Overdue", "bg-red-100 text-red-800" ],
+    booked: [ "Booked", "bg-sage-200 text-sage-800" ],
+    no_expiry: [ "No expiry recorded", "bg-stone-200 text-stone-700" ]
+  }.freeze
+
+  def vaccine_state_label(state) = VACCINE_STATE_CHIPS.fetch(state).first
+  def vaccine_state_chip_classes(state) = VACCINE_STATE_CHIPS.fetch(state).second
+
+  # One line under a vaccine on the card: when it runs out, then when it was
+  # last given. A titer or exemption says so, because it is not a dose and a
+  # reader relying on the card needs to know which it is looking at.
+  def vaccine_entry_line(entry)
+    latest = entry.latest
+    when_phrase = case entry.state
+    when :booked then "#{vaccine_until_phrase(latest)} · booked #{entry.booked_visit.starts_at.strftime("%b %-d")}"
+    when :overdue then "Ran out #{latest.due_on.strftime("%b %-d, %Y")}"
+    when :due_soon then "Due #{latest.due_on.strftime("%b %-d, %Y")}"
+    when :current then vaccine_until_phrase(latest)
+    else "No good-until date on record"
+    end
+    given = latest.dose? ? "last given #{latest.given_on.strftime("%b %-d, %Y")}" : "#{latest.kind_label.downcase} #{latest.given_on.strftime("%b %-d, %Y")}"
+    [ when_phrase, given ].join(" · ")
+  end
+
+  def vaccine_until_phrase(dose)
+    return "No good-until date on record" unless dose.due_on
+
+    "Good until #{dose.due_on.strftime("%b %-d, %Y")}"
+  end
+
+  # The duration buttons' labels: "1 year", "3 years", "6 months".
+  def vaccine_duration_options(durations)
+    durations.map { |months| [ Pets::Vaccines.duration_label(months), months ] }
+  end
+
+  def vaccine_kind_options = PetVaccination::KINDS.map { |kind| [ PetVaccination::KIND_LABELS[kind], kind ] }
 end

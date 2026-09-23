@@ -42,11 +42,11 @@ class Pets::CareRadarTest < ActiveSupport::TestCase
     # Grants are per-grantor, so the spouse shares their own Rex items back —
     # which is what the reciprocal button on a shared pet's page is for.
     users(:two).granted_access_grants.create!(grantee: @user, subject: @rex.section)
-    booked = users(:two).events.create!(title: "Rex — vaccinations", starts_at: 3.days.from_now)
+    booked = users(:two).events.create!(title: "Rex — dental", starts_at: 3.days.from_now)
     booked.sections << @rex.section
 
     statuses = radar(viewer: @user).statuses.index_by { |status| status.kind.key }
-    assert_equal :booked, statuses["pet_vaccinations"].state,
+    assert_equal :booked, statuses["pet_dental"].state,
       "the spouse who books the vet books the dog's visit"
   end
 
@@ -60,18 +60,18 @@ class Pets::CareRadarTest < ActiveSupport::TestCase
   end
 
   test "a pet's radar still reads through visible_to" do
-    vet_event("Rex — vaccinations", 1.month.ago)
+    vet_event("Rex — dental", 1.month.ago)
 
     statuses = radar(viewer: users(:two)).statuses.index_by { |status| status.kind.key }
-    assert_equal :unknown, statuses["pet_vaccinations"].state, "no grant, no sight"
+    assert_equal :unknown, statuses["pet_dental"].state, "no grant, no sight"
   end
 
   test "species decides the slate, and an unknown species claims only wellness" do
-    assert_equal %w[ pet_wellness pet_vaccinations pet_dental pet_parasite pet_grooming pet_nails ],
+    assert_equal %w[ pet_wellness pet_dental pet_parasite pet_grooming pet_nails ],
       radar.kinds.map(&:key)
 
     cat = create_pet(name: "Luna", species: "cat")
-    assert_equal %w[ pet_wellness pet_vaccinations pet_dental pet_parasite ], radar(cat).kinds.map(&:key)
+    assert_equal %w[ pet_wellness pet_dental pet_parasite ], radar(cat).kinds.map(&:key)
 
     iggy = create_pet(name: "Iggy", species: "reptile")
     assert_equal %w[ pet_wellness ], radar(iggy).kinds.map(&:key),
@@ -94,9 +94,17 @@ class Pets::CareRadarTest < ActiveSupport::TestCase
     assert_equal "grooming", grooming.visit_noun
   end
 
+  test "a vaccination visit belongs to her vaccine record, not a radar tile (D-pet-vaccinations)" do
+    visit = vet_event("Rex — vaccinations at the vet", 2.months.ago)
+    visit.update!(care_kind: Pets::VaccineStatus::VISIT_KIND)
+
+    statuses = radar.statuses.index_by { |status| status.kind.key }
+    assert_nil statuses["pet_vaccinations"], "vaccines are not a kind any more"
+    assert_nil statuses["pet_wellness"].last_visit, "and the visit doesn't fall through to wellness on \"vet\""
+  end
+
   test "the specific kinds beat the generic wellness one" do
     assert_equal "pet_dental", radar.classify("Rex — dental").key
-    assert_equal "pet_vaccinations", radar.classify("rabies booster").key
     assert_equal "pet_wellness", radar.classify("annual check").key
     assert_nil radar.classify("Rex to the park"), "an event it can't place doesn't count"
   end

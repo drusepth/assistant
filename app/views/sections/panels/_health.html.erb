@@ -72,10 +72,11 @@
       <% end %>
       <%# The dog's vaccinations sit beside the kid's dental because whoever
           is driving needs to see both (D-pet-care-radar). %>
-      <% pet_care.each do |pet, statuses| %>
+      <% pet_care.each do |pet, statuses, vaccines| %>
         <div class="flex flex-wrap items-center gap-2">
           <%= link_to pet.name, pet_path(pet), class: "min-w-24 text-sm font-medium text-ink hover:text-primary-700" %>
           <%= render "sections/care_chips", statuses: statuses %>
+          <%= render "pets/vaccine_chips", pet: pet, entries: vaccines %>
         </div>
       <% end %>
     </div>

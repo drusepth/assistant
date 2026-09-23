@@ -9,6 +9,7 @@
         <%= form.field :title, hint: "Optional — uses the file name if left blank." %>
         <p class="hint"><%= document_auto_sort_hint %></p>
       </div>
+      <%= render "shared/pretagged_sections", form: form, item: @document %>
       <div class="flex items-center gap-2">
         <%= form.submit "Add document" %>
         <%= link_to "Cancel", documents_path, class: "btn btn-ghost" %>

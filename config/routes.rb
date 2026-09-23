@@ -136,7 +136,18 @@ Rails.application.routes.draw do
         post :reorder
       end
     end
+    # Her vaccine record (D-pet-vaccinations): the history is the index, and
+    # `record` is the one-sheet the kennel gets, printed or by share link.
+    resources :vaccinations, except: :show, controller: :pet_vaccinations do
+      collection do
+        get :record
+      end
+    end
   end
+  # A dose and a food have no page of their own — they live on her pages — so
+  # `link_to dose` (the document's "Saved from this document" list) lands there.
+  resolve("PetVaccination") { |dose| route_for(:pet_vaccinations, dose.pet) }
+  resolve("PetFood") { |food| route_for(:pet, food.pet) }
   resources :goals do
     member do
       patch :complete
@@ -294,6 +305,7 @@ Rails.application.routes.draw do
   end
   resources :share_links, only: %i[ create destroy ]
   get "s/:token" => "public#show", as: :shared
+  get "s/:token/certificates/:id" => "public#certificate", as: :shared_certificate
 
   # The event radar (D-place-subscriptions, D-listing-feeds, D-event-radar):
   # the places you subscribe to, the calendars followed under each, and the

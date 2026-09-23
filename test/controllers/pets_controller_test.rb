@@ -25,6 +25,14 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @rex.reload.weight_lb
   end
 
+  test "the pet tools are a quiet list in the sidebar, led by the missing-pet tool" do
+    get pet_path(@rex)
+    assert_select "nav[aria-label=?] li", "Tools for #{@rex.name}", minimum: 5 do |items|
+      assert_equal "#{@rex.name} is missing", items.first.text.strip
+    end
+    assert_select "h2", text: "What the app can do", count: 0
+  end
+
   test "the header offers a task already tagged with her lens" do
     get pet_path(@rex)
     assert_select "button[data-quick-add-name-param=task]", text: /Add a task/
@@ -237,12 +245,12 @@ class PetsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the Pets hub rolls up care only once the cards stop being an overview" do
-    event = users(:one).events.create!(title: "Rex — vaccinations", starts_at: 1.year.ago)
+    event = users(:one).events.create!(title: "Rex — dental", starts_at: 13.months.ago)
     event.sections << @rex.section
 
     get section_path("pets")
     assert_select "h2", text: "Routine care", count: 0
-    assert_match "vaccinations due", response.body, "the card names what's due"
+    assert_match "dental due", response.body, "the card names what's due"
 
     create_pet(name: "Luna", species: "cat")
     create_pet(name: "Bean", species: "rabbit")

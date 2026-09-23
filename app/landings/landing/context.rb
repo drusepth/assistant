@@ -58,6 +58,9 @@ module Landing
       @care_kind_options ||= begin
         kinds = Health::CareRadar.new(user).kinds + pets.flat_map { |pet| Pets::CareKinds.for(pet) }
         options = kinds.uniq(&:key).map { |kind| [ kind.label, kind.key ] }
+        # A pet's vaccination visit is her vaccine record's, not a radar kind
+        # (D-pet-vaccinations), but the visit itself is still an event.
+        options << [ "A pet's vaccination visit", Pets::VaccineStatus::VISIT_KIND ] if pets.any?
         options << [ "Not a visit (a due date, a refill)", Health::CareRadar::EXCLUDED ]
       end
     end

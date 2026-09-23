@@ -1,0 +1,102 @@
+<%# Her vaccine record at a glance (D-pet-vaccinations): one row per vaccine,
+    the ones needing attention first. A reaction is never collapsed — it is
+    the sentence the next vet most needs to hear. Anyone the pet is shared
+    with can log a dose; the person at the vet is the one with the paper.
+
+    A pet who has died or been rehomed keeps her record as history: dates,
+    no states, no buttons — nothing about her should read as a to-do
+    (D-pet-primitive). %>
+<% active = pet.active? %>
+<% due = active ? status.needing_attention : [] %>
+<%= render Ui::CardComponent.new(title: "Vaccinations",
+      subtitle: status.any? && active ? "What #{pet.pronouns.subject} #{pet.pronouns.verb("is", "are")} covered for, and until when." : nil) do |card| %>
+  <% card.with_actions do %>
+    <% if status.any? %>
+      <%= link_to "Full record", pet_vaccinations_path(pet), class: "btn btn-ghost btn-sm" %>
+    <% end %>
+    <% if active %>
+      <%= link_to "Log vaccines", new_pet_vaccination_path(pet), class: "btn btn-secondary btn-sm" %>
+    <% end %>
+  <% end %>
+
+  <div class="space-y-4">
+    <% status.reactions.each do |dose| %>
+      <p class="rounded-xl bg-red-100 px-3 py-2 text-sm text-red-800" role="note">
+        <span class="font-medium">Reacted to <%= dose.vaccine_label %></span>
+        (<%= dose.given_on.strftime("%b %Y") %>): <%= dose.reaction %>
+      </p>
+    <% end %>
+
+    <%# One visit covers everything due, so one button books it — the same
+        prefill the reminder's "Book the visit" opens. %>
+    <% if due.any? %>
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-primary-500/10 px-3 py-2">
+        <p class="text-sm text-ink">
+          <%= due.map(&:label).to_sentence %> <%= due.one? ? "needs" : "need" %> doing — nothing is booked yet.
+        </p>
+        <%= link_to "Book a visit", new_event_path(status.booking_params(due)), class: "btn btn-primary btn-sm" %>
+      </div>
+    <% end %>
+
+    <% if status.any? %>
+      <div class="divide-y divide-edge">
+        <% status.entries.each do |entry| %>
+          <div class="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+            <div class="min-w-0 flex-1">
+              <p class="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">
+                <%= entry.label %>
+                <% if active %>
+                  <span class="chip <%= vaccine_state_chip_classes(entry.state) %>"><%= vaccine_state_label(entry.state) %></span>
+                <% end %>
+                <% unless entry.latest.dose? %>
+                  <span class="chip bg-canvas text-soft"><%= entry.latest.kind_label %></span>
+                <% end %>
+              </p>
+              <p class="mt-0.5 text-xs text-soft">
+                <% if active %>
+                  <%= vaccine_entry_line(entry) %>
+                <% else %>
+                  Last given <%= entry.latest.given_on.strftime("%b %-d, %Y") %>
+                <% end %>
+                <% if entry.latest.tag_number.present? %> · tag <span class="font-mono"><%= entry.latest.tag_number %></span><% end %>
+              </p>
+            </div>
+            <% if active && entry.attention? %>
+              <div class="row-actions">
+                <%= link_to "Log a dose", new_pet_vaccination_path(pet, vaccine: entry.latest.vaccine_key), class: "btn btn-ghost btn-sm" %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-soft">
+        No vaccine records yet. Log the last visit — or
+        <%= link_to "upload the certificate", new_document_path(section_ids: [ pet.section_id, Section.find_by(slug: "health")&.id ].compact),
+              class: "text-primary-700 hover:underline" %>
+        and the app will read it — and this card will say when each one runs out.
+      </p>
+    <% end %>
+
+    <% if active && (missing = status.missing_core).any? %>
+      <p class="text-xs text-soft">
+        No record of <%= missing.map(&:label).to_sentence %> —
+        <%= Pets::Vaccines.guidance(pet.species) %> guidance lists <%= missing.one? ? "it" : "them" %> as core for <%= pet.species_label.downcase.pluralize %>.
+      </p>
+    <% end %>
+
+    <% if active && status.unlogged_visits.any? %>
+      <div class="rounded-xl bg-stone-100/70 p-3 text-sm">
+        <p class="text-ink">Vaccination visits on the calendar with nothing logged yet:</p>
+        <ul class="mt-1 space-y-0.5">
+          <% status.unlogged_visits.each do |visit| %>
+            <li>
+              <%= link_to "#{visit.starts_at.strftime("%B %-d, %Y")} — add what was given",
+                    new_pet_vaccination_path(pet, event_id: visit.id), class: "text-primary-700 hover:underline" %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+<% end %>

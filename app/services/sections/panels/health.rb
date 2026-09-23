@@ -29,11 +29,17 @@ module Sections
       # (D-pet-care-radar), so they join this strip as rows without a login:
       # the visibility wall is the pet's own grants rather than a member's
       # sharing, and only pets still with us are tracked.
+      #
+      # Each row also carries the vaccines that need doing (D-pet-vaccinations)
+      # — "Rabies due Jun 3" — from her vaccine record, which is not a radar
+      # kind because each vaccine runs its own clock.
       def pet_care
         @pet_care ||= Pet.visible_to(viewer).active.includes(:section).filter_map do |pet|
           tracked = ::Health::CareRadar.new(pet, viewer: viewer).statuses
             .select { |status| status.last_visit || status.next_visit }
-          [ pet, tracked ] if tracked.any?
+          vaccines = ::Pets::VaccineStatus.new(pet, viewer: viewer).entries
+            .select { |entry| entry.attention? || entry.state == :booked }
+          [ pet, tracked, vaccines ] if tracked.any? || vaccines.any?
         end
       end
 

@@ -1,0 +1,21 @@
+<%# The shareable record (D-pet-vaccinations §5.5): print it, or send the
+    kennel a link that expires. Everything outside the sheet is hidden when
+    printing. %>
+<div class="mb-6 flex flex-wrap items-center justify-between gap-2 print:hidden">
+  <%= link_to "← #{@pet.name}'s vaccinations", pet_vaccinations_path(@pet), class: "text-sm text-primary-700 hover:underline" %>
+  <button type="button" class="btn btn-secondary" data-controller="print" data-action="print#now">Print</button>
+</div>
+
+<div class="grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-3">
+  <div class="card p-6 lg:col-span-2 print:border-0 print:p-0 print:shadow-none">
+    <%= render "pet_vaccinations/sheet", pet: @pet, status: @status,
+          certificate_url: ->(dose) { (document = dose.certificate_for(Current.user)) && document_path(document) } %>
+  </div>
+  <% if @pet.user_id == Current.user.id %>
+    <div class="print:hidden">
+      <%= render "share_links/card", links: @links, subject: @pet, noun: "record", default_expiry: "30",
+            detail: "Anyone with the link sees this sheet — #{@pet.name}'s name, photo, microchip, vet and vaccines, and the certificates " \
+                    "you attached. Not reactions, notes, or anything else. Set it to expire after the stay, and revoke it any time." %>
+    </div>
+  <% end %>
+</div>

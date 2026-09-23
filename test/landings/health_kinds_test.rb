@@ -12,14 +12,14 @@ class Landing::HealthKindsTest < ActiveSupport::TestCase
 
   test "a past visit with a care kind lands as Health + the pet's lens, and the pet's radar counts it" do
     landing = Landing::Event.new(@context)
-    attrs = landing.validate("title" => "Rex — vaccinations", "on" => 2.weeks.ago.to_date.iso8601,
-      "care_kind" => "pet_vaccinations", "pet" => @rex.section.slug)
+    attrs = landing.validate("title" => "Rex — dental", "on" => 2.weeks.ago.to_date.iso8601,
+      "care_kind" => "pet_dental", "pet" => @rex.section.slug)
 
     event = landing.land!(attrs, sections: [])
-    assert_equal "pet_vaccinations", event.care_kind
+    assert_equal "pet_dental", event.care_kind
     assert_equal [ @rex.section, @health ].to_set, event.sections.to_set
 
-    status = Health::CareRadar.new(@rex).statuses.find { |s| s.kind.key == "pet_vaccinations" }
+    status = Health::CareRadar.new(@rex).statuses.find { |s| s.kind.key == "pet_dental" }
     assert_equal :ok, status.state
     assert_equal event, status.last_visit
   end
@@ -32,7 +32,7 @@ class Landing::HealthKindsTest < ActiveSupport::TestCase
 
     assert_equal "none", event.care_kind
     assert_equal [ @rex.section ], event.sections.to_a, "not a visit, so not Health by the care rule"
-    status = Health::CareRadar.new(@rex).statuses.find { |s| s.kind.key == "pet_vaccinations" }
+    status = Health::CareRadar.new(@rex).statuses.find { |s| s.kind.key == "pet_wellness" }
     assert_equal :unknown, status.state
   end
 

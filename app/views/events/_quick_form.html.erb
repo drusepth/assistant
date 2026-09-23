@@ -16,6 +16,10 @@
   <% end %>
   <%= form.field :location, label_text: "Where (optional)", placeholder: "Clinic, address, or video link" %>
   <%= render "shared/pretagged_sections", form: form, item: event %>
+  <%# Carried, not shown: the link that opened this form already said what
+      kind of visit it is (a vaccine card's "Book") — the event's page is
+      where that is changed. %>
+  <%= form.hidden_field :care_kind if event.care_kind.present? %>
   <%= hidden_field_tag :return_to, local_assigns[:return_to], id: nil if local_assigns[:return_to].present? %>
   <div class="flex items-center gap-2">
     <%= form.submit "Add event" %>

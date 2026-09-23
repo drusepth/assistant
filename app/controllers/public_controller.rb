@@ -27,8 +27,25 @@ class PublicController < ApplicationController
     when Recipe then show_recipe(@link.subject)
     when RecipeBook then show_book(@link.subject)
     when Album then show_album(@link.subject)
+    when Pet then show_vaccine_record(@link.subject)
     else gone
     end
+  end
+
+  # A certificate attached to one of a shared pet's doses, streamed through
+  # the token (D-pet-vaccinations) — never a permanent blob URL, so the file
+  # stops being reachable the moment the link is revoked or expires. Only a
+  # document the pet's owner owns, attached to a dose of *this* pet.
+  def certificate
+    link = ShareLink.live.find_by(token: params[:token])
+    return gone unless link&.subject.is_a?(Pet)
+
+    dose = link.subject.pet_vaccinations.find_by(id: params[:id])
+    document = dose&.document
+    return gone unless document&.file&.attached? && document.user_id == link.user_id
+
+    send_data document.file.download, filename: document.file.filename.to_s,
+      type: document.file.content_type, disposition: "inline"
   end
 
   private
@@ -97,6 +114,16 @@ class PublicController < ApplicationController
       else
         render :album
       end
+    end
+
+    # A pet's link shows her vaccine one-sheet and nothing else of hers — the
+    # same partial the owner prints, so the two cannot drift apart.
+    def show_vaccine_record(pet)
+      return gone if request.format.json?
+
+      @pet = pet
+      @status = Pets::VaccineStatus.new(pet, viewer: pet.user)
+      render :vaccine_record
     end
 
     def gone

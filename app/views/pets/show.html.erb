@@ -109,12 +109,15 @@
       <% end %>
     <% end %>
 
-    <% if @own && @pet.active? %>
-      <%= render "pets/tools", pet: @pet %>
-    <% end %>
-
     <% if @care_statuses.any? %>
       <%= render "pets/care_radar", pet: @pet, statuses: @care_statuses, health_section_id: @health_section_id %>
+    <% end %>
+
+    <%# A goldfish's page doesn't need a card about vaccines it will never
+        get: the card is for species the catalog lists, or any pet with
+        records. Everyone else logs one from the sidebar's Tools. %>
+    <% if @vaccines.any? || (@pet.active? && Pets::Vaccines.known?(@pet.species)) %>
+      <%= render "pets/vaccinations", pet: @pet, status: @vaccines %>
     <% end %>
 
     <% if @shelf.any? || @own %>
@@ -161,6 +164,9 @@
               access_grants_path(subject_type: "Section", subject_id: @pet.section_id, everyone: 1),
               method: :post, class: "btn btn-secondary btn-sm w-full" %>
       <% end %>
+    <% end %>
+    <% if @own && @pet.active? %>
+      <%= render "pets/tools", pet: @pet, log_vaccine: !@vaccines.any? && !Pets::Vaccines.known?(@pet.species) %>
     <% end %>
   </div>
 </div>

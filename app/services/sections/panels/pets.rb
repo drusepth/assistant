@@ -43,12 +43,15 @@ module Sections
       def show_care? = active_pets.size >= CARE_SUMMARY_FROM && care.any?
 
       # The same rows the Health page's household strip draws, so the two can
-      # never disagree about what's due (D-pet-care-radar).
+      # never disagree about what's due (D-pet-care-radar) — radar tiles and,
+      # beside them, the vaccines needing doing (D-pet-vaccinations).
       def care
         @care ||= active_pets.filter_map do |pet|
           tracked = ::Health::CareRadar.new(pet, viewer: viewer).statuses
             .select { |status| status.last_visit || status.next_visit }
-          [ pet, tracked ] if tracked.any?
+          vaccines = ::Pets::VaccineStatus.new(pet, viewer: viewer).entries
+            .select { |entry| entry.attention? || entry.state == :booked }
+          [ pet, tracked, vaccines ] if tracked.any? || vaccines.any?
         end
       end
 
