@@ -1,0 +1,38 @@
+<%= render Ui::PageHeaderComponent.new(title: "Your vault",
+      subtitle: "Pick the tools you want to keep your things in. Only the ones you switch on appear in your sidebar.") %>
+
+<p class="hint mb-6 max-w-2xl">
+  Turning a page off only takes it out of your sidebar — it deletes nothing,
+  and anything already saved there is waiting when you switch it back on.
+</p>
+
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  <% @pages.each do |page| %>
+    <% enabled = Current.user.vault_page_enabled?(page.slug) %>
+    <% waiting = enabled && page.requires == :email_account && !@has_email_account %>
+    <div id="vault_page_<%= page.slug %>"
+         class="card flex flex-col gap-3 p-5 <%= enabled ? "ring-2 ring-primary-300" : "opacity-80" %>">
+      <div class="flex items-center gap-2.5">
+        <%= icon(page.icon, css_class: "size-5 shrink-0 text-soft") %>
+        <h2 class="text-base font-semibold text-ink"><%= page.name %></h2>
+        <span class="chip ml-auto <%= enabled ? "bg-primary-100 text-primary-800" : "bg-stone-200 text-stone-700" %>">
+          <%= enabled ? "On" : "Off" %>
+        </span>
+      </div>
+
+      <p class="text-sm text-soft"><%= page.blurb %></p>
+
+      <div class="mt-auto flex flex-wrap items-center gap-2 pt-1">
+        <%= button_to enabled ? "Turn off" : "Turn on", vault_page_path(page.slug),
+              method: :patch, params: { enabled: enabled ? "0" : "1" },
+              class: "btn btn-sm #{enabled ? "btn-secondary" : "btn-primary"}",
+              aria: { label: "#{enabled ? "Turn off" : "Turn on"} #{page.name}" } %>
+        <% if waiting %>
+          <%= link_to "Connect an email account", settings_path, class: "btn btn-ghost btn-sm" %>
+        <% elsif enabled %>
+          <%= link_to "Open", public_send(page.route), class: "btn btn-ghost btn-sm" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

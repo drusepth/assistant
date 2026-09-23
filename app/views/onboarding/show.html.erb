@@ -23,6 +23,28 @@
             </span>
           </label>
         <% end %>
+
+        <%# The Vault half of the same question (D-vault-picker): not every
+            household wants a password manager or a diary, and the first day
+            is when the sidebar should get its shape. The blank hidden value
+            makes an all-unchecked submit mean "none", not "untouched". %>
+        <div class="pt-4">
+          <h3 class="text-base font-semibold text-ink">And what should your vault hold?</h3>
+          <p class="mt-0.5 text-sm text-soft">The tools you keep your things in. Change this anytime from "Customize" beside Vault in the sidebar.</p>
+        </div>
+        <%= hidden_field_tag "enabled_vault_slugs[]", "", id: nil %>
+        <% VaultPage::ALL.each do |page| %>
+          <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-edge px-4 py-3 has-[:checked]:border-primary-300 has-[:checked]:bg-primary-50/50">
+            <%= check_box_tag "enabled_vault_slugs[]", page.slug, Current.user.vault_page_enabled?(page.slug),
+                  id: "onboarding_vault_#{page.slug}", class: "mt-0.5 size-4 shrink-0 rounded accent-primary-600" %>
+            <%= icon(page.icon, css_class: "mt-0.5 size-4 shrink-0 text-soft") %>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium text-ink"><%= page.name %></span>
+              <span class="block text-sm text-soft"><%= page.blurb %></span>
+            </span>
+          </label>
+        <% end %>
+
         <div class="flex items-center gap-2 pt-2">
           <%= form.submit "Continue" %>
           <%= link_to "Skip", onboarding_path(step: 2), class: "btn btn-ghost" %>
