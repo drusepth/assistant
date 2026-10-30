@@ -15,9 +15,9 @@ If AI assistance only ever arrives as a subscription from a few large companies,
 So this is built to be **owned** rather than rented:
 
 - **Self-hosted.** One installation serves one household. There is no account to make, no server of ours, no telemetry, and no paid tier.
-- **Model-agnostic, local-first.** The app is built *around* a model, not on one. Point it at a model you run at home (Ollama, llama.cpp, LM Studio) or at a hosted provider; the settings page argues for the first and one switch removes the second.
-- **Useful before it's clever.** With no model configured at all it is still a complete organiser — calendar, documents, tasks, people, photos — and every AI feature says plainly that it's off rather than guessing.
-- **For people who've never had the help.** The target user is the household that doesn't already have an assistant, an accountant and a lawyer — not power users or enterprises.
+- **Model-agnostic, local-first.** The app is built *around* a model, not on one. Point it at a model you run at home (Ollama, llama.cpp, LM Studio) or at a hosted provider if you really want. You're in control.
+- **Useful before it's clever.** With no model configured at all it is still a complete organiser — calendar, documents, tasks, people, photos — and every AI feature is just turned off.
+- **For people who've never had the help.** The target user is the household that doesn't already have an assistant, an accountant, and a lawyer — not power users or enterprises.
 
 The full argument is in [docs/VISION.md](docs/VISION.md).
 
@@ -27,11 +27,11 @@ The app works in three layers, built in this order:
 
 1. **Organize** — an owned record of your life, valuable with no AI at all.
 2. **Tools** — specific jobs with a form and an answer: *read this pay stub*, *appeal this insurance denial*, *get my deposit back*, *plan my job search*. There are over fifty.
-3. **Agent** — the app comes to you: what needs attention this week, the renewal next month, a drafted reply waiting for one click. How proactive it is can be dialled per area.
+3. **Agent** — the app comes to you: what needs attention this week, the renewal next month, a drafted reply waiting for one click. How proactive it is can be customized per area.
 
 ### Ten areas of life
 
-Each area can be switched off if it isn't yours. They aren't separate apps: everything lives in one shared pool and an area is a view over it, so *Mom's cardiology appointment* is a Health thing and a People thing at once and appears in both.
+Each area can be switched off if it isn't relevant. They aren't separate apps: everything lives in one shared pool and an area is a view over it, so *Mom's cardiology appointment* is both a Health thing and a People thing and appears in both areas.
 
 | Area | What it covers |
 |---|---|
@@ -73,9 +73,9 @@ Each area can be switched off if it isn't yours. They aren't separate apps: ever
 ## Privacy model
 
 - **Private from your own household by default.** Everyone in the house gets their own account, and nothing one person keeps is visible to another — the admin included — until they share it, either one item at a time or a whole area ("share everything I file under Money with my spouse"). Every share is listed in one place and revocable. There are no hidden defaults.
-- **Your data is files.** One SQLite database and a folder of attachments. Backing up is copying them.
-- **The network is opt-in.** Anything that reaches outside the house — a hosted model, a mailbox, feeds, linked calendars and contacts, local event listings, phone alerts, outside file storage — is off until you set it up, and the app's own privacy page ([source](app/views/about/topics/_privacy.html.erb)) lists every one.
-- **The public pages know nothing about you.** Each installation serves a set of `/about` pages explaining the app; they are identical on every install and read no household data, and one checkbox turns them off.
+- **Your data is files.** One SQLite database and a folder of attachments. Backing up is copying them. Exporting is moving them.
+- **The Internet is optional and opt-in.** Anything that reaches outside the house — a hosted model, a mailbox, feeds, linked calendars and contacts, local event listings, phone alerts, outside file storage — is off until you explicitly set it up and turn it on. The privacy page ([source](app/views/about/topics/_privacy.html.erb)) lists every option.
+- **The public pages know nothing about you.** Each installation serves a set of `/about` pages explaining the app for your reference; they are identical on every install and read no household data, and one checkbox turns them off.
 
 ## How it's built
 
