@@ -1,7 +1,7 @@
 <%# The front door. Three promises, in the order a skeptical stranger needs
     them: what it is, where it runs, and that it earns its keep before any
     model is involved. %>
-<% content_for :description, "An open-source life assistant your household runs at home. Your data stays on your machine, on a model you run yourself." %>
+<% content_for :description, "An open-source life assistant your household runs at home. Your data stays on your machine, and the model that reads it can too." %>
 
 <section class="max-w-3xl">
   <p class="text-sm font-semibold tracking-wide text-primary-700 uppercase">Open source · self-hosted</p>
@@ -25,8 +25,8 @@
   <%= render Ui::CardComponent.new(title: "It runs in your house") do %>
     <p class="text-sm text-soft">
       Not on our servers — there are no our-servers. The app runs on your
-      machine and thinks with a model running on your machine. Nothing you
-      put into it goes anywhere else.
+      machine, and the model it thinks with can run there too. Set it up
+      that way and nothing you put into it goes anywhere else.
     </p>
     <p class="mt-3 text-sm"><%= link_to "How that works →", about_page_path("privacy"), class: "text-primary-700 hover:underline" %></p>
   <% end %>

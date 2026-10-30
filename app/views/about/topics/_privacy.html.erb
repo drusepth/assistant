@@ -12,21 +12,22 @@
   </p>
   <p>
     This one is built the other way round. The app runs on a computer in your
-    home. The model it thinks with runs on a computer in your home. There is
-    no account to make, no server of ours to reach, and no version of this
-    software that works differently if you pay more.
+    home, and the model it thinks with can run on a computer in your home
+    too. There is no account to make, no server of ours to reach, and no
+    version of this software that works differently if you pay more.
   </p>
 </section>
 
 <section class="mt-14">
   <h2 class="display text-2xl">What that means, concretely</h2>
   <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <%= render Ui::CardComponent.new(title: "There is no cloud to fall back on") do %>
+    <%= render Ui::CardComponent.new(title: "The model is wherever you point it") do %>
       <p class="text-sm text-soft">
-        The app talks to one model endpoint, and that endpoint is one you
-        chose and run — on the same machine, or another one in your house.
-        Turn off your internet connection and everything on these pages still
-        works.
+        The app talks to one model, and you choose which. Point it at one
+        running in your house — the same machine, or another one down the
+        hall — and you can unplug the internet and everything on these pages
+        still works. The big hosted models are on the menu too, for a
+        household that wants them, and one switch in Settings takes them off.
       </p>
     <% end %>
 
@@ -50,10 +51,10 @@
     <%= render Ui::CardComponent.new(title: "Some things are sealed even from the software") do %>
       <p class="text-sm text-soft">
         The password vault and the diary are encrypted with a key derived
-        from your own passphrase. Somebody with the database file and full
+        from your own login password. Somebody with the database file and full
         access to the machine still cannot read either one. That is also true
-        of you, if you lose the passphrase — which is the honest cost of it
-        being real.
+        of you, if you lose both the password and the recovery code you were
+        given — which is the honest cost of it being real.
       </p>
     <% end %>
   </div>
@@ -62,11 +63,22 @@
 <section class="mt-14 max-w-3xl">
   <h2 class="display text-2xl">The parts that do touch the internet</h2>
   <p class="mt-4 text-soft">
-    A short list of features reach outside the house, because they cannot do
-    their job otherwise. Each is off until you set it up, and each is listed
-    here rather than buried.
+    Some features reach outside the house, because they cannot do their job
+    otherwise. Each is off until you set it up, and each is listed here
+    rather than buried.
   </p>
   <ul class="mt-6 space-y-4">
+    <li class="card p-5">
+      <h3 class="font-semibold">A hosted model, if you choose one</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        If you pick one of the big providers instead of a model at home, what
+        the app asks it — which can include the document it is reading for
+        you — goes to that company, under their terms. Settings makes the case
+        for staying home before it offers them, and one switch takes them off
+        the list entirely.
+        <%= link_to "Running your own →", about_page_path("models"), class: "text-primary-700 hover:underline" %>
+      </p>
+    </li>
     <li class="card p-5">
       <h3 class="font-semibold">Email, if you connect a mailbox</h3>
       <p class="mt-1.5 text-sm text-soft">
@@ -81,6 +93,43 @@
         The reader fetches the sites you subscribed to, on a polite schedule,
         the same way any feed reader does. Those sites learn that somebody at
         your address is subscribed — which is what subscribing is.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">Calendars and contacts, if you link them</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        A linked calendar, address book, or Meetup or Eventbrite account
+        syncs with that provider and nobody else.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">Local events, if you follow a place</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        The event radar checks the listings you added for a place. The
+        big ticketing searches are off by default, and each one says exactly
+        what it would send before you turn it on.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">A web page, when you hand it one</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Importing a recipe or reading a job posting fetches that one address,
+        once, because you pasted it.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">Alerts on your phone, if you turn them on</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        A text message goes out through whatever you set up to send it, and a
+        browser notification through your browser's own push service. The
+        message is a line or two, not your files.
+      </p>
+    </li>
+    <li class="card p-5">
+      <h3 class="font-semibold">Storage elsewhere, if you configure it</h3>
+      <p class="mt-1.5 text-sm text-soft">
+        Photos and files live on your own disk unless whoever installed the
+        app points them at a storage service instead.
       </p>
     </li>
     <li class="card p-5">
