@@ -2,7 +2,7 @@
 
 **An open-source AI life assistant that a household runs on its own computer.**
 
-People with money have help: an assistant who keeps the calendar, an accountant who reads the letters, a lawyer who writes the difficult one back. This project is that stack of help as software you install at home — a private place for a whole household's life (appointments, tasks, documents, money, health, people), with an AI model of your choosing doing the reading and writing on top of it.
+People with money have help: an assistant who keeps the calendar, an accountant who reads the letters, a lawyer who writes the difficult one back. This project is that stack of help as software you install at home — a private place for a whole household's life (appointments, tasks, documents, money, health, people), with a locally-hosted AI model doing that work for you.
 
 ![The dashboard, reading across every part of one household's week](app/assets/images/about/dashboard.webp)
 
