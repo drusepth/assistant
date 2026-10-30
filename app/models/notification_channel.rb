@@ -156,7 +156,7 @@ class NotificationChannel < ApplicationRecord
       "Email — #{config["address"]}#{via}#{" (can't send: #{problem})" if problem}"
     end
 
-    # Numbers arrive through the phone mask as "(503) 614-9061" or pasted
+    # Numbers arrive through the phone mask as "(503) 555-0142" or pasted
     # with any decoration; carriers want E.164, so it's settled once here
     # rather than in three provider classes — by the same PhoneNumber every
     # contact uses, so ten bare digits get their +1 instead of becoming a

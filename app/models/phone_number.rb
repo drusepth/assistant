@@ -3,9 +3,9 @@
 # (phone_input_controller.js, via ApplicationFormBuilder#telephone_field)
 # is what the user types into; this is what the server makes of it.
 #
-# Stored as E.164 — "+15036149061" — because that is the form a `tel:` link,
+# Stored as E.164 — "+15035550142" — because that is the form a `tel:` link,
 # an SMS gateway, and a search by digits all want, and the form notification
-# channels already insist on. Printed as "(503) 614-9061" for North American
+# channels already insist on. Printed as "(503) 555-0142" for North American
 # numbers; anything else is printed as stored, since grouping an
 # international number correctly takes a per-country table we don't carry.
 #

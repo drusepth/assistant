@@ -26,10 +26,10 @@ class ApplicationFormBuilderTest < ActionView::TestCase
   end
 
   test "telephone_field shows the stored number masked and wires the mask" do
-    builder = ApplicationFormBuilder.new(:person, Person.new(phone: "+15036149061"), self, {})
+    builder = ApplicationFormBuilder.new(:person, Person.new(phone: "+15035550142"), self, {})
     html = builder.telephone_field(:phone)
 
-    assert_match 'value="(503) 614-9061"', html
+    assert_match 'value="(503) 555-0142"', html
     assert_match 'data-controller="phone-input"', html
     assert_match 'inputmode="tel"', html
     assert_match "pattern=", html

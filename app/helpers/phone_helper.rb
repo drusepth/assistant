@@ -1,5 +1,5 @@
 module PhoneHelper
-  # A number as the app prints it — "(503) 614-9061" — dialing the stored
+  # A number as the app prints it — "(503) 555-0142" — dialing the stored
   # E.164 underneath (PhoneNumber). Built by hand for a stored "+" number
   # because Rails' phone_to percent-encodes the "+" to "%2B", which not
   # every dialer decodes; a number kept as typed goes through phone_to.

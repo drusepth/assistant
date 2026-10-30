@@ -49,12 +49,12 @@ class People::MatchesControllerTest < ActionDispatch::IntegrationTest
 
   test "the matched text is bold, and a repeated name carries a hint to tell them apart" do
     users(:one).people.create!(name: "Sam Lee", email: "sam@work.test")
-    users(:one).people.create!(name: "Sam Lee", phone: "5036149061")
+    users(:one).people.create!(name: "Sam Lee", phone: "5035550142")
 
     get people_matches_path(for: "circle", q: "lee")
     assert_select "li[role=option] strong", text: "Lee", count: 2
     assert_match "sam@work.test", response.body
-    assert_match "(503) 614-9061", response.body
+    assert_match "(503) 555-0142", response.body
   end
 
   test "a form field's suggestions reach anyone visible, nobody left out" do

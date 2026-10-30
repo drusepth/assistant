@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 // The phone mask every telephone field gets from ApplicationFormBuilder:
-// you type digits, the box draws the "(503) 614-9061" around them. A leading
+// you type digits, the box draws the "(503) 555-0142" around them. A leading
 // "+" switches to an international number — the digits are kept as typed,
 // since grouping them right takes a per-country table — and "+1" gets the
 // North American mask after it. The server (PhoneNumber) is what actually
@@ -43,7 +43,7 @@ export default class extends Controller {
 const digitsOf = (value) => value.replace(/\D/g, "")
 const isInternational = (value) => value.trimStart().startsWith("+")
 
-// "(5", "(503) 6", "(503) 614-9" — drawn as far as the digits go, so the
+// "(5", "(503) 5", "(503) 555-0" — drawn as far as the digits go, so the
 // box never shows punctuation waiting for a digit that hasn't been typed.
 function northAmerican(digits) {
   if (!digits) return ""

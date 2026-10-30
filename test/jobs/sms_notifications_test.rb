@@ -224,11 +224,11 @@ class SmsNotificationsTest < ActiveJob::TestCase
 
   test "ten digits typed through the mask get their +1, not another country" do
     channel = @user.notification_channels.create!(kind: :sms, config: {
-      "provider" => "gammu", "outbox_path" => "/tmp", "to" => "(503) 614-9061"
+      "provider" => "gammu", "outbox_path" => "/tmp", "to" => "(503) 555-0142"
     })
 
-    assert_equal "+15036149061", channel.config["to"],
-      "bare digits once became +5036149061 — a number in Brazil that passed validation"
+    assert_equal "+15035550142", channel.config["to"],
+      "bare digits once became +5035550142 — a number in Brazil that passed validation"
   end
 
   test "a number too short to read is refused rather than texted" do

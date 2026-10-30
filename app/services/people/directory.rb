@@ -111,8 +111,8 @@ module People
           [ "people.phone LIKE :digits" ]).join(" OR ")
       end
 
-      # Phones are stored as bare digits (PhoneNumber), so "503-614" finds
-      # "+15036149061" by its digits. A query that is only a number and
+      # Phones are stored as bare digits (PhoneNumber), so "503-555" finds
+      # "+15035550142" by its digits. A query that is only a number and
       # its punctuation, with at least three digits — otherwise NULL, which
       # LIKE never matches, so "Ann" can't reach a phone this way.
       def digits_needle
